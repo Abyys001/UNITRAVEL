@@ -1,0 +1,703 @@
+{
+  "source": {
+    "url": "https://unitravels.co.uk/",
+    "title": "UNI TRAVEL | به‌زودی",
+    "capturedAt": "2026-10-23T13:43:43.840Z",
+    "tool": "Design Thief 0.3.0"
+  },
+  "detail": "exhaustive",
+  "note": "certainty: detected = measured; inferred/approximated = heuristic",
+  "overview": {
+    "title": "UNI TRAVEL | به‌زودی",
+    "url": "https://unitravels.co.uk/",
+    "lang": "fa",
+    "viewport": {
+      "width": 1534,
+      "height": 916,
+      "dpr": 1
+    },
+    "colorScheme": "unknown",
+    "pageHeight": 1046,
+    "description": "آژانس مسافرتی یونی تراول (UNI TRAVEL) — رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت به‌زودی راه‌اندازی می‌شود."
+  },
+  "tech": [
+    {
+      "name": "Font Awesome",
+      "category": "font-service",
+      "version": null,
+      "certainty": "detected",
+      "evidence": [
+        "loads cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "5 distinct fa-* icon classes (14 uses)"
+      ]
+    },
+    {
+      "name": "Google Fonts",
+      "category": "font-service",
+      "version": null,
+      "certainty": "detected",
+      "evidence": [
+        "loads fonts.googleapis.com/"
+      ]
+    },
+    {
+      "name": "Cloudflare",
+      "category": "cdn",
+      "version": null,
+      "certainty": "detected",
+      "evidence": [
+        "loads cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      ]
+    }
+  ],
+  "colors": {
+    "scheme": "unknown",
+    "roles": {
+      "primary": {
+        "hex": "#ff8617",
+        "certainty": "inferred"
+      },
+      "secondary": {
+        "hex": "#ffac50",
+        "certainty": "inferred"
+      },
+      "accent": {
+        "hex": "#11b7ff",
+        "certainty": "inferred"
+      },
+      "pageBackground": {
+        "hex": "#ffffff",
+        "certainty": "detected"
+      },
+      "surface": {
+        "hex": "#ffffff14",
+        "certainty": "inferred"
+      },
+      "text": {
+        "hex": "#ffffff",
+        "certainty": "detected"
+      },
+      "heading": {
+        "hex": "#ffffff",
+        "certainty": "detected"
+      },
+      "border": {
+        "hex": "#ffffff24",
+        "certainty": "detected"
+      },
+      "buttonBackground": {
+        "hex": "#ffffff1a",
+        "certainty": "inferred"
+      },
+      "buttonText": {
+        "hex": "#ffffff",
+        "certainty": "inferred"
+      },
+      "hover": {
+        "hex": "#ffffff2e",
+        "certainty": "detected"
+      }
+    },
+    "palette": [
+      {
+        "hex": "#ffffff24",
+        "alpha": 0.14,
+        "usages": {
+          "border": 36,
+          "background": 6
+        },
+        "variables": []
+      },
+      {
+        "hex": "#ffffff",
+        "alpha": 1,
+        "usages": {
+          "border": 4,
+          "text": 17
+        },
+        "variables": []
+      },
+      {
+        "hex": "#ffffff14",
+        "alpha": 0.08,
+        "usages": {
+          "shadow": 1,
+          "background": 10
+        },
+        "variables": []
+      },
+      {
+        "hex": "#ff8617",
+        "alpha": 1,
+        "usages": {
+          "background": 1,
+          "gradient": 2,
+          "variable": 1
+        },
+        "variables": [
+          "--orange"
+        ]
+      },
+      {
+        "hex": "#11b7ff",
+        "alpha": 1,
+        "usages": {
+          "background": 1,
+          "variable": 1
+        },
+        "variables": [
+          "--cyan"
+        ]
+      },
+      {
+        "hex": "#ffffff38",
+        "alpha": 0.22,
+        "usages": {
+          "border": 4
+        },
+        "variables": []
+      },
+      {
+        "hex": "#ffac50",
+        "alpha": 1,
+        "usages": {
+          "text": 2
+        },
+        "variables": []
+      },
+      {
+        "hex": "#061f4c",
+        "alpha": 1,
+        "usages": {
+          "gradient": 1
+        },
+        "variables": []
+      },
+      {
+        "hex": "#083575",
+        "alpha": 1,
+        "usages": {
+          "gradient": 1
+        },
+        "variables": []
+      },
+      {
+        "hex": "#0c67b9",
+        "alpha": 1,
+        "usages": {
+          "gradient": 1
+        },
+        "variables": []
+      }
+    ]
+  },
+  "typography": {
+    "heading": "Vazirmatn",
+    "body": "Montserrat",
+    "families": [
+      {
+        "family": "Vazirmatn",
+        "usedFor": [
+          "heading",
+          "body"
+        ],
+        "source": "google-fonts",
+        "stack": "Vazirmatn, sans-serif"
+      },
+      {
+        "family": "Font Awesome 6 Free",
+        "usedFor": [
+          "icon"
+        ],
+        "source": "third-party",
+        "stack": "\"Font Awesome 6 Free\""
+      },
+      {
+        "family": "Montserrat",
+        "usedFor": [
+          "heading",
+          "body"
+        ],
+        "source": "google-fonts",
+        "stack": "Montserrat, sans-serif"
+      }
+    ],
+    "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@400;600;700;800&display=swap",
+    "scale": [
+      {
+        "name": "Display",
+        "family": "Vazirmatn",
+        "size": 51.2,
+        "weight": 800,
+        "lineHeight": "1.15",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "inferred"
+      },
+      {
+        "name": "H1",
+        "family": "Montserrat",
+        "size": 30.4,
+        "weight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "0.5px",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      {
+        "name": "H2",
+        "family": "Vazirmatn",
+        "size": 51.2,
+        "weight": 800,
+        "lineHeight": "1.15",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      {
+        "name": "H3",
+        "family": "Vazirmatn",
+        "size": 17.6,
+        "weight": 800,
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      {
+        "name": "Body",
+        "family": "Montserrat",
+        "size": 12.48,
+        "weight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "4px",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      {
+        "name": "Small",
+        "family": "Montserrat",
+        "size": 11.2,
+        "weight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "0.8px",
+        "textTransform": "none",
+        "certainty": "inferred"
+      },
+      {
+        "name": "Caption",
+        "family": "Vazirmatn",
+        "size": 16,
+        "weight": 700,
+        "lineHeight": "1.15",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "detected"
+      }
+    ]
+  },
+  "fontFiles": [
+    {
+      "family": "Montserrat",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "400",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "500",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap"
+    },
+    {
+      "family": "Font Awesome 6 Brands",
+      "weight": "400",
+      "style": "normal",
+      "display": "block"
+    },
+    {
+      "family": "Font Awesome 6 Free",
+      "weight": "400",
+      "style": "normal",
+      "display": "block"
+    },
+    {
+      "family": "Font Awesome 6 Free",
+      "weight": "900",
+      "style": "normal",
+      "display": "block"
+    },
+    {
+      "family": "Font Awesome 5 Brands",
+      "weight": "400",
+      "style": "normal",
+      "display": "block"
+    },
+    {
+      "family": "Font Awesome 5 Free",
+      "weight": "900",
+      "style": "normal",
+      "display": "block"
+    },
+    {
+      "family": "Font Awesome 5 Free",
+      "weight": "400",
+      "style": "normal",
+      "display": "block"
+    },
+    {
+      "family": "FontAwesome",
+      "weight": "400",
+      "style": "normal",
+      "display": "block"
+    },
+    {
+      "family": "FontAwesome",
+      "weight": "normal",
+      "style": "normal",
+      "display": "block"
+    }
+  ],
+  "layout": {
+    "containerWidths": [],
+    "flexCount": 13,
+    "gridCount": 7,
+    "gridTemplates": [
+      {
+        "value": "2 equal columns",
+        "count": 1
+      }
+    ],
+    "stickyHeader": false,
+    "fixedCount": 0,
+    "stickyCount": 0,
+    "centeredTextRatio": 0.58,
+    "evidence": {
+      "certainty": "detected",
+      "note": "no centered max-width wrappers found"
+    },
+    "breakpoints": [
+      {
+        "px": 340,
+        "label": "Mobile"
+      },
+      {
+        "px": 480,
+        "label": "Mobile"
+      },
+      {
+        "px": 520,
+        "label": "Mobile"
+      }
+    ]
+  },
+  "spacing": {
+    "base": null,
+    "scale": [
+      9,
+      10,
+      12,
+      13,
+      14,
+      18,
+      22,
+      26,
+      32,
+      34,
+      70
+    ],
+    "radii": [
+      {
+        "class": "circle",
+        "value": "50%",
+        "count": 9
+      },
+      {
+        "class": "large",
+        "value": "16px",
+        "count": 9
+      },
+      {
+        "class": "pill",
+        "value": "999px",
+        "count": 1
+      }
+    ],
+    "borders": [
+      {
+        "value": "1px",
+        "px": 1,
+        "count": 40
+      },
+      {
+        "value": "3px",
+        "px": 3,
+        "count": 4
+      }
+    ]
+  },
+  "effects": {
+    "shadows": [
+      {
+        "name": "xs",
+        "kind": "box",
+        "value": "inset 0px 0px 0px 4px rgba(255, 255, 255, 0.08)"
+      }
+    ],
+    "gradients": [
+      {
+        "type": "linear",
+        "value": "linear-gradient(150deg, rgb(6, 31, 76) 0%, rgb(8, 53, 117) 46%, rgb(12, 103, 185) 100%)",
+        "colors": [
+          "rgb(6, 31, 76)",
+          "rgb(8, 53, 117)",
+          "rgb(12, 103, 185)"
+        ]
+      },
+      {
+        "type": "linear",
+        "value": "linear-gradient(to right, rgba(0, 0, 0, 0), rgb(255, 134, 23))",
+        "colors": [
+          "rgba(0, 0, 0, 0)",
+          "rgb(255, 134, 23)"
+        ]
+      },
+      {
+        "type": "linear",
+        "value": "linear-gradient(to left, rgba(0, 0, 0, 0), rgb(255, 134, 23))",
+        "colors": [
+          "rgba(0, 0, 0, 0)",
+          "rgb(255, 134, 23)"
+        ]
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "button",
+      "count": 3,
+      "confidence": 0.74,
+      "variants": [
+        {
+          "name": "secondary",
+          "count": 3,
+          "style": {
+            "background": "rgba(255, 255, 255, 0.1)",
+            "backgroundImage": null,
+            "color": "rgb(255, 255, 255)",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "borderStyle": "solid",
+            "radius": "16px",
+            "shadow": null,
+            "padding": "12px 18px",
+            "gap": "9px",
+            "fontFamily": "Vazirmatn",
+            "fontSize": "16px",
+            "fontWeight": "700",
+            "lineHeight": "normal",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "height": "51px",
+            "transition": "0.25s"
+          },
+          "states": [
+            {
+              "state": "hover",
+              "declarations": {
+                "transform": "translateY(-2px)",
+                "background-color": "rgba(255, 255, 255, 0.18)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "footer",
+      "count": 1,
+      "confidence": 0.92,
+      "variants": [
+        {
+          "name": "default",
+          "count": 1,
+          "style": {
+            "background": "rgba(0, 0, 0, 0)",
+            "backgroundImage": null,
+            "color": "rgb(255, 255, 255)",
+            "borderColor": null,
+            "borderWidth": "0px",
+            "borderStyle": "none",
+            "radius": null,
+            "shadow": null,
+            "padding": "0px",
+            "gap": null,
+            "fontFamily": "Montserrat",
+            "fontSize": "11.2px",
+            "fontWeight": "400",
+            "lineHeight": "normal",
+            "letterSpacing": "0.8px",
+            "textTransform": "none",
+            "height": "36px",
+            "transition": null
+          },
+          "states": []
+        }
+      ]
+    },
+    {
+      "type": "link",
+      "count": 1,
+      "confidence": 0.95,
+      "variants": [
+        {
+          "name": "default",
+          "count": 1,
+          "style": {
+            "background": "rgba(0, 0, 0, 0)",
+            "backgroundImage": null,
+            "color": "rgb(255, 172, 80)",
+            "borderColor": null,
+            "borderWidth": "0px",
+            "borderStyle": "none",
+            "radius": null,
+            "shadow": null,
+            "padding": "0px",
+            "gap": null,
+            "fontFamily": "Montserrat",
+            "fontSize": "10.88px",
+            "fontWeight": "700",
+            "lineHeight": "normal",
+            "letterSpacing": "0.8px",
+            "textTransform": "none",
+            "height": "14px",
+            "transition": null
+          },
+          "states": []
+        }
+      ]
+    }
+  ],
+  "motion": {
+    "libraries": [],
+    "transitions": [
+      {
+        "value": "transform 0.25s, background 0.25s",
+        "count": 6
+      },
+      {
+        "value": "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
+        "count": 6
+      },
+      {
+        "value": "0.25s",
+        "count": 3
+      }
+    ],
+    "animations": [
+      {
+        "name": "svc-in",
+        "duration": "0.55s",
+        "timing": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "iteration": "1",
+        "count": 6
+      }
+    ],
+    "lottie": 0
+  },
+  "assets": {
+    "images": 1,
+    "svg": {},
+    "media": 0,
+    "lottie": 0,
+    "iconSystems": [
+      "Font Awesome"
+    ],
+    "keyImages": [
+      {
+        "width": 1200,
+        "height": 800,
+        "alt": null
+      }
+    ]
+  },
+  "structure": {
+    "landmarks": [
+      {
+        "role": "main",
+        "selector": "main.card",
+        "label": "UNI TRAVEL"
+      },
+      {
+        "role": "contentinfo",
+        "selector": "footer",
+        "label": null
+      }
+    ],
+    "outline": [
+      "- div",
+      "- div",
+      "- main [main] (8 children)",
+      "  - div “UNI TRAVEL” (2 children)",
+      "    - span (1 children)",
+      "    - div (2 children)",
+      "  - h2 (1 children)",
+      "    - small",
+      "  - span",
+      "  - p",
+      "  - div (3 children)",
+      "    - span",
+      "    - h3",
+      "    - span",
+      "  - div (6 children)",
+      "    - div (2 children)",
+      "    - div (2 children)",
+      "    - div (2 children)",
+      "    - div (2 children)",
+      "    - div (2 children)",
+      "    - div (2 children)",
+      "  - div (3 children)",
+      "    - a (1 children)",
+      "    - a (1 children)",
+      "    - a (1 children)",
+      "  - footer [contentinfo] (1 children)",
+      "    - a"
+    ]
+  }
+}

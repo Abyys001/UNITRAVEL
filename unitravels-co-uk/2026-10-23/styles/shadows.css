@@ -1,0 +1,13 @@
+/*
+ * Shadows and gradients
+ * Source: https://unitravels.co.uk/
+ * Extracted by Design Thief on 2026-10-23.
+ * Generated from detected design values — not the site's original source files.
+ */
+
+:root {
+  --shadow-xs: inset 0px 0px 0px 4px rgba(255, 255, 255, 0.08);
+  --gradient-1: linear-gradient(150deg, rgb(6, 31, 76) 0%, rgb(8, 53, 117) 46%, rgb(12, 103, 185) 100%);
+  --gradient-2: linear-gradient(to right, rgba(0, 0, 0, 0), rgb(255, 134, 23));
+  --gradient-3: linear-gradient(to left, rgba(0, 0, 0, 0), rgb(255, 134, 23));
+}

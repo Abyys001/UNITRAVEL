@@ -1,0 +1,36 @@
+{
+  "elementCount": 50,
+  "scannedCount": 50,
+  "truncated": false,
+  "maxDepth": 6,
+  "tagCounts": {
+    "html": 1,
+    "body": 1,
+    "div": 16,
+    "main": 1,
+    "span": 4,
+    "i": 10,
+    "h1": 1,
+    "p": 2,
+    "h2": 1,
+    "small": 1,
+    "h3": 1,
+    "strong": 6,
+    "a": 4,
+    "footer": 1
+  },
+  "shadowRootCount": 0,
+  "iframes": [],
+  "landmarks": [
+    {
+      "role": "main",
+      "selector": "main.card",
+      "label": "UNI TRAVEL"
+    },
+    {
+      "role": "contentinfo",
+      "selector": "footer",
+      "label": null
+    }
+  ]
+}

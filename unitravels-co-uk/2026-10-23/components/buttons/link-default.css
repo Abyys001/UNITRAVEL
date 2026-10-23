@@ -1,0 +1,9 @@
+/* link / default — 1 instance(s), sample: "CYBERCINA"
+   original selector: div.powered-by > a */
+.link-default {
+  color: rgb(255, 172, 80);
+  font-family: "Montserrat";
+  font-size: 10.88px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}

@@ -1,0 +1,3453 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/auth/otp/request": {
+      "post": {
+        "operationId": "AuthController_request",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "channel": {
+                    "type": "string",
+                    "enum": [
+                      "PHONE",
+                      "EMAIL"
+                    ]
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 254
+                  },
+                  "purpose": {
+                    "default": "SIGN_IN",
+                    "type": "string",
+                    "enum": [
+                      "SIGN_IN",
+                      "VERIFY_PHONE",
+                      "VERIFY_EMAIL",
+                      "STEP_UP"
+                    ]
+                  },
+                  "defaultCountry": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}$"
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  },
+                  "client": {
+                    "type": "string",
+                    "enum": [
+                      "WEB",
+                      "CONSOLE",
+                      "MOBILE"
+                    ]
+                  },
+                  "challenge": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "voice": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "channel",
+                  "value",
+                  "deviceId",
+                  "client"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "challengeId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "resendAfterSeconds": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "normalised": {
+                      "type": "string"
+                    },
+                    "voiceAvailable": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "challengeId",
+                    "resendAfterSeconds",
+                    "expiresAt",
+                    "normalised",
+                    "voiceAvailable"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/pow": {
+      "get": {
+        "operationId": "AuthController_challenge",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/otp/verify": {
+      "post": {
+        "operationId": "AuthController_verify",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "challengeId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[0-9۰-۹٠-٩]{4,8}$"
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  },
+                  "client": {
+                    "type": "string",
+                    "enum": [
+                      "WEB",
+                      "CONSOLE",
+                      "MOBILE"
+                    ]
+                  },
+                  "profile": {
+                    "type": "object",
+                    "properties": {
+                      "givenNamesLatin": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "surnameLatin": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "nameFa": {
+                        "type": "string",
+                        "maxLength": 120
+                      }
+                    },
+                    "required": [
+                      "givenNamesLatin",
+                      "surnameLatin"
+                    ]
+                  }
+                },
+                "required": [
+                  "challengeId",
+                  "code",
+                  "deviceId",
+                  "client"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isNewUser": {
+                      "type": "boolean"
+                    },
+                    "needsProfile": {
+                      "type": "boolean"
+                    },
+                    "mfaRequired": {
+                      "type": "boolean"
+                    },
+                    "mfaEnrolmentRequired": {
+                      "type": "boolean"
+                    },
+                    "tokens": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "accessExpiresAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        },
+                        "refreshExpiresAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        }
+                      },
+                      "required": [
+                        "accessToken",
+                        "accessExpiresAt",
+                        "refreshToken",
+                        "refreshExpiresAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "isNewUser",
+                    "needsProfile",
+                    "mfaRequired",
+                    "mfaEnrolmentRequired"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/mfa/totp/enrol": {
+      "post": {
+        "operationId": "AuthController_enrolTotp",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/mfa/totp/verify": {
+      "post": {
+        "operationId": "AuthController_verifyTotp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/mfa/webauthn/registration-options": {
+      "post": {
+        "operationId": "AuthController_webauthnRegOptions",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/mfa/webauthn/register": {
+      "post": {
+        "operationId": "AuthController_webauthnRegister",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/mfa/webauthn/authentication-options": {
+      "post": {
+        "operationId": "AuthController_webauthnAuthOptions",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/mfa/webauthn/authenticate": {
+      "post": {
+        "operationId": "AuthController_webauthnAuthenticate",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "MeController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "preferredLocale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fa"
+                      ]
+                    },
+                    "calendar": {
+                      "type": "string",
+                      "enum": [
+                        "GREGORIAN",
+                        "JALALI"
+                      ]
+                    },
+                    "timezone": {
+                      "type": "string"
+                    },
+                    "identities": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "PHONE",
+                              "EMAIL"
+                            ]
+                          },
+                          "value": {
+                            "type": "string"
+                          },
+                          "verifiedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "isPrimary": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "type",
+                          "value",
+                          "verifiedAt",
+                          "isPrimary"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "flight_search.run",
+                          "flight_request.create.own",
+                          "flight_request.read.own",
+                          "flight_request.read.any",
+                          "flight_request.assign",
+                          "flight_request.transition",
+                          "flight_request.note.internal",
+                          "quote.create",
+                          "reservation.record",
+                          "ticket.record",
+                          "payment.record",
+                          "cargo_request.create.own",
+                          "cargo_request.read.own",
+                          "cargo_request.read.any",
+                          "cargo_request.transition",
+                          "customer.read.pii",
+                          "customer.read.documents",
+                          "compliance.case.read",
+                          "compliance.case.decide",
+                          "user.read",
+                          "user.role.assign",
+                          "user.role.assign.privileged",
+                          "provider.config.read",
+                          "provider.config.write",
+                          "engine.rules.read",
+                          "engine.rules.publish",
+                          "settings.write",
+                          "flags.write",
+                          "notification.template.write",
+                          "audit.read",
+                          "diagnostics.read"
+                        ]
+                      }
+                    },
+                    "flags": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "boolean"
+                      }
+                    },
+                    "permVersion": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "profile": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "givenNamesLatin": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "surnameLatin": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "nameFa": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "contactTimePref": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "givenNamesLatin",
+                            "surnameLatin",
+                            "nameFa",
+                            "contactTimePref"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "notificationPrefs": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "boolean"
+                      }
+                    },
+                    "mfa": {
+                      "type": "object",
+                      "properties": {
+                        "level": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "enrolled": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "stepUpValidUntil": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "level",
+                        "enrolled",
+                        "stepUpValidUntil"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "onDuty": {
+                      "type": "boolean"
+                    },
+                    "surfaces": {
+                      "type": "object",
+                      "properties": {
+                        "customer": {
+                          "type": "boolean"
+                        },
+                        "admin": {
+                          "type": "boolean"
+                        },
+                        "developer": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "customer",
+                        "admin",
+                        "developer"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "displayName",
+                    "status",
+                    "preferredLocale",
+                    "calendar",
+                    "timezone",
+                    "identities",
+                    "roles",
+                    "permissions",
+                    "flags",
+                    "permVersion",
+                    "profile",
+                    "notificationPrefs",
+                    "mfa",
+                    "onDuty",
+                    "surfaces"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      },
+      "patch": {
+        "operationId": "MeController_update",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/identities": {
+      "post": {
+        "operationId": "MeController_addIdentity",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/sessions": {
+      "get": {
+        "operationId": "MeController_listSessions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/sessions/{id}": {
+      "delete": {
+        "operationId": "MeController_revokeSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/devices": {
+      "post": {
+        "operationId": "MeController_registerDevice",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/devices/{id}": {
+      "delete": {
+        "operationId": "MeController_removeDevice",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/export": {
+      "post": {
+        "operationId": "MeController_exportData",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/delete": {
+      "post": {
+        "operationId": "MeController_deleteAccount",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/locations": {
+      "get": {
+        "operationId": "ReferenceController_locations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/v1/dev/users": {
+      "get": {
+        "operationId": "DevUsersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}": {
+      "get": {
+        "operationId": "DevUsersController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/roles": {
+      "put": {
+        "operationId": "DevUsersController_replaceRoles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/suspend": {
+      "post": {
+        "operationId": "DevUsersController_suspend",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/reactivate": {
+      "post": {
+        "operationId": "DevUsersController_reactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/sessions/revoke": {
+      "post": {
+        "operationId": "DevUsersController_revokeSessions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/force-reverify": {
+      "post": {
+        "operationId": "DevUsersController_forceReverify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/identities/{identityId}/unlink": {
+      "post": {
+        "operationId": "DevUsersController_unlink",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identityId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/merge": {
+      "post": {
+        "operationId": "DevUsersController_merge",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/roles": {
+      "get": {
+        "operationId": "DevUsersController_roles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      },
+      "post": {
+        "operationId": "DevUsersController_createRole",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/roles/{key}": {
+      "put": {
+        "operationId": "DevUsersController_updateRole",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/config/{domain}/versions": {
+      "get": {
+        "operationId": "DevSystemController_versions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      },
+      "post": {
+        "operationId": "DevSystemController_draft",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/config/{domain}/versions/{version}/publish": {
+      "post": {
+        "operationId": "DevSystemController_publish",
+        "parameters": [
+          {
+            "name": "version",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/settings": {
+      "get": {
+        "operationId": "DevSystemController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      },
+      "put": {
+        "operationId": "DevSystemController_putSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/feature-flags": {
+      "get": {
+        "operationId": "DevSystemController_flags",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/feature-flags/{key}": {
+      "put": {
+        "operationId": "DevSystemController_putFlag",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/audit-log": {
+      "get": {
+        "operationId": "DevSystemController_auditLog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/audit-log/verify": {
+      "get": {
+        "operationId": "DevSystemController_verify",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/audit-log/export": {
+      "post": {
+        "operationId": "DevSystemController_export",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/health": {
+      "get": {
+        "operationId": "DevSystemController_diagnostics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/queues/dead-letters": {
+      "get": {
+        "operationId": "DevSystemController_deadLetters",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/jobs/{queue}/{id}/retry": {
+      "post": {
+        "operationId": "DevSystemController_retry",
+        "parameters": [
+          {
+            "name": "queue",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/jobs/{queue}/{id}/discard": {
+      "post": {
+        "operationId": "DevSystemController_discard",
+        "parameters": [
+          {
+            "name": "queue",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/notification-templates": {
+      "get": {
+        "operationId": "DevSystemController_templates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      },
+      "put": {
+        "operationId": "DevSystemController_putTemplate",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/notification-templates/test-send": {
+      "post": {
+        "operationId": "DevSystemController_testSend",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/sms-routes": {
+      "get": {
+        "operationId": "DevSystemController_routes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      },
+      "put": {
+        "operationId": "DevSystemController_putRoute",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/vendors/{vendor}/credentials": {
+      "put": {
+        "operationId": "DevSystemController_vendorCredentials",
+        "parameters": [
+          {
+            "name": "vendor",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/vendors": {
+      "get": {
+        "operationId": "DevSystemController_vendorList",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/providers": {
+      "get": {
+        "operationId": "DevProvidersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/providers/{id}": {
+      "get": {
+        "operationId": "DevProvidersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      },
+      "patch": {
+        "operationId": "DevProvidersController_patch",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/providers/{id}/credentials": {
+      "put": {
+        "operationId": "DevProvidersController_credentials",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/providers/{id}/test": {
+      "post": {
+        "operationId": "DevProvidersController_test",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/uploads": {
+      "post": {
+        "operationId": "DocumentsController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/uploads/{id}/complete": {
+      "post": {
+        "operationId": "DocumentsController_complete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/uploads/{id}": {
+      "get": {
+        "operationId": "DocumentsController_status",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/documents/{id}/download": {
+      "get": {
+        "operationId": "DocumentsController_download",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/me/travellers": {
+      "get": {
+        "operationId": "TravellersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      },
+      "post": {
+        "operationId": "TravellersController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      }
+    },
+    "/v1/me/travellers/{id}": {
+      "patch": {
+        "operationId": "TravellersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      },
+      "delete": {
+        "operationId": "TravellersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      }
+    },
+    "/v1/admin/customers/{id}": {
+      "get": {
+        "operationId": "AdminCustomersController_context",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/customers/travellers/{travellerId}/reveal-document": {
+      "post": {
+        "operationId": "AdminCustomersController_reveal",
+        "parameters": [
+          {
+            "name": "travellerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/compliance/cases": {
+      "get": {
+        "operationId": "ComplianceController_cases",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/cases/{id}": {
+      "get": {
+        "operationId": "ComplianceController_case",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/cases/{id}/decide": {
+      "post": {
+        "operationId": "ComplianceController_decide",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/policies": {
+      "get": {
+        "operationId": "ComplianceController_policies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      },
+      "post": {
+        "operationId": "ComplianceController_propose",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/policies/{id}/approve": {
+      "post": {
+        "operationId": "ComplianceController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/screen": {
+      "post": {
+        "operationId": "ComplianceController_screen",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/lists": {
+      "get": {
+        "operationId": "ComplianceController_lists",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/lists/sync": {
+      "post": {
+        "operationId": "ComplianceController_sync",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/flight-requests": {
+      "post": {
+        "operationId": "CustomerFlightRequestsController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      },
+      "get": {
+        "operationId": "CustomerFlightRequestsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      }
+    },
+    "/v1/flight-requests/{ref}": {
+      "get": {
+        "operationId": "CustomerFlightRequestsController_detail",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      }
+    },
+    "/v1/flight-requests/{ref}/messages": {
+      "post": {
+        "operationId": "CustomerFlightRequestsController_message",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      }
+    },
+    "/v1/flight-requests/{ref}/quotes/{quoteId}/accept": {
+      "post": {
+        "operationId": "CustomerFlightRequestsController_accept",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      }
+    },
+    "/v1/flight-requests/{ref}/quotes/{quoteId}/decline": {
+      "post": {
+        "operationId": "CustomerFlightRequestsController_decline",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      }
+    },
+    "/v1/flight-requests/{ref}/cancel": {
+      "post": {
+        "operationId": "CustomerFlightRequestsController_cancel",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      }
+    },
+    "/v1/flight-requests/{ref}/after-sales": {
+      "post": {
+        "operationId": "CustomerFlightRequestsController_afterSales",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/staff": {
+      "get": {
+        "operationId": "AdminFlightRequestsController_staff",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/queues/summary": {
+      "get": {
+        "operationId": "AdminFlightRequestsController_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/events": {
+      "get": {
+        "operationId": "AdminFlightRequestsController_events",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests": {
+      "get": {
+        "operationId": "AdminFlightRequestsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}": {
+      "get": {
+        "operationId": "AdminFlightRequestsController_detail",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/commands/{command}": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_command",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "command",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/notes": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_note",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/messages": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_message",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/contact-attempts": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_contact",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/quotes/from-snapshot": {
+      "get": {
+        "operationId": "AdminFlightRequestsController_fromSnapshot",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/quotes": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_draft",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/quotes/{id}": {
+      "patch": {
+        "operationId": "AdminFlightRequestsController_editDraft",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      },
+      "get": {
+        "operationId": "AdminFlightRequestsController_quote",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/reservations": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_reservation",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/reservations/{id}/cancel": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_cancelReservation",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/tickets": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_tickets",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/payments": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_payment",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/payments/{id}/verify": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_verify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/credit-override": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_creditOverride",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/credit-overrides/{id}/approve": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_approveOverride",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/flight-requests/{ref}/after-sales": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_afterSales",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/admin/after-sales/{ref}/commands/{command}": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_afterSalesCommand",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "command",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
+    "/v1/flight-searches": {
+      "post": {
+        "operationId": "SearchController_start",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/v1/flight-searches/{id}": {
+      "get": {
+        "operationId": "SearchController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/v1/flight-searches/{id}/events": {
+      "get": {
+        "operationId": "SearchController_events",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/v1/itineraries/{id}": {
+      "get": {
+        "operationId": "SearchController_itinerary",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/v1/itineraries/{id}/price-check": {
+      "post": {
+        "operationId": "SearchController_priceCheck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/v1/itineraries/{id}/seat-maps": {
+      "get": {
+        "operationId": "SearchController_seatMaps",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/v1/admin/flight-searches": {
+      "post": {
+        "operationId": "StaffSearchController_start",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-search"
+        ]
+      }
+    },
+    "/v1/admin/flight-searches/{id}": {
+      "get": {
+        "operationId": "StaffSearchController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-search"
+        ]
+      }
+    },
+    "/v1/admin/itineraries/{id}/price-check": {
+      "post": {
+        "operationId": "StaffSearchController_priceCheck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-search"
+        ]
+      }
+    },
+    "/v1/admin/itineraries/{id}": {
+      "get": {
+        "operationId": "StaffSearchController_itinerary",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-search"
+        ]
+      }
+    },
+    "/v1/dev/config/{domain}/simulate": {
+      "post": {
+        "operationId": "StaffSearchController_simulate",
+        "parameters": [
+          {
+            "name": "domain",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-search"
+        ]
+      }
+    },
+    "/v1/cargo/lanes": {
+      "get": {
+        "operationId": "CustomerCargoController_lanes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/requests": {
+      "get": {
+        "operationId": "CustomerCargoController_all",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/cargo-requests": {
+      "post": {
+        "operationId": "CustomerCargoController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      },
+      "get": {
+        "operationId": "CustomerCargoController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/cargo-requests/{ref}": {
+      "get": {
+        "operationId": "CustomerCargoController_detail",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/cargo-requests/{ref}/messages": {
+      "post": {
+        "operationId": "CustomerCargoController_message",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/cargo-requests/{ref}/quotes/{quoteId}/accept": {
+      "post": {
+        "operationId": "CustomerCargoController_accept",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quoteId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/cargo-requests/{ref}/cancel": {
+      "post": {
+        "operationId": "CustomerCargoController_cancel",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests": {
+      "get": {
+        "operationId": "AdminCargoController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}": {
+      "get": {
+        "operationId": "AdminCargoController_detail",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/commands/{command}": {
+      "post": {
+        "operationId": "AdminCargoController_command",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "command",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/quotes": {
+      "post": {
+        "operationId": "AdminCargoController_quote",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/tracking-events": {
+      "post": {
+        "operationId": "AdminCargoController_tracking",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/notes": {
+      "post": {
+        "operationId": "AdminCargoController_note",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/messages": {
+      "post": {
+        "operationId": "AdminCargoController_message",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/contact-attempts": {
+      "post": {
+        "operationId": "AdminCargoController_contact",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/documents/generate": {
+      "post": {
+        "operationId": "AdminCargoController_generate",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/partners": {
+      "get": {
+        "operationId": "AdminCargoController_partners",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCargoController_createPartner",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/partners/{id}": {
+      "put": {
+        "operationId": "AdminCargoController_updatePartner",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/availability": {
+      "get": {
+        "operationId": "AdminCargoController_availability",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCargoController_addAvailability",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/availability/{id}": {
+      "put": {
+        "operationId": "AdminCargoController_updateAvailability",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/lanes": {
+      "get": {
+        "operationId": "AdminCargoController_lanes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/lanes/{id}": {
+      "put": {
+        "operationId": "AdminCargoController_updateLane",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/dev/cargo/lanes": {
+      "get": {
+        "operationId": "DevCargoController_lanes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/cargo/lanes/{id}": {
+      "put": {
+        "operationId": "DevCargoController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/notifications": {
+      "get": {
+        "operationId": "NotificationsController_inbox",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/notifications/read": {
+      "post": {
+        "operationId": "NotificationsController_read",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/webhooks/sms/{provider}": {
+      "post": {
+        "operationId": "NotificationsController_smsWebhook",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/webhooks/push/{provider}": {
+      "post": {
+        "operationId": "NotificationsController_pushWebhook",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/s/{code}": {
+      "get": {
+        "operationId": "NotificationsController_shortLink",
+        "parameters": [
+          {
+            "name": "code",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/dev-sink/sms": {
+      "get": {
+        "operationId": "NotificationsController_smsSink",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/dev-sink/push": {
+      "get": {
+        "operationId": "NotificationsController_pushSink",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Uni Travel API",
+    "description": "Flight & cargo request platform — REST /v1 (booklet ch. 24)",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {}
+  }
+}

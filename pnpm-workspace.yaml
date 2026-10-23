@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  esbuild: true
+  "@swc/core": true
+  sharp: true
+  "@parcel/watcher": true
+  unrs-resolver: true
+  msgpackr-extract: true
+  "@scarf/scarf": false

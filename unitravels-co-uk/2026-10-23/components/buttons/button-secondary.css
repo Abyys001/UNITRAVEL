@@ -1,0 +1,20 @@
+/* button / secondary — 3 instance(s), sample: "+44 20 4511 3292"
+   original selector: div.contact:nth-of-type(4) > a:nth-of-type(1) */
+.button-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgb(255, 255, 255);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  padding: 12px 18px;
+  gap: 9px;
+  font-family: "Vazirmatn";
+  font-size: 16px;
+  font-weight: 700;
+  transition: 0.25s;
+}
+
+/* from .contact a:hover */
+.button-secondary:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.18);
+}

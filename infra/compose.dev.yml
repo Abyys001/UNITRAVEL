@@ -1,0 +1,30 @@
+# Local infrastructure (booklet ch. 30.2 "Local"). Ports are offset to avoid clashing with other stacks.
+name: unitravel-dev
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment: { POSTGRES_USER: unitravel, POSTGRES_PASSWORD: unitravel, POSTGRES_DB: unitravel }
+    ports: ["5462:5432"]
+    volumes: [pg:/var/lib/postgresql]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U unitravel"], interval: 3s, retries: 20 }
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    # AOF on: BullMQ jobs (SLA timers) must survive restarts (ch. 26.4)
+    command: ["valkey-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports: ["6390:6379"]
+    volumes: [valkey:/data]
+    healthcheck: { test: ["CMD", "valkey-cli", "ping"], interval: 3s, retries: 20 }
+  storage:
+    image: rustfs/rustfs:1.0.1
+    environment: { RUSTFS_ACCESS_KEY: unitravel, RUSTFS_SECRET_KEY: unitravel-secret }
+    command: ["/data"]
+    ports: ["9010:9000"]
+    volumes: [storage:/data]
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ["1035:1025", "8035:8025"]
+  clamav:
+    profiles: [scan]
+    image: clamav/clamav:1.4
+    ports: ["3310:3310"]
+volumes: { pg: {}, valkey: {}, storage: {} }

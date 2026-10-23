@@ -1,0 +1,33 @@
+/*
+ * Colors
+ * Source: https://unitravels.co.uk/
+ * Extracted by Design Thief on 2026-10-23.
+ * Generated from detected design values — not the site's original source files.
+ */
+
+/* Color roles */
+:root {
+  --color-primary: #ff8617; /* inferred: most frequent saturated color (3 uses) */
+  --color-secondary: #ffac50; /* inferred: third saturated color (2 uses) */
+  --color-accent: #11b7ff; /* inferred: second most frequent saturated color (1 uses) */
+  --color-page-background: #ffffff; /* detected: computed background of <body>/<html> */
+  --color-surface: #ffffff14; /* inferred: largest non-page background area (6 containers) */
+  --color-text: #ffffff; /* detected: most-used body text color across 11 elements */
+  --color-heading: #ffffff; /* detected: color of heading elements (3) */
+  --color-border: #ffffff24; /* detected: most frequent border color (24 elements) */
+  --color-button-background: #ffffff1a; /* inferred: most common button background (3 elements) */
+  --color-button-text: #ffffff; /* inferred: text color of the most common button */
+  --color-hover: #ffffff2e; /* detected: from :hover rule .contact a:hover */
+}
+
+/* Full palette, ranked by usage */
+:root {
+  --palette-white: #ffffff24;
+  --palette-white-ffffff: #ffffff38;
+  --palette-amber-300: #ff8617;
+  --palette-blue-300: #11b7ff;
+  --palette-amber-200: #ffac50;
+  --palette-indigo-700: #061f4c;
+  --palette-indigo-700-083575: #083575;
+  --palette-blue-500: #0c67b9;
+}

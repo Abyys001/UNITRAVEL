@@ -1,0 +1,57 @@
+/*
+ * Generated from detected design values by Design Thief. This is NOT the original site's Tailwind configuration.
+ * Source: https://unitravels.co.uk/
+ */
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #ff8617;
+  --color-secondary: #ffac50;
+  --color-accent: #11b7ff;
+  --color-page-background: #ffffff;
+  --color-surface: #ffffff14;
+  --color-text: #ffffff;
+  --color-heading: #ffffff;
+  --color-border: #ffffff24;
+  --color-button-background: #ffffff1a;
+  --color-button-text: #ffffff;
+  --color-hover: #ffffff2e;
+  --color-white: #ffffff24;
+  --color-white-ffffff: #ffffff38;
+  --color-amber-300: #ff8617;
+  --color-blue-300: #11b7ff;
+  --color-amber-200: #ffac50;
+  --color-indigo-700: #061f4c;
+  --color-indigo-700-083575: #083575;
+  --color-blue-500: #0c67b9;
+  --font-heading: Vazirmatn, sans-serif;
+  --font-body: Montserrat, sans-serif;
+  --text-display: 51.2px;
+  --text-display--line-height: 58.88px;
+  --text-display--font-weight: 800;
+  --text-h1: 30.4px;
+  --text-h1--line-height: normal;
+  --text-h1--font-weight: 700;
+  --text-h2: 51.2px;
+  --text-h2--line-height: 58.88px;
+  --text-h2--font-weight: 800;
+  --text-h3: 17.6px;
+  --text-h3--line-height: normal;
+  --text-h3--font-weight: 800;
+  --text-body: 12.48px;
+  --text-body--line-height: normal;
+  --text-body--font-weight: 400;
+  --text-small: 11.2px;
+  --text-small--line-height: normal;
+  --text-small--font-weight: 400;
+  --text-caption: 16px;
+  --text-caption--line-height: 18.4px;
+  --text-caption--font-weight: 700;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --radius-circle: 50%;
+  --shadow-xs: inset 0px 0px 0px 4px rgba(255, 255, 255, 0.08);
+  --breakpoint-mobile: 340px;
+  --breakpoint-mobile-2: 480px;
+  --breakpoint-mobile-3: 520px;
+}

@@ -1,0 +1,633 @@
+[
+  {
+    "id": "a-55a3c1c7",
+    "name": "favicon.ico",
+    "assetType": "favicon",
+    "sourceUrl": "https://unitravels.co.uk/favicon.ico",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "link[rel=\"icon (default location)\"]",
+    "usages": [
+      {
+        "selector": "link[rel=\"icon (default location)\"]",
+        "usage": "favicon",
+        "alt": null,
+        "context": "favicon"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": null,
+    "absolutePath": null,
+    "status": "failed",
+    "reason": "Could not download this asset. The server says it no longer exists.",
+    "sha256": null
+  },
+  {
+    "id": "a-f16b1876",
+    "name": "og-image.png",
+    "assetType": "image",
+    "sourceUrl": "https://unitravels.co.uk/share.png",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "meta[property=\"og:image\"]",
+    "usages": [
+      {
+        "selector": "meta[property=\"og:image\"]",
+        "usage": "og-image",
+        "alt": "UNI TRAVEL — یونی تراول، آژانس مسافرتی",
+        "context": "social"
+      },
+      {
+        "selector": "meta[property=\"og:image:secure_url\"]",
+        "usage": "og-image",
+        "alt": "UNI TRAVEL — یونی تراول، آژانس مسافرتی",
+        "context": "social"
+      },
+      {
+        "selector": "meta[name=\"twitter:image\"]",
+        "usage": "twitter-image",
+        "alt": null,
+        "context": "social"
+      }
+    ],
+    "width": 1200,
+    "height": 800,
+    "alt": null,
+    "localPath": "assets/images/og-image.png",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "175d76ab2acde0ad451e59b8bcc0c4cf33fa832028a9080ec2e11af03bd67d25"
+  },
+  {
+    "id": "a-203ef2c6",
+    "name": "font-montserrat-600.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Montserrat",
+    "usages": [
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-montserrat-600.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "0f7f5f2fbb4eae126790fe6f01659ab3ee0806e8038a941908e893020569f51a"
+  },
+  {
+    "id": "a-d2653b95",
+    "name": "font-montserrat-600-d2653b.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Montserrat",
+    "usages": [
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-montserrat-600-d2653b.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "a187b077090fe8ae3fd2d7496aabbeae604819c718a282e0afc92df72b450766"
+  },
+  {
+    "id": "a-e1352c2e",
+    "name": "font-montserrat-600-e1352c.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Montserrat",
+    "usages": [
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-montserrat-600-e1352c.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "26b2403f995ed65fb49037a6498c074d3ec3c36031a69fc368c4c2180e2c01fa"
+  },
+  {
+    "id": "a-6d414710",
+    "name": "font-montserrat-600-6d4147.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Montserrat",
+    "usages": [
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-montserrat-600-6d4147.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "54d9a78b7ff60b689ad9f3017ffac8547b5d871afec733f6c1c3ae36577ee504"
+  },
+  {
+    "id": "a-e1eef21e",
+    "name": "font-montserrat-600-e1eef2.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Montserrat",
+    "usages": [
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Montserrat",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-montserrat-600-e1eef2.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "06b16db7a969135d48d38c49183be7fb88d4452e2a3011957c7851941f4e4879"
+  },
+  {
+    "id": "a-934413b6",
+    "name": "font-vazirmatn-400.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Vazirmatn",
+    "usages": [
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-vazirmatn-400.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "84a382e46c30fb4f73d0e3800c16d0af15888e2731e57fa5f93e2c29a2c6a957"
+  },
+  {
+    "id": "a-8cac08d9",
+    "name": "font-vazirmatn-400-8cac08.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Vazirmatn",
+    "usages": [
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-vazirmatn-400-8cac08.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "21529facfd236f6be527e4353623bdb889c96a7ebb7db1e148e28406be0ea004"
+  },
+  {
+    "id": "a-9a784802",
+    "name": "font-vazirmatn-400-9a7848.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Vazirmatn",
+    "usages": [
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Vazirmatn",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-vazirmatn-400-9a7848.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "d29c041cd4294af893cf3c01dfab6d47202c667ab55d702f68782599918c651d"
+  },
+  {
+    "id": "a-aecf7591",
+    "name": "font-awesome-6-brands-400.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Font Awesome 6 Brands",
+    "usages": [
+      {
+        "selector": "@font-face Font Awesome 6 Brands",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Font Awesome 5 Brands",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-6-brands-400.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "232c6f6a7678304f9efaa26f30b1610debc2ba9f4cd636b5e6751c8d73761b92"
+  },
+  {
+    "id": "a-1ef62cc7",
+    "name": "font-awesome-6-brands-400.ttf",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.ttf",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Font Awesome 6 Brands",
+    "usages": [
+      {
+        "selector": "@font-face Font Awesome 6 Brands",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Font Awesome 5 Brands",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-6-brands-400.ttf",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "e28096fa75a96ac77020155ea3a6dd7312983e84115366d4cf49a0c312ec6d51"
+  },
+  {
+    "id": "a-33053ecb",
+    "name": "font-awesome-6-free-400.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Font Awesome 6 Free",
+    "usages": [
+      {
+        "selector": "@font-face Font Awesome 6 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Font Awesome 5 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-6-free-400.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "c27da6f833431da5aa295c44540bfac0fd8270ba6a3c4346427006d8a7b34b76"
+  },
+  {
+    "id": "a-0f650ef1",
+    "name": "font-awesome-6-free-400.ttf",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.ttf",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Font Awesome 6 Free",
+    "usages": [
+      {
+        "selector": "@font-face Font Awesome 6 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Font Awesome 5 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-6-free-400.ttf",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "9174757efc83e072436e873c22be1663d3c103b0a16d7fb73569af4918d4d351"
+  },
+  {
+    "id": "a-22b3cb7b",
+    "name": "font-awesome-6-free-900.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Font Awesome 6 Free",
+    "usages": [
+      {
+        "selector": "@font-face Font Awesome 6 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Font Awesome 5 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-6-free-900.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "ae17c16afbea216707b2203ea1cf9bdb45b9bfe47d0f4ae3258ddbc6294dd02f"
+  },
+  {
+    "id": "a-8b79dde1",
+    "name": "font-awesome-6-free-900.ttf",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.ttf",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face Font Awesome 6 Free",
+    "usages": [
+      {
+        "selector": "@font-face Font Awesome 6 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face Font Awesome 5 Free",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      },
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-6-free-900.ttf",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "b4990d0d0c5f5d38d62e936eea120674e584c7eea8dcee38a975c0cf9a37539b"
+  },
+  {
+    "id": "a-af0d62c8",
+    "name": "font-awesome-400.woff2",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.woff2",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face FontAwesome",
+    "usages": [
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-400.woff2",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "c7a869faca299d15be10a01f19d0765a7c4d46d8922d9b9317235c1e4a6f0982"
+  },
+  {
+    "id": "a-6e97e12a",
+    "name": "font-awesome-400.ttf",
+    "assetType": "font",
+    "sourceUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.ttf",
+    "pageUrl": "https://unitravels.co.uk/",
+    "selector": "@font-face FontAwesome",
+    "usages": [
+      {
+        "selector": "@font-face FontAwesome",
+        "usage": "font-face",
+        "alt": null,
+        "context": "font"
+      }
+    ],
+    "width": null,
+    "height": null,
+    "alt": null,
+    "localPath": "assets/fonts/font-awesome-400.ttf",
+    "absolutePath": null,
+    "status": "ok",
+    "sha256": "ff8f525fb050c5d24519ccc8f5723d85b2e51edd3f9bc6548af55aebadd4f269"
+  }
+]

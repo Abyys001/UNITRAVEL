@@ -1,0 +1,22 @@
+{
+  "name": "@unitravel/db",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsc -p tsconfig.json && node dist/migrate.js",
+    "seed": "node dist/seed/index.js",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@unitravel/contracts": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "pg": "8.23.1",
+    "uuid": "14.0.3"
+  },
+  "devDependencies": { "@types/node": "24.19.2", "@types/pg": "8.23.1", "drizzle-kit": "0.31.11", "typescript": "6.0.3", "vitest": "5.0.4", "dotenv": "18.0.7" }
+}

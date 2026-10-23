@@ -1,0 +1,3427 @@
+{
+  "schemaVersion": 1,
+  "id": "an-def1dc4decd3a3b7",
+  "createdAt": "2026-10-23T13:43:43.840Z",
+  "durationMs": 930,
+  "extractorVersion": "0.3.0",
+  "page": {
+    "url": "https://unitravels.co.uk/",
+    "origin": "https://unitravels.co.uk",
+    "host": "unitravels.co.uk",
+    "path": "/",
+    "title": "UNI TRAVEL | به‌زودی",
+    "lang": "fa",
+    "charset": "UTF-8",
+    "projectName": "unitravels-co-uk"
+  },
+  "viewport": {
+    "width": 1534,
+    "height": 916,
+    "devicePixelRatio": 1,
+    "scrollWidth": 1639,
+    "scrollHeight": 1046,
+    "colorScheme": "unknown"
+  },
+  "metadata": {
+    "description": "آژانس مسافرتی یونی تراول (UNI TRAVEL) — رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت به‌زودی راه‌اندازی می‌شود.",
+    "canonical": "https://unitravels.co.uk/",
+    "themeColor": "#072f6b",
+    "viewportMeta": "width=device-width, initial-scale=1.0",
+    "generator": null,
+    "manifestUrl": null,
+    "favicons": [
+      {
+        "href": "https://unitravels.co.uk/favicon.ico",
+        "rel": "icon (default location)",
+        "sizes": null,
+        "type": null
+      }
+    ],
+    "openGraph": {
+      "type": "website",
+      "site_name": "UNI TRAVEL",
+      "locale": "fa_IR",
+      "url": "https://unitravels.co.uk/",
+      "title": "یونی تراول | UNI TRAVEL — آژانس مسافرتی",
+      "description": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود.",
+      "image": "https://unitravels.co.uk/share.png",
+      "image:secure_url": "https://unitravels.co.uk/share.png",
+      "image:type": "image/png",
+      "image:width": "1200",
+      "image:height": "800",
+      "image:alt": "UNI TRAVEL — یونی تراول، آژانس مسافرتی"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "یونی تراول | UNI TRAVEL — آژانس مسافرتی",
+      "description": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود.",
+      "image": "https://unitravels.co.uk/share.png"
+    },
+    "meta": [
+      {
+        "key": "viewport",
+        "value": "width=device-width, initial-scale=1.0"
+      },
+      {
+        "key": "theme-color",
+        "value": "#072f6b"
+      },
+      {
+        "key": "description",
+        "value": "آژانس مسافرتی یونی تراول (UNI TRAVEL) — رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت به‌زودی راه‌اندازی می‌شود."
+      },
+      {
+        "key": "og:type",
+        "value": "website"
+      },
+      {
+        "key": "og:site_name",
+        "value": "UNI TRAVEL"
+      },
+      {
+        "key": "og:locale",
+        "value": "fa_IR"
+      },
+      {
+        "key": "og:url",
+        "value": "https://unitravels.co.uk/"
+      },
+      {
+        "key": "og:title",
+        "value": "یونی تراول | UNI TRAVEL — آژانس مسافرتی"
+      },
+      {
+        "key": "og:description",
+        "value": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود."
+      },
+      {
+        "key": "og:image",
+        "value": "https://unitravels.co.uk/share.png"
+      },
+      {
+        "key": "og:image:secure_url",
+        "value": "https://unitravels.co.uk/share.png"
+      },
+      {
+        "key": "og:image:type",
+        "value": "image/png"
+      },
+      {
+        "key": "og:image:width",
+        "value": "1200"
+      },
+      {
+        "key": "og:image:height",
+        "value": "800"
+      },
+      {
+        "key": "og:image:alt",
+        "value": "UNI TRAVEL — یونی تراول، آژانس مسافرتی"
+      },
+      {
+        "key": "twitter:card",
+        "value": "summary_large_image"
+      },
+      {
+        "key": "twitter:title",
+        "value": "یونی تراول | UNI TRAVEL — آژانس مسافرتی"
+      },
+      {
+        "key": "twitter:description",
+        "value": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود."
+      },
+      {
+        "key": "twitter:image",
+        "value": "https://unitravels.co.uk/share.png"
+      }
+    ]
+  },
+  "dom": {
+    "elementCount": 50,
+    "scannedCount": 50,
+    "truncated": false,
+    "maxDepth": 6,
+    "tagCounts": {
+      "html": 1,
+      "body": 1,
+      "div": 16,
+      "main": 1,
+      "span": 4,
+      "i": 10,
+      "h1": 1,
+      "p": 2,
+      "h2": 1,
+      "small": 1,
+      "h3": 1,
+      "strong": 6,
+      "a": 4,
+      "footer": 1
+    },
+    "shadowRootCount": 0,
+    "iframes": [],
+    "landmarks": [
+      {
+        "role": "main",
+        "selector": "main.card",
+        "label": "UNI TRAVEL"
+      },
+      {
+        "role": "contentinfo",
+        "selector": "footer",
+        "label": null
+      }
+    ],
+    "outline": [
+      {
+        "tag": "div",
+        "selector": "div.g1:nth-of-type(1)",
+        "role": null,
+        "label": null,
+        "childCount": 0,
+        "children": []
+      },
+      {
+        "tag": "div",
+        "selector": "div.g2:nth-of-type(2)",
+        "role": null,
+        "label": null,
+        "childCount": 0,
+        "children": []
+      },
+      {
+        "tag": "main",
+        "selector": "main.card",
+        "role": "main",
+        "label": null,
+        "childCount": 8,
+        "children": [
+          {
+            "tag": "div",
+            "selector": "div.brand-mark:nth-of-type(1)",
+            "role": null,
+            "label": "UNI TRAVEL",
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "div",
+                "selector": "div.logo-orbit:nth-of-type(1)",
+                "role": null,
+                "label": null,
+                "childCount": 1,
+                "children": [
+                  {
+                    "tag": "span",
+                    "selector": "span.plane",
+                    "role": null,
+                    "label": null,
+                    "childCount": 1,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "selector": "div.brand-copy:nth-of-type(2)",
+                "role": null,
+                "label": null,
+                "childCount": 2,
+                "children": [
+                  {
+                    "tag": "h1",
+                    "selector": "h1",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  },
+                  {
+                    "tag": "p",
+                    "selector": "div.brand-copy:nth-of-type(2) > p",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "h2",
+            "selector": "h2.persian-title",
+            "role": null,
+            "label": null,
+            "childCount": 1,
+            "children": [
+              {
+                "tag": "small",
+                "selector": "small",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "span",
+            "selector": "span.soon",
+            "role": null,
+            "label": null,
+            "childCount": 0,
+            "children": []
+          },
+          {
+            "tag": "p",
+            "selector": "p.lead",
+            "role": null,
+            "label": null,
+            "childCount": 0,
+            "children": []
+          },
+          {
+            "tag": "div",
+            "selector": "div.services-head:nth-of-type(2)",
+            "role": null,
+            "label": null,
+            "childCount": 3,
+            "children": [
+              {
+                "tag": "span",
+                "selector": "div.services-head:nth-of-type(2) > span:nth-of-type(1)",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "h3",
+                "selector": "h3",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "span",
+                "selector": "span:nth-of-type(2)",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.services:nth-of-type(3)",
+            "role": null,
+            "label": null,
+            "childCount": 6,
+            "children": [
+              {
+                "tag": "div",
+                "selector": "div.service:nth-of-type(1)",
+                "role": null,
+                "label": null,
+                "childCount": 2,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-plane-departure",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  },
+                  {
+                    "tag": "strong",
+                    "selector": "div.service:nth-of-type(1) > strong",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "selector": "div.service:nth-of-type(2)",
+                "role": null,
+                "label": null,
+                "childCount": 2,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-hotel",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  },
+                  {
+                    "tag": "strong",
+                    "selector": "div.service:nth-of-type(2) > strong",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "selector": "div.service:nth-of-type(3)",
+                "role": null,
+                "label": null,
+                "childCount": 2,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-earth-americas",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  },
+                  {
+                    "tag": "strong",
+                    "selector": "div.service:nth-of-type(3) > strong",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "selector": "div.service:nth-of-type(4)",
+                "role": null,
+                "label": null,
+                "childCount": 2,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-passport",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  },
+                  {
+                    "tag": "strong",
+                    "selector": "div.service:nth-of-type(4) > strong",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "selector": "div.service:nth-of-type(5)",
+                "role": null,
+                "label": null,
+                "childCount": 2,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-shield-halved",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  },
+                  {
+                    "tag": "strong",
+                    "selector": "div.service:nth-of-type(5) > strong",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "selector": "div.service:nth-of-type(6)",
+                "role": null,
+                "label": null,
+                "childCount": 2,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-box",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  },
+                  {
+                    "tag": "strong",
+                    "selector": "div.service:nth-of-type(6) > strong",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.contact:nth-of-type(4)",
+            "role": null,
+            "label": null,
+            "childCount": 3,
+            "children": [
+              {
+                "tag": "a",
+                "selector": "div.contact:nth-of-type(4) > a:nth-of-type(1)",
+                "role": null,
+                "label": null,
+                "childCount": 1,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-phone",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "a",
+                "selector": "a:nth-of-type(2)",
+                "role": null,
+                "label": null,
+                "childCount": 1,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-envelope",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "a",
+                "selector": "a:nth-of-type(3)",
+                "role": null,
+                "label": null,
+                "childCount": 1,
+                "children": [
+                  {
+                    "tag": "i",
+                    "selector": "i.fa-solid.fa-location-dot",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "footer",
+            "selector": "footer",
+            "role": "contentinfo",
+            "label": null,
+            "childCount": 1,
+            "children": [
+              {
+                "tag": "div",
+                "selector": "div.powered-by",
+                "role": null,
+                "label": null,
+                "childCount": 1,
+                "children": [
+                  {
+                    "tag": "a",
+                    "selector": "div.powered-by > a",
+                    "role": null,
+                    "label": null,
+                    "childCount": 0,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "button",
+      "confidence": 0.74,
+      "certainty": "inferred",
+      "count": 3,
+      "signals": [
+        "link styled as button (3)",
+        "padding + background/border (3)"
+      ],
+      "variants": [
+        {
+          "id": "v-0f3b0163",
+          "name": "secondary",
+          "count": 3,
+          "selector": "div.contact:nth-of-type(4) > a:nth-of-type(1)",
+          "sampleText": "+44 20 4511 3292",
+          "style": {
+            "background": "rgba(255, 255, 255, 0.1)",
+            "backgroundImage": null,
+            "color": "rgb(255, 255, 255)",
+            "borderColor": "rgba(255, 255, 255, 0.16)",
+            "borderWidth": "1px",
+            "borderStyle": "solid",
+            "radius": "16px",
+            "shadow": null,
+            "padding": "12px 18px",
+            "gap": "9px",
+            "fontFamily": "Vazirmatn",
+            "fontSize": "16px",
+            "fontWeight": "700",
+            "lineHeight": "normal",
+            "letterSpacing": "normal",
+            "textTransform": "none",
+            "height": "51px",
+            "transition": "0.25s"
+          },
+          "states": [
+            {
+              "state": "hover",
+              "selector": ".contact a:hover",
+              "declarations": {
+                "transform": "translateY(-2px)",
+                "background-color": "rgba(255, 255, 255, 0.18)"
+              },
+              "certainty": "detected"
+            }
+          ],
+          "rect": {
+            "x": 779,
+            "y": 710,
+            "width": 194,
+            "height": 51
+          }
+        }
+      ]
+    },
+    {
+      "type": "footer",
+      "confidence": 0.92,
+      "certainty": "inferred",
+      "count": 1,
+      "signals": [
+        "<footer> (1)"
+      ],
+      "variants": [
+        {
+          "id": "v-ee132351",
+          "name": "default",
+          "count": 1,
+          "selector": "footer",
+          "sampleText": "UNI TRAVEL · Travel Agency Powered by CYBERCINA",
+          "style": {
+            "background": "rgba(0, 0, 0, 0)",
+            "backgroundImage": null,
+            "color": "rgb(255, 255, 255)",
+            "borderColor": null,
+            "borderWidth": "0px",
+            "borderStyle": "none",
+            "radius": null,
+            "shadow": null,
+            "padding": "0px",
+            "gap": null,
+            "fontFamily": "Montserrat",
+            "fontSize": "11.2px",
+            "fontWeight": "400",
+            "lineHeight": "normal",
+            "letterSpacing": "0.8px",
+            "textTransform": "none",
+            "height": "36px",
+            "transition": null
+          },
+          "states": [],
+          "rect": {
+            "x": 480,
+            "y": 858,
+            "width": 560,
+            "height": 36
+          }
+        }
+      ]
+    },
+    {
+      "type": "link",
+      "confidence": 0.95,
+      "certainty": "inferred",
+      "count": 1,
+      "signals": [
+        "<a href> (1)"
+      ],
+      "variants": [
+        {
+          "id": "v-42556266",
+          "name": "default",
+          "count": 1,
+          "selector": "div.powered-by > a",
+          "sampleText": "CYBERCINA",
+          "style": {
+            "background": "rgba(0, 0, 0, 0)",
+            "backgroundImage": null,
+            "color": "rgb(255, 172, 80)",
+            "borderColor": null,
+            "borderWidth": "0px",
+            "borderStyle": "none",
+            "radius": null,
+            "shadow": null,
+            "padding": "0px",
+            "gap": null,
+            "fontFamily": "Montserrat",
+            "fontSize": "10.88px",
+            "fontWeight": "700",
+            "lineHeight": "normal",
+            "letterSpacing": "0.8px",
+            "textTransform": "none",
+            "height": "14px",
+            "transition": null
+          },
+          "states": [],
+          "rect": {
+            "x": 761,
+            "y": 880,
+            "width": 74,
+            "height": 14
+          }
+        }
+      ]
+    }
+  ],
+  "colors": {
+    "palette": [
+      {
+        "hex": "#ffffff24",
+        "rgb": "rgba(255, 255, 255, 0.14)",
+        "hsl": "hsla(0, 0%, 100%, 0.14)",
+        "alpha": 0.14,
+        "count": 42,
+        "weight": 42.34,
+        "usages": {
+          "border": 36,
+          "background": 6
+        },
+        "variables": [],
+        "aliases": [
+          "rgba(255, 255, 255, 0.14)",
+          "rgba(255, 255, 255, 0.16)",
+          "rgba(255, 255, 255, 0.12)"
+        ]
+      },
+      {
+        "hex": "#ffffff",
+        "rgb": "rgb(255, 255, 255)",
+        "hsl": "hsl(0, 0%, 100%)",
+        "alpha": 1,
+        "count": 21,
+        "weight": 21,
+        "usages": {
+          "border": 4,
+          "text": 17
+        },
+        "variables": [],
+        "aliases": [
+          "rgb(255, 255, 255)"
+        ]
+      },
+      {
+        "hex": "#ffffff14",
+        "rgb": "rgba(255, 255, 255, 0.08)",
+        "hsl": "hsla(0, 0%, 100%, 0.08)",
+        "alpha": 0.08,
+        "count": 11,
+        "weight": 16.72,
+        "usages": {
+          "shadow": 1,
+          "background": 10
+        },
+        "variables": [],
+        "aliases": [
+          "rgba(255, 255, 255, 0.08)",
+          "rgba(255, 255, 255, 0.1)"
+        ]
+      },
+      {
+        "hex": "#ff8617",
+        "rgb": "rgb(255, 134, 23)",
+        "hsl": "hsl(29, 100%, 55%)",
+        "alpha": 1,
+        "count": 3,
+        "weight": 5.41,
+        "usages": {
+          "background": 1,
+          "gradient": 2,
+          "variable": 1
+        },
+        "variables": [
+          "--orange"
+        ],
+        "aliases": [
+          "rgb(255, 134, 23)"
+        ]
+      },
+      {
+        "hex": "#11b7ff",
+        "rgb": "rgb(17, 183, 255)",
+        "hsl": "hsl(198, 100%, 53%)",
+        "alpha": 1,
+        "count": 1,
+        "weight": 4.64,
+        "usages": {
+          "background": 1,
+          "variable": 1
+        },
+        "variables": [
+          "--cyan"
+        ],
+        "aliases": [
+          "rgb(17, 183, 255)"
+        ]
+      },
+      {
+        "hex": "#ffffff38",
+        "rgb": "rgba(255, 255, 255, 0.22)",
+        "hsl": "hsla(0, 0%, 100%, 0.22)",
+        "alpha": 0.22,
+        "count": 4,
+        "weight": 4,
+        "usages": {
+          "border": 4
+        },
+        "variables": [],
+        "aliases": [
+          "rgba(255, 255, 255, 0.22)"
+        ]
+      },
+      {
+        "hex": "#ffac50",
+        "rgb": "rgb(255, 172, 80)",
+        "hsl": "hsl(32, 100%, 66%)",
+        "alpha": 1,
+        "count": 2,
+        "weight": 2,
+        "usages": {
+          "text": 2
+        },
+        "variables": [],
+        "aliases": [
+          "rgb(255, 172, 80)"
+        ]
+      },
+      {
+        "hex": "#061f4c",
+        "rgb": "rgb(6, 31, 76)",
+        "hsl": "hsl(219, 85%, 16%)",
+        "alpha": 1,
+        "count": 1,
+        "weight": 1,
+        "usages": {
+          "gradient": 1
+        },
+        "variables": [],
+        "aliases": [
+          "rgb(6, 31, 76)"
+        ]
+      },
+      {
+        "hex": "#083575",
+        "rgb": "rgb(8, 53, 117)",
+        "hsl": "hsl(215, 87%, 25%)",
+        "alpha": 1,
+        "count": 1,
+        "weight": 1,
+        "usages": {
+          "gradient": 1
+        },
+        "variables": [],
+        "aliases": [
+          "rgb(8, 53, 117)"
+        ]
+      },
+      {
+        "hex": "#0c67b9",
+        "rgb": "rgb(12, 103, 185)",
+        "hsl": "hsl(208, 88%, 39%)",
+        "alpha": 1,
+        "count": 1,
+        "weight": 1,
+        "usages": {
+          "gradient": 1
+        },
+        "variables": [],
+        "aliases": [
+          "rgb(12, 103, 185)"
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "role": "primary",
+        "hex": "#ff8617",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "most frequent saturated color (3 uses)",
+          "count": 3
+        }
+      },
+      {
+        "role": "secondary",
+        "hex": "#ffac50",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "third saturated color (2 uses)",
+          "count": 2
+        }
+      },
+      {
+        "role": "accent",
+        "hex": "#11b7ff",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "second most frequent saturated color (1 uses)",
+          "count": 1
+        }
+      },
+      {
+        "role": "pageBackground",
+        "hex": "#ffffff",
+        "evidence": {
+          "certainty": "detected",
+          "note": "computed background of <body>/<html>"
+        }
+      },
+      {
+        "role": "surface",
+        "hex": "#ffffff14",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "largest non-page background area (6 containers)",
+          "count": 6
+        }
+      },
+      {
+        "role": "card",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "text",
+        "hex": "#ffffff",
+        "evidence": {
+          "certainty": "detected",
+          "note": "most-used body text color across 11 elements",
+          "count": 11
+        }
+      },
+      {
+        "role": "heading",
+        "hex": "#ffffff",
+        "evidence": {
+          "certainty": "detected",
+          "note": "color of heading elements (3)",
+          "count": 3
+        }
+      },
+      {
+        "role": "muted",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "link",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "border",
+        "hex": "#ffffff24",
+        "evidence": {
+          "certainty": "detected",
+          "note": "most frequent border color (24 elements)",
+          "count": 24
+        }
+      },
+      {
+        "role": "input",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "inputBorder",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "buttonBackground",
+        "hex": "#ffffff1a",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "most common button background (3 elements)",
+          "count": 3
+        }
+      },
+      {
+        "role": "buttonText",
+        "hex": "#ffffff",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "text color of the most common button"
+        }
+      },
+      {
+        "role": "hover",
+        "hex": "#ffffff2e",
+        "evidence": {
+          "certainty": "detected",
+          "note": "from :hover rule .contact a:hover"
+        }
+      },
+      {
+        "role": "focus",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "active",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "disabled",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "success",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "warning",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "error",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      },
+      {
+        "role": "info",
+        "hex": null,
+        "evidence": {
+          "certainty": "unavailable",
+          "note": "no reliable evidence on this page"
+        }
+      }
+    ]
+  },
+  "typography": {
+    "families": [
+      {
+        "family": "Vazirmatn",
+        "stack": "Vazirmatn, sans-serif",
+        "count": 14,
+        "usedFor": [
+          "heading",
+          "body"
+        ],
+        "source": "google-fonts"
+      },
+      {
+        "family": "Font Awesome 6 Free",
+        "stack": "\"Font Awesome 6 Free\"",
+        "count": 10,
+        "usedFor": [
+          "icon"
+        ],
+        "source": "third-party"
+      },
+      {
+        "family": "Montserrat",
+        "stack": "Montserrat, sans-serif",
+        "count": 5,
+        "usedFor": [
+          "heading",
+          "body"
+        ],
+        "source": "google-fonts"
+      }
+    ],
+    "styles": [
+      {
+        "id": "ts-237a2663",
+        "family": "Vazirmatn",
+        "size": 14.72,
+        "weight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 6,
+        "tags": {
+          "strong": 6
+        },
+        "sample": "رزرو پرواز"
+      },
+      {
+        "id": "ts-0e94764a",
+        "family": "Vazirmatn",
+        "size": 16,
+        "weight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 3,
+        "tags": {
+          "a": 3
+        },
+        "sample": "+44 20 4511 3292"
+      },
+      {
+        "id": "ts-505633e1",
+        "family": "Montserrat",
+        "size": 30.4,
+        "weight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "0.5px",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "h1": 1
+        },
+        "sample": "UNI TRAVEL"
+      },
+      {
+        "id": "ts-701dc741",
+        "family": "Montserrat",
+        "size": 12.48,
+        "weight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "4px",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "p": 1
+        },
+        "sample": "Travel Agency"
+      },
+      {
+        "id": "ts-8520d7e6",
+        "family": "Vazirmatn",
+        "size": 51.2,
+        "weight": 800,
+        "lineHeight": "58.88px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "h2": 1
+        },
+        "sample": "یونی تراول"
+      },
+      {
+        "id": "ts-15c93cce",
+        "family": "Vazirmatn",
+        "size": 16,
+        "weight": 700,
+        "lineHeight": "18.4px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "small": 1
+        },
+        "sample": "آژانس مسافرتی"
+      },
+      {
+        "id": "ts-853e727c",
+        "family": "Vazirmatn",
+        "size": 16.8,
+        "weight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "span": 1
+        },
+        "sample": "وب‌سایت به‌زودی راه‌اندازی می‌شود"
+      },
+      {
+        "id": "ts-f34a1867",
+        "family": "Vazirmatn",
+        "size": 16,
+        "weight": 600,
+        "lineHeight": "32px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "p": 1
+        },
+        "sample": "در حال آماده‌سازی تجربه‌ای تازه برای رزرو پرواز، هتل، تور و "
+      },
+      {
+        "id": "ts-2251a320",
+        "family": "Vazirmatn",
+        "size": 17.6,
+        "weight": 800,
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "h3": 1
+        },
+        "sample": "خدمات ما"
+      },
+      {
+        "id": "ts-a88e6538",
+        "family": "Montserrat",
+        "size": 11.2,
+        "weight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "0.8px",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "footer": 1
+        },
+        "sample": "UNI TRAVEL · Travel Agency"
+      },
+      {
+        "id": "ts-93cb5945",
+        "family": "Montserrat",
+        "size": 10.88,
+        "weight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "0.8px",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "div": 1
+        },
+        "sample": "Powered by"
+      },
+      {
+        "id": "ts-9e2fadf6",
+        "family": "Montserrat",
+        "size": 10.88,
+        "weight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "0.8px",
+        "textTransform": "none",
+        "fontStyle": "normal",
+        "textDecoration": "none",
+        "count": 1,
+        "tags": {
+          "a": 1
+        },
+        "sample": "CYBERCINA"
+      }
+    ],
+    "scale": [
+      {
+        "name": "Display",
+        "styleId": "ts-8520d7e6",
+        "family": "Vazirmatn",
+        "size": 51.2,
+        "weight": 800,
+        "lineHeight": "58.88px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "largest text style above H1",
+          "count": 1
+        }
+      },
+      {
+        "name": "H1",
+        "styleId": "ts-505633e1",
+        "family": "Montserrat",
+        "size": 30.4,
+        "weight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "0.5px",
+        "textTransform": "none",
+        "evidence": {
+          "certainty": "detected",
+          "note": "<h1> elements",
+          "count": 1
+        }
+      },
+      {
+        "name": "H2",
+        "styleId": "ts-8520d7e6",
+        "family": "Vazirmatn",
+        "size": 51.2,
+        "weight": 800,
+        "lineHeight": "58.88px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "evidence": {
+          "certainty": "detected",
+          "note": "<h2> elements",
+          "count": 1
+        }
+      },
+      {
+        "name": "H3",
+        "styleId": "ts-2251a320",
+        "family": "Vazirmatn",
+        "size": 17.6,
+        "weight": 800,
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "evidence": {
+          "certainty": "detected",
+          "note": "<h3> elements",
+          "count": 1
+        }
+      },
+      {
+        "name": "Body",
+        "styleId": "ts-701dc741",
+        "family": "Montserrat",
+        "size": 12.48,
+        "weight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "4px",
+        "textTransform": "none",
+        "evidence": {
+          "certainty": "detected",
+          "note": "most-used paragraph/list text style",
+          "count": 1
+        }
+      },
+      {
+        "name": "Small",
+        "styleId": "ts-a88e6538",
+        "family": "Montserrat",
+        "size": 11.2,
+        "weight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "0.8px",
+        "textTransform": "none",
+        "evidence": {
+          "certainty": "inferred",
+          "note": "frequent text style just below body size",
+          "count": 1
+        }
+      },
+      {
+        "name": "Caption",
+        "styleId": "ts-15c93cce",
+        "family": "Vazirmatn",
+        "size": 16,
+        "weight": 700,
+        "lineHeight": "18.4px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "evidence": {
+          "certainty": "detected",
+          "note": "<figcaption>/<small>/<time> elements",
+          "count": 1
+        }
+      }
+    ],
+    "headingFamily": "Vazirmatn",
+    "bodyFamily": "Montserrat"
+  },
+  "spacing": {
+    "values": [
+      {
+        "value": "12px",
+        "px": 12,
+        "count": 15
+      },
+      {
+        "value": "14px",
+        "px": 14,
+        "count": 14
+      },
+      {
+        "value": "13px",
+        "px": 13,
+        "count": 12
+      },
+      {
+        "value": "18px",
+        "px": 18,
+        "count": 8
+      },
+      {
+        "value": "10px",
+        "px": 10,
+        "count": 3
+      },
+      {
+        "value": "9px",
+        "px": 9,
+        "count": 3
+      },
+      {
+        "value": "32px",
+        "px": 32,
+        "count": 2
+      },
+      {
+        "value": "26px",
+        "px": 26,
+        "count": 2
+      },
+      {
+        "value": "22px",
+        "px": 22,
+        "count": 2
+      },
+      {
+        "value": "70px",
+        "px": 70,
+        "count": 2
+      },
+      {
+        "value": "34px",
+        "px": 34,
+        "count": 2
+      },
+      {
+        "value": "2px",
+        "px": 2,
+        "count": 1
+      },
+      {
+        "value": "4px",
+        "px": 4,
+        "count": 1
+      },
+      {
+        "value": "16px",
+        "px": 16,
+        "count": 1
+      },
+      {
+        "value": "30px",
+        "px": 30,
+        "count": 1
+      },
+      {
+        "value": "8px",
+        "px": 8,
+        "count": 1
+      }
+    ],
+    "base": null,
+    "scale": [
+      9,
+      10,
+      12,
+      13,
+      14,
+      18,
+      22,
+      26,
+      32,
+      34,
+      70
+    ],
+    "evidence": {
+      "certainty": "inferred",
+      "count": 70,
+      "note": "from 70 margin/padding/gap values; no consistent base unit"
+    }
+  },
+  "radii": {
+    "values": [
+      {
+        "value": "50%",
+        "px": 0,
+        "count": 9,
+        "class": "circle"
+      },
+      {
+        "value": "16px",
+        "px": 16,
+        "count": 9,
+        "class": "large"
+      },
+      {
+        "value": "999px",
+        "px": 999,
+        "count": 1,
+        "class": "pill"
+      }
+    ],
+    "evidence": {
+      "certainty": "detected",
+      "count": 19,
+      "note": "border-radius on 19 elements; size classes inferred from value ranges"
+    }
+  },
+  "shadows": [
+    {
+      "name": "xs",
+      "kind": "box",
+      "value": "inset 0px 0px 0px 4px rgba(255, 255, 255, 0.08)",
+      "count": 1,
+      "variants": [
+        "inset 0px 0px 0px 4px rgba(255, 255, 255, 0.08)"
+      ]
+    }
+  ],
+  "gradients": [
+    {
+      "type": "linear",
+      "value": "linear-gradient(150deg, rgb(6, 31, 76) 0%, rgb(8, 53, 117) 46%, rgb(12, 103, 185) 100%)",
+      "count": 1,
+      "colors": [
+        "rgb(6, 31, 76)",
+        "rgb(8, 53, 117)",
+        "rgb(12, 103, 185)"
+      ],
+      "selectors": [
+        "body"
+      ]
+    },
+    {
+      "type": "linear",
+      "value": "linear-gradient(to right, rgba(0, 0, 0, 0), rgb(255, 134, 23))",
+      "count": 1,
+      "colors": [
+        "rgba(0, 0, 0, 0)",
+        "rgb(255, 134, 23)"
+      ],
+      "selectors": [
+        "div.services-head:nth-of-type(2) > span:nth-of-type(1)"
+      ]
+    },
+    {
+      "type": "linear",
+      "value": "linear-gradient(to left, rgba(0, 0, 0, 0), rgb(255, 134, 23))",
+      "count": 1,
+      "colors": [
+        "rgba(0, 0, 0, 0)",
+        "rgb(255, 134, 23)"
+      ],
+      "selectors": [
+        "span:nth-of-type(2)"
+      ]
+    }
+  ],
+  "borders": {
+    "widths": [
+      {
+        "value": "1px",
+        "px": 1,
+        "count": 40
+      },
+      {
+        "value": "3px",
+        "px": 3,
+        "count": 4
+      }
+    ],
+    "styles": [
+      {
+        "value": "solid",
+        "count": 44
+      }
+    ]
+  },
+  "assets": [
+    {
+      "id": "a-55a3c1c7",
+      "kind": "favicon",
+      "originalUrl": "https://unitravels.co.uk/favicon.ico",
+      "resolvedUrl": "https://unitravels.co.uk/favicon.ico",
+      "normalizedUrl": "https://unitravels.co.uk/favicon.ico",
+      "extension": "ico",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "favicon",
+      "usages": [
+        {
+          "selector": "link[rel=\"icon (default location)\"]",
+          "usage": "favicon",
+          "alt": null,
+          "context": "favicon"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "favicon.ico"
+    },
+    {
+      "id": "a-f16b1876",
+      "kind": "image",
+      "originalUrl": "https://unitravels.co.uk/share.png",
+      "resolvedUrl": "https://unitravels.co.uk/share.png",
+      "normalizedUrl": "https://unitravels.co.uk/share.png",
+      "extension": "png",
+      "width": 1200,
+      "height": 800,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "og-image",
+      "usages": [
+        {
+          "selector": "meta[property=\"og:image\"]",
+          "usage": "og-image",
+          "alt": "UNI TRAVEL — یونی تراول، آژانس مسافرتی",
+          "context": "social"
+        },
+        {
+          "selector": "meta[property=\"og:image:secure_url\"]",
+          "usage": "og-image",
+          "alt": "UNI TRAVEL — یونی تراول، آژانس مسافرتی",
+          "context": "social"
+        },
+        {
+          "selector": "meta[name=\"twitter:image\"]",
+          "usage": "twitter-image",
+          "alt": null,
+          "context": "social"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "og-image.png"
+    },
+    {
+      "id": "a-203ef2c6",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-montserrat-600",
+      "usages": [
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-montserrat-600.woff2"
+    },
+    {
+      "id": "a-d2653b95",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-montserrat-600",
+      "usages": [
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-montserrat-600-d2653b.woff2"
+    },
+    {
+      "id": "a-e1352c2e",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-montserrat-600",
+      "usages": [
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-montserrat-600-e1352c.woff2"
+    },
+    {
+      "id": "a-6d414710",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-montserrat-600",
+      "usages": [
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-montserrat-600-6d4147.woff2"
+    },
+    {
+      "id": "a-e1eef21e",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-montserrat-600",
+      "usages": [
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Montserrat",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-montserrat-600-e1eef2.woff2"
+    },
+    {
+      "id": "a-934413b6",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-vazirmatn-400",
+      "usages": [
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-vazirmatn-400.woff2"
+    },
+    {
+      "id": "a-8cac08d9",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-vazirmatn-400",
+      "usages": [
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-vazirmatn-400-8cac08.woff2"
+    },
+    {
+      "id": "a-9a784802",
+      "kind": "font",
+      "originalUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+      "resolvedUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+      "normalizedUrl": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-vazirmatn-400",
+      "usages": [
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Vazirmatn",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-vazirmatn-400-9a7848.woff2"
+    },
+    {
+      "id": "a-aecf7591",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-6-brands-400",
+      "usages": [
+        {
+          "selector": "@font-face Font Awesome 6 Brands",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Font Awesome 5 Brands",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-6-brands-400.woff2"
+    },
+    {
+      "id": "a-1ef62cc7",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.ttf",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.ttf",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.ttf",
+      "extension": "ttf",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-6-brands-400",
+      "usages": [
+        {
+          "selector": "@font-face Font Awesome 6 Brands",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Font Awesome 5 Brands",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-6-brands-400.ttf"
+    },
+    {
+      "id": "a-33053ecb",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-6-free-400",
+      "usages": [
+        {
+          "selector": "@font-face Font Awesome 6 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Font Awesome 5 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-6-free-400.woff2"
+    },
+    {
+      "id": "a-0f650ef1",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.ttf",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.ttf",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.ttf",
+      "extension": "ttf",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-6-free-400",
+      "usages": [
+        {
+          "selector": "@font-face Font Awesome 6 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Font Awesome 5 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-6-free-400.ttf"
+    },
+    {
+      "id": "a-22b3cb7b",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-6-free-900",
+      "usages": [
+        {
+          "selector": "@font-face Font Awesome 6 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Font Awesome 5 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-6-free-900.woff2"
+    },
+    {
+      "id": "a-8b79dde1",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.ttf",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.ttf",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.ttf",
+      "extension": "ttf",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-6-free-900",
+      "usages": [
+        {
+          "selector": "@font-face Font Awesome 6 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face Font Awesome 5 Free",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        },
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-6-free-900.ttf"
+    },
+    {
+      "id": "a-af0d62c8",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.woff2",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.woff2",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.woff2",
+      "extension": "woff2",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-400",
+      "usages": [
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-400.woff2"
+    },
+    {
+      "id": "a-6e97e12a",
+      "kind": "font",
+      "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.ttf",
+      "resolvedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.ttf",
+      "normalizedUrl": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.ttf",
+      "extension": "ttf",
+      "width": null,
+      "height": null,
+      "aspectRatio": null,
+      "alt": null,
+      "nameHint": "font-awesome-400",
+      "usages": [
+        {
+          "selector": "@font-face FontAwesome",
+          "usage": "font-face",
+          "alt": null,
+          "context": "font"
+        }
+      ],
+      "inline": null,
+      "embedded": false,
+      "download": {
+        "status": "pending"
+      },
+      "filename": "font-awesome-400.ttf"
+    }
+  ],
+  "icons": {
+    "systems": [
+      {
+        "name": "Font Awesome",
+        "confidence": 0.95,
+        "count": 10,
+        "evidence": [
+          "fa-* classes"
+        ]
+      }
+    ],
+    "total": 10
+  },
+  "svg": [],
+  "fonts": [
+    {
+      "family": "Montserrat",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+460-52F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-203ef2c6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+301, U+400-45F, U+490-491, U+4B0-4B1, U+2116",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-d2653b95"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-e1352c2e"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-6d414710"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2",
+          "format": "woff2",
+          "assetId": "a-e1eef21e"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": true,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+460-52F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-203ef2c6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+301, U+400-45F, U+490-491, U+4B0-4B1, U+2116",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-d2653b95"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-e1352c2e"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-6d414710"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2",
+          "format": "woff2",
+          "assetId": "a-e1eef21e"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": true,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+460-52F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WRhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-203ef2c6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+301, U+400-45F, U+490-491, U+4B0-4B1, U+2116",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459W1hyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-d2653b95"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+102-103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+303-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WZhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-e1352c2e"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wdhyzbi.woff2",
+          "format": "woff2",
+          "assetId": "a-6d414710"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Montserrat",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2",
+          "format": "woff2",
+          "assetId": "a-e1eef21e"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": false,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "400",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+600-6FF, U+750-77F, U+870-891, U+897-8E1, U+8E3-8FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-934413b6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "400",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-8cac08d9"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "400",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+          "format": "woff2",
+          "assetId": "a-9a784802"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": true,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "500",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+600-6FF, U+750-77F, U+870-891, U+897-8E1, U+8E3-8FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-934413b6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "500",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-8cac08d9"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "500",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+          "format": "woff2",
+          "assetId": "a-9a784802"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": false,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+600-6FF, U+750-77F, U+870-891, U+897-8E1, U+8E3-8FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-934413b6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-8cac08d9"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "600",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+          "format": "woff2",
+          "assetId": "a-9a784802"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": true,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+600-6FF, U+750-77F, U+870-891, U+897-8E1, U+8E3-8FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-934413b6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-8cac08d9"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "700",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+          "format": "woff2",
+          "assetId": "a-9a784802"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": true,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+600-6FF, U+750-77F, U+870-891, U+897-8E1, U+8E3-8FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlGMWWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-934413b6"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+100-2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlE8WWMmk.woff2",
+          "format": "woff2",
+          "assetId": "a-8cac08d9"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "Vazirmatn",
+      "weight": "800",
+      "style": "normal",
+      "display": "swap",
+      "unicodeRange": "U+0-FF, U+131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "sources": [
+        {
+          "url": "https://fonts.gstatic.com/s/vazirmatn/v16/Dxxo8j6PP2D_kU2muijlHcWW.woff2",
+          "format": "woff2",
+          "assetId": "a-9a784802"
+        }
+      ],
+      "stylesheet": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "loaded": true,
+      "certainty": "detected"
+    },
+    {
+      "family": "Font Awesome 6 Brands",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2",
+          "format": "woff2",
+          "assetId": "a-aecf7591"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.ttf",
+          "format": "truetype",
+          "assetId": "a-1ef62cc7"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": false,
+      "certainty": "detected"
+    },
+    {
+      "family": "Font Awesome 6 Free",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+          "format": "woff2",
+          "assetId": "a-33053ecb"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.ttf",
+          "format": "truetype",
+          "assetId": "a-0f650ef1"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": false,
+      "certainty": "detected"
+    },
+    {
+      "family": "Font Awesome 6 Free",
+      "weight": "900",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+          "format": "woff2",
+          "assetId": "a-22b3cb7b"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.ttf",
+          "format": "truetype",
+          "assetId": "a-8b79dde1"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": true,
+      "certainty": "detected"
+    },
+    {
+      "family": "Font Awesome 5 Brands",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2",
+          "format": "woff2",
+          "assetId": "a-aecf7591"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.ttf",
+          "format": "truetype",
+          "assetId": "a-1ef62cc7"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": false,
+      "certainty": "detected"
+    },
+    {
+      "family": "Font Awesome 5 Free",
+      "weight": "900",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+          "format": "woff2",
+          "assetId": "a-22b3cb7b"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.ttf",
+          "format": "truetype",
+          "assetId": "a-8b79dde1"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": false,
+      "certainty": "detected"
+    },
+    {
+      "family": "Font Awesome 5 Free",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+          "format": "woff2",
+          "assetId": "a-33053ecb"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.ttf",
+          "format": "truetype",
+          "assetId": "a-0f650ef1"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": false,
+      "certainty": "detected"
+    },
+    {
+      "family": "FontAwesome",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.woff2",
+          "format": "woff2",
+          "assetId": "a-22b3cb7b"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-solid-900.ttf",
+          "format": "truetype",
+          "assetId": "a-8b79dde1"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "FontAwesome",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.woff2",
+          "format": "woff2",
+          "assetId": "a-aecf7591"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-brands-400.ttf",
+          "format": "truetype",
+          "assetId": "a-1ef62cc7"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "FontAwesome",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": "U+F003, U+F006, U+F014, U+F016-F017, U+F01A-F01B, U+F01D, U+F022, U+F03E, U+F044, U+F046, U+F05C-F05D, U+F06E, U+F070, U+F087-F088, U+F08A, U+F094, U+F096-F097, U+F09D, U+F0A0, U+F0A2, U+F0A4-F0A7, U+F0C5, U+F0C7, U+F0E5-F0E6, U+F0EB, U+F0F6-F0F8, U+F10C, U+F114-F115, U+F118-F11A, U+F11C-F11D, U+F133, U+F147, U+F14E, U+F150-F152, U+F185-F186, U+F18E, U+F190-F192, U+F196, U+F1C1-F1C9, U+F1D9, U+F1DB, U+F1E3, U+F1EA, U+F1F7, U+F1F9, U+F20A, U+F247-F248, U+F24A, U+F24D, U+F255-F25B, U+F25D, U+F271-F274, U+F278, U+F27B, U+F28C, U+F28E, U+F29C, U+F2B5, U+F2B7, U+F2BA, U+F2BC, U+F2BE, U+F2C0-F2C1, U+F2C3, U+F2D0, U+F2D2, U+F2D4, U+F2DC",
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.woff2",
+          "format": "woff2",
+          "assetId": "a-33053ecb"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-regular-400.ttf",
+          "format": "truetype",
+          "assetId": "a-0f650ef1"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "FontAwesome",
+      "weight": "400",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": "U+F041, U+F047, U+F065-F066, U+F07D-F07E, U+F080, U+F08B, U+F08E, U+F090, U+F09A, U+F0AC, U+F0AE, U+F0B2, U+F0D0, U+F0D6, U+F0E4, U+F0EC, U+F10A-F10B, U+F123, U+F13E, U+F148-F149, U+F14C, U+F156, U+F15E, U+F160-F161, U+F163, U+F175-F178, U+F195, U+F1F8, U+F219, U+F27A",
+      "sources": [
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.woff2",
+          "format": "woff2",
+          "assetId": "a-af0d62c8"
+        },
+        {
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/webfonts/fa-v4compatibility.ttf",
+          "format": "truetype",
+          "assetId": "a-6e97e12a"
+        }
+      ],
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "loaded": null,
+      "certainty": "detected"
+    },
+    {
+      "family": "FontAwesome",
+      "weight": "normal",
+      "style": "normal",
+      "display": "block",
+      "unicodeRange": null,
+      "sources": [],
+      "stylesheet": null,
+      "loaded": false,
+      "certainty": "detected"
+    }
+  ],
+  "lottie": [],
+  "media": [],
+  "animations": {
+    "keyframes": [
+      {
+        "name": "fa-beat",
+        "css": "@-webkit-keyframes fa-beat { \n  0%, 90% { transform: scale(1); }\n  45% { transform: scale(var(--fa-beat-scale,1.25)); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-beat",
+        "css": "@keyframes fa-beat { \n  0%, 90% { transform: scale(1); }\n  45% { transform: scale(var(--fa-beat-scale,1.25)); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-bounce",
+        "css": "@-webkit-keyframes fa-bounce { \n  0% { transform: scale(1) translateY(0px); }\n  10% { transform: scale(var(--fa-bounce-start-scale-x,1.1),var(--fa-bounce-start-scale-y,.9)) translateY(0); }\n  30% { transform: scale(var(--fa-bounce-jump-scale-x,.9),var(--fa-bounce-jump-scale-y,1.1)) translateY(var(--fa-bounce-height,-.5em)); }\n  50% { transform: scale(var(--fa-bounce-land-scale-x,1.05),var(--fa-bounce-land-scale-y,.95)) translateY(0); }\n  57% { transform: scale(1) translateY(var(--fa-bounce-rebound,-.125em)); }\n  64% { transform: scale(1) translateY(0px); }\n  100% { transform: scale(1) translateY(0px); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-bounce",
+        "css": "@keyframes fa-bounce { \n  0% { transform: scale(1) translateY(0px); }\n  10% { transform: scale(var(--fa-bounce-start-scale-x,1.1),var(--fa-bounce-start-scale-y,.9)) translateY(0); }\n  30% { transform: scale(var(--fa-bounce-jump-scale-x,.9),var(--fa-bounce-jump-scale-y,1.1)) translateY(var(--fa-bounce-height,-.5em)); }\n  50% { transform: scale(var(--fa-bounce-land-scale-x,1.05),var(--fa-bounce-land-scale-y,.95)) translateY(0); }\n  57% { transform: scale(1) translateY(var(--fa-bounce-rebound,-.125em)); }\n  64% { transform: scale(1) translateY(0px); }\n  100% { transform: scale(1) translateY(0px); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-fade",
+        "css": "@-webkit-keyframes fa-fade { \n  50% { opacity: var(--fa-fade-opacity,.4); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-fade",
+        "css": "@keyframes fa-fade { \n  50% { opacity: var(--fa-fade-opacity,.4); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-beat-fade",
+        "css": "@-webkit-keyframes fa-beat-fade { \n  0%, 100% { opacity: var(--fa-beat-fade-opacity,.4); transform: scale(1); }\n  50% { opacity: 1; transform: scale(var(--fa-beat-fade-scale,1.125)); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-beat-fade",
+        "css": "@keyframes fa-beat-fade { \n  0%, 100% { opacity: var(--fa-beat-fade-opacity,.4); transform: scale(1); }\n  50% { opacity: 1; transform: scale(var(--fa-beat-fade-scale,1.125)); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-flip",
+        "css": "@-webkit-keyframes fa-flip { \n  50% { transform: rotate3d(var(--fa-flip-x,0),var(--fa-flip-y,1),var(--fa-flip-z,0),var(--fa-flip-angle,-180deg)); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-flip",
+        "css": "@keyframes fa-flip { \n  50% { transform: rotate3d(var(--fa-flip-x,0),var(--fa-flip-y,1),var(--fa-flip-z,0),var(--fa-flip-angle,-180deg)); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-shake",
+        "css": "@-webkit-keyframes fa-shake { \n  0% { transform: rotate(-15deg); }\n  4% { transform: rotate(15deg); }\n  8%, 24% { transform: rotate(-18deg); }\n  12%, 28% { transform: rotate(18deg); }\n  16% { transform: rotate(-22deg); }\n  20% { transform: rotate(22deg); }\n  32% { transform: rotate(-12deg); }\n  36% { transform: rotate(12deg); }\n  40%, 100% { transform: rotate(0deg); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-shake",
+        "css": "@keyframes fa-shake { \n  0% { transform: rotate(-15deg); }\n  4% { transform: rotate(15deg); }\n  8%, 24% { transform: rotate(-18deg); }\n  12%, 28% { transform: rotate(18deg); }\n  16% { transform: rotate(-22deg); }\n  20% { transform: rotate(22deg); }\n  32% { transform: rotate(-12deg); }\n  36% { transform: rotate(12deg); }\n  40%, 100% { transform: rotate(0deg); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-spin",
+        "css": "@-webkit-keyframes fa-spin { \n  0% { transform: rotate(0deg); }\n  100% { transform: rotate(1turn); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "fa-spin",
+        "css": "@keyframes fa-spin { \n  0% { transform: rotate(0deg); }\n  100% { transform: rotate(1turn); }\n}",
+        "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "usedBy": 0
+      },
+      {
+        "name": "svc-in",
+        "css": "@keyframes svc-in { \n  0% { opacity: 0; transform: translateY(16px); }\n  100% { opacity: 1; transform: translateY(0px); }\n}",
+        "stylesheet": null,
+        "usedBy": 6
+      }
+    ],
+    "animations": [
+      {
+        "name": "svc-in",
+        "duration": "0.55s",
+        "timing": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "iteration": "1",
+        "count": 6
+      }
+    ],
+    "transitions": [
+      {
+        "value": "transform 0.25s, background 0.25s",
+        "count": 6
+      },
+      {
+        "value": "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
+        "count": 6
+      },
+      {
+        "value": "0.25s",
+        "count": 3
+      }
+    ]
+  },
+  "breakpoints": {
+    "values": [
+      {
+        "px": 340,
+        "queries": [
+          "(max-width: 340px)"
+        ],
+        "count": 3,
+        "label": "Mobile"
+      },
+      {
+        "px": 480,
+        "queries": [
+          "(max-width: 480px)"
+        ],
+        "count": 3,
+        "label": "Mobile"
+      },
+      {
+        "px": 520,
+        "queries": [
+          "(max-width: 520px)"
+        ],
+        "count": 7,
+        "label": "Mobile"
+      }
+    ],
+    "evidence": {
+      "certainty": "detected",
+      "count": 13,
+      "note": "widths read from @media rules; device labels inferred from ranges"
+    }
+  },
+  "cssVariables": [
+    {
+      "name": "--fa-animation-direction",
+      "value": "reverse",
+      "resolved": null,
+      "scope": ".fa-spin-reverse",
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "category": "other"
+    },
+    {
+      "name": "--fa-style-family-brands",
+      "value": "\"Font Awesome 6 Brands\"",
+      "resolved": null,
+      "scope": ":host, :root",
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "category": "font"
+    },
+    {
+      "name": "--fa-font-brands",
+      "value": "normal 400 1em/1 \"Font Awesome 6 Brands\"",
+      "resolved": null,
+      "scope": ":host, :root",
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "category": "font"
+    },
+    {
+      "name": "--fa-font-regular",
+      "value": "normal 400 1em/1 \"Font Awesome 6 Free\"",
+      "resolved": null,
+      "scope": ":host, :root",
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "category": "font"
+    },
+    {
+      "name": "--fa-style-family-classic",
+      "value": "\"Font Awesome 6 Free\"",
+      "resolved": null,
+      "scope": ":host, :root",
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "category": "font"
+    },
+    {
+      "name": "--fa-font-solid",
+      "value": "normal 900 1em/1 \"Font Awesome 6 Free\"",
+      "resolved": null,
+      "scope": ":host, :root",
+      "stylesheet": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "category": "font"
+    },
+    {
+      "name": "--navy",
+      "value": "#082f6b",
+      "resolved": "#082f6b",
+      "scope": ":root",
+      "stylesheet": null,
+      "category": "color"
+    },
+    {
+      "name": "--blue",
+      "value": "#0d8df2",
+      "resolved": "#0d8df2",
+      "scope": ":root",
+      "stylesheet": null,
+      "category": "color"
+    },
+    {
+      "name": "--cyan",
+      "value": "#11b7ff",
+      "resolved": "#11b7ff",
+      "scope": ":root",
+      "stylesheet": null,
+      "category": "color"
+    },
+    {
+      "name": "--orange",
+      "value": "#ff8617",
+      "resolved": "#ff8617",
+      "scope": ":root",
+      "stylesheet": null,
+      "category": "color"
+    }
+  ],
+  "stylesheets": [
+    {
+      "href": "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap",
+      "kind": "link",
+      "accessible": true,
+      "accessVia": "page-fetch",
+      "ruleCount": 30,
+      "mediaQueries": [],
+      "categories": {},
+      "bytes": 14301,
+      "error": null,
+      "text": null
+    },
+    {
+      "href": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+      "kind": "link",
+      "accessible": true,
+      "accessVia": "cssom",
+      "ruleCount": 1964,
+      "mediaQueries": [
+        "(prefers-reduced-motion: reduce)"
+      ],
+      "categories": {
+        "utility": 1401,
+        "component": 536,
+        "responsive": 1,
+        "state": 1
+      },
+      "bytes": null,
+      "error": null,
+      "text": null
+    },
+    {
+      "href": null,
+      "kind": "style",
+      "accessible": true,
+      "accessVia": "cssom",
+      "ruleCount": 64,
+      "mediaQueries": [
+        "(max-width: 520px)",
+        "(max-width: 480px)",
+        "(max-width: 340px)",
+        "(prefers-reduced-motion: reduce)"
+      ],
+      "categories": {
+        "global": 5,
+        "theme": 1,
+        "component": 32,
+        "utility": 3,
+        "state": 3,
+        "responsive": 15
+      },
+      "bytes": null,
+      "error": null,
+      "text": null
+    }
+  ],
+  "screenshots": [],
+  "snapshots": [],
+  "issues": [],
+  "tech": [
+    {
+      "name": "Font Awesome",
+      "category": "font-service",
+      "version": null,
+      "certainty": "detected",
+      "evidence": [
+        "loads cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css",
+        "5 distinct fa-* icon classes (14 uses)"
+      ]
+    },
+    {
+      "name": "Google Fonts",
+      "category": "font-service",
+      "version": null,
+      "certainty": "detected",
+      "evidence": [
+        "loads fonts.googleapis.com/"
+      ]
+    },
+    {
+      "name": "Cloudflare",
+      "category": "cdn",
+      "version": null,
+      "certainty": "detected",
+      "evidence": [
+        "loads cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      ]
+    }
+  ],
+  "layout": {
+    "containerWidths": [],
+    "flexCount": 13,
+    "gridCount": 7,
+    "gridTemplates": [
+      {
+        "value": "2 equal columns",
+        "count": 1
+      }
+    ],
+    "stickyHeader": false,
+    "fixedCount": 0,
+    "stickyCount": 0,
+    "centeredTextRatio": 0.58,
+    "evidence": {
+      "certainty": "detected",
+      "note": "no centered max-width wrappers found"
+    }
+  },
+  "stats": {
+    "assets": 18,
+    "images": 1,
+    "svg": 0,
+    "icons": 10,
+    "fonts": 41,
+    "lottie": 0,
+    "media": 0,
+    "colors": 10,
+    "cssVariables": 10,
+    "components": 5,
+    "animations": 18,
+    "stylesheets": 3
+  }
+}

@@ -1,0 +1,117 @@
+# CI (booklet ch. 32.1 test layers, ch. 35 working rules). Every PR: typecheck, unit + property tests, API e2e with
+# the permission matrix, web e2e + axe, dependency audit, secret scan, OpenAPI artefact, Flutter analyze/test/build.
+name: ci
+on:
+  pull_request:
+  push: { branches: [main] }
+permissions: { contents: read }
+concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
+
+env:
+  NODE_VERSION: "24"
+  PNPM_VERSION: "12.6.0"
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "./packages/*" run build
+      - run: pnpm -r run typecheck
+      - name: Unit and property tests (domain, engine, API route table, serialisers)
+        run: pnpm -r --filter "!@unitravel/web" run test
+      - name: Dependency audit (fails on high/critical)
+        run: pnpm audit --audit-level high
+
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+
+  e2e:
+    runs-on: ubuntu-24.04
+    needs: static
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env: { POSTGRES_USER: unitravel, POSTGRES_PASSWORD: unitravel, POSTGRES_DB: unitravel }
+        ports: ["5462:5432"]
+        options: --health-cmd "pg_isready -U unitravel" --health-interval 3s --health-retries 20
+      valkey:
+        image: valkey/valkey:8.1-alpine
+        ports: ["6390:6379"]
+        options: --health-cmd "valkey-cli ping" --health-interval 3s --health-retries 20
+      storage:
+        image: rustfs/rustfs:1.0.1
+        env: { RUSTFS_ACCESS_KEY: unitravel, RUSTFS_SECRET_KEY: unitravel-secret }
+        ports: ["9010:9000"]
+      mailpit:
+        image: axllent/mailpit:v1.27
+        ports: ["1035:1025"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "${{ env.PNPM_VERSION }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.example .env
+      - run: pnpm --filter "./packages/*" run build && pnpm --filter @unitravel/api run build
+      - name: Migrate and seed (local profile, FAKE supplier, TEST sanctions list)
+        run: pnpm db:migrate && pnpm db:seed
+      - name: Start API, worker and web
+        run: |
+          pnpm --filter @unitravel/web run build
+          scripts/svc.sh start api worker web
+          for i in $(seq 1 60); do curl -sf localhost:4100/ready && curl -sf localhost:4000/en >/dev/null && break; sleep 2; done
+      - name: API end-to-end (stages 1–5, permission matrix)
+        run: pnpm --filter @unitravel/api run test:e2e
+      - name: OpenAPI artefact
+        run: pnpm --filter @unitravel/api run openapi
+      - uses: actions/upload-artifact@v4
+        with: { name: openapi, path: packages/contracts/openapi.json }
+      - name: Web end-to-end + accessibility (axe, WCAG 2.2 AA)
+        run: |
+          pnpm --filter @unitravel/web exec playwright install --with-deps chromium
+          pnpm --filter @unitravel/web run e2e
+      - name: Console end-to-end
+        if: hashFiles('apps/console/package.json') != ''
+        run: |
+          pnpm --filter @unitravel/console run build
+          scripts/svc.sh start console
+          pnpm --filter @unitravel/console run e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: e2e-traces, path: "apps/*/test-results/**" }
+      - if: always()
+        run: tail -n 200 .run/*.log || true
+
+  mobile:
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: apps/mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build web --release --no-web-resources-cdn
+
+  images:
+    runs-on: ubuntu-24.04
+    needs: [static]
+    strategy: { matrix: { target: [api, migrate, web, console] } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with: { context: ., file: infra/docker/node.Dockerfile, target: "${{ matrix.target }}", push: false, cache-from: type=gha, cache-to: "type=gha,mode=max" }

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+coverage/
+test-results/
+playwright-report/
+apps/mobile/build/
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins*
+media/raw/
+.dev-jwt.json
+.run/
+media/teaser/.state/

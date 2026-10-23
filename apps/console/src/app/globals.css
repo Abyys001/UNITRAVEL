@@ -1,0 +1,38 @@
+@import "@unitravel/ui/styles.css";
+@source "../../node_modules/@unitravel/ui/src";
+
+/*
+ * Console tokens on top of the shared palette (docs/design/DESIGN.md): the console reads like a ledger — dense
+ * 13 px type, hairline rules instead of cards, mono for references and values. The dev host swaps the accent for a
+ * hatched "workshop" strip so nobody confuses the two surfaces.
+ */
+@theme {
+  --font-sans: var(--font-inter), var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
+  --color-rule: #e6e1d8;
+  --color-rule-strong: #cfc7b8;
+  --color-ledger: #fffdf9;
+  --color-workshop: #b07a45;
+}
+
+html, body { font-size: 13px; line-height: 1.45; }
+body { background: var(--color-sand); }
+[dir="auto"], .bidi { unicode-bidi: plaintext; }
+
+/* Component classes sit in the components layer so Tailwind utilities (w-40, bg-transparent…) still override them. */
+@layer components {
+  .workshop-strip {
+    background: repeating-linear-gradient(-45deg, #c98d5b 0 8px, #0f2238 8px 16px);
+  }
+  .ledger-rows > * + * { border-top: 1px solid var(--color-rule); }
+  .cap { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate); }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .kbd { font-family: var(--font-mono); font-size: 10.5px; border: 1px solid var(--color-rule-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: #fff; color: var(--color-slate); }
+  .field-input {
+    height: 30px; width: 100%; border: 1px solid var(--color-rule-strong); border-radius: 6px; background: #fff; padding: 0 8px; font-size: 13px;
+  }
+  .field-input:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 0; }
+  textarea.field-input { height: auto; padding: 6px 8px; }
+  select.field-input { padding-inline-end: 4px; }
+  .row-focus { box-shadow: inset 3px 0 0 var(--color-copper); background: #f6efe5; }
+  [dir="rtl"] .row-focus { box-shadow: inset -3px 0 0 var(--color-copper); }
+}

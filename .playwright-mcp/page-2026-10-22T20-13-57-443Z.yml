@@ -1,0 +1,34 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "Uni Travel home" [ref=f2e4] [cursor=pointer]:
+        - /url: /en
+        - generic [ref=f2e5]: Uni Travel
+      - navigation "Main" [ref=f2e12]:
+        - link "Flights" [ref=f2e13] [cursor=pointer]:
+          - /url: /en
+        - link "Send cargo" [ref=f2e14] [cursor=pointer]:
+          - /url: /en/cargo
+        - link "My requests" [ref=f2e15] [cursor=pointer]:
+          - /url: /en/requests
+      - generic [ref=f2e16]:
+        - link "فارسی" [ref=f2e17] [cursor=pointer]:
+          - /url: /fa/search
+        - link "Sign in" [ref=f2e18] [cursor=pointer]:
+          - /url: /en/sign-in?next=%2Fen%2Fsearch
+  - main [ref=f2e19]:
+    - paragraph [ref=f2e20]: Something went wrong.
+  - contentinfo [ref=f2e21]:
+    - generic [ref=f2e22]:
+      - generic [ref=f2e23]:
+        - generic [ref=f2e24]: Uni Travel
+        - paragraph [ref=f2e31]: Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people.
+      - paragraph [ref=f2e32]: Flights are arranged as an airline ticket agent; payment is taken when tickets are issued.
+      - generic [ref=f2e33]:
+        - link "Terms" [ref=f2e34] [cursor=pointer]:
+          - /url: /en/terms
+        - link "Privacy" [ref=f2e35] [cursor=pointer]:
+          - /url: /en/privacy
+        - generic [ref=f2e36]: Uni Travel Ltd · London
+  - region "Notifications alt+T"
+  - alert [ref=f2e37]

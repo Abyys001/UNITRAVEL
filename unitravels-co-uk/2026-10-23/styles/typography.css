@@ -1,0 +1,94 @@
+/*
+ * Typography
+ * Source: https://unitravels.co.uk/
+ * Extracted by Design Thief on 2026-10-23.
+ * Generated from detected design values — not the site's original source files.
+ */
+
+:root {
+  --font-heading: "Vazirmatn";
+  --font-body: "Montserrat";
+  --text-display-size: 51.2px;
+  --text-display-weight: 800;
+  --text-display-line-height: 58.88px;
+  --text-h1-size: 30.4px;
+  --text-h1-weight: 700;
+  --text-h1-line-height: normal;
+  --text-h1-letter-spacing: 0.5px;
+  --text-h2-size: 51.2px;
+  --text-h2-weight: 800;
+  --text-h2-line-height: 58.88px;
+  --text-h3-size: 17.6px;
+  --text-h3-weight: 800;
+  --text-h3-line-height: normal;
+  --text-body-size: 12.48px;
+  --text-body-weight: 400;
+  --text-body-line-height: normal;
+  --text-body-letter-spacing: 4px;
+  --text-small-size: 11.2px;
+  --text-small-weight: 400;
+  --text-small-line-height: normal;
+  --text-small-letter-spacing: 0.8px;
+  --text-caption-size: 16px;
+  --text-caption-weight: 700;
+  --text-caption-line-height: 18.4px;
+}
+
+/* display — inferred */
+.text-display {
+  font-family: "Vazirmatn";
+  font-size: 51.2px;
+  font-weight: 800;
+  line-height: 58.88px;
+}
+
+/* h1 — detected */
+.text-h1 {
+  font-family: "Montserrat";
+  font-size: 30.4px;
+  font-weight: 700;
+  line-height: normal;
+  letter-spacing: 0.5px;
+}
+
+/* h2 — detected */
+.text-h2 {
+  font-family: "Vazirmatn";
+  font-size: 51.2px;
+  font-weight: 800;
+  line-height: 58.88px;
+}
+
+/* h3 — detected */
+.text-h3 {
+  font-family: "Vazirmatn";
+  font-size: 17.6px;
+  font-weight: 800;
+  line-height: normal;
+}
+
+/* body — detected */
+.text-body {
+  font-family: "Montserrat";
+  font-size: 12.48px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 4px;
+}
+
+/* small — inferred */
+.text-small {
+  font-family: "Montserrat";
+  font-size: 11.2px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 0.8px;
+}
+
+/* caption — detected */
+.text-caption {
+  font-family: "Vazirmatn";
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 18.4px;
+}

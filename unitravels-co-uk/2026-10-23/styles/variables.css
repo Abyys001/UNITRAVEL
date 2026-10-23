@@ -1,0 +1,29 @@
+/*
+ * Original CSS custom properties (names and values as declared by the site)
+ * Source: https://unitravels.co.uk/
+ * Extracted by Design Thief on 2026-10-23.
+ * Generated from detected design values — not the site's original source files.
+ */
+
+.fa-spin-reverse {
+  /* Other */
+  --fa-animation-direction: reverse;
+}
+
+:host, :root {
+  /* Font families */
+  --fa-style-family-brands: "Font Awesome 6 Brands";
+  --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+  --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Free";
+  --fa-style-family-classic: "Font Awesome 6 Free";
+  --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Free";
+}
+
+:root {
+  /* Colors */
+  --navy: #082f6b;
+  --blue: #0d8df2;
+  --cyan: #11b7ff;
+  --orange: #ff8617;
+}
+

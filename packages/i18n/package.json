@@ -1,0 +1,10 @@
+{
+  "name": "@unitravel/i18n",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit", "test": "vitest run --passWithNoTests" },
+  "dependencies": { "@unitravel/contracts": "workspace:*" },
+  "devDependencies": { "@types/node": "24.19.2", "typescript": "6.0.3", "vitest": "5.0.4" }
+}

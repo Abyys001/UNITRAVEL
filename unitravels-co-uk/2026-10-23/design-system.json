@@ -1,0 +1,374 @@
+{
+  "$meta": {
+    "generator": "Design Thief",
+    "note": "Generated from detected design values. These are not the site's original tokens; see \"source\" for the raw observed values.",
+    "sourceUrl": "https://unitravels.co.uk/",
+    "generatedAt": "2026-10-23T13:43:43.840Z"
+  },
+  "colors": {
+    "roles": {
+      "primary": {
+        "value": "#ff8617",
+        "certainty": "inferred",
+        "note": "most frequent saturated color (3 uses)"
+      },
+      "secondary": {
+        "value": "#ffac50",
+        "certainty": "inferred",
+        "note": "third saturated color (2 uses)"
+      },
+      "accent": {
+        "value": "#11b7ff",
+        "certainty": "inferred",
+        "note": "second most frequent saturated color (1 uses)"
+      },
+      "pageBackground": {
+        "value": "#ffffff",
+        "certainty": "detected",
+        "note": "computed background of <body>/<html>"
+      },
+      "surface": {
+        "value": "#ffffff14",
+        "certainty": "inferred",
+        "note": "largest non-page background area (6 containers)"
+      },
+      "text": {
+        "value": "#ffffff",
+        "certainty": "detected",
+        "note": "most-used body text color across 11 elements"
+      },
+      "heading": {
+        "value": "#ffffff",
+        "certainty": "detected",
+        "note": "color of heading elements (3)"
+      },
+      "border": {
+        "value": "#ffffff24",
+        "certainty": "detected",
+        "note": "most frequent border color (24 elements)"
+      },
+      "buttonBackground": {
+        "value": "#ffffff1a",
+        "certainty": "inferred",
+        "note": "most common button background (3 elements)"
+      },
+      "buttonText": {
+        "value": "#ffffff",
+        "certainty": "inferred",
+        "note": "text color of the most common button"
+      },
+      "hover": {
+        "value": "#ffffff2e",
+        "certainty": "detected",
+        "note": "from :hover rule .contact a:hover"
+      }
+    },
+    "palette": {
+      "white": {
+        "value": "#ffffff24",
+        "count": 42,
+        "variables": []
+      },
+      "white-ffffff": {
+        "value": "#ffffff38",
+        "count": 4,
+        "variables": []
+      },
+      "amber-300": {
+        "value": "#ff8617",
+        "count": 3,
+        "variables": [
+          "--orange"
+        ]
+      },
+      "blue-300": {
+        "value": "#11b7ff",
+        "count": 1,
+        "variables": [
+          "--cyan"
+        ]
+      },
+      "amber-200": {
+        "value": "#ffac50",
+        "count": 2,
+        "variables": []
+      },
+      "indigo-700": {
+        "value": "#061f4c",
+        "count": 1,
+        "variables": []
+      },
+      "indigo-700-083575": {
+        "value": "#083575",
+        "count": 1,
+        "variables": []
+      },
+      "blue-500": {
+        "value": "#0c67b9",
+        "count": 1,
+        "variables": []
+      }
+    }
+  },
+  "typography": {
+    "families": {
+      "heading": "Vazirmatn",
+      "body": "Montserrat"
+    },
+    "scale": {
+      "display": {
+        "fontFamily": "Vazirmatn",
+        "fontSize": "51.2px",
+        "fontWeight": 800,
+        "lineHeight": "58.88px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "inferred"
+      },
+      "h1": {
+        "fontFamily": "Montserrat",
+        "fontSize": "30.4px",
+        "fontWeight": 700,
+        "lineHeight": "normal",
+        "letterSpacing": "0.5px",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      "h2": {
+        "fontFamily": "Vazirmatn",
+        "fontSize": "51.2px",
+        "fontWeight": 800,
+        "lineHeight": "58.88px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      "h3": {
+        "fontFamily": "Vazirmatn",
+        "fontSize": "17.6px",
+        "fontWeight": 800,
+        "lineHeight": "normal",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      "body": {
+        "fontFamily": "Montserrat",
+        "fontSize": "12.48px",
+        "fontWeight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "4px",
+        "textTransform": "none",
+        "certainty": "detected"
+      },
+      "small": {
+        "fontFamily": "Montserrat",
+        "fontSize": "11.2px",
+        "fontWeight": 400,
+        "lineHeight": "normal",
+        "letterSpacing": "0.8px",
+        "textTransform": "none",
+        "certainty": "inferred"
+      },
+      "caption": {
+        "fontFamily": "Vazirmatn",
+        "fontSize": "16px",
+        "fontWeight": 700,
+        "lineHeight": "18.4px",
+        "letterSpacing": "normal",
+        "textTransform": "none",
+        "certainty": "detected"
+      }
+    }
+  },
+  "spacing": {
+    "base": null,
+    "scale": {
+      "9": "9px",
+      "10": "10px",
+      "12": "12px",
+      "13": "13px",
+      "14": "14px",
+      "18": "18px",
+      "22": "22px",
+      "26": "26px",
+      "32": "32px",
+      "34": "34px",
+      "70": "70px"
+    },
+    "certainty": "inferred"
+  },
+  "radii": {
+    "lg": "16px",
+    "full": "9999px",
+    "circle": "50%"
+  },
+  "shadows": {
+    "xs": "inset 0px 0px 0px 4px rgba(255, 255, 255, 0.08)"
+  },
+  "breakpoints": {
+    "mobile": "340px",
+    "mobile-2": "480px",
+    "mobile-3": "520px"
+  },
+  "gradients": {
+    "gradient-1": "linear-gradient(150deg, rgb(6, 31, 76) 0%, rgb(8, 53, 117) 46%, rgb(12, 103, 185) 100%)",
+    "gradient-2": "linear-gradient(to right, rgba(0, 0, 0, 0), rgb(255, 134, 23))",
+    "gradient-3": "linear-gradient(to left, rgba(0, 0, 0, 0), rgb(255, 134, 23))"
+  },
+  "source": {
+    "cssVariables": [
+      {
+        "name": "--fa-animation-direction",
+        "value": "reverse",
+        "scope": ".fa-spin-reverse"
+      },
+      {
+        "name": "--fa-style-family-brands",
+        "value": "\"Font Awesome 6 Brands\"",
+        "scope": ":host, :root"
+      },
+      {
+        "name": "--fa-font-brands",
+        "value": "normal 400 1em/1 \"Font Awesome 6 Brands\"",
+        "scope": ":host, :root"
+      },
+      {
+        "name": "--fa-font-regular",
+        "value": "normal 400 1em/1 \"Font Awesome 6 Free\"",
+        "scope": ":host, :root"
+      },
+      {
+        "name": "--fa-style-family-classic",
+        "value": "\"Font Awesome 6 Free\"",
+        "scope": ":host, :root"
+      },
+      {
+        "name": "--fa-font-solid",
+        "value": "normal 900 1em/1 \"Font Awesome 6 Free\"",
+        "scope": ":host, :root"
+      },
+      {
+        "name": "--navy",
+        "value": "#082f6b",
+        "scope": ":root"
+      },
+      {
+        "name": "--blue",
+        "value": "#0d8df2",
+        "scope": ":root"
+      },
+      {
+        "name": "--cyan",
+        "value": "#11b7ff",
+        "scope": ":root"
+      },
+      {
+        "name": "--orange",
+        "value": "#ff8617",
+        "scope": ":root"
+      }
+    ],
+    "colors": [
+      "rgba(255, 255, 255, 0.14)",
+      "rgba(255, 255, 255, 0.16)",
+      "rgba(255, 255, 255, 0.12)",
+      "rgb(255, 255, 255)",
+      "rgba(255, 255, 255, 0.08)",
+      "rgba(255, 255, 255, 0.1)",
+      "rgb(255, 134, 23)",
+      "rgb(17, 183, 255)",
+      "rgba(255, 255, 255, 0.22)",
+      "rgb(255, 172, 80)",
+      "rgb(6, 31, 76)",
+      "rgb(8, 53, 117)",
+      "rgb(12, 103, 185)"
+    ],
+    "spacing": [
+      {
+        "value": "12px",
+        "count": 15
+      },
+      {
+        "value": "14px",
+        "count": 14
+      },
+      {
+        "value": "13px",
+        "count": 12
+      },
+      {
+        "value": "18px",
+        "count": 8
+      },
+      {
+        "value": "10px",
+        "count": 3
+      },
+      {
+        "value": "9px",
+        "count": 3
+      },
+      {
+        "value": "32px",
+        "count": 2
+      },
+      {
+        "value": "26px",
+        "count": 2
+      },
+      {
+        "value": "22px",
+        "count": 2
+      },
+      {
+        "value": "70px",
+        "count": 2
+      },
+      {
+        "value": "34px",
+        "count": 2
+      },
+      {
+        "value": "2px",
+        "count": 1
+      },
+      {
+        "value": "4px",
+        "count": 1
+      },
+      {
+        "value": "16px",
+        "count": 1
+      },
+      {
+        "value": "30px",
+        "count": 1
+      },
+      {
+        "value": "8px",
+        "count": 1
+      }
+    ],
+    "radii": [
+      {
+        "value": "50%",
+        "count": 9
+      },
+      {
+        "value": "16px",
+        "count": 9
+      },
+      {
+        "value": "999px",
+        "count": 1
+      }
+    ],
+    "shadows": [
+      {
+        "value": "inset 0px 0px 0px 4px rgba(255, 255, 255, 0.08)",
+        "count": 1
+      }
+    ]
+  }
+}

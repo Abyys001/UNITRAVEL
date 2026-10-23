@@ -1,0 +1,6 @@
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+# Library package: don't pin transitive versions for consuming apps.
+pubspec.lock

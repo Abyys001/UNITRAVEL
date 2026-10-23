@@ -1,0 +1,23 @@
+{
+  "name": "unitravel",
+  "private": true,
+  "packageManager": "pnpm@12.6.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "check": "turbo run typecheck test",
+    "infra:up": "docker compose -f infra/compose.dev.yml up -d",
+    "infra:down": "docker compose -f infra/compose.dev.yml down",
+    "db:migrate": "pnpm --filter @unitravel/db migrate",
+    "db:seed": "pnpm --filter @unitravel/db seed",
+    "dev:api": "pnpm --filter @unitravel/api dev",
+    "dev:worker": "pnpm --filter @unitravel/api dev:worker"
+  },
+  "devDependencies": {
+    "turbo": "2.11.10",
+    "typescript": "6.0.3"
+  }
+}

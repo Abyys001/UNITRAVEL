@@ -1,0 +1,647 @@
+{
+  "@@locale": "en",
+  "appName": "UniTravel",
+  "navSearch": "Search",
+  "navRequests": "Requests",
+  "navCargo": "Cargo",
+  "navInbox": "Inbox",
+  "navAccount": "Account",
+  "navQueue": "Queue",
+  "navMine": "Mine",
+  "retry": "Retry",
+  "cancel": "Cancel",
+  "close": "Close",
+  "continueLabel": "Continue",
+  "back": "Back",
+  "save": "Save",
+  "send": "Send",
+  "done": "Done",
+  "loading": "Loading…",
+  "optional": "Optional",
+  "offlineBanner": "You are offline. Showing saved data.",
+  "lastUpdated": "Last updated {when}",
+  "@lastUpdated": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "maintenanceTitle": "Something went wrong",
+  "errNetwork": "Cannot reach the server. Check your connection and try again.",
+  "errRateLimited": "Too many attempts. Please wait a moment.",
+  "errRateLimitedIn": "Too many attempts. Try again in {seconds}s.",
+  "@errRateLimitedIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "errOtpInvalid": "That code is not right or has expired.",
+  "errOtpExpired": "That code has expired. Request a new one.",
+  "errOtpLocked": "Too many wrong codes. Try again later.",
+  "errValidation": "Please check the highlighted details.",
+  "errForbidden": "You do not have access to this.",
+  "errNotFound": "We could not find that.",
+  "errConflict": "This changed while you were looking. Refresh and try again.",
+  "errOfferExpired": "That offer has expired. Search again for fresh prices.",
+  "errPriceChanged": "The price changed. Review it and try again.",
+  "errSearchExpired": "This search has expired. Start a new one.",
+  "errSupplier": "A supplier is unavailable right now. Try again shortly.",
+  "errFeatureDisabled": "This feature is switched off right now.",
+  "errMfa": "Second-factor verification is required.",
+  "errGeneric": "Something went wrong. Please try again.",
+  "sessionExpired": "Your session expired. Please sign in again.",
+  "signInTitle": "Sign in",
+  "signInIntro": "Fly home, or anywhere. We keep every request in one place and a real person behind it.",
+  "phoneLabel": "Mobile number",
+  "phoneHint": "+98 912 000 0000",
+  "phoneHelp": "Include the country code, or enter an Iranian number starting with 09.",
+  "sendCode": "Send code",
+  "codeLabel": "Verification code",
+  "codeSentTo": "We sent a code to {phone}.",
+  "@codeSentTo": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "verify": "Verify",
+  "resendCode": "Resend code",
+  "resendIn": "Resend in {seconds}s",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "changeNumber": "Use a different number",
+  "languageLabel": "Language",
+  "langEnglish": "English",
+  "langPersian": "فارسی",
+  "profileTitle": "Your name",
+  "profileIntro": "Enter your name exactly as it appears in your passport.",
+  "givenNames": "Given names",
+  "surname": "Surname",
+  "nameFa": "Name in Persian",
+  "fieldRequired": "Required",
+  "fieldLatin": "Use Latin letters only",
+  "mfaTitle": "Second-factor check",
+  "mfaIntro": "Staff access needs a code from your authenticator app.",
+  "mfaEnrolIntro": "Set up your authenticator app with this key, then enter the 6-digit code.",
+  "mfaSecret": "Setup key",
+  "mfaCode": "6-digit code",
+  "mfaStart": "Set up authenticator",
+  "searchTitle": "Where to?",
+  "searchSubtitle": "Compare routes, then ask us to arrange the one you like.",
+  "tripOneWay": "One way",
+  "tripReturn": "Return",
+  "tripOpenJaw": "Open jaw",
+  "tripMultiCity": "Multi-city",
+  "from": "From",
+  "to": "To",
+  "chooseCity": "Choose a city or airport",
+  "searchPlaces": "Search city or airport",
+  "noPlaces": "No matching places",
+  "date": "Date",
+  "returnDate": "Return date",
+  "chooseDate": "Choose a date",
+  "leg": "Flight {n}",
+  "@leg": {
+    "placeholders": {
+      "n": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "addFlight": "Add a flight",
+  "removeFlight": "Remove flight",
+  "travellers": "Travellers",
+  "adults": "Adults",
+  "children": "Children (2–11)",
+  "infants": "Infants (under 2)",
+  "childAge": "Age of child {n}",
+  "@childAge": {
+    "placeholders": {
+      "n": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "travellerCount": "{count, plural, one{1 traveller} other{{count} travellers}}",
+  "@travellerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "cabin": "Cabin",
+  "cabinEconomy": "Economy",
+  "cabinPremium": "Premium economy",
+  "cabinBusiness": "Business",
+  "cabinFirst": "First",
+  "connections": "Connections",
+  "maxStops": "Maximum stops",
+  "stopsAny": "{count, plural, =0{Direct only} one{Up to 1 stop} other{Up to {count} stops}}",
+  "@stopsAny": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "allowSelfTransfer": "Allow self-transfer (separate tickets)",
+  "allowOvernight": "Allow overnight layovers",
+  "allowAirportChange": "Allow airport changes",
+  "includeGateways": "Include nearby gateway airports",
+  "gatewayHint": "Gateways start your trip at a nearby border city, often cheaper, with an overland leg.",
+  "searchFlights": "Search flights",
+  "problemMissingPlace": "Choose where you are flying from and to.",
+  "problemSamePlace": "Origin and destination must be different.",
+  "problemMissingDate": "Choose a date for each flight.",
+  "problemDateOrder": "Dates must be in order.",
+  "problemInfants": "Each infant needs an adult on the same booking.",
+  "calendarGregorian": "Gregorian",
+  "calendarJalali": "Jalali",
+  "resultsTitle": "Results",
+  "searchingSources": "Searching {total} sources · {done} of {total}",
+  "@searchingSources": {
+    "placeholders": {
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "done": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "searchComplete": "Searched {total} sources",
+  "@searchComplete": {
+    "placeholders": {
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "searchPartial": "Some sources were slow ({done} of {total} answered)",
+  "@searchPartial": {
+    "placeholders": {
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "done": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "searchFailed": "The search could not finish.",
+  "tabBest": "Best",
+  "tabCheapest": "Cheapest",
+  "tabFastest": "Fastest",
+  "tabSingle": "Single ticket",
+  "noResults": "No flights found for these details.",
+  "noResultsHelp": "Try other dates, allow more stops, or send us a manual request.",
+  "manualRequest": "Send a manual request",
+  "manualRequestHelp": "Not finding what you need? Our team will search by hand and call you.",
+  "loadMore": "Show more",
+  "resultCount": "{count, plural, one{1 result} other{{count} results}}",
+  "@resultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "badgeLive": "LIVE",
+  "badgeCached": "CACHED",
+  "badgePriced": "PRICE CONFIRMED",
+  "badgeFake": "TEST DATA",
+  "badgeSeparate": "SEPARATE TICKETS",
+  "badgeGateway": "STARTS AT GATEWAY",
+  "badgeOvernight": "OVERNIGHT",
+  "badgeTight": "TIGHT CONNECTION",
+  "badgeAirportChange": "AIRPORT CHANGE",
+  "stopsDirect": "Direct",
+  "stopsCount": "{count, plural, one{1 stop} other{{count} stops}}",
+  "@stopsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "layoverAt": "{duration} in {airport}",
+  "@layoverAt": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "airport": {
+        "type": "String"
+      }
+    }
+  },
+  "durationHm": "{hours}h {minutes}m",
+  "@durationHm": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "durationH": "{hours}h",
+  "@durationH": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "durationM": "{minutes}m",
+  "@durationM": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "dayPlus": "+{n}d",
+  "@dayPlus": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "itineraryTitle": "Itinerary",
+  "itineraryLoadError": "We could not load this itinerary.",
+  "priceTotal": "Total price",
+  "priceFrom": "Fares in this itinerary: {count}",
+  "@priceFrom": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "ticketN": "Ticket {n}",
+  "@ticketN": {
+    "placeholders": {
+      "n": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "sumOfTickets": "Sum of separate tickets",
+  "segments": "Flights",
+  "terminal": "Terminal {t}",
+  "@terminal": {
+    "placeholders": {
+      "t": {
+        "type": "String"
+      }
+    }
+  },
+  "selfTransferAdvice": "Self-transfer: you collect your bags, check in again and clear any border control yourself. A missed connection is not protected by the airline.",
+  "overnightAdvice": "Overnight layover: plan where you will stay.",
+  "tightAdvice": "Tight connection: allow for delays.",
+  "airportChangeAdvice": "This connection changes airport.",
+  "gatewayAdvice": "Starts at gateway {iata}: {access}",
+  "@gatewayAdvice": {
+    "placeholders": {
+      "iata": {
+        "type": "String"
+      },
+      "access": {
+        "type": "String"
+      }
+    }
+  },
+  "baggage": "Baggage",
+  "baggageUnknown": "Not provided — our team will confirm",
+  "baggageNone": "No checked bag included",
+  "baggagePieces": "{count, plural, one{1 checked bag included} other{{count} checked bags included}}",
+  "@baggagePieces": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "baggageKg": "{kg} kg each",
+  "@baggageKg": {
+    "placeholders": {
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "cabinBagYes": "Cabin bag included",
+  "cabinBagNo": "No cabin bag",
+  "priceFreshness": "Price checked {when}",
+  "@priceFreshness": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "priceFreshnessCached": "Cached price from {when}, not yet confirmed with the airline",
+  "@priceFreshnessCached": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "recheckPrice": "Recheck price",
+  "priceConfirmed": "Price confirmed.",
+  "priceChangedTo": "Price changed to {price}.",
+  "@priceChangedTo": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "offerExpired": "This offer has expired. Search again.",
+  "offerUnavailable": "This offer is no longer available.",
+  "requestItinerary": "Request this itinerary",
+  "requestNotBooking": "Requesting does not book a seat. Our team checks availability and sends you a quote.",
+  "fakeNotice": "Test data from a demo supplier. Not a real fare.",
+  "ruleSeparateWarn": "Separate tickets: if the first flight is late, the second is not protected.",
+  "requestFormTitle": "Your request",
+  "manualFormTitle": "Manual request",
+  "whoIsTravelling": "Who is travelling?",
+  "addTraveller": "Add a traveller",
+  "noTravellers": "Add the people travelling, as named in their passports.",
+  "travellerForType": "Traveller {n} ({type})",
+  "@travellerForType": {
+    "placeholders": {
+      "n": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "typeAdult": "adult",
+  "typeChild": "child",
+  "typeInfant": "infant",
+  "documentMissing": "Passport details still needed",
+  "noteLabel": "Note for our team",
+  "flexibility": "Date flexibility",
+  "flexibilityHint": "e.g. ±3 days, prefer weekdays",
+  "budget": "Budget (GBP, optional)",
+  "ackNotBooking": "I understand this is a request, not a booking or a ticket.",
+  "ackPrivacy": "I agree to the privacy notice and to being contacted about this request.",
+  "ackSelfTransfer": "I understand the self-transfer risks of separate tickets.",
+  "submitRequest": "Submit request",
+  "acceptNewPrice": "Accept the new price and submit",
+  "copy": "Copy",
+  "copied": "Copied",
+  "statusSubmitted": "Received",
+  "statusComplianceHold": "Compliance hold",
+  "statusNew": "New",
+  "statusInReview": "In review",
+  "statusAwaitingCustomer": "Awaiting customer",
+  "statusQuoted": "Quoted",
+  "statusAccepted": "Accepted",
+  "statusReserved": "Reserved",
+  "statusTicketed": "Ticketed",
+  "statusCompleted": "Completed",
+  "statusDeclined": "Declined",
+  "statusCancelled": "Cancelled",
+  "statusExpired": "Expired",
+  "submitting": "Submitting…",
+  "needAcks": "Please tick the acknowledgements to continue.",
+  "needTraveller": "Add at least one traveller.",
+  "travellerFormTitle": "New traveller",
+  "title": "Title",
+  "dateOfBirth": "Date of birth",
+  "gender": "Gender on passport",
+  "genderM": "Male",
+  "genderF": "Female",
+  "genderX": "Unspecified",
+  "nationality": "Nationality",
+  "nationalityHint": "Two-letter country code, e.g. IR",
+  "confirmationTitle": "Request received",
+  "confirmationBody": "Your reference is below. We will call you to confirm details and send a quote. Nothing is booked yet.",
+  "referenceLabel": "Reference",
+  "viewRequest": "View request",
+  "newSearch": "New search",
+  "requestsTitle": "My requests",
+  "noRequests": "No requests yet",
+  "noRequestsHelp": "Search for a flight and request the one you like.",
+  "startSearch": "Start a search",
+  "requestDetail": "Request",
+  "statusTimeline": "Progress",
+  "messages": "Messages",
+  "noMessages": "No messages yet.",
+  "messageHint": "Write a message to our team",
+  "youLabel": "You",
+  "quotes": "Quotes",
+  "quoteValidUntil": "Valid until {when}",
+  "@quoteValidUntil": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "quoteAccepted": "Accepted",
+  "quoteExpired": "Expired",
+  "acceptOption": "Accept this option",
+  "acceptConfirmTitle": "Accept this quote?",
+  "acceptConfirmBody": "{label} for {price}. Our team will then arrange the booking.",
+  "@acceptConfirmBody": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownFields": "To be confirmed by our team: {fields}",
+  "@unknownFields": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "tickets": "Tickets",
+  "cancelRequest": "Cancel request",
+  "cancelConfirmTitle": "Cancel this request?",
+  "cancelConfirmBody": "This stops our work on it. You can send a new request any time.",
+  "keepRequest": "Keep it",
+  "submittedOn": "Submitted {when}",
+  "@submittedOn": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "travellersLabel": "Travellers",
+  "unreadMessages": "{count} unread",
+  "@unreadMessages": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "cargoTitle": "Cargo",
+  "cargoIntro": "Send documents or parcels along routes we serve. We quote after reviewing your goods.",
+  "laneDisabled": "Not available",
+  "laneServices": "Services: {list}",
+  "@laneServices": {
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "svcDocuments": "Documents",
+  "svcParcel": "Parcel",
+  "svcExcess": "Excess baggage",
+  "svcFreight": "Air freight",
+  "cargoRequestTitle": "Cargo request",
+  "service": "Service",
+  "shipper": "Sender",
+  "consignee": "Recipient",
+  "fullNameLatin": "Full name (Latin letters)",
+  "phone": "Phone",
+  "addressLine": "Address",
+  "cityLabel": "City",
+  "postcode": "Postcode",
+  "readyDate": "Ready to ship on",
+  "handover": "Handover",
+  "handoverPickup": "Pick-up",
+  "handoverDropoff": "Drop-off",
+  "weightKg": "Weight (kg)",
+  "lengthCm": "Length (cm)",
+  "widthCm": "Width (cm)",
+  "heightCm": "Height (cm)",
+  "contents": "What is inside?",
+  "declaredValue": "Declared value (GBP)",
+  "consentAccuracy": "The details I gave are accurate.",
+  "consentProhibited": "I am not sending prohibited or dangerous items.",
+  "consentPrivacy": "I agree to the privacy notice.",
+  "submitCargo": "Submit cargo request",
+  "cargoDetail": "Cargo request",
+  "tracking": "Tracking",
+  "noTracking": "No tracking events yet.",
+  "chargeableWeight": "Estimated chargeable weight: {kg} kg",
+  "@chargeableWeight": {
+    "placeholders": {
+      "kg": {
+        "type": "String"
+      }
+    }
+  },
+  "inboxTitle": "Inbox",
+  "inboxEmpty": "Nothing here yet",
+  "inboxEmptyHelp": "Updates about your requests will appear here.",
+  "markAllRead": "Mark all read",
+  "accountTitle": "Account",
+  "profileSection": "Profile",
+  "preferences": "Preferences",
+  "calendarLabel": "Calendar",
+  "myTravellers": "Saved travellers",
+  "signOut": "Sign out",
+  "signOutConfirm": "Sign out of this device?",
+  "roleStaff": "Staff",
+  "adminMode": "Admin mode",
+  "onDuty": "On duty",
+  "onDutyHelp": "On-duty staff receive new-request alerts and can claim cases.",
+  "version": "Version {v}",
+  "@version": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
+  "queueTitle": "Queue",
+  "mineTitle": "My cases",
+  "tabNew": "New",
+  "tabAwaiting": "Awaiting",
+  "tabQuoted": "Quoted",
+  "tabReserved": "Reserved",
+  "summaryNew": "New",
+  "summaryMine": "Mine",
+  "summaryAwaiting": "Awaiting customer",
+  "summaryQuoted": "Quoted",
+  "summaryReserved": "Reserved",
+  "summarySla": "SLA breaches",
+  "queueEmpty": "Nothing in this queue",
+  "caseTitle": "Case",
+  "claim": "Claim",
+  "claimed": "Claimed — it is yours now.",
+  "requestInfo": "Request info",
+  "requestInfoHint": "What do you need from the customer?",
+  "addNote": "Internal note",
+  "noteHint": "Visible to staff only",
+  "messageCustomer": "Message customer",
+  "logCall": "Log call",
+  "callCustomer": "Call customer",
+  "outcomeReached": "Reached",
+  "outcomeNoAnswer": "No answer",
+  "outcomeBusy": "Busy",
+  "outcomeWrongNumber": "Wrong number",
+  "outcomeCallBack": "Call back requested",
+  "notes": "Notes",
+  "assignee": "Assigned to",
+  "unassigned": "Unassigned",
+  "slaDue": "SLA due {when}",
+  "@slaDue": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "slaBreached": "SLA breached",
+  "customerLabel": "Customer",
+  "mobileTriageOnly": "Quotes, records and compliance decisions are handled in the Admin Panel.",
+  "actionDone": "Done.",
+  "allowedNone": "No actions available for you on this case.",
+  "commandNotAllowed": "Not available: {reason}",
+  "@commandNotAllowed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  }
+}

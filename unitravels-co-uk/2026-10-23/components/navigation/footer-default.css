@@ -1,0 +1,9 @@
+/* footer / default — 1 instance(s), sample: "UNI TRAVEL · Travel Agency Powered by CYBERCINA"
+   original selector: footer */
+.footer-default {
+  color: rgb(255, 255, 255);
+  font-family: "Montserrat";
+  font-size: 11.2px;
+  font-weight: 400;
+  letter-spacing: 0.8px;
+}

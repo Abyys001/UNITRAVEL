@@ -1,0 +1,134 @@
+{
+  "page": {
+    "url": "https://unitravels.co.uk/",
+    "origin": "https://unitravels.co.uk",
+    "host": "unitravels.co.uk",
+    "path": "/",
+    "title": "UNI TRAVEL | به‌زودی",
+    "lang": "fa",
+    "charset": "UTF-8",
+    "projectName": "unitravels-co-uk"
+  },
+  "viewport": {
+    "width": 1534,
+    "height": 916,
+    "devicePixelRatio": 1,
+    "scrollWidth": 1639,
+    "scrollHeight": 1046,
+    "colorScheme": "unknown"
+  },
+  "metadata": {
+    "description": "آژانس مسافرتی یونی تراول (UNI TRAVEL) — رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت به‌زودی راه‌اندازی می‌شود.",
+    "canonical": "https://unitravels.co.uk/",
+    "themeColor": "#072f6b",
+    "viewportMeta": "width=device-width, initial-scale=1.0",
+    "generator": null,
+    "manifestUrl": null,
+    "favicons": [
+      {
+        "href": "https://unitravels.co.uk/favicon.ico",
+        "rel": "icon (default location)",
+        "sizes": null,
+        "type": null
+      }
+    ],
+    "openGraph": {
+      "type": "website",
+      "site_name": "UNI TRAVEL",
+      "locale": "fa_IR",
+      "url": "https://unitravels.co.uk/",
+      "title": "یونی تراول | UNI TRAVEL — آژانس مسافرتی",
+      "description": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود.",
+      "image": "https://unitravels.co.uk/share.png",
+      "image:secure_url": "https://unitravels.co.uk/share.png",
+      "image:type": "image/png",
+      "image:width": "1200",
+      "image:height": "800",
+      "image:alt": "UNI TRAVEL — یونی تراول، آژانس مسافرتی"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "یونی تراول | UNI TRAVEL — آژانس مسافرتی",
+      "description": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود.",
+      "image": "https://unitravels.co.uk/share.png"
+    },
+    "meta": [
+      {
+        "key": "viewport",
+        "value": "width=device-width, initial-scale=1.0"
+      },
+      {
+        "key": "theme-color",
+        "value": "#072f6b"
+      },
+      {
+        "key": "description",
+        "value": "آژانس مسافرتی یونی تراول (UNI TRAVEL) — رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت به‌زودی راه‌اندازی می‌شود."
+      },
+      {
+        "key": "og:type",
+        "value": "website"
+      },
+      {
+        "key": "og:site_name",
+        "value": "UNI TRAVEL"
+      },
+      {
+        "key": "og:locale",
+        "value": "fa_IR"
+      },
+      {
+        "key": "og:url",
+        "value": "https://unitravels.co.uk/"
+      },
+      {
+        "key": "og:title",
+        "value": "یونی تراول | UNI TRAVEL — آژانس مسافرتی"
+      },
+      {
+        "key": "og:description",
+        "value": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود."
+      },
+      {
+        "key": "og:image",
+        "value": "https://unitravels.co.uk/share.png"
+      },
+      {
+        "key": "og:image:secure_url",
+        "value": "https://unitravels.co.uk/share.png"
+      },
+      {
+        "key": "og:image:type",
+        "value": "image/png"
+      },
+      {
+        "key": "og:image:width",
+        "value": "1200"
+      },
+      {
+        "key": "og:image:height",
+        "value": "800"
+      },
+      {
+        "key": "og:image:alt",
+        "value": "UNI TRAVEL — یونی تراول، آژانس مسافرتی"
+      },
+      {
+        "key": "twitter:card",
+        "value": "summary_large_image"
+      },
+      {
+        "key": "twitter:title",
+        "value": "یونی تراول | UNI TRAVEL — آژانس مسافرتی"
+      },
+      {
+        "key": "twitter:description",
+        "value": "رزرو پرواز، هتل، تور، اخذ ویزا، بیمه مسافرتی و ارسال بار. وب‌سایت یونی تراول به‌زودی راه‌اندازی می‌شود."
+      },
+      {
+        "key": "twitter:image",
+        "value": "https://unitravels.co.uk/share.png"
+      }
+    ]
+  }
+}

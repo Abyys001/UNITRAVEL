@@ -1,0 +1,16 @@
+[
+  {"id": "01-title", "text": "Getting from Iran to London or Europe has never been simple. Uni Travel makes it honest."},
+  {"id": "02-home", "text": "Uni Travel is a flight and cargo request service for travellers between Iran, Türkiye, Armenia, the UK and Europe. It starts with one promise: show only the routes that really fly today."},
+  {"id": "03-search", "text": "Search Tehran to London, and results stream in from every source within seconds. Each option says where its price came from and when, and whether the trip starts at an overland gateway like Van or Yerevan. Airlines ruled out by policy are hidden, and the page tells you so."},
+  {"id": "04-itinerary", "text": "Open an itinerary to see every leg in local time, the baggage that is actually included, and the connection risk. Self-transfers on separate tickets are flagged clearly, and one tap re-checks the live price."},
+  {"id": "05-request", "text": "Requesting doesn't book a seat. The customer picks who is travelling, confirms what they understand, and gets a reference straight away, by text message too."},
+  {"id": "06-persian", "text": "Everything works in Persian as well: right to left, with Persian digits and the Jalali calendar."},
+  {"id": "07-mobile", "text": "The mobile app brings the same journey to the phone. Search, track every request, accept quotes, and keep working when the connection drops."},
+  {"id": "08-queue", "text": "Behind the scenes, the team works from a fast, keyboard-first console. New requests land in a live queue with service-level timers. One key claims a case."},
+  {"id": "09-quote", "text": "Each case lives on one screen: the customer, the itinerary snapshot, the timeline, and only the actions that are allowed right now. The quote builder never guesses. Unknown baggage or fare rules block sending until a person confirms them."},
+  {"id": "10-accept", "text": "The customer sees the quote at once and can accept it on the web or in the app. Payment is taken only when tickets are issued, and verified by a second person."},
+  {"id": "11-compliance", "text": "Every traveller is screened against the UK, US and EU sanctions lists, with a matcher tuned for Persian names. A possible match opens a case, and overrides need four eyes."},
+  {"id": "12-dev", "text": "Developers tune the engine safely. Change hub and layover rules, simulate the change against real searches, then publish, or roll back, with a full audit trail."},
+  {"id": "13-cargo", "text": "Cargo works the same way: vetted partners, goods screening, air waybills, and live tracking."},
+  {"id": "14-end", "text": "Uni Travel. Search honestly, request in minutes, and let a person arrange the rest."}
+]

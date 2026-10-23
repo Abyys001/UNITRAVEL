@@ -1,0 +1,234 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Uni Travel home" [ref=e4] [cursor=pointer]:
+        - /url: /en
+        - generic [ref=e5]: Uni Travel
+      - navigation "Main" [ref=e12]:
+        - link "Flights" [ref=e13] [cursor=pointer]:
+          - /url: /en
+        - link "Send cargo" [ref=e14] [cursor=pointer]:
+          - /url: /en/cargo
+        - link "My requests" [ref=e15] [cursor=pointer]:
+          - /url: /en/requests
+      - generic [ref=e16]:
+        - link "فارسی" [ref=e17] [cursor=pointer]:
+          - /url: /fa/search
+        - link "Sign in" [ref=e18] [cursor=pointer]:
+          - /url: /en/sign-in?next=%2Fen%2Fsearch
+  - main [ref=e19]:
+    - generic [ref=e160]:
+      - group [ref=e161]:
+        - generic "Tehran → London · 2026-11-14" [ref=e162] [cursor=pointer]:
+          - generic [ref=e163]: Tehran → London
+          - text: · 2026-11-14
+        - option "Economy" [selected]
+        - option "Premium economy"
+        - option "Business"
+        - option "First"
+        - option "0"
+        - option "1"
+        - option "2" [selected]
+      - generic [ref=e164]:
+        - generic [ref=e165]: Search complete · 8 options
+        - generic [ref=e166]: Some results were hidden by our carrier policy.
+      - generic [ref=e167]:
+        - generic [ref=e168]:
+          - tablist [ref=e169]:
+            - tab "Best" [selected] [ref=e170]
+            - tab "Cheapest" [ref=e171]
+            - tab "Fastest" [ref=e172]
+            - tab "Single ticket" [ref=e173]
+          - list [ref=e174]:
+            - listitem [ref=e175]:
+              - link "VAN → IST → LHR 07:10 – 12:05 · 7h 55m · 1 stop · Sun 15 Nov Layover 2h 00m · IST £334 total for all travellers Sources TK2721 · TK1971" [ref=e176] [cursor=pointer]:
+                - /url: /en/itinerary/itn_1u7cc8g14wzay6?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e177]:
+                  - generic [ref=e178]:
+                    - paragraph [ref=e179]:
+                      - generic [ref=e180]: VAN → IST → LHR
+                    - paragraph [ref=e181]:
+                      - generic [ref=e182]: 07:10 – 12:05
+                      - text: · 7h 55m · 1 stop · Sun 15 Nov
+                    - paragraph [ref=e183]: Layover 2h 00m · IST
+                  - generic [ref=e184]:
+                    - paragraph [ref=e185]: £334
+                    - paragraph [ref=e186]: total for all travellers
+                - generic [ref=e187]:
+                  - generic "Sources" [ref=e188]:
+                    - generic [ref=e189]: TEST DATA
+                    - generic [ref=e190]: Live price · 23:42
+                    - generic [ref=e191]: Starts at gateway
+                  - generic [ref=e192]: TK2721 · TK1971
+            - listitem [ref=e194]:
+              - link "EVN → VIE → LHR 04:15 – 10:10 · 9h 55m · 1 stop · Sun 15 Nov Layover 3h 20m · VIE £341 total for all travellers Sources OS632 · OS451" [ref=e195] [cursor=pointer]:
+                - /url: /en/itinerary/itn_0e6drwl18ogldh?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e196]:
+                  - generic [ref=e197]:
+                    - paragraph [ref=e198]:
+                      - generic [ref=e199]: EVN → VIE → LHR
+                    - paragraph [ref=e200]:
+                      - generic [ref=e201]: 04:15 – 10:10
+                      - text: · 9h 55m · 1 stop · Sun 15 Nov
+                    - paragraph [ref=e202]: Layover 3h 20m · VIE
+                  - generic [ref=e203]:
+                    - paragraph [ref=e204]: £341
+                    - paragraph [ref=e205]: total for all travellers
+                - generic [ref=e206]:
+                  - generic "Sources" [ref=e207]:
+                    - generic [ref=e208]: TEST DATA
+                    - generic [ref=e209]: Live price · 23:42
+                    - generic [ref=e210]: Starts at gateway
+                  - generic [ref=e211]: OS632 · OS451
+            - listitem [ref=e213]:
+              - link "VAN → IST → LHR 07:10 – 15:35 · 11h 25m · 1 stop · Sun 15 Nov Layover 4h 50m · IST · Separate tickets £304 total for all travellers Sources TK2721 · BA675" [ref=e214] [cursor=pointer]:
+                - /url: /en/itinerary/itn_1r0btx21su7gmg?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e215]:
+                  - generic [ref=e216]:
+                    - paragraph [ref=e217]:
+                      - generic [ref=e218]: VAN → IST → LHR
+                    - paragraph [ref=e219]:
+                      - generic [ref=e220]: 07:10 – 15:35
+                      - text: · 11h 25m · 1 stop · Sun 15 Nov
+                    - paragraph [ref=e221]:
+                      - text: Layover 4h 50m · IST
+                      - generic [ref=e222]: · Separate tickets
+                  - generic [ref=e223]:
+                    - paragraph [ref=e224]: £304
+                    - paragraph [ref=e225]: total for all travellers
+                - generic [ref=e226]:
+                  - generic "Sources" [ref=e227]:
+                    - generic [ref=e228]: TEST DATA
+                    - generic [ref=e229]: Live price · 23:42
+                    - generic [ref=e230]: Separate tickets
+                    - generic [ref=e231]: Starts at gateway
+                  - generic [ref=e232]: TK2721 · BA675
+            - listitem [ref=e234]:
+              - link "EVN → WAW → LHR 03:35 – 11:35 · 12h 00m · 1 stop · Sun 15 Nov Layover 4h 55m · WAW £413 total for all travellers Sources LO730 · LO281" [ref=e235] [cursor=pointer]:
+                - /url: /en/itinerary/itn_0llbnr719cnw47?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e236]:
+                  - generic [ref=e237]:
+                    - paragraph [ref=e238]:
+                      - generic [ref=e239]: EVN → WAW → LHR
+                    - paragraph [ref=e240]:
+                      - generic [ref=e241]: 03:35 – 11:35
+                      - text: · 12h 00m · 1 stop · Sun 15 Nov
+                    - paragraph [ref=e242]: Layover 4h 55m · WAW
+                  - generic [ref=e243]:
+                    - paragraph [ref=e244]: £413
+                    - paragraph [ref=e245]: total for all travellers
+                - generic [ref=e246]:
+                  - generic "Sources" [ref=e247]:
+                    - generic [ref=e248]: TEST DATA
+                    - generic [ref=e249]: Live price · 23:42
+                    - generic [ref=e250]: Starts at gateway
+                  - generic [ref=e251]: LO730 · LO281
+            - listitem [ref=e253]:
+              - link "ERZ → IST → LGW 08:30 – 19:30 · 14h 00m · 1 stop · Sun 15 Nov Layover 7h 50m · IST £402 total for all travellers Sources TK2649 · TK1985" [ref=e254] [cursor=pointer]:
+                - /url: /en/itinerary/itn_08f8jns091fq58?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e255]:
+                  - generic [ref=e256]:
+                    - paragraph [ref=e257]:
+                      - generic [ref=e258]: ERZ → IST → LGW
+                    - paragraph [ref=e259]:
+                      - generic [ref=e260]: 08:30 – 19:30
+                      - text: · 14h 00m · 1 stop · Sun 15 Nov
+                    - paragraph [ref=e261]: Layover 7h 50m · IST
+                  - generic [ref=e262]:
+                    - paragraph [ref=e263]: £402
+                    - paragraph [ref=e264]: total for all travellers
+                - generic [ref=e265]:
+                  - generic "Sources" [ref=e266]:
+                    - generic [ref=e267]: TEST DATA
+                    - generic [ref=e268]: Live price · 23:42
+                    - generic [ref=e269]: Starts at gateway
+                  - generic [ref=e270]: TK2649 · TK1985
+            - listitem [ref=e272]:
+              - link "EVN → VIE → LHR 04:15 – 14:35 · 14h 20m · 1 stop · Sun 15 Nov Layover 7h 45m · VIE · Separate tickets £298 total for all travellers Sources OS632 · OS455" [ref=e273] [cursor=pointer]:
+                - /url: /en/itinerary/itn_0n4gvm60c2749m?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e274]:
+                  - generic [ref=e275]:
+                    - paragraph [ref=e276]:
+                      - generic [ref=e277]: EVN → VIE → LHR
+                    - paragraph [ref=e278]:
+                      - generic [ref=e279]: 04:15 – 14:35
+                      - text: · 14h 20m · 1 stop · Sun 15 Nov
+                    - paragraph [ref=e280]:
+                      - text: Layover 7h 45m · VIE
+                      - generic [ref=e281]: · Separate tickets
+                  - generic [ref=e282]:
+                    - paragraph [ref=e283]: £298
+                    - paragraph [ref=e284]: total for all travellers
+                - generic [ref=e285]:
+                  - generic "Sources" [ref=e286]:
+                    - generic [ref=e287]: TEST DATA
+                    - generic [ref=e288]: Live price · 23:42
+                    - generic [ref=e289]: Separate tickets
+                    - generic [ref=e290]: Starts at gateway
+                  - generic [ref=e291]: OS632 · OS455
+            - listitem [ref=e293]:
+              - link "VAN → IST → LGW 07:10 – 19:30 · 15h 20m · 1 stop · Sun 15 Nov Layover 9h 20m · IST · Separate tickets £352 total for all travellers Sources TK2721 · TK1985" [ref=e294] [cursor=pointer]:
+                - /url: /en/itinerary/itn_0v8lsg41l5159e?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e295]:
+                  - generic [ref=e296]:
+                    - paragraph [ref=e297]:
+                      - generic [ref=e298]: VAN → IST → LGW
+                    - paragraph [ref=e299]:
+                      - generic [ref=e300]: 07:10 – 19:30
+                      - text: · 15h 20m · 1 stop · Sun 15 Nov
+                    - paragraph [ref=e301]:
+                      - text: Layover 9h 20m · IST
+                      - generic [ref=e302]: · Separate tickets
+                  - generic [ref=e303]:
+                    - paragraph [ref=e304]: £352
+                    - paragraph [ref=e305]: total for all travellers
+                - generic [ref=e306]:
+                  - generic "Sources" [ref=e307]:
+                    - generic [ref=e308]: TEST DATA
+                    - generic [ref=e309]: Live price · 23:42
+                    - generic [ref=e310]: Separate tickets
+                    - generic [ref=e311]: Starts at gateway
+                  - generic [ref=e312]: TK2721 · TK1985
+            - listitem [ref=e314]:
+              - link "IKA → MCT → LHR 04:20 – 17:05 · 16h 15m · 1 stop · Sat 14 Nov Layover 6h 10m · MCT · Separate tickets £595 total for all travellers Sources OV511 · WY103" [ref=e315] [cursor=pointer]:
+                - /url: /en/itinerary/itn_1xrx7mc1u9wsm0?s=01a1653d-f00c-76cb-b61d-5d4350507fba
+                - generic [ref=e316]:
+                  - generic [ref=e317]:
+                    - paragraph [ref=e318]:
+                      - generic [ref=e319]: IKA → MCT → LHR
+                    - paragraph [ref=e320]:
+                      - generic [ref=e321]: 04:20 – 17:05
+                      - text: · 16h 15m · 1 stop · Sat 14 Nov
+                    - paragraph [ref=e322]:
+                      - text: Layover 6h 10m · MCT
+                      - generic [ref=e323]: · Separate tickets
+                  - generic [ref=e324]:
+                    - paragraph [ref=e325]: £595
+                    - paragraph [ref=e326]: total for all travellers
+                - generic [ref=e327]:
+                  - generic "Sources" [ref=e328]:
+                    - generic [ref=e329]: TEST DATA
+                    - generic [ref=e330]: Live price · 23:42
+                    - generic [ref=e331]: Separate tickets
+                  - generic [ref=e332]: OV511 · WY103
+        - complementary [ref=e334]:
+          - paragraph [ref=e336]: Prices include taxes; our team re-confirms before reserving.
+          - generic [ref=e337]:
+            - paragraph [ref=e338]: No suitable flights found.
+            - paragraph [ref=e339]: Our team can look further — including overland starts and other dates.
+            - link "Ask our team to find options" [ref=e340] [cursor=pointer]:
+              - /url: /en/request/new?manual=eyJ0cmlwIjoiT05FX1dBWSIsImZyb20iOnsia2luZCI6IkNJVFkiLCJjb2RlIjoiVEhSIiwibGFiZWwiOiJUZWhyYW4ifSwidG8iOnsia2luZCI6IkNJVFkiLCJjb2RlIjoiTE9OIiwibGFiZWwiOiJMb25kb24ifSwiZGF0ZSI6IjIwMjYtMTEtMTQiLCJhZHQiOjEsImNoZCI6W10sImluZiI6MCwiY2FiaW4iOiJFQ09OT01ZIiwiZmxleCI6ZmFsc2UsInN0Ijp0cnVlLCJhYyI6ZmFsc2UsIm9uIjp0cnVlLCJndyI6dHJ1ZSwic3RvcHMiOjIsImxheSI6WzI0MCwzNjBdfQ%3D%3D
+  - contentinfo [ref=e143]:
+    - generic [ref=e144]:
+      - generic [ref=e145]:
+        - generic [ref=e146]: Uni Travel
+        - paragraph [ref=e153]: Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people.
+      - paragraph [ref=e154]: Flights are arranged as an airline ticket agent; payment is taken when tickets are issued.
+      - generic [ref=e155]:
+        - link "Terms" [ref=e156] [cursor=pointer]:
+          - /url: /en/terms
+        - link "Privacy" [ref=e157] [cursor=pointer]:
+          - /url: /en/privacy
+        - generic [ref=e158]: Uni Travel Ltd · London
+  - region "Notifications alt+T"
+  - alert [ref=e159]

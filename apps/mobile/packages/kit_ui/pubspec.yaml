@@ -1,0 +1,28 @@
+name: kit_ui
+description: >
+  XFAM shared Flutter UI kit — theme, finance, workflow, forms, feedback,
+  navigation and overlay widgets built on the XFAM design tokens. State-
+  management agnostic: no Riverpod/Dio/go_router dependency.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.9.0 <4.0.0'
+  flutter: '>=3.35.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  intl: ^0.20.0
+  flutter_svg: ^2.3.0
+  lucide_icons_flutter: ^3.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

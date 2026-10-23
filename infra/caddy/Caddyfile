@@ -1,0 +1,37 @@
+# Edge (booklet ch. 30.2): TLS, HTTP/3, compression and the host split. Security headers are set by the apps
+# (CSP needs a per-request nonce); Caddy only adds what applies to every response.
+{
+	email {$ACME_EMAIL}
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+(common) {
+	encode zstd gzip
+	header -Server
+	log {
+		output stdout
+		format json
+	}
+}
+
+{$WEB_HOST} {
+	import common
+	reverse_proxy web:4000
+}
+
+{$API_HOST} {
+	import common
+	# SSE search progress must not be buffered.
+	reverse_proxy api:4100 {
+		flush_interval -1
+	}
+}
+
+{$ADMIN_HOST}, {$DEV_HOST} {
+	import common
+	reverse_proxy console:4200 {
+		header_up X-Forwarded-Host {host}
+	}
+}

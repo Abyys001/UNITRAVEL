@@ -1,0 +1,389 @@
+[
+  {
+    "tag": "div",
+    "selector": "div.g1:nth-of-type(1)",
+    "role": null,
+    "label": null,
+    "childCount": 0,
+    "children": []
+  },
+  {
+    "tag": "div",
+    "selector": "div.g2:nth-of-type(2)",
+    "role": null,
+    "label": null,
+    "childCount": 0,
+    "children": []
+  },
+  {
+    "tag": "main",
+    "selector": "main.card",
+    "role": "main",
+    "label": null,
+    "childCount": 8,
+    "children": [
+      {
+        "tag": "div",
+        "selector": "div.brand-mark:nth-of-type(1)",
+        "role": null,
+        "label": "UNI TRAVEL",
+        "childCount": 2,
+        "children": [
+          {
+            "tag": "div",
+            "selector": "div.logo-orbit:nth-of-type(1)",
+            "role": null,
+            "label": null,
+            "childCount": 1,
+            "children": [
+              {
+                "tag": "span",
+                "selector": "span.plane",
+                "role": null,
+                "label": null,
+                "childCount": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.brand-copy:nth-of-type(2)",
+            "role": null,
+            "label": null,
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "h1",
+                "selector": "h1",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "p",
+                "selector": "div.brand-copy:nth-of-type(2) > p",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "h2",
+        "selector": "h2.persian-title",
+        "role": null,
+        "label": null,
+        "childCount": 1,
+        "children": [
+          {
+            "tag": "small",
+            "selector": "small",
+            "role": null,
+            "label": null,
+            "childCount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "selector": "span.soon",
+        "role": null,
+        "label": null,
+        "childCount": 0,
+        "children": []
+      },
+      {
+        "tag": "p",
+        "selector": "p.lead",
+        "role": null,
+        "label": null,
+        "childCount": 0,
+        "children": []
+      },
+      {
+        "tag": "div",
+        "selector": "div.services-head:nth-of-type(2)",
+        "role": null,
+        "label": null,
+        "childCount": 3,
+        "children": [
+          {
+            "tag": "span",
+            "selector": "div.services-head:nth-of-type(2) > span:nth-of-type(1)",
+            "role": null,
+            "label": null,
+            "childCount": 0,
+            "children": []
+          },
+          {
+            "tag": "h3",
+            "selector": "h3",
+            "role": null,
+            "label": null,
+            "childCount": 0,
+            "children": []
+          },
+          {
+            "tag": "span",
+            "selector": "span:nth-of-type(2)",
+            "role": null,
+            "label": null,
+            "childCount": 0,
+            "children": []
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "selector": "div.services:nth-of-type(3)",
+        "role": null,
+        "label": null,
+        "childCount": 6,
+        "children": [
+          {
+            "tag": "div",
+            "selector": "div.service:nth-of-type(1)",
+            "role": null,
+            "label": null,
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-plane-departure",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "strong",
+                "selector": "div.service:nth-of-type(1) > strong",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.service:nth-of-type(2)",
+            "role": null,
+            "label": null,
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-hotel",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "strong",
+                "selector": "div.service:nth-of-type(2) > strong",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.service:nth-of-type(3)",
+            "role": null,
+            "label": null,
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-earth-americas",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "strong",
+                "selector": "div.service:nth-of-type(3) > strong",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.service:nth-of-type(4)",
+            "role": null,
+            "label": null,
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-passport",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "strong",
+                "selector": "div.service:nth-of-type(4) > strong",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.service:nth-of-type(5)",
+            "role": null,
+            "label": null,
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-shield-halved",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "strong",
+                "selector": "div.service:nth-of-type(5) > strong",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "selector": "div.service:nth-of-type(6)",
+            "role": null,
+            "label": null,
+            "childCount": 2,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-box",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              },
+              {
+                "tag": "strong",
+                "selector": "div.service:nth-of-type(6) > strong",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "selector": "div.contact:nth-of-type(4)",
+        "role": null,
+        "label": null,
+        "childCount": 3,
+        "children": [
+          {
+            "tag": "a",
+            "selector": "div.contact:nth-of-type(4) > a:nth-of-type(1)",
+            "role": null,
+            "label": null,
+            "childCount": 1,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-phone",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "a",
+            "selector": "a:nth-of-type(2)",
+            "role": null,
+            "label": null,
+            "childCount": 1,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-envelope",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "a",
+            "selector": "a:nth-of-type(3)",
+            "role": null,
+            "label": null,
+            "childCount": 1,
+            "children": [
+              {
+                "tag": "i",
+                "selector": "i.fa-solid.fa-location-dot",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "footer",
+        "selector": "footer",
+        "role": "contentinfo",
+        "label": null,
+        "childCount": 1,
+        "children": [
+          {
+            "tag": "div",
+            "selector": "div.powered-by",
+            "role": null,
+            "label": null,
+            "childCount": 1,
+            "children": [
+              {
+                "tag": "a",
+                "selector": "div.powered-by > a",
+                "role": null,
+                "label": null,
+                "childCount": 0,
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,109 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "Uni Travel home" [ref=e4] [cursor=pointer]:
+        - /url: /en
+        - generic [ref=e5]: Uni Travel
+      - navigation "Main" [ref=e12]:
+        - link "Flights" [ref=e13] [cursor=pointer]:
+          - /url: /en
+        - link "Send cargo" [ref=e14] [cursor=pointer]:
+          - /url: /en/cargo
+        - link "My requests" [ref=e15] [cursor=pointer]:
+          - /url: /en/requests
+      - generic [ref=e16]:
+        - link "فارسی" [ref=e17] [cursor=pointer]:
+          - /url: /fa
+        - link "Sign in" [ref=e18] [cursor=pointer]:
+          - /url: /en/sign-in?next=%2Fen
+  - main [ref=e19]:
+    - generic [ref=e20]:
+      - img [aria-hidden] [ref=e22]:
+        - generic [ref=e34]: LON
+        - generic [ref=e38]: IST
+        - generic [ref=e42]: EVN
+        - generic [ref=e46]: TBZ
+        - generic [ref=e50]: VAN
+        - generic [ref=e54]: THR
+        - generic [ref=e58]: NJF
+        - generic [ref=e62]: MCT
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - paragraph [ref=e68]: Iran · Türkiye · Armenia · UK · Europe
+          - heading "Real routes out of Iran, assembled with care." [level=1] [ref=e69]
+          - paragraph [ref=e70]: We search airline and agency systems for flights that actually exist today — including starts from Van, Erzurum and Yerevan — and a person calls you to arrange the rest.
+          - paragraph [ref=e71]: "October 2026: Turkish carriers have no Iran flights before March 2027, and Iranian airlines are not offered. We show what really flies."
+        - form "Search flights" [ref=e73]:
+          - radiogroup [ref=e74]:
+            - radio "One-way" [checked] [ref=e75]
+            - radio "Return" [ref=e76]
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - generic [ref=e79]: From
+              - generic [ref=e80]:
+                - combobox "From" [ref=e84]
+                - generic [ref=e85]: THR
+            - button "Swap" [ref=e86]
+            - generic [ref=e90]:
+              - generic [ref=e91]: To
+              - generic [ref=e92]:
+                - combobox "To" [ref=e96]
+                - generic [ref=e97]: LON
+          - generic [ref=e98]:
+            - generic [ref=e99]:
+              - text: Depart
+              - textbox "Depart" [ref=e100]: 2026-11-14
+            - generic [ref=e102]:
+              - text: Cabin
+              - combobox "Cabin" [ref=e103]:
+                - option "Economy" [selected]
+                - option "Premium economy"
+                - option "Business"
+                - option "First"
+            - generic [ref=e104]:
+              - checkbox "± 3 days" [ref=e105]
+              - text: ± 3 days
+          - group [ref=e106]:
+            - generic "Travellers · Connection preferences" [ref=e107] [cursor=pointer]
+            - option "0"
+            - option "1"
+            - option "2" [selected]
+          - button "Search flights" [ref=e111]
+    - generic [ref=e112]:
+      - heading "How it works" [level=2] [ref=e113]
+      - list [ref=e114]:
+        - listitem [ref=e115]:
+          - generic [ref=e116]: "01"
+          - heading "Search" [level=3] [ref=e117]
+          - paragraph [ref=e118]: Every option shows where its price came from and when.
+        - listitem [ref=e119]:
+          - generic [ref=e120]: "02"
+          - heading "Request" [level=3] [ref=e121]
+          - paragraph [ref=e122]: Pick an itinerary or ask our team. Requesting does not book a seat.
+        - listitem [ref=e123]:
+          - generic [ref=e124]: "03"
+          - heading "We call you" [level=3] [ref=e125]
+          - paragraph [ref=e126]: Our team confirms prices, baggage and entry rules, then sends options.
+        - listitem [ref=e127]:
+          - generic [ref=e128]: "04"
+          - heading "Ticketed" [level=3] [ref=e129]
+          - paragraph [ref=e130]: You pay when the ticket is issued. Tickets appear in your request.
+    - generic [ref=e132]:
+      - generic [ref=e138]:
+        - heading "Sending documents, parcels or freight?" [level=2] [ref=e139]
+        - paragraph [ref=e140]: Request a quote through our vetted partners. Every shipment is checked and quoted by a person.
+      - link "Request a cargo quote" [ref=e141] [cursor=pointer]:
+        - /url: /en/cargo
+  - contentinfo [ref=e144]:
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - generic [ref=e147]: Uni Travel
+        - paragraph [ref=e154]: Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people.
+      - paragraph [ref=e155]: Flights are arranged as an airline ticket agent; payment is taken when tickets are issued.
+      - generic [ref=e156]:
+        - link "Terms" [ref=e157] [cursor=pointer]:
+          - /url: /en/terms
+        - link "Privacy" [ref=e158] [cursor=pointer]:
+          - /url: /en/privacy
+        - generic [ref=e159]: Uni Travel Ltd · London
+  - region "Notifications alt+T"
