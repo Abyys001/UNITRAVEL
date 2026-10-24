@@ -2,7 +2,7 @@ import { Body, Controller, Get, Headers, HttpCode, Param, Post, Put, Query } fro
 import { ApiTags } from "@nestjs/swagger"
 import { z } from "zod"
 
-import { AvailabilityBody, CARGO_COMMANDS, CargoCommandBodies, CargoQuoteBody, ContactAttemptBody, CreateCargoRequestBody, LaneUpsertBody, MessageBody, NoteBody, PartnerBody, TrackingEventBody } from "@unitravel/contracts"
+import { AvailabilityBody, CARGO_COMMANDS, CargoCommandBodies, CargoQuoteBody, ContactAttemptBody, EstimatedDeliveryBody, CreateCargoRequestBody, LaneUpsertBody, MessageBody, NoteBody, PartnerBody, TrackingCorrectionBody, TrackingEventBody } from "@unitravel/contracts"
 
 import { AppError } from "../../core/errors"
 import { type Actor, Ctx, CurrentActor, DevSurface, Idempotent, Public, RateLimit, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
@@ -50,6 +50,25 @@ export class CustomerCargoController {
   @RequirePermission("cargo_request.read.own")
   detail(@Param("ref") ref: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     return this.cargo.customerDetail(ref, actor, ctx.locale)
+  }
+
+  /** Shipments overview (Phase E): the customer's own cargo with the current tracking state and the estimate. */
+  @Get("shipments")
+  @RequirePermission("cargo_request.read.own")
+  shipments(@CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.cargo.customerShipments(actor.userId, ctx.locale)
+  }
+
+  @Get("shipments/summary")
+  @RequirePermission("cargo_request.read.own")
+  shipmentSummary(@CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.cargo.shipmentSummary(actor.userId, ctx.locale)
+  }
+
+  @Get("shipments/:ref")
+  @RequirePermission("cargo_request.read.own")
+  shipment(@Param("ref") ref: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.cargo.customerShipment(ref, actor, ctx.locale)
   }
 
   @Post("cargo-requests/:ref/messages")
@@ -113,6 +132,19 @@ export class AdminCargoController {
   @RequirePermission("cargo_request.transition")
   tracking(@Param("ref") ref: string, @Body(zbody(TrackingEventBody)) body: z.infer<typeof TrackingEventBody>, @CurrentActor() actor: Actor) {
     return this.cargo.trackingEvent(ref, body, actor)
+  }
+
+  /** Appends a correction that points at the event it replaces; never edits in place. */
+  @Post("requests/:ref/tracking-corrections")
+  @RequirePermission("cargo_request.transition")
+  correctTracking(@Param("ref") ref: string, @Body(zbody(TrackingCorrectionBody)) body: z.infer<typeof TrackingCorrectionBody>, @CurrentActor() actor: Actor) {
+    return this.cargo.correctTracking(ref, body, actor)
+  }
+
+  @Put("requests/:ref/estimated-delivery")
+  @RequirePermission("cargo_request.transition")
+  eta(@Param("ref") ref: string, @Body(zbody(EstimatedDeliveryBody)) body: z.infer<typeof EstimatedDeliveryBody>, @CurrentActor() actor: Actor) {
+    return this.cargo.setEstimatedDelivery(ref, body.estimatedDeliveryAt, actor)
   }
 
   @Post("requests/:ref/notes")

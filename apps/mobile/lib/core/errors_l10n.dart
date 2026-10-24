@@ -28,11 +28,10 @@ String errorMessage(AppL10n l, Object error) {
       return l.errNotFound;
     case 'VERSION_CONFLICT':
     case 'INVALID_TRANSITION':
+    case 'IDENTITY_NOT_VERIFIED':
       return l.errConflict;
     case 'OFFER_EXPIRED':
       return l.errOfferExpired;
-    case 'PRICE_CHANGED':
-      return l.errPriceChanged;
     case 'SEARCH_EXPIRED':
       return l.errSearchExpired;
     case 'SUPPLIER_UNAVAILABLE':

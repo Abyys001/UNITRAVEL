@@ -16,7 +16,8 @@ services:
     healthcheck: { test: ["CMD", "valkey-cli", "ping"], interval: 3s, retries: 20 }
   storage:
     image: rustfs/rustfs:1.0.1
-    environment: { RUSTFS_ACCESS_KEY: unitravel, RUSTFS_SECRET_KEY: unitravel-secret }
+    # SSE-S3 for the identity bucket needs a master key (ADR-0005 V6). The key lives in the git-ignored .env (rule 6); production uses the object store's KMS.
+    environment: { RUSTFS_ACCESS_KEY: unitravel, RUSTFS_SECRET_KEY: unitravel-secret, RUSTFS_SSE_S3_MASTER_KEY: "${RUSTFS_SSE_S3_MASTER_KEY:?set RUSTFS_SSE_S3_MASTER_KEY in .env}" }
     command: ["/data"]
     ports: ["9010:9000"]
     volumes: [storage:/data]

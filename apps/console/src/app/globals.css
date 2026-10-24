@@ -2,37 +2,97 @@
 @source "../../node_modules/@unitravel/ui/src";
 
 /*
- * Console tokens on top of the shared palette (docs/design/DESIGN.md): the console reads like a ledger — dense
- * 13 px type, hairline rules instead of cards, mono for references and values. The dev host swaps the accent for a
- * hatched "workshop" strip so nobody confuses the two surfaces.
+ * Console tokens on top of the shared palette (docs/design/DESIGN.md, "Control deck"). Light is the ledger look; dark
+ * (html[data-theme="dark"], set before paint by the script in layout.tsx) re-points the semantic variables below, so
+ * pages written against bg-surface-raised / text-ink / text-steel / border-rule follow the theme without edits.
+ * The dev host swaps the accent for a hatched orange/navy "workshop" strip and a cyan active indicator.
  */
-@theme {
-  --font-sans: var(--font-inter), var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
-  --color-rule: #e6e1d8;
-  --color-rule-strong: #cfc7b8;
-  --color-ledger: #fffdf9;
-  --color-workshop: #b07a45;
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-ink: var(--ink);
+  --color-chrome: var(--chrome);
+  --color-hover: var(--hover);
 }
 
+@theme {
+  --font-sans: var(--font-montserrat), var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
+  --color-steel: var(--ink-muted);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-ledger: var(--surface-sunk);
+  --color-workshop: #ff8617;
+  --indicator: var(--color-orange);
+}
+
+:root {
+  --tile-shadow: 0 1px 2px rgb(6 31 76 / 0.05);
+  --tile-pad: calc(var(--spacing) * 4);
+  --grid-gap: calc(var(--spacing) * 3);
+}
+
+/* Dark values come from the generated tokens.css (tokens/tokens.json): navy-950 page, navy-900 raised cards, hairline white
+   rules, accent text on the -300 shades for AA (DESIGN.md table). Only the shadow is local. */
+[data-theme="dark"] {
+  --tile-shadow: 0 0 0 1px rgb(255 255 255 / 0.02), 0 12px 28px -18px rgb(0 0 0 / 0.6);
+}
+
+/* Compact density: tightens every spacing utility on fine pointers only, so touch targets stay >= 32 px. */
+@media (pointer: fine) {
+  [data-density="compact"] {
+    --spacing: 0.215rem;
+    --tile-pad: calc(var(--spacing) * 3);
+    --grid-gap: calc(var(--spacing) * 2.5);
+  }
+}
+
+[data-surface="dev"] { --indicator: var(--color-cyan); }
 html, body { font-size: 13px; line-height: 1.45; }
-body { background: var(--color-sand); }
+body { background: var(--surface); color: var(--ink); }
 [dir="auto"], .bidi { unicode-bidi: plaintext; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
 
 /* Component classes sit in the components layer so Tailwind utilities (w-40, bg-transparent…) still override them. */
 @layer components {
   .workshop-strip {
-    background: repeating-linear-gradient(-45deg, #c98d5b 0 8px, #0f2238 8px 16px);
+    background: repeating-linear-gradient(-45deg, var(--color-orange) 0 8px, var(--color-navy-950) 8px 16px);
   }
-  .ledger-rows > * + * { border-top: 1px solid var(--color-rule); }
-  .cap { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-slate); }
+  .ledger-rows > * + * { border-top: 1px solid var(--rule); }
+  .cap { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
   .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-  .kbd { font-family: var(--font-mono); font-size: 10.5px; border: 1px solid var(--color-rule-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: #fff; color: var(--color-slate); }
+  .kbd { font-family: var(--font-mono); font-size: 10.5px; border: 1px solid var(--rule-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--surface-raised); color: var(--ink-muted); }
   .field-input {
-    height: 30px; width: 100%; border: 1px solid var(--color-rule-strong); border-radius: 6px; background: #fff; padding: 0 8px; font-size: 13px;
+    height: 30px; width: 100%; border: 1px solid var(--rule-strong); border-radius: 6px; background: var(--surface-raised); color: var(--ink); padding: 0 8px; font-size: 13px;
   }
-  .field-input:focus-visible { outline: 2px solid var(--color-copper); outline-offset: 0; }
+  .field-input:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 0; }
   textarea.field-input { height: auto; padding: 6px 8px; }
-  select.field-input { padding-inline-end: 4px; }
-  .row-focus { box-shadow: inset 3px 0 0 var(--color-copper); background: #f6efe5; }
-  [dir="rtl"] .row-focus { box-shadow: inset -3px 0 0 var(--color-copper); }
+  .row-focus { box-shadow: inset 3px 0 0 var(--indicator); background: var(--hover); }
+  [dir="rtl"] .row-focus { box-shadow: inset -3px 0 0 var(--indicator); }
+
+  /* ---- Shell rail: width and label visibility come from html[data-rail] (set before paint), so a collapsed rail never flashes open ---- */
+  .rail { width: 14.5rem; transition: width 0.18s ease; }
+  [data-rail="collapsed"] .rail { width: 3.5rem; }
+  [data-rail="collapsed"] .rail-label, [data-rail="collapsed"] .rail-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  [data-rail="collapsed"] .rail-link { justify-content: center; padding-inline: 0; position: relative; }
+  [data-rail="collapsed"] .rail-sep { display: block; }
+  .rail-sep { display: none; margin: 0.5rem 0.75rem; border-top: 1px solid var(--rule); }
+  [data-rail="collapsed"] .rail-count { position: absolute; inset-block-start: 1px; inset-inline-end: 3px; min-width: 15px; text-align: center; font-size: 9.5px; line-height: 14px; border-radius: 8px; padding: 0 3px; background: var(--hover); color: var(--ink); }
+
+  /* ---- Bento primitives (components/bento.tsx) ---- */
+  .bento-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: var(--grid-gap); }
+  @media (min-width: 640px) { .bento-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .bento-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); } }
+  .bento-tile {
+    position: relative; min-width: 0; border: 1px solid var(--rule); border-radius: 14px; background: var(--surface-raised);
+    padding: var(--tile-pad); box-shadow: var(--tile-shadow);
+  }
+  .bento-tile[data-tone="hero"] { border-color: var(--color-orange); }
+  .bento-tile[data-tone="alert"] { border-color: var(--color-danger); background: color-mix(in oklab, var(--color-danger) 7%, var(--surface-raised)); }
+  .skeleton { border-radius: 6px; background: linear-gradient(90deg, var(--hover) 0%, var(--rule) 50%, var(--hover) 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
 }

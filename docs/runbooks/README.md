@@ -13,6 +13,9 @@ Source: booklet ch. 30.7 (trigger table) and ch. 30.6 (backup). Targets: ch. 30.
 | [security-incident](security-incident.md) | Suspected breach (includes ICO 72-hour steps) |
 | [sanctions-ingestion-failure](sanctions-ingestion-failure.md) | List sync failed twice in a row |
 | [backup-restore](backup-restore.md) | Data loss, corruption, or the monthly restore test (ch. 30.6) |
+| [identity-verification](identity-verification.md) | Staff procedure for passport verification (ADR-0005); not an incident trigger |
+| [stripe-webhook-failure](stripe-webhook-failure.md) | Failed Stripe events, or a customer paid by card but the invoice is unpaid (ADR-0007, test mode) |
+| [refunds](refunds.md) | Staff procedure for refunding an online card payment (ADR-0007); not an incident trigger |
 
 ## Conventions
 

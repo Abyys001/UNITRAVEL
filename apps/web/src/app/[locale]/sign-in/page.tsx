@@ -4,9 +4,10 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 
-import { Button } from "@unitravel/ui/components/button"
+import { Logo } from "@unitravel/ui/brand/logo"
 import { Input } from "@unitravel/ui/components/input"
 
+import { HeroVideo } from "@/components/hero-video"
 import { api, ApiError } from "@/lib/api"
 import { deviceId } from "@/lib/device"
 import { useI18n } from "@/lib/i18n"
@@ -28,6 +29,9 @@ function SignIn() {
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [pow, setPow] = useState<number | null>(null)
+  // The media panel is hidden below md; do not download its poster and video on phones.
+  const [wide, setWide] = useState(false)
+  useEffect(() => setWide(window.matchMedia("(min-width: 768px)").matches), [])
   const [profile, setProfile] = useState({ givenNamesLatin: "", surnameLatin: "", nameFa: "" })
   useEffect(() => { if (wait <= 0) return; const id = setTimeout(() => setWait((w) => w - 1), 1000); return () => clearTimeout(id) }, [wait])
 
@@ -65,39 +69,56 @@ function SignIn() {
     } catch (e2) { setErr(e2 instanceof ApiError ? e2.problem.detail ?? e2.problem.title : String(e2)) } finally { setBusy(false) }
   }
   return (
-    <div className="mx-auto max-w-md px-4 py-12">
-      <h1 className="font-display text-3xl">{step === "profile" ? t("auth.nameTitle") : t("auth.title")}</h1>
-      <p className="mt-2 text-sm text-slate">{t("auth.noPassword")}</p>
-      {step === "identity" && (
-        <form className="mt-6 space-y-4" onSubmit={(e) => { e.preventDefault(); void send() }}>
-          <label className="block text-sm font-medium">{t(channel === "PHONE" ? "auth.phone" : "auth.email")}
-            <Input className="mt-1 h-11 text-base" dir="ltr" inputMode={channel === "PHONE" ? "tel" : "email"} autoComplete={channel === "PHONE" ? "tel" : "email"} placeholder={channel === "PHONE" ? "0912 345 6789 · +44 7700 900123" : "you@example.com"} value={value} onChange={(e) => setValue(e.target.value)} required />
-          </label>
-          <Button type="submit" className="h-11 w-full" disabled={busy || !value}>{pow !== null ? `${t("auth.checking")} ${Math.round(pow * 100)}%` : t("auth.sendCode")}</Button>
-          <button type="button" className="text-sm text-copper-700 underline underline-offset-4" onClick={() => { setChannel((c) => (c === "PHONE" ? "EMAIL" : "PHONE")); setValue("") }}>{t(channel === "PHONE" ? "auth.useEmail" : "auth.usePhone")}</button>
-        </form>
-      )}
-      {step === "code" && challenge && (
-        <form className="mt-6 space-y-4" onSubmit={verify}>
-          <label className="block text-sm">{t("auth.code", { to: challenge.normalised })}
-            <Input className="mt-2 h-12 text-center font-mono text-2xl tracking-[0.5em]" dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/[^0-9۰-۹]/g, ""))} autoFocus required />
-          </label>
-          <Button type="submit" className="h-11 w-full" disabled={busy || code.length < 6}>{t("auth.verify")}</Button>
-          <div className="flex items-center justify-between text-sm">
-            {wait > 0 ? <span className="text-slate">{t("auth.resendIn", { s: wait })}</span> : <button type="button" className="text-copper-700 underline" onClick={() => void send()}>{t("auth.resend")}</button>}
-            {challenge.voiceAvailable && wait <= 0 && <button type="button" className="text-copper-700 underline" onClick={() => void send(true)}>{t("auth.voice")}</button>}
+    <div className="mx-auto max-w-5xl px-4 py-8 md:py-12">
+      <div className="card-brand grid overflow-hidden md:min-h-[600px] md:grid-cols-[1fr_1.05fr]">
+        <div className="relative hidden overflow-hidden bg-navy-950 md:block">
+          {wide && <HeroVideo name="signin" />}
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-navy-950/85 via-navy-900/60 to-navy-950/90" />
+          <div className="relative flex h-full flex-col items-center justify-between p-10 text-center text-white">
+            <Logo variant="stacked" tone="onDark" size={64} />
+            <p className="max-w-xs text-lg font-semibold leading-relaxed">{t("brand.tagline")}</p>
           </div>
-        </form>
-      )}
-      {step === "profile" && (
-        <form className="mt-6 space-y-4" onSubmit={saveProfile}>
-          <label className="block text-sm font-medium">{t("auth.given")}<Input className="mt-1 h-11" dir="ltr" value={profile.givenNamesLatin} onChange={(e) => setProfile({ ...profile, givenNamesLatin: e.target.value })} required pattern="[A-Za-z][A-Za-z '\-]*" /></label>
-          <label className="block text-sm font-medium">{t("auth.surname")}<Input className="mt-1 h-11" dir="ltr" value={profile.surnameLatin} onChange={(e) => setProfile({ ...profile, surnameLatin: e.target.value })} required pattern="[A-Za-z][A-Za-z '\-]*" /></label>
-          <label className="block text-sm font-medium">{t("auth.nameFa")}<Input className="mt-1 h-11" dir="rtl" value={profile.nameFa} onChange={(e) => setProfile({ ...profile, nameFa: e.target.value })} /></label>
-          <Button type="submit" className="h-11 w-full" disabled={busy}>{t("auth.save")}</Button>
-        </form>
-      )}
-      {err && <p role="alert" className="mt-4 rounded-md bg-[#fbeee9] px-3 py-2 text-sm text-brick">{err}</p>}
+        </div>
+        <div>
+          <div className="bg-brand px-6 py-3 md:hidden">
+            <p className="text-sm font-semibold text-white">{t("brand.tagline")}</p>
+          </div>
+          <div className="p-6 sm:p-10">
+        <h1 className="font-display text-3xl md:text-4xl">{step === "profile" ? t("auth.nameTitle") : t("auth.title")}</h1>
+        <p className="mt-3 text-steel">{t("auth.noPassword")}</p>
+        {step === "identity" && (
+          <form className="mt-6 space-y-4" onSubmit={(e) => { e.preventDefault(); void send() }}>
+            <label className="block text-sm font-medium">{t(channel === "PHONE" ? "auth.phone" : "auth.email")}
+              <Input className="mt-1.5 h-12 rounded-xl bg-cloud text-base" dir="ltr" inputMode={channel === "PHONE" ? "tel" : "email"} autoComplete={channel === "PHONE" ? "tel" : "email"} placeholder={channel === "PHONE" ? "0912 345 6789 · +44 7700 900123" : "you@example.com"} value={value} onChange={(e) => setValue(e.target.value)} required />
+            </label>
+            <button type="submit" className="btn-orange h-12 w-full" disabled={busy || !value}>{pow !== null ? `${t("auth.checking")} ${Math.round(pow * 100)}%` : t("auth.sendCode")}</button>
+            <button type="button" className="text-sm font-semibold text-orange-700 underline underline-offset-4" onClick={() => { setChannel((c) => (c === "PHONE" ? "EMAIL" : "PHONE")); setValue("") }}>{t(channel === "PHONE" ? "auth.useEmail" : "auth.usePhone")}</button>
+          </form>
+        )}
+        {step === "code" && challenge && (
+          <form className="mt-6 space-y-4" onSubmit={verify}>
+            <label className="block text-sm">{t("auth.code", { to: challenge.normalised })}
+              <Input className="mt-2 h-14 rounded-xl bg-cloud text-center font-mono text-2xl tracking-[0.5em]" dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/[^0-9۰-۹]/g, ""))} autoFocus required />
+            </label>
+            <button type="submit" className="btn-orange h-12 w-full" disabled={busy || code.length < 6}>{t("auth.verify")}</button>
+            <div className="flex items-center justify-between text-sm">
+              {wait > 0 ? <span className="text-steel">{t("auth.resendIn", { s: wait })}</span> : <button type="button" className="font-semibold text-orange-700 underline underline-offset-4" onClick={() => void send()}>{t("auth.resend")}</button>}
+              {challenge.voiceAvailable && wait <= 0 && <button type="button" className="font-semibold text-orange-700 underline underline-offset-4" onClick={() => void send(true)}>{t("auth.voice")}</button>}
+            </div>
+          </form>
+        )}
+        {step === "profile" && (
+          <form className="mt-6 space-y-4" onSubmit={saveProfile}>
+            <label className="block text-sm font-medium">{t("auth.given")}<Input className="mt-1.5 h-12 rounded-xl bg-cloud" dir="ltr" value={profile.givenNamesLatin} onChange={(e) => setProfile({ ...profile, givenNamesLatin: e.target.value })} required pattern="[A-Za-z][A-Za-z '\-]*" /></label>
+            <label className="block text-sm font-medium">{t("auth.surname")}<Input className="mt-1.5 h-12 rounded-xl bg-cloud" dir="ltr" value={profile.surnameLatin} onChange={(e) => setProfile({ ...profile, surnameLatin: e.target.value })} required pattern="[A-Za-z][A-Za-z '\-]*" /></label>
+            <label className="block text-sm font-medium">{t("auth.nameFa")}<Input className="mt-1.5 h-12 rounded-xl bg-cloud" dir="rtl" value={profile.nameFa} onChange={(e) => setProfile({ ...profile, nameFa: e.target.value })} /></label>
+            <button type="submit" className="btn-orange h-12 w-full" disabled={busy}>{t("auth.save")}</button>
+          </form>
+        )}
+        {err && <p role="alert" className="mt-4 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err}</p>}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

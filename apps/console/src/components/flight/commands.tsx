@@ -10,6 +10,7 @@ import { COMMAND_LABEL, Field } from "@/components/ui"
 import { api } from "@/lib/api"
 import { money } from "@/lib/format"
 import type { FlightDetail } from "@/lib/types"
+import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 /** Commands that need input (Table 13.1). The body shapes are CommandBodies in contracts; the API validates them. */
 export const DIALOG_COMMANDS = new Set(["assign", "request_info", "send_quote", "record_acceptance", "close", "reopen", "cancel", "decline", "mark_reservation_lapsed"])
@@ -46,25 +47,25 @@ export function CommandDialog({ command, d, onClose, done }: { command: string |
       {command === "send_quote" && (
         drafts.length ? (
           <>
-            <Field label="Draft quote"><select className="field-input" value={f.quoteId} onChange={set("quoteId")}>{drafts.map((q) => <option key={q.id} value={q.id}>v{q.version} · {q.options.length} option{q.options.length === 1 ? "" : "s"}</option>)}</select></Field>
-            {quote && <ul className="ledger-rows">{quote.options.map((o) => <li key={o.id} className="flex justify-between py-1"><span>{o.label}{o.unknownFields.length > 0 && <span className="ms-2 text-brick">needs {o.unknownFields.join(", ")}</span>}</span><span className="num">{money(o.priceBreakdown.total)}</span></li>)}</ul>}
-            <p className="text-slate">The customer is notified and the request moves to QUOTED. A quote PDF is generated.</p>
+            <Field label="Draft quote"><NativeSelect className="field-input" value={f.quoteId} onChange={set("quoteId")}>{drafts.map((q) => <option key={q.id} value={q.id}>v{q.version} · {q.options.length} option{q.options.length === 1 ? "" : "s"}</option>)}</NativeSelect></Field>
+            {quote && <ul className="ledger-rows">{quote.options.map((o) => <li key={o.id} className="flex justify-between py-1"><span>{o.label}{o.unknownFields.length > 0 && <span className="ms-2 text-danger">needs {o.unknownFields.join(", ")}</span>}</span><span className="num">{money(o.priceBreakdown.total)}</span></li>)}</ul>}
+            <p className="text-steel">The customer is notified and the request moves to QUOTED. A quote PDF is generated.</p>
           </>
-        ) : <p className="text-brick">There is no draft quote. Build one first.</p>
+        ) : <p className="text-danger">There is no draft quote. Build one first.</p>
       )}
       {command === "record_acceptance" && (
         sent ? (
           <>
-            <Field label="Option the customer accepted"><select className="field-input" value={f.optionId} onChange={set("optionId")}>{sent.options.map((o) => <option key={o.id} value={o.id}>{o.label} · {money(o.priceBreakdown.total)}</option>)}</select></Field>
+            <Field label="Option the customer accepted"><NativeSelect className="field-input" value={f.optionId} onChange={set("optionId")}>{sent.options.map((o) => <option key={o.id} value={o.id}>{o.label} · {money(o.priceBreakdown.total)}</option>)}</NativeSelect></Field>
             <Field label="Call time"><input type="datetime-local" className="field-input" value={f.calledAt ?? ""} onChange={set("calledAt")} required /></Field>
             <Field label="Note" hint="What the customer said, in your words."><textarea className="field-input min-h-20" value={f.note ?? ""} onChange={set("note")} minLength={3} required /></Field>
           </>
-        ) : <p className="text-brick">No sent quote to accept.</p>
+        ) : <p className="text-danger">No sent quote to accept.</p>
       )}
       {(command === "close" || command === "reopen") && <Field label="Note (optional)"><textarea className="field-input min-h-20" value={f.note ?? ""} onChange={set("note")} /></Field>}
       {(command === "cancel" || command === "decline") && (
         <>
-          <Field label="Reason code"><select className="field-input" value={f.reasonCode} onChange={set("reasonCode")}>{reasons.map((r) => <option key={r.code} value={r.code}>{r.code} — {r.label.en}</option>)}</select></Field>
+          <Field label="Reason code"><NativeSelect className="field-input" value={f.reasonCode} onChange={set("reasonCode")}>{reasons.map((r) => <option key={r.code} value={r.code}>{r.code} — {r.label.en}</option>)}</NativeSelect></Field>
           <Field label="Message to the customer" hint="Neutral wording; it is sent as written."><textarea className="field-input min-h-24" value={f.message ?? ""} onChange={set("message")} required dir="auto" /></Field>
         </>
       )}

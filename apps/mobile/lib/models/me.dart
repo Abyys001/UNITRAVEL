@@ -19,6 +19,7 @@ class Me {
     required this.mfaLevel,
     required this.mfaEnrolled,
     required this.flags,
+    this.phoneVerified = true,
   });
 
   final String id;
@@ -41,6 +42,9 @@ class Me {
   final List<String> mfaEnrolled;
   final Map<String, bool> flags;
 
+  /// False when the account has no verified phone yet; the request form then offers add-and-verify inline.
+  final bool phoneVerified;
+
   bool get isJalali => calendar == 'JALALI';
   bool get cargoEnabled => flags['cargo.enabled'] ?? true;
 
@@ -59,6 +63,7 @@ class Me {
       roles: j.strs('roles'),
       permVersion: j.integer('permVersion'),
       phone: phone?.strOrNull('value'),
+      phoneVerified: phone?.strOrNull('verifiedAt') != null,
       contactIdentityId: contact?.strOrNull('id'),
       givenNamesLatin: profile?.strOrNull('givenNamesLatin'),
       surnameLatin: profile?.strOrNull('surnameLatin'),

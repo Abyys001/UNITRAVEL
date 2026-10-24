@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { bigint, boolean, char, date, index, integer, jsonb, pgEnum, pgTable, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
 
 import type { SearchQuery } from "@unitravel/contracts"
@@ -127,6 +128,9 @@ export const quotes = pgTable("quotes", {
   cargoPartnerId: uuid(),
   transitNote: text(),
   partnerCostMinor: bigint({ mode: "number" }),
+  /** ADR-0006: the quotation number, allocated when the quote is sent. */
+  documentNumber: varchar({ length: 32 }).unique(),
+  pdfDocumentId: uuid(),
   createdBy: uuid().notNull().references(() => users.id),
   rowVersion: rowVersion(),
   ...timestamps,
@@ -222,7 +226,7 @@ export const paymentRecords = pgTable("payment_records", {
   requestId: uuid().notNull(),
   amountMinor: bigint({ mode: "number" }).notNull(),
   currency: varchar({ length: 3 }).notNull(),
-  method: text({ enum: ["BANK_TRANSFER", "CASH", "CARD_TERMINAL", "OTHER"] }).notNull(),
+  method: text({ enum: ["BANK_TRANSFER", "CASH", "CARD_TERMINAL", "OTHER", "CARD_ONLINE"] }).notNull(),
   receivedAt: tstz().notNull(),
   externalReference: varchar({ length: 80 }).notNull(),
   payerName: varchar({ length: 120 }).notNull(),
@@ -230,11 +234,17 @@ export const paymentRecords = pgTable("payment_records", {
   evidenceDocumentId: uuid(),
   status: text({ enum: ["RECORDED", "VERIFIED", "REJECTED", "REFUNDED"] }).notNull().default("RECORDED"),
   atolCertificateDocumentId: uuid(),
-  recordedBy: uuid().notNull().references(() => users.id),
+  /** Null for payments recorded by the system from a verified provider event (ADR-0007 P7). */
+  recordedBy: uuid().references(() => users.id),
   verifiedBy: uuid().references(() => users.id),
   verifiedAt: tstz(),
+  /** ADR-0007: CARD_ONLINE payments name their invoice, provider and PaymentIntent (unique, so a replayed event cannot pay twice). */
+  invoiceId: uuid(),
+  provider: text({ enum: ["STRIPE", "FAKE"] }),
+  providerRef: varchar({ length: 255 }),
+  refundedMinor: bigint({ mode: "number" }).notNull().default(0),
   ...timestamps,
-}, (t) => [index("payment_records_request_idx").on(t.requestType, t.requestId)])
+}, (t) => [index("payment_records_request_idx").on(t.requestType, t.requestId), uniqueIndex("payment_records_provider_ref_uq").on(t.providerRef).where(sql`${t.providerRef} is not null`)])
 
 /** Owner-approved credit override for ticketing before payment (ch. 13.3 record_tickets). */
 export const creditOverrides = pgTable("credit_overrides", {

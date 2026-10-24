@@ -6,6 +6,7 @@ import { Field } from "@/components/ui"
 import { api } from "@/lib/api"
 import { human } from "@/lib/format"
 import type { StaffDirectoryEntry } from "@/lib/types"
+import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 /**
  * Assignee picker backed by GET /v1/admin/staff (needs flight_request.assign); on-duty staff are listed first. Staff
@@ -17,10 +18,10 @@ export function StaffSelect({ value, onChange, hint }: { value: string; onChange
   if (q.error) return <Field label="Staff user id" hint={hint}><input className="field-input font-mono" value={value} onChange={(e) => onChange(e.target.value)} required pattern="[0-9a-fA-F-]{36}" dir="ltr" /></Field>
   return (
     <Field label="Assign to" hint={hint}>
-      <select className="field-input" value={value} onChange={(e) => onChange(e.target.value)} required disabled={q.isPending} data-testid="staff-select">
+      <NativeSelect className="field-input" value={value} onChange={(e) => onChange(e.target.value)} required disabled={q.isPending} data-testid="staff-select">
         <option value="" disabled>{q.isPending ? "Loading staff…" : "Choose a staff member"}</option>
         {staff.map((s) => <option key={s.id} value={s.id}>{s.displayName} · {s.roles.map(human).join(", ")}{s.onDuty ? " · on duty" : ""}</option>)}
-      </select>
+      </NativeSelect>
     </Field>
   )
 }

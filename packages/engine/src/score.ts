@@ -37,8 +37,10 @@ export function timeOfDay(it: Unscored): number {
 const norm = (v: number, min: number, max: number) => (max === min ? 0 : (v - min) / (max - min))
 
 /**
- * cost = 0.35·price + 0.20·duration + 0.15·layoverFit + 0.20·risk + 0.05·stops + 0.05·timeOfDay (weights configurable);
+ * cost = 0.20·duration + 0.15·layoverFit + 0.20·risk + 0.05·stops + 0.05·timeOfDay (weights configurable);
  * preferred carriers subtract up to 0.05. Component values are kept so the console can explain a ranking.
+ * Price is NOT part of the cost (ADR-0004: customers see no amounts, so the order they see must not encode price).
+ * `explain.price` is still computed for staff holding `pricing.read.internal`; `weights.price` is ignored.
  */
 export function scoreAll(items: Unscored[], weights: ScoringWeights, window: [number, number], maxStops: number, preferred: Map<string, number>): (Unscored & { score: number; explain: ScoreExplain })[] {
   if (items.length === 0) return []
@@ -55,7 +57,7 @@ export function scoreAll(items: Unscored[], weights: ScoringWeights, window: [nu
       timeOfDay: timeOfDay(it),
       preferredCarrierBonus: Math.max(0, ...it.carriers.map((c) => preferred.get(c) ?? 0)),
     }
-    const score = weights.price * explain.price + weights.duration * explain.duration + weights.layoverFit * explain.layoverFit
+    const score = weights.duration * explain.duration + weights.layoverFit * explain.layoverFit
       + weights.risk * explain.risk + weights.stops * explain.stops + weights.timeOfDay * explain.timeOfDay - explain.preferredCarrierBonus
     return { ...it, score: round(score, 4), explain }
   })
@@ -66,7 +68,7 @@ function round(v: number, d = 3): number {
   return Math.round(v * f) / f
 }
 
-/** Ties are broken by price, then duration (ch. 22.6). */
-export function byCost(a: { score: number; price: { total: { amountMinor: number } }; durationMin: number }, b: typeof a): number {
-  return a.score - b.score || a.price.total.amountMinor - b.price.total.amountMinor || a.durationMin - b.durationMin
+/** Ties are broken by duration, then id: never by price (ADR-0004; ch. 22.6 amended). */
+export function byCost(a: { score: number; durationMin: number; id: string }, b: typeof a): number {
+  return a.score - b.score || a.durationMin - b.durationMin || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 }

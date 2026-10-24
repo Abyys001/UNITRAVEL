@@ -147,3 +147,32 @@ async function freshStaffSession(phone: string, host: string): Promise<Session> 
 /** +98 912 xxx xxxx, or a UK drama-range test number +44 7700 900100–999 (never assigned to real people). */
 export const randomPhone = (prefix: "+98912" | "+4477009") =>
   prefix === "+98912" ? `+98912${String(Math.floor(Math.random() * 1e7)).padStart(7, "0")}` : `+447700900${100 + Math.floor(Math.random() * 900)}`
+
+/**
+ * Test shortcut for suites that are not about identity: marks a traveller's document VERIFIED directly in the
+ * database so ticketing can proceed. The real flow (scan, confirm, review) is covered in stage8.e2e.ts.
+ */
+export async function markVerifiedForTest(travellerId: string) {
+  const { Client } = await import("pg")
+  const c = new Client({ connectionString: process.env.DATABASE_MIGRATE_URL ?? "postgres://unitravel:unitravel@localhost:5462/unitravel" })
+  await c.connect()
+  await c.query("update traveller_documents set verification_status = 'VERIFIED', verified_at = now() where traveller_id = $1 and erased_at is null", [travellerId])
+  await c.end()
+}
+
+/** Reads one value from the database for assertions the API deliberately does not expose. */
+export async function dbQuery<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const { Client } = await import("pg")
+  const c = new Client({ connectionString: process.env.DATABASE_MIGRATE_URL ?? "postgres://unitravel:unitravel@localhost:5462/unitravel" })
+  await c.connect()
+  try { return (await c.query(sql, params)).rows as T[] } finally { await c.end() }
+}
+
+/** Mirrors what AccessService does after a role change made outside the API (tests assign roles in SQL). */
+export async function refreshPermCache(userId: string) {
+  const { Redis } = await import("ioredis")
+  const r = new Redis(process.env.REDIS_URL ?? "redis://localhost:6390")
+  const [u] = await dbQuery<{ perm_version: number }>("select perm_version from users where id = $1", [userId])
+  await r.set(`perm:${userId}`, String(u!.perm_version))
+  r.disconnect()
+}

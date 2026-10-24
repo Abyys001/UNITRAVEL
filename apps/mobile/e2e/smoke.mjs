@@ -17,7 +17,7 @@ fs.mkdirSync(SHOTS, { recursive: true })
 for (const f of fs.readdirSync(SHOTS)) if (f.endsWith('.png')) fs.rmSync(path.join(SHOTS, f))
 
 const results = []
-async function step(name, fn) {
+async function step(name, fn, { soft = false } = {}) {
   const t0 = Date.now()
   try {
     await fn()
@@ -25,8 +25,11 @@ async function step(name, fn) {
     console.log(`PASS  ${name} (${Date.now() - t0} ms)`)
   } catch (e) {
     results.push({ name, ok: false, error: e.message })
-    console.log(`FAIL  ${name}\n      ${String(e.message).split('\n').join('\n      ')}`)
-    throw e
+    await page.screenshot({ path: path.join(SHOTS, 'zz-failure.png') }).catch(() => {})
+    console.log(`${soft ? 'SOFT-FAIL' : 'FAIL'}  ${name}\n      ${String(e.message).split('\n').join('\n      ')}`)
+    if (!soft) throw e
+    await page.goto(`${APP}/?semantics#/requests`)
+    await settle(2500)
   }
 }
 
@@ -114,10 +117,10 @@ try {
     await shot('06-search-filled-fa')
     await byRole('button', 'جستجوی پرواز').click()
     // Result cards are buttons labelled "<route>, <price>".
-    await byRole('button', /→.*£/).first().waitFor({ timeout: 40000 })
+    await byRole('button', /→/).first().waitFor({ timeout: 40000 })
     await settle(1500)
     await shot('07-results-fa')
-    const n = await byRole('button', /→.*£/).count()
+    const n = await byRole('button', /→/).count()
     if (n < 1) throw new Error('no result cards')
     console.log(`      ${n} result cards visible`)
   })
@@ -147,19 +150,17 @@ try {
     console.log(`      manual request ${ref}`)
   })
 
-  await step('open an itinerary, recheck price, and request it', async () => {
+  await step('open an itinerary and request it', async () => {
     await byRole('button', 'جستجوی تازه').click()
     await byRole('button', 'جستجوی پرواز').click()
-    const card = byRole('button', /→.*£/).first()
+    const card = byRole('button', /→/).first()
     await card.waitFor({ timeout: 40000 })
     await settle(1200)
     await card.click()
-    await page.getByText('قیمت کل').first().waitFor()
+    // ADR-0004: no amounts and no customer price check before a sent quote.
+    await byRole('button', 'درخواست این برنامه سفر').waitFor()
     await settle(800)
     await shot('12-itinerary-fa')
-    await byRole('button', 'بررسی دوباره قیمت').click()
-    await settle(2000)
-    await shot('13-itinerary-pricecheck-fa')
     await byRole('button', 'درخواست این برنامه سفر').click()
     await byRole('button', /^مسافر ۱/).waitFor()
     await byRole('button', /^مسافر ۱/).click()
@@ -171,15 +172,7 @@ try {
     }
     await shot('14-itinerary-request-fa')
     await byRole('button', 'ثبت درخواست').click()
-    const done = page.getByText('درخواست ثبت شد').first()
-    const changed = byRole('button', /قیمت جدید را می‌پذیرم/)
-    await done.or(changed).first().waitFor()
-    if (await changed.count()) {
-      // The (demo) supplier moved the price since the search: the customer must accept the new price explicitly.
-      await shot('14b-price-changed-fa')
-      await changed.click()
-    }
-    await done.waitFor()
+    await page.getByText('درخواست ثبت شد').first().waitFor()
     await settle(800)
     await shot('15-itinerary-confirmation-fa')
   })
@@ -217,7 +210,7 @@ try {
     // The app is still in customer mode with the pre-promotion token. Opening the Account tab makes its next API call;
     // that gets 401 PERMISSIONS_CHANGED, the app refreshes silently, reloads /me and rebuilds navigation.
     await page.getByRole('tab', { name: /حساب/ }).or(page.getByRole('button', { name: /^حساب/ })).first().click()
-    await page.getByText('صف درخواست‌ها').first().waitFor({ timeout: 30000 })
+    await page.getByText('پیشخوان').first().waitFor({ timeout: 30000 })
     await settle(1000)
     await shot('18-admin-mode-fa')
     await page.getByText('تأیید دومرحله‌ای').first().waitFor()
@@ -241,7 +234,11 @@ try {
     await byRole('button', 'تأیید').click()
     await page.getByText('جدید').first().waitFor()
     await settle(2500)
-    await shot('20-admin-queue-fa')
+    await shot('20-admin-home-fa')
+    // Home is the landing tab; the queue is its own tab in the admin navigation bar.
+    await page.getByRole('tab', { name: /صف/ }).or(page.getByRole('button', { name: /صف/ })).first().click()
+    await settle(1800)
+    await shot('20b-admin-queue-fa')
     const cases = byRole('button', /UT-F-/)
     await cases.first().waitFor({ timeout: 15000 })
     console.log(`      ${await cases.count()} cases visible in the queue`)
@@ -249,7 +246,7 @@ try {
 
   await step('open a case: customer, SLA and triage actions (no quote/record/compliance on mobile)', async () => {
     await byRole('button', /UT-F-/).first().click()
-    await page.getByText('برداشتن پرونده').or(page.getByText('ثبت تماس')).first().waitFor()
+    await page.getByText('برداشتن پرونده').or(page.getByText('پیام به مشتری')).first().waitFor()
     await settle(1000)
     await shot('21-admin-case-fa')
     await page.goBack().catch(() => {})
@@ -290,12 +287,12 @@ try {
     await enType(en.getByRole('textbox', { name: /Search city or airport/ }), 'lon')
     await en.getByRole('button', { name: /London/ }).first().click()
     await en.getByRole('button', { name: 'Search flights' }).click()
-    const card = en.getByRole('button', { name: /→.*£/ }).first()
+    const card = en.getByRole('button', { name: /→/ }).first()
     await card.waitFor({ timeout: 40000 })
     await en.waitForTimeout(1200)
     await enShot('31-results-en')
     await card.click()
-    await en.getByText('Total price').first().waitFor()
+    await en.getByRole('button', { name: 'Request this itinerary' }).waitFor()
     await en.waitForTimeout(800)
     await enShot('32-itinerary-en')
     await en.goBack()

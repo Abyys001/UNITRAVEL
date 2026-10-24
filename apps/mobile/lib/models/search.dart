@@ -292,14 +292,13 @@ class ConnectionView {
 
 /// One ticket (one supplier offer) inside an itinerary.
 class TicketComponent {
-  const TicketComponent({required this.provider, required this.rung, required this.fake, required this.fetchedAt, required this.expiresAt, required this.slices, required this.total, required this.baggage});
+  const TicketComponent({required this.provider, required this.rung, required this.fake, required this.fetchedAt, required this.expiresAt, required this.slices, required this.baggage});
   final String provider;
   final String rung;
   final bool fake;
   final DateTime? fetchedAt;
   final DateTime? expiresAt;
   final List<SliceView> slices;
-  final Money? total;
   final List<Json> baggage;
 
   /// Baggage facts for one segment of this ticket, or null when none were supplied.
@@ -315,7 +314,6 @@ class TicketComponent {
       fetchedAt: parseDate(s['fetchedAt']),
       expiresAt: parseDate(s['expiresAt']),
       slices: j.objs('slices').map(SliceView.fromJson).toList(),
-      total: Money.from(j.obj('price')['total']),
       baggage: j.objs('baggage'),
     );
   }
@@ -326,8 +324,6 @@ class Itinerary {
     required this.id,
     required this.construction,
     required this.ticketing,
-    required this.total,
-    required this.isSumOfTickets,
     required this.durationMin,
     required this.components,
     required this.connections,
@@ -343,8 +339,6 @@ class Itinerary {
   final String id;
   final String construction; // THROUGH | SELF_TRANSFER | GATEWAY
   final String ticketing; // SINGLE_TICKET | SEPARATE_TICKETS
-  final Money? total;
-  final bool isSumOfTickets;
   final int durationMin;
   final List<TicketComponent> components;
   final List<ConnectionView> connections;
@@ -379,8 +373,6 @@ class Itinerary {
       id: j.str('id'),
       construction: j.str('construction', 'THROUGH'),
       ticketing: j.str('ticketing', 'SINGLE_TICKET'),
-      total: Money.from(j.obj('price')['total']),
-      isSumOfTickets: j.obj('price').flag('isSumOfTickets'),
       durationMin: j.integer('durationMin'),
       components: j.objs('components').map(TicketComponent.fromJson).toList(),
       connections: j.objs('connections').map(ConnectionView.fromJson).toList(),

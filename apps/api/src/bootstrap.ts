@@ -18,7 +18,8 @@ export async function createApi() {
   app.use(cookieParser())
   // The API serves JSON only: the strictest CSP, no framing, HSTS (ch. 28.4).
   app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } }, hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }, referrerPolicy: { policy: "strict-origin-when-cross-origin" } }))
-  app.useBodyParser("json", { limit: "1mb" })
+  // Webhook signatures are computed over the exact bytes Stripe sent, so keep them for that path only (ADR-0007 P6).
+  app.useBodyParser("json", { limit: "1mb", verify: (req: { url?: string; rawBody?: Buffer }, _res: unknown, buf: Buffer) => { if (req.url?.startsWith("/v1/webhooks/")) req.rawBody = buf } } as { limit: string })
   // The website and console call same-origin through their /api proxy; only the Flutter web build (bearer tokens) is cross-origin.
   app.enableCors({ origin: [env().PUBLIC_MOBILE_WEB_URL], credentials: false, allowedHeaders: ["authorization", "content-type", "idempotency-key", "if-match", "accept-language", "x-device-id", "x-client-platform", "x-app-version", "last-event-id"], exposedHeaders: ["etag", "x-request-id", "retry-after", "location"] })
   app.enableShutdownHooks()

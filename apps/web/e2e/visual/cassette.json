@@ -1,0 +1,5891 @@
+{
+ "capturedAt": "2026-10-24T13:28:29.312Z",
+ "meta": {
+  "cargoRef": "UT-C-A987BD",
+  "flightRef": "UT-F-MP97Y0",
+  "invoiceNumber": "INV-2026-000107",
+  "searchQ": "eyJ0cmlwIjoiT05FX1dBWSIsImZyb20iOnsia2luZCI6IkNJVFkiLCJjb2RlIjoiVEhSIiwibGFiZWwiOiJUZWhyYW4ifSwidG8iOnsia2luZCI6IkNJVFkiLCJjb2RlIjoiTE9OIiwibGFiZWwiOiJMb25kb24ifSwiZGF0ZSI6IjIwMjYtMTEtMjMiLCJhZHQiOjEsImNoZCI6W10sImluZiI6MCwiY2FiaW4iOiJFQ09OT01ZIiwiZmxleCI6ZmFsc2UsInN0Ijp0cnVlLCJhYyI6ZmFsc2UsIm9uIjp0cnVlLCJndyI6dHJ1ZSwic3RvcHMiOjIsImxheSI6WzI0MCwzNjBdfQ%3D%3D",
+  "itineraryPath": "/itinerary/itn_0nf5i350dhh0qr?s=01a16e19-8b6e-70fe-b9e9-eb2372f9960d",
+  "requestNewPath": "/request/new?s=01a16e19-8b6e-70fe-b9e9-eb2372f9960d&i=itn_0nf5i350dhh0qr"
+ },
+ "entries": {
+  "en GET /v1/me": {
+   "status": 200,
+   "body": {
+    "id": "01a16e19-3524-7648-87f6-b0733654f859",
+    "displayName": "Leila Shipper",
+    "status": "ACTIVE",
+    "preferredLocale": "en",
+    "calendar": "GREGORIAN",
+    "timezone": "Asia/Tehran",
+    "identities": [
+     {
+      "id": "01a16e19-3525-73d0-b99e-16079cff0670",
+      "type": "PHONE",
+      "value": "+989127450992",
+      "verifiedAt": "2026-10-24T13:28:28.197Z",
+      "isPrimary": true
+     }
+    ],
+    "roles": [
+     "customer"
+    ],
+    "permissions": [
+     "cargo_request.create.own",
+     "cargo_request.read.own",
+     "flight_request.create.own",
+     "flight_request.read.own",
+     "flight_search.run"
+    ],
+    "flags": {
+     "cargo.enabled": true,
+     "search.gateways.enabled": true,
+     "seatmaps.enabled": false,
+     "payments.online.enabled": false,
+     "search.self_transfer.enabled": true,
+     "sms.free_text.enabled": false,
+     "push.pushy_pilot.enabled": false,
+     "maintenance.enabled": false
+    },
+    "permVersion": 1,
+    "profile": {
+     "givenNamesLatin": "Leila",
+     "surnameLatin": "Shipper",
+     "nameFa": null,
+     "contactTimePref": null
+    },
+    "notificationPrefs": {},
+    "mfa": {
+     "level": 0,
+     "enrolled": [],
+     "stepUpValidUntil": null
+    },
+    "onDuty": false,
+    "surfaces": {
+     "customer": true,
+     "admin": false,
+     "developer": false
+    }
+   }
+  },
+  "en GET /v1/cargo/lanes": {
+   "status": 200,
+   "body": [
+    {
+     "id": "01a1643f-d2a6-760e-ba0e-07c0618f14a7",
+     "originCountry": "DE",
+     "destinationCountry": "IR",
+     "label": "Germany → Iran",
+     "enabled": false,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": "Not available pending legal review."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-f7618aea094f",
+     "originCountry": "GB",
+     "destinationCountry": "AE",
+     "label": "United Kingdom → United Arab Emirates",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": "UAE consignees are screened before booking."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-fbd6fabfc881",
+     "originCountry": "GB",
+     "destinationCountry": "AM",
+     "label": "United Kingdom → Armenia",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "EXCESS_BAGGAGE"
+     ],
+     "volumetricDivisor": 5000,
+     "notice": null
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-fe596308583c",
+     "originCountry": "GB",
+     "destinationCountry": "IR",
+     "label": "United Kingdom → Iran",
+     "enabled": false,
+     "services": [
+      "DOCUMENTS"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": null
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-ed74611d75c8",
+     "originCountry": "GB",
+     "destinationCountry": "TR",
+     "label": "United Kingdom → Türkiye",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "EXCESS_BAGGAGE",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 5000,
+     "notice": "Typical transit 3–6 working days after handover. Customs duties may be payable by the recipient."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0e-00725e904441",
+     "originCountry": "IR",
+     "destinationCountry": "GB",
+     "label": "Iran → United Kingdom",
+     "enabled": false,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": "Not available pending legal review."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-f1888d1db9a6",
+     "originCountry": "TR",
+     "destinationCountry": "GB",
+     "label": "Türkiye → United Kingdom",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "EXCESS_BAGGAGE",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 5000,
+     "notice": "UK import VAT and duty may apply."
+    }
+   ]
+  },
+  "en POST /v1/flight-searches": {
+   "status": 202,
+   "body": {
+    "id": "01a16e19-4472-7789-8e01-0eec7a939d4b",
+    "status": "RUNNING",
+    "expiresAt": "2026-10-24T13:58:32.114Z"
+   }
+  },
+  "en GET /v1/flight-searches/01a16e19-4472-7789-8e01-0eec7a939d4b?tab=BEST&limit=40": {
+   "status": 200,
+   "body": {
+    "id": "01a16e19-4472-7789-8e01-0eec7a939d4b",
+    "status": "COMPLETE",
+    "version": 4,
+    "query": {
+     "cabin": "ECONOMY",
+     "slices": [
+      {
+       "to": {
+        "city": "LON"
+       },
+       "date": "2026-11-23",
+       "from": {
+        "city": "THR"
+       },
+       "flexDays": 0
+      }
+     ],
+     "tripType": "ONE_WAY",
+     "passengers": [
+      {
+       "type": "ADT"
+      }
+     ],
+     "preferences": {
+      "maxStops": 2,
+      "studentFare": false,
+      "nearestCabin": false,
+      "allowOvernight": true,
+      "includeGateways": true,
+      "allowSelfTransfer": true,
+      "allowAirportChange": false,
+      "preferredLayoverMin": [
+       240,
+       360
+      ]
+     }
+    },
+    "progress": {
+     "sourcesTotal": 15,
+     "sourcesDone": 15,
+     "removedByPolicy": 2,
+     "slowSources": [],
+     "wave": 3
+    },
+    "expiresAt": "2026-10-24T13:58:32.114Z",
+    "historical": false,
+    "ruleVersion": 1,
+    "engineVersion": "engine-1.0.0",
+    "notices": [
+     "POLICY_HIDDEN"
+    ],
+    "results": [
+     {
+      "id": "itn_0nf5i350dhh0qr",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 475,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "IST",
+        "departAirport": "IST",
+        "layoverMin": 120,
+        "requiredMin": 60,
+        "inPreferredWindow": false,
+        "protected": true,
+        "overnight": false,
+        "flags": [],
+        "ruleId": "airport-IST,global"
+       }
+      ],
+      "gateway": {
+       "iata": "VAN",
+       "dayOffset": 1,
+       "access": "Overland via the Razi–Kapıköy border crossing",
+       "country": "TR"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T04:10:00Z",
+      "lastArrival": "2026-11-24T12:05:00Z",
+      "carriers": [
+       "TK"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNTZdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzMzNDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuMzc3WiJ9",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "VAN",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "origin": {
+             "iata": "VAN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "departure": {
+             "local": "2026-11-24T07:10",
+             "utc": "2026-11-24T04:10:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T09:00",
+             "utc": "2026-11-24T06:00:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "1971"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "1971"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T11:00",
+             "utc": "2026-11-24T08:00:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T12:05",
+             "utc": "2026-11-24T12:05:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "77W",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 475
+         }
+        ],
+        "validatingCarrier": "TK",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "EcoFly"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 5,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1yjcbo71alzjd9",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 595,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "VIE",
+        "departAirport": "VIE",
+        "layoverMin": 200,
+        "requiredMin": 60,
+        "inPreferredWindow": false,
+        "protected": true,
+        "overnight": true,
+        "flags": [
+         "OVERNIGHT"
+        ],
+        "ruleId": "global"
+       }
+      ],
+      "gateway": {
+       "iata": "EVN",
+       "dayOffset": 1,
+       "access": "Overland via the Nurduz–Agarak border crossing",
+       "country": "AM"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "OVERNIGHT"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T00:15:00Z",
+      "lastArrival": "2026-11-24T10:10:00Z",
+      "carriers": [
+       "OS"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNjRdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzQxNzAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuOTg3WiJ9",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "EVN",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "origin": {
+             "iata": "EVN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "departure": {
+             "local": "2026-11-24T04:15",
+             "utc": "2026-11-24T00:15:00Z",
+             "tz": "Asia/Yerevan"
+            },
+            "arrival": {
+             "local": "2026-11-24T05:20",
+             "utc": "2026-11-24T04:20:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "E90",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "451"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "451"
+            },
+            "origin": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T08:40",
+             "utc": "2026-11-24T07:40:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "arrival": {
+             "local": "2026-11-24T10:10",
+             "utc": "2026-11-24T10:10:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "320",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 595
+         }
+        ],
+        "validatingCarrier": "OS",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Classic"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 2,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1cjfzf10wfxftl",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 720,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "WAW",
+        "departAirport": "WAW",
+        "layoverMin": 295,
+        "requiredMin": 60,
+        "inPreferredWindow": true,
+        "protected": true,
+        "overnight": true,
+        "flags": [
+         "OVERNIGHT"
+        ],
+        "ruleId": "global"
+       }
+      ],
+      "gateway": {
+       "iata": "EVN",
+       "dayOffset": 1,
+       "access": "Overland via the Nurduz–Agarak border crossing",
+       "country": "AM"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "OVERNIGHT"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-23T23:35:00Z",
+      "lastArrival": "2026-11-24T11:35:00Z",
+      "carriers": [
+       "LO"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNzBdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzM1MDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuOTg3WiJ9",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "EVN",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "LO",
+             "flightNumber": "730"
+            },
+            "operating": {
+             "carrier": "LO",
+             "flightNumber": "730"
+            },
+            "origin": {
+             "iata": "EVN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "WAW",
+             "terminal": "A"
+            },
+            "departure": {
+             "local": "2026-11-24T03:35",
+             "utc": "2026-11-23T23:35:00Z",
+             "tz": "Asia/Yerevan"
+            },
+            "arrival": {
+             "local": "2026-11-24T04:55",
+             "utc": "2026-11-24T03:55:00Z",
+             "tz": "Europe/Warsaw"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "738",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "LO",
+             "flightNumber": "281"
+            },
+            "operating": {
+             "carrier": "LO",
+             "flightNumber": "281"
+            },
+            "origin": {
+             "iata": "WAW",
+             "terminal": "A"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T09:50",
+             "utc": "2026-11-24T08:50:00Z",
+             "tz": "Europe/Warsaw"
+            },
+            "arrival": {
+             "local": "2026-11-24T11:35",
+             "utc": "2026-11-24T11:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "738",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 720
+         }
+        ],
+        "validatingCarrier": "LO",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Standard"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 2,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1g1j4ar1ipbvud",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 840,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "IST",
+        "departAirport": "IST",
+        "layoverMin": 470,
+        "requiredMin": 60,
+        "inPreferredWindow": false,
+        "protected": true,
+        "overnight": false,
+        "flags": [],
+        "ruleId": "airport-IST,global"
+       }
+      ],
+      "gateway": {
+       "iata": "ERZ",
+       "dayOffset": 1,
+       "access": "Overland via the Bazargan–Gürbulak border crossing",
+       "country": "TR"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T05:30:00Z",
+      "lastArrival": "2026-11-24T19:30:00Z",
+      "carriers": [
+       "TK"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNThdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzMwNjAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuOTcxWiJ9",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "ERZ",
+          "destination": "LGW",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "2649"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "2649"
+            },
+            "origin": {
+             "iata": "ERZ",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "departure": {
+             "local": "2026-11-24T08:30",
+             "utc": "2026-11-24T05:30:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T10:30",
+             "utc": "2026-11-24T07:30:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "1985"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "1985"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LGW",
+             "terminal": "S"
+            },
+            "departure": {
+             "local": "2026-11-24T18:20",
+             "utc": "2026-11-24T15:20:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T19:30",
+             "utc": "2026-11-24T19:30:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 840
+         }
+        ],
+        "validatingCarrier": "TK",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "EcoFly"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 2,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1numh1p09g0drn",
+      "construction": "GATEWAY",
+      "ticketing": "SEPARATE_TICKETS",
+      "durationMin": 685,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "IST",
+        "departAirport": "IST",
+        "layoverMin": 290,
+        "requiredMin": 180,
+        "inPreferredWindow": true,
+        "protected": false,
+        "overnight": false,
+        "flags": [
+         "SEPARATE_TICKETS",
+         "ENTRY_REQUIRED"
+        ],
+        "advisory": "Self-transfer in Istanbul means entering Türkiye: passport control, collect bags, check in again. Entry rules depend on your passport; our team confirms them before quoting.",
+        "ruleId": "airport-IST,global"
+       }
+      ],
+      "gateway": {
+       "iata": "VAN",
+       "dayOffset": 1,
+       "access": "Overland via the Razi–Kapıköy border crossing",
+       "country": "TR"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       },
+       {
+        "component": 2,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:32Z",
+        "expiresAt": "2026-10-24T13:58:32Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "UNKNOWN"
+        },
+        "cabin": {
+         "status": "UNKNOWN"
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "SEPARATE_TICKETS",
+       "ENTRY_REQUIRED"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T04:10:00Z",
+      "lastArrival": "2026-11-24T15:35:00Z",
+      "carriers": [
+       "TK",
+       "BA"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbMjRdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzY0MDBdLCJmIjoiMjAyNi0xMC0yNFQxMzoyODozMy41MzhaIn0",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "VAN",
+          "destination": "IST",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "origin": {
+             "iata": "VAN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "departure": {
+             "local": "2026-11-24T07:10",
+             "utc": "2026-11-24T04:10:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T09:00",
+             "utc": "2026-11-24T06:00:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 110
+         }
+        ],
+        "validatingCarrier": "TK",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "UNKNOWN"
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "UNKNOWN"
+          },
+          "cabin": {
+           "status": "UNKNOWN"
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 5,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "UNKNOWN"
+         },
+         "refund": {
+          "status": "UNKNOWN"
+         }
+        }
+       },
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbMzRdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzI5NDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzIuNzY4WiJ9",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:32Z",
+         "expiresAt": "2026-10-24T13:58:32Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "IST",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "operating": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "5"
+            },
+            "departure": {
+             "local": "2026-11-24T13:50",
+             "utc": "2026-11-24T10:50:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T15:35",
+             "utc": "2026-11-24T15:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "320",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 285
+         }
+        ],
+        "validatingCarrier": "BA",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Euro Traveller"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 8,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST"
+      ]
+     },
+     {
+      "id": "itn_1cjldi504zk20p",
+      "construction": "GATEWAY",
+      "ticketing": "SEPARATE_TICKETS",
+      "durationMin": 860,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "VIE",
+        "departAirport": "VIE",
+        "layoverMin": 465,
+        "requiredMin": 180,
+        "inPreferredWindow": false,
+        "protected": false,
+        "overnight": true,
+        "flags": [
+         "SEPARATE_TICKETS",
+         "OVERNIGHT",
+         "ENTRY_REQUIRED"
+        ],
+        "ruleId": "global"
+       }
+      ],
+      "gateway": {
+       "iata": "EVN",
+       "dayOffset": 1,
+       "access": "Overland via the Nurduz–Agarak border crossing",
+       "country": "AM"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:32Z",
+        "expiresAt": "2026-10-24T13:58:32Z",
+        "fake": true
+       },
+       {
+        "component": 2,
+        "provider": "fake",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "SEPARATE_TICKETS",
+       "OVERNIGHT",
+       "ENTRY_REQUIRED"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T00:15:00Z",
+      "lastArrival": "2026-11-24T14:35:00Z",
+      "carriers": [
+       "OS"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNjZdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzE2OTAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzIuNDI5WiJ9",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:32Z",
+         "expiresAt": "2026-10-24T13:58:32Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "EVN",
+          "destination": "VIE",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "origin": {
+             "iata": "EVN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "departure": {
+             "local": "2026-11-24T04:15",
+             "utc": "2026-11-24T00:15:00Z",
+             "tz": "Asia/Yerevan"
+            },
+            "arrival": {
+             "local": "2026-11-24T05:20",
+             "utc": "2026-11-24T04:20:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "E90",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 245
+         }
+        ],
+        "validatingCarrier": "OS",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Light"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 6,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        }
+       },
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNjhdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzE0NzAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuMTY0WiJ9",
+         "rung": "LIVE_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "VIE",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "455"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "455"
+            },
+            "origin": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T13:05",
+             "utc": "2026-11-24T12:05:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "arrival": {
+             "local": "2026-11-24T14:35",
+             "utc": "2026-11-24T14:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "320",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 150
+         }
+        ],
+        "validatingCarrier": "OS",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Light"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 8,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST"
+      ]
+     }
+    ],
+    "nextCursor": null,
+    "total": 6
+   }
+  },
+  "en GET /v1/itineraries/itn_0nf5i350dhh0qr": {
+   "status": 200,
+   "body": {
+    "searchId": "01a16e19-4472-7789-8e01-0eec7a939d4b",
+    "itinerary": {
+     "id": "itn_0nf5i350dhh0qr",
+     "construction": "GATEWAY",
+     "ticketing": "SINGLE_TICKET",
+     "durationMin": 475,
+     "connections": [
+      {
+       "sliceIndex": 0,
+       "at": "IST",
+       "departAirport": "IST",
+       "layoverMin": 120,
+       "requiredMin": 60,
+       "inPreferredWindow": false,
+       "protected": true,
+       "overnight": false,
+       "flags": [],
+       "ruleId": "airport-IST,global"
+      }
+     ],
+     "gateway": {
+      "iata": "VAN",
+      "dayOffset": 1,
+      "access": "Overland via the Razi–Kapıköy border crossing",
+      "country": "TR"
+     },
+     "truth": [
+      {
+       "component": 1,
+       "provider": "fake",
+       "rung": "LIVE_OFFER",
+       "fetchedAt": "2026-10-24T13:28:33Z",
+       "expiresAt": "2026-10-24T13:58:33Z",
+       "fake": true
+      }
+     ],
+     "baggage": [
+      {
+       "segmentIndex": 0,
+       "passengerType": "ADT",
+       "checked": {
+        "status": "KNOWN",
+        "value": {
+         "pieces": 1,
+         "kgPerPiece": 23
+        }
+       },
+       "cabin": {
+        "status": "KNOWN",
+        "value": true
+       }
+      },
+      {
+       "segmentIndex": 1,
+       "passengerType": "ADT",
+       "checked": {
+        "status": "KNOWN",
+        "value": {
+         "pieces": 1,
+         "kgPerPiece": 23
+        }
+       },
+       "cabin": {
+        "status": "KNOWN",
+        "value": true
+       }
+      }
+     ],
+     "riskFlags": [],
+     "stops": 1,
+     "firstDeparture": "2026-11-24T04:10:00Z",
+     "lastArrival": "2026-11-24T12:05:00Z",
+     "carriers": [
+      "TK"
+     ],
+     "components": [
+      {
+       "source": {
+        "provider": "fake",
+        "providerOfferId": "fake_eyJ0IjpbNTZdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzMzNDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuMzc3WiJ9",
+        "rung": "LIVE_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       },
+       "slices": [
+        {
+         "origin": "VAN",
+         "destination": "LHR",
+         "segments": [
+          {
+           "marketing": {
+            "carrier": "TK",
+            "flightNumber": "2721"
+           },
+           "operating": {
+            "carrier": "TK",
+            "flightNumber": "2721"
+           },
+           "origin": {
+            "iata": "VAN",
+            "terminal": "1"
+           },
+           "destination": {
+            "iata": "IST",
+            "terminal": "1"
+           },
+           "departure": {
+            "local": "2026-11-24T07:10",
+            "utc": "2026-11-24T04:10:00Z",
+            "tz": "Europe/Istanbul"
+           },
+           "arrival": {
+            "local": "2026-11-24T09:00",
+            "utc": "2026-11-24T06:00:00Z",
+            "tz": "Europe/Istanbul"
+           },
+           "cabin": "ECONOMY",
+           "aircraft": "321",
+           "technicalStops": []
+          },
+          {
+           "marketing": {
+            "carrier": "TK",
+            "flightNumber": "1971"
+           },
+           "operating": {
+            "carrier": "TK",
+            "flightNumber": "1971"
+           },
+           "origin": {
+            "iata": "IST",
+            "terminal": "1"
+           },
+           "destination": {
+            "iata": "LHR",
+            "terminal": "2"
+           },
+           "departure": {
+            "local": "2026-11-24T11:00",
+            "utc": "2026-11-24T08:00:00Z",
+            "tz": "Europe/Istanbul"
+           },
+           "arrival": {
+            "local": "2026-11-24T12:05",
+            "utc": "2026-11-24T12:05:00Z",
+            "tz": "Europe/London"
+           },
+           "cabin": "ECONOMY",
+           "aircraft": "77W",
+           "technicalStops": []
+          }
+         ],
+         "durationMin": 475
+        }
+       ],
+       "validatingCarrier": "TK",
+       "ticketing": "SINGLE_TICKET",
+       "brand": {
+        "status": "KNOWN",
+        "value": {
+         "name": "EcoFly"
+        }
+       },
+       "baggage": [
+        {
+         "segmentIndex": 0,
+         "passengerType": "ADT",
+         "checked": {
+          "status": "KNOWN",
+          "value": {
+           "pieces": 1,
+           "kgPerPiece": 23
+          }
+         },
+         "cabin": {
+          "status": "KNOWN",
+          "value": true
+         }
+        },
+        {
+         "segmentIndex": 1,
+         "passengerType": "ADT",
+         "checked": {
+          "status": "KNOWN",
+          "value": {
+           "pieces": 1,
+           "kgPerPiece": 23
+          }
+         },
+         "cabin": {
+          "status": "KNOWN",
+          "value": true
+         }
+        }
+       ],
+       "seatSelection": {
+        "status": "KNOWN",
+        "value": "PAID"
+       },
+       "seatsRemaining": 5,
+       "seatMapAvailable": true,
+       "restrictions": [
+        "FAKE_SUPPLIER"
+       ],
+       "conditions": {
+        "change": {
+         "status": "KNOWN",
+         "value": {
+          "allowed": true
+         }
+        },
+        "refund": {
+         "status": "KNOWN",
+         "value": {
+          "allowed": true
+         }
+        }
+       }
+      }
+     ],
+     "tabs": [
+      "BEST",
+      "FASTEST",
+      "SINGLE_TICKET"
+     ]
+    },
+    "query": {
+     "cabin": "ECONOMY",
+     "slices": [
+      {
+       "to": {
+        "city": "LON"
+       },
+       "date": "2026-11-23",
+       "from": {
+        "city": "THR"
+       },
+       "flexDays": 0
+      }
+     ],
+     "tripType": "ONE_WAY",
+     "passengers": [
+      {
+       "type": "ADT"
+      }
+     ],
+     "preferences": {
+      "maxStops": 2,
+      "studentFare": false,
+      "nearestCabin": false,
+      "allowOvernight": true,
+      "includeGateways": true,
+      "allowSelfTransfer": true,
+      "allowAirportChange": false,
+      "preferredLayoverMin": [
+       240,
+       360
+      ]
+     }
+    }
+   }
+  },
+  "en GET /v1/itineraries/itn_0nf5i350dhh0qr/seat-maps": {
+   "status": 200,
+   "body": {
+    "available": false,
+    "reason": "SEATMAPS_DISABLED",
+    "maps": []
+   }
+  },
+  "en GET /v1/me/travellers": {
+   "status": 200,
+   "body": [
+    {
+     "id": "01a16e19-3779-7449-937b-6468a2f1925e",
+     "title": "MS",
+     "givenNames": "LEILA",
+     "surname": "SHIPPER",
+     "nameFa": null,
+     "dateOfBirth": "1998-05-02",
+     "genderOnDocument": "F",
+     "nationality": "IR",
+     "relationship": "SELF",
+     "document": {
+      "type": "PASSPORT",
+      "last4": "5678",
+      "issuingCountry": "IR",
+      "expiryDate": "2030-01-01"
+     },
+     "documentComplete": true,
+     "verification": {
+      "status": "VERIFIED",
+      "confirmedAt": null,
+      "reviewHash": "471764a2da71674bd458c966c682b30921f8981d8ab4a3ca41bb9b6e979237f5",
+      "reason": null,
+      "scan": null
+     }
+    }
+   ]
+  },
+  "en GET /v1/requests": {
+   "status": 200,
+   "body": [
+    {
+     "ref": "UT-F-MP97Y0",
+     "productType": "FLIGHT",
+     "status": "QUOTED",
+     "statusLabel": "Options sent",
+     "routeLabel": "Tehran → London",
+     "firstDate": "2026-12-14",
+     "submittedAt": "2026-10-24T13:28:28.843Z",
+     "updatedAt": "2026-10-24T13:28:29.261Z",
+     "unread": 0
+    },
+    {
+     "ref": "UT-C-A987BD",
+     "productType": "CARGO",
+     "status": "RECEIVED",
+     "statusLabel": "Received by us",
+     "routeLabel": "United Kingdom → Türkiye",
+     "firstDate": "2026-11-02",
+     "submittedAt": "2026-10-24T13:28:28.226Z",
+     "updatedAt": "2026-10-24T13:28:28.745Z",
+     "unread": 0
+    }
+   ]
+  },
+  "en GET /v1/flight-requests/UT-F-MP97Y0": {
+   "status": 200,
+   "body": {
+    "ref": "UT-F-MP97Y0",
+    "kind": "MANUAL",
+    "status": "QUOTED",
+    "statusLabel": "Options sent",
+    "paymentStatus": "NONE",
+    "tripType": "ONE_WAY",
+    "query": {
+     "tripType": "ONE_WAY",
+     "slices": [
+      {
+       "from": {
+        "city": "THR"
+       },
+       "to": {
+        "city": "LON"
+       },
+       "date": "2026-12-14",
+       "flexDays": 2
+      }
+     ],
+     "passengers": [
+      {
+       "type": "ADT"
+      }
+     ],
+     "cabin": "ECONOMY",
+     "preferences": {
+      "allowSelfTransfer": true,
+      "allowAirportChange": false,
+      "allowOvernight": true,
+      "maxStops": 2,
+      "nearestCabin": false,
+      "studentFare": false
+     }
+    },
+    "routeLabel": "Tehran → London",
+    "firstTravelDate": "2026-12-14",
+    "submittedAt": "2026-10-24T13:28:28.843Z",
+    "updatedAt": "2026-10-24T13:28:29.261Z",
+    "snapshot": null,
+    "travellers": [
+     {
+      "travellerId": "01a16e19-3779-7449-937b-6468a2f1925e",
+      "passengerType": "ADT",
+      "name": "LEILA SHIPPER",
+      "documentComplete": true
+     }
+    ],
+    "timeline": [
+     {
+      "at": "2026-10-24T13:28:28.843Z",
+      "kind": "STATUS",
+      "label": "Received",
+      "toStatus": "SUBMITTED"
+     },
+     {
+      "at": "2026-10-24T13:28:29.220Z",
+      "kind": "STATUS",
+      "label": "Being reviewed",
+      "fromStatus": "NEW",
+      "toStatus": "IN_REVIEW"
+     },
+     {
+      "at": "2026-10-24T13:28:29.256Z",
+      "kind": "STATUS",
+      "label": "Options sent",
+      "fromStatus": "IN_REVIEW",
+      "toStatus": "QUOTED"
+     }
+    ],
+    "messages": [],
+    "quotes": [
+     {
+      "id": "01a16e19-393f-7644-bd7e-7b7b8065ee25",
+      "version": 1,
+      "status": "SENT",
+      "currency": "GBP",
+      "validUntil": "2026-10-25T13:28:29.247Z",
+      "sentAt": "2026-10-24T13:28:29.264Z",
+      "acceptedOptionId": null,
+      "acceptedAt": null,
+      "acceptedVia": null,
+      "options": [
+       {
+        "label": "BA via Istanbul",
+        "source": "MANUAL",
+        "slices": [
+         {
+          "origin": "IST",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "operating": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-12-14T13:50",
+             "utc": "2026-12-14T10:50:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-12-14T15:35",
+             "utc": "2026-12-14T15:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 285
+         }
+        ],
+        "priceBreakdown": {
+         "fare": {
+          "amountMinor": 30000,
+          "currency": "GBP"
+         },
+         "taxes": {
+          "amountMinor": 9000,
+          "currency": "GBP"
+         },
+         "serviceFee": {
+          "amountMinor": 2500,
+          "currency": "GBP"
+         },
+         "total": {
+          "amountMinor": 41500,
+          "currency": "GBP"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true,
+           "penalty": {
+            "amountMinor": 5000,
+            "currency": "GBP"
+           }
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        },
+        "ticketingModel": "SINGLE_TICKET",
+        "id": "01a16e19-3940-7674-b48f-5c4c069e43dc",
+        "attestedBy": "Olivia Owner",
+        "unknownFields": []
+       }
+      ],
+      "rowVersion": 1
+     }
+    ],
+    "reservation": null,
+    "tickets": [],
+    "documents": [
+     {
+      "id": "01a16e19-3960-737d-85d6-27e5e25744a2",
+      "type": "QUOTE_PDF",
+      "filename": "quotation-QT-2026-000144.pdf",
+      "createdAt": "2026-10-24T13:28:29.268Z"
+     }
+    ],
+    "actions": [
+     "ACCEPT_QUOTE",
+     "CANCEL",
+     "MESSAGE"
+    ],
+    "truthBadge": "REQUEST"
+   }
+  },
+  "en GET /v1/cargo-requests/UT-C-A987BD": {
+   "status": 200,
+   "body": {
+    "ref": "UT-C-A987BD",
+    "service": "PARCEL",
+    "status": "RECEIVED",
+    "statusLabel": "Received by us",
+    "paymentStatus": "NONE",
+    "lane": {
+     "origin": "GB",
+     "destination": "TR"
+    },
+    "shipper": {
+     "name": "Leila Shipper",
+     "address": {
+      "line1": "1 Test Street",
+      "city": "London",
+      "postcode": "N1 1AA",
+      "country": "GB"
+     },
+     "phone": "+989127450992"
+    },
+    "consignee": {
+     "name": "Mina Receiver",
+     "address": {
+      "line1": "1 Test Street",
+      "city": "Istanbul",
+      "postcode": "N1 1AA",
+      "country": "TR"
+     },
+     "phone": "+447700900555"
+    },
+    "readyDate": "2026-11-02",
+    "handoverMode": "PICKUP",
+    "pieces": [
+     {
+      "lengthCm": 20,
+      "widthCm": 20,
+      "heightCm": 20,
+      "weightKg": 8,
+      "id": "01a16e19-355d-7621-b5d7-7ec79fd848c2",
+      "verifiedWeightKg": 8
+     }
+    ],
+    "items": [
+     {
+      "description": "Winter clothes",
+      "category": "CLOTHING",
+      "quantity": 1,
+      "unitValue": {
+       "amountMinor": 5000,
+       "currency": "GBP"
+      },
+      "originCountry": "GB",
+      "purpose": "PERSONAL_EFFECTS",
+      "id": "01a16e19-355e-7158-98a9-f6966e473bbd"
+     }
+    ],
+    "weights": {
+     "actualKg": 8,
+     "volumetricKg": 1.6,
+     "chargeableKg": 8,
+     "divisor": 5000,
+     "estimate": true
+    },
+    "declaredTotal": {
+     "amountMinor": 5000,
+     "currency": "GBP"
+    },
+    "submittedAt": "2026-10-24T13:28:28.226Z",
+    "timeline": [
+     {
+      "at": "2026-10-24T13:28:28.226Z",
+      "label": "Received"
+     },
+     {
+      "at": "2026-10-24T13:28:28.522Z",
+      "label": "Received"
+     },
+     {
+      "at": "2026-10-24T13:28:28.592Z",
+      "label": "Being reviewed"
+     },
+     {
+      "at": "2026-10-24T13:28:28.616Z",
+      "label": "Quote sent"
+     },
+     {
+      "at": "2026-10-24T13:28:28.645Z",
+      "label": "Booking with carrier"
+     },
+     {
+      "at": "2026-10-24T13:28:28.668Z",
+      "label": "Booked"
+     },
+     {
+      "at": "2026-10-24T13:28:28.682Z",
+      "label": "Awaiting pickup / drop-off"
+     },
+     {
+      "at": "2026-10-24T13:28:28.700Z",
+      "label": "Received by us"
+     }
+    ],
+    "tracking": [
+     {
+      "id": "01a16e19-370f-75a8-a3ce-f9ae0a3b6362",
+      "eventCode": "NOTE",
+      "label": "Update",
+      "location": "Pickup scheduled",
+      "occurredAt": "2026-10-24T13:28:28.686Z",
+      "description": "Courier pickup",
+      "corrected": false
+     },
+     {
+      "id": "01a16e19-3723-752d-86f0-b15deae8c44f",
+      "eventCode": "RECEIVED",
+      "label": "Received at our partner",
+      "location": "London hub",
+      "occurredAt": "2026-10-24T13:28:28.706Z",
+      "corrected": false
+     },
+     {
+      "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+      "eventCode": "AT_CUSTOMS",
+      "label": "At customs",
+      "location": "IST customs",
+      "occurredAt": "2026-10-24T13:31:28.734Z",
+      "corrected": true
+     }
+    ],
+    "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+    "quotes": [
+     {
+      "id": "01a16e19-36c2-7632-964a-9c7d3361092e",
+      "version": 1,
+      "status": "ACCEPTED",
+      "validUntil": "2026-10-25T13:28:28.610Z",
+      "lines": {
+       "freight": {
+        "ratePerKg": {
+         "amountMinor": 450,
+         "currency": "GBP"
+        },
+        "chargeableKg": 8,
+        "amount": {
+         "amountMinor": 3600,
+         "currency": "GBP"
+        }
+       },
+       "fuelSurcharge": {
+        "amountMinor": 600,
+        "currency": "GBP"
+       },
+       "securitySurcharge": {
+        "amountMinor": 300,
+        "currency": "GBP"
+       },
+       "handling": {
+        "amountMinor": 500,
+        "currency": "GBP"
+       },
+       "customsBrokerage": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "dutiesTaxes": "PAYABLE_BY_CONSIGNEE",
+       "dutiesEstimate": true,
+       "insurance": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "pickup": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "delivery": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "total": {
+        "amountMinor": 5000,
+        "currency": "GBP"
+       }
+      },
+      "transitNote": "3–6 working days",
+      "sentAt": "2026-10-24T13:28:28.620Z",
+      "acceptedAt": "2026-10-24T13:28:28.648Z",
+      "partnerName": "Uni Travel partner"
+     }
+    ],
+    "messages": [],
+    "documents": [
+     {
+      "id": "01a16e19-36d9-775f-9c28-836cda4e392d",
+      "type": "QUOTE_PDF",
+      "filename": "quotation-QT-2026-000143.pdf",
+      "createdAt": "2026-10-24T13:28:28.616Z"
+     },
+     {
+      "id": "01a16e19-3768-71cb-8d7d-636206f6d716",
+      "type": "INVOICE",
+      "filename": "invoice-INV-2026-000107.pdf",
+      "createdAt": "2026-10-24T13:28:28.763Z"
+     }
+    ],
+    "booking": {
+     "partnerName": "Uni Travel partner",
+     "awbNumber": "176-12345675"
+    },
+    "actions": [
+     "MESSAGE"
+    ]
+   }
+  },
+  "en GET /v1/me/sessions": {
+   "status": 200,
+   "body": [
+    {
+     "id": "01a16e19-3529-70e0-8afb-0f612b39990c",
+     "client": "WEB",
+     "ip": "10.237.88.148",
+     "userAgent": "node",
+     "createdAt": "2026-10-24T13:28:28.196Z",
+     "lastSeenAt": "2026-10-24T13:28:28.210Z",
+     "current": true,
+     "mfaLevel": 0
+    }
+   ]
+  },
+  "en GET /v1/me/details": {
+   "status": 200,
+   "body": {
+    "givenNamesLatin": "Leila",
+    "surnameLatin": "Shipper",
+    "nameFa": null,
+    "contactTimePref": null,
+    "address": null,
+    "identities": [
+     {
+      "id": "01a16e19-3525-73d0-b99e-16079cff0670",
+      "type": "PHONE",
+      "value": "+989127450992",
+      "verified": true
+     }
+    ],
+    "self": {
+     "id": "01a16e19-3779-7449-937b-6468a2f1925e",
+     "title": "MS",
+     "givenNames": "LEILA",
+     "surname": "SHIPPER",
+     "nameFa": null,
+     "dateOfBirth": "1998-05-02",
+     "genderOnDocument": "F",
+     "nationality": "IR",
+     "relationship": "SELF",
+     "document": {
+      "type": "PASSPORT",
+      "last4": "5678",
+      "issuingCountry": "IR",
+      "expiryDate": "2030-01-01"
+     },
+     "documentComplete": true,
+     "verification": {
+      "status": "VERIFIED",
+      "confirmedAt": null,
+      "reviewHash": "471764a2da71674bd458c966c682b30921f8981d8ab4a3ca41bb9b6e979237f5",
+      "reason": null,
+      "scan": null
+     }
+    }
+   }
+  },
+  "en GET /v1/shipments": {
+   "status": 200,
+   "body": [
+    {
+     "ref": "UT-C-A987BD",
+     "service": "PARCEL",
+     "status": "RECEIVED",
+     "statusLabel": "Received by us",
+     "laneLabel": "United Kingdom → Türkiye",
+     "awbNumber": "176-12345675",
+     "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+     "lastEvent": {
+      "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+      "eventCode": "AT_CUSTOMS",
+      "label": "At customs",
+      "location": "IST customs",
+      "occurredAt": "2026-10-24T13:31:28.734Z",
+      "corrected": true
+     },
+     "timeline": [
+      {
+       "id": "01a16e19-370f-75a8-a3ce-f9ae0a3b6362",
+       "eventCode": "NOTE",
+       "label": "Update",
+       "location": "Pickup scheduled",
+       "occurredAt": "2026-10-24T13:28:28.686Z",
+       "description": "Courier pickup",
+       "corrected": false
+      },
+      {
+       "id": "01a16e19-3723-752d-86f0-b15deae8c44f",
+       "eventCode": "RECEIVED",
+       "label": "Received at our partner",
+       "location": "London hub",
+       "occurredAt": "2026-10-24T13:28:28.706Z",
+       "corrected": false
+      },
+      {
+       "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+       "eventCode": "AT_CUSTOMS",
+       "label": "At customs",
+       "location": "IST customs",
+       "occurredAt": "2026-10-24T13:31:28.734Z",
+       "corrected": true
+      }
+     ]
+    }
+   ]
+  },
+  "en GET /v1/shipments/summary": {
+   "status": 200,
+   "body": {
+    "total": 1,
+    "inTransit": 1,
+    "delivered": 0,
+    "next": {
+     "ref": "UT-C-A987BD",
+     "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+     "lastEvent": {
+      "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+      "eventCode": "AT_CUSTOMS",
+      "label": "At customs",
+      "location": "IST customs",
+      "occurredAt": "2026-10-24T13:31:28.734Z",
+      "corrected": true
+     },
+     "laneLabel": "United Kingdom → Türkiye"
+    }
+   }
+  },
+  "en GET /v1/billing/documents": {
+   "status": 200,
+   "body": {
+    "quotations": [
+     {
+      "number": "QT-2026-000144",
+      "requestRef": "UT-F-MP97Y0",
+      "productType": "FLIGHT",
+      "status": "SENT",
+      "sentAt": "2026-10-24T13:28:29.264Z",
+      "validUntil": "2026-10-25T13:28:29.247Z",
+      "documentId": "01a16e19-3960-737d-85d6-27e5e25744a2"
+     },
+     {
+      "number": "QT-2026-000143",
+      "requestRef": "UT-C-A987BD",
+      "productType": "CARGO",
+      "status": "ACCEPTED",
+      "sentAt": "2026-10-24T13:28:28.620Z",
+      "validUntil": "2026-10-25T13:28:28.610Z",
+      "documentId": "01a16e19-36d9-775f-9c28-836cda4e392d"
+     }
+    ],
+    "invoices": [
+     {
+      "number": "INV-2026-000107",
+      "status": "ISSUED",
+      "requestRef": "UT-C-A987BD",
+      "productType": "CARGO",
+      "lines": [
+       {
+        "description": "Freight (8 kg)",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 3600,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 3600,
+         "currency": "GBP"
+        }
+       },
+       {
+        "description": "Fuel surcharge",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 600,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 600,
+         "currency": "GBP"
+        }
+       },
+       {
+        "description": "Security surcharge",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 300,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 300,
+         "currency": "GBP"
+        }
+       },
+       {
+        "description": "Handling",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 500,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 500,
+         "currency": "GBP"
+        }
+       }
+      ],
+      "total": {
+       "amountMinor": 5000,
+       "currency": "GBP"
+      },
+      "issuedAt": "2026-10-24T13:28:28.763Z",
+      "expiresAt": "2026-11-07T13:28:28.763Z",
+      "paidAt": null,
+      "cancelledAt": null,
+      "cancelReason": null,
+      "documentId": "01a16e19-3768-71cb-8d7d-636206f6d716"
+     }
+    ]
+   }
+  },
+  "en GET /v1/billing/invoices/INV-2026-000107": {
+   "status": 200,
+   "body": {
+    "number": "INV-2026-000107",
+    "status": "ISSUED",
+    "requestRef": "UT-C-A987BD",
+    "productType": "CARGO",
+    "lines": [
+     {
+      "description": "Freight (8 kg)",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 3600,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 3600,
+       "currency": "GBP"
+      }
+     },
+     {
+      "description": "Fuel surcharge",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 600,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 600,
+       "currency": "GBP"
+      }
+     },
+     {
+      "description": "Security surcharge",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 300,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 300,
+       "currency": "GBP"
+      }
+     },
+     {
+      "description": "Handling",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 500,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 500,
+       "currency": "GBP"
+      }
+     }
+    ],
+    "total": {
+     "amountMinor": 5000,
+     "currency": "GBP"
+    },
+    "issuedAt": "2026-10-24T13:28:28.763Z",
+    "expiresAt": "2026-11-07T13:28:28.763Z",
+    "paidAt": null,
+    "cancelledAt": null,
+    "cancelReason": null,
+    "documentId": "01a16e19-3768-71cb-8d7d-636206f6d716"
+   }
+  },
+  "en GET /v1/billing/invoices/INV-2026-000107/payment": {
+   "status": 200,
+   "body": {
+    "invoiceNumber": "INV-2026-000107",
+    "requestRef": "UT-C-A987BD",
+    "invoiceStatus": "ISSUED",
+    "total": {
+     "amountMinor": 5000,
+     "currency": "GBP"
+    },
+    "expiresAt": "2026-11-07T13:28:28.763Z",
+    "offered": false,
+    "reasons": [
+     "FLAG_OFF"
+    ],
+    "provider": "FAKE",
+    "session": null,
+    "processing": false,
+    "paidAt": null
+   }
+  },
+  "en GET /v1/notifications?limit=50": {
+   "status": 200,
+   "body": {
+    "items": [
+     {
+      "id": "01a16e19-3ab6-7191-9c97-e9a36ac15fa2",
+      "eventType": "quotation.sent",
+      "title": "Quotation QT-2026-000144 · UT-F-MP97Y0",
+      "body": "Your quotation QT-2026-000144 for UT-F-MP97Y0 is ready. It is valid until {expires_at_local}.",
+      "data": {
+       "linkPath": "/requests/UT-F-MP97Y0"
+      },
+      "critical": true,
+      "readAt": "2026-10-24T13:28:37.192Z",
+      "createdAt": "2026-10-24T13:28:29.622Z"
+     },
+     {
+      "id": "01a16e19-3ab1-77e2-a27d-519bc69aa1c5",
+      "eventType": "request.status_changed",
+      "title": "UT-F-MP97Y0 · Being reviewed",
+      "body": "Your request UT-F-MP97Y0 is now: Being reviewed.",
+      "data": {
+       "linkPath": "/requests/UT-F-MP97Y0"
+      },
+      "critical": false,
+      "readAt": "2026-10-24T13:28:37.192Z",
+      "createdAt": "2026-10-24T13:28:29.617Z"
+     },
+     {
+      "id": "01a16e19-3883-764d-af3b-faadc1561052",
+      "eventType": "request.submitted",
+      "title": "Request received · UT-F-MP97Y0",
+      "body": "We received your request UT-F-MP97Y0 (Tehran → London). Our team will call you. Requesting does not book a seat.",
+      "data": {
+       "linkPath": "/requests/UT-F-MP97Y0"
+      },
+      "critical": true,
+      "readAt": "2026-10-24T13:28:37.192Z",
+      "createdAt": "2026-10-24T13:28:29.059Z"
+     },
+     {
+      "id": "01a16e19-3879-7474-8e6d-fe4450d164f9",
+      "eventType": "invoice.issued",
+      "title": "Invoice INV-2026-000107 · UT-C-A987BD",
+      "body": "Invoice INV-2026-000107 for UT-C-A987BD has been issued. If it is still unpaid it expires on {expires_at_local}.",
+      "data": {
+       "linkPath": "/billing/INV-2026-000107"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.049Z"
+     },
+     {
+      "id": "01a16e19-3875-7588-8eca-9736377c4dc4",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Departed · LHR",
+      "body": "Your request UT-C-A987BD is now: Departed · LHR.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.045Z"
+     },
+     {
+      "id": "01a16e19-3870-7095-93c5-d151403b976e",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Received by us",
+      "body": "Your request UT-C-A987BD is now: Received by us.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.040Z"
+     },
+     {
+      "id": "01a16e19-3869-7009-82c7-ceb320f6d6d5",
+      "eventType": "cargo.status_changed",
+      "title": "UT-C-A987BD · Awaiting pickup / drop-off",
+      "body": "Your shipment UT-C-A987BD is now: Awaiting pickup / drop-off.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.034Z"
+     },
+     {
+      "id": "01a16e19-3864-7074-b995-00a2615769ad",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Booked",
+      "body": "Your request UT-C-A987BD is now: Booked.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.028Z"
+     },
+     {
+      "id": "01a16e19-385f-7333-b688-6cc04e31eed4",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Booking with carrier",
+      "body": "Your request UT-C-A987BD is now: Booking with carrier.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.024Z"
+     },
+     {
+      "id": "01a16e19-385d-73c9-8622-6646b500fafe",
+      "eventType": "quotation.sent",
+      "title": "Quotation QT-2026-000143 · UT-C-A987BD",
+      "body": "Your quotation QT-2026-000143 for UT-C-A987BD is ready. It is valid until {expires_at_local}.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.021Z"
+     },
+     {
+      "id": "01a16e19-3858-7336-b827-43837bca592a",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Quote sent",
+      "body": "Your request UT-C-A987BD is now: Quote sent.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.016Z"
+     },
+     {
+      "id": "01a16e19-3851-73af-a097-5d94e2167f0e",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Received",
+      "body": "Your request UT-C-A987BD is now: Received.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.009Z"
+     },
+     {
+      "id": "01a16e19-3680-7513-b4cf-7412a504f92e",
+      "eventType": "cargo.submitted",
+      "title": "Cargo request received · UT-C-A987BD",
+      "body": "We received your cargo request UT-C-A987BD (United Kingdom → Türkiye). Nothing is booked until we send a quote and you accept it.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:28.544Z"
+     }
+    ],
+    "nextCursor": null,
+    "unread": 10
+   }
+  },
+  "fa GET /v1/me": {
+   "status": 200,
+   "body": {
+    "id": "01a16e19-3524-7648-87f6-b0733654f859",
+    "displayName": "Leila Shipper",
+    "status": "ACTIVE",
+    "preferredLocale": "en",
+    "calendar": "GREGORIAN",
+    "timezone": "Asia/Tehran",
+    "identities": [
+     {
+      "id": "01a16e19-3525-73d0-b99e-16079cff0670",
+      "type": "PHONE",
+      "value": "+989127450992",
+      "verifiedAt": "2026-10-24T13:28:28.197Z",
+      "isPrimary": true
+     }
+    ],
+    "roles": [
+     "customer"
+    ],
+    "permissions": [
+     "cargo_request.create.own",
+     "cargo_request.read.own",
+     "flight_request.create.own",
+     "flight_request.read.own",
+     "flight_search.run"
+    ],
+    "flags": {
+     "cargo.enabled": true,
+     "search.gateways.enabled": true,
+     "seatmaps.enabled": false,
+     "payments.online.enabled": false,
+     "search.self_transfer.enabled": true,
+     "sms.free_text.enabled": false,
+     "push.pushy_pilot.enabled": false,
+     "maintenance.enabled": false
+    },
+    "permVersion": 1,
+    "profile": {
+     "givenNamesLatin": "Leila",
+     "surnameLatin": "Shipper",
+     "nameFa": null,
+     "contactTimePref": null
+    },
+    "notificationPrefs": {},
+    "mfa": {
+     "level": 0,
+     "enrolled": [],
+     "stepUpValidUntil": null
+    },
+    "onDuty": false,
+    "surfaces": {
+     "customer": true,
+     "admin": false,
+     "developer": false
+    }
+   }
+  },
+  "fa GET /v1/cargo/lanes": {
+   "status": 200,
+   "body": [
+    {
+     "id": "01a1643f-d2a6-760e-ba0e-07c0618f14a7",
+     "originCountry": "DE",
+     "destinationCountry": "IR",
+     "label": "آلمان → ایران",
+     "enabled": false,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": "تا بررسی حقوقی در دسترس نیست."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-f7618aea094f",
+     "originCountry": "GB",
+     "destinationCountry": "AE",
+     "label": "بریتانیا → امارات متحده عربی",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": "گیرندگان امارات پیش از رزرو بررسی می‌شوند."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-fbd6fabfc881",
+     "originCountry": "GB",
+     "destinationCountry": "AM",
+     "label": "بریتانیا → ارمنستان",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "EXCESS_BAGGAGE"
+     ],
+     "volumetricDivisor": 5000,
+     "notice": null
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-fe596308583c",
+     "originCountry": "GB",
+     "destinationCountry": "IR",
+     "label": "بریتانیا → ایران",
+     "enabled": false,
+     "services": [
+      "DOCUMENTS"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": null
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-ed74611d75c8",
+     "originCountry": "GB",
+     "destinationCountry": "TR",
+     "label": "بریتانیا → ترکیه",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "EXCESS_BAGGAGE",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 5000,
+     "notice": "زمان معمول حمل ۳ تا ۶ روز کاری پس از تحویل. ممکن است عوارض گمرکی بر عهدهٔ گیرنده باشد."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0e-00725e904441",
+     "originCountry": "IR",
+     "destinationCountry": "GB",
+     "label": "ایران → بریتانیا",
+     "enabled": false,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 6000,
+     "notice": "تا بررسی حقوقی در دسترس نیست."
+    },
+    {
+     "id": "01a1643f-d2a6-760e-ba0d-f1888d1db9a6",
+     "originCountry": "TR",
+     "destinationCountry": "GB",
+     "label": "ترکیه → بریتانیا",
+     "enabled": true,
+     "services": [
+      "DOCUMENTS",
+      "PARCEL",
+      "EXCESS_BAGGAGE",
+      "AIR_FREIGHT"
+     ],
+     "volumetricDivisor": 5000,
+     "notice": "ممکن است مالیات و عوارض واردات بریتانیا اعمال شود."
+    }
+   ]
+  },
+  "fa POST /v1/flight-searches": {
+   "status": 202,
+   "body": {
+    "id": "01a16e19-8b6e-70fe-b9e9-eb2372f9960d",
+    "status": "RUNNING",
+    "expiresAt": "2026-10-24T13:58:50.286Z"
+   }
+  },
+  "fa GET /v1/flight-searches/01a16e19-8b6e-70fe-b9e9-eb2372f9960d?tab=BEST&limit=40": {
+   "status": 200,
+   "body": {
+    "id": "01a16e19-8b6e-70fe-b9e9-eb2372f9960d",
+    "status": "COMPLETE",
+    "version": 4,
+    "query": {
+     "cabin": "ECONOMY",
+     "slices": [
+      {
+       "to": {
+        "city": "LON"
+       },
+       "date": "2026-11-23",
+       "from": {
+        "city": "THR"
+       },
+       "flexDays": 0
+      }
+     ],
+     "tripType": "ONE_WAY",
+     "passengers": [
+      {
+       "type": "ADT"
+      }
+     ],
+     "preferences": {
+      "maxStops": 2,
+      "studentFare": false,
+      "nearestCabin": false,
+      "allowOvernight": true,
+      "includeGateways": true,
+      "allowSelfTransfer": true,
+      "allowAirportChange": false,
+      "preferredLayoverMin": [
+       240,
+       360
+      ]
+     }
+    },
+    "progress": {
+     "sourcesTotal": 15,
+     "sourcesDone": 15,
+     "removedByPolicy": 2,
+     "slowSources": [],
+     "wave": 3
+    },
+    "expiresAt": "2026-10-24T13:58:50.286Z",
+    "historical": false,
+    "ruleVersion": 1,
+    "engineVersion": "engine-1.0.0",
+    "notices": [
+     "POLICY_HIDDEN"
+    ],
+    "results": [
+     {
+      "id": "itn_0nf5i350dhh0qr",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 475,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "IST",
+        "departAirport": "IST",
+        "layoverMin": 120,
+        "requiredMin": 60,
+        "inPreferredWindow": false,
+        "protected": true,
+        "overnight": false,
+        "flags": [],
+        "ruleId": "airport-IST,global"
+       }
+      ],
+      "gateway": {
+       "iata": "VAN",
+       "dayOffset": 1,
+       "access": "سفر زمینی از طریق مرز رازی–کاپی‌کوی",
+       "country": "TR"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T04:10:00Z",
+      "lastArrival": "2026-11-24T12:05:00Z",
+      "carriers": [
+       "TK"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNTZdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzMzNDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuMzc3WiJ9",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "VAN",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "origin": {
+             "iata": "VAN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "departure": {
+             "local": "2026-11-24T07:10",
+             "utc": "2026-11-24T04:10:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T09:00",
+             "utc": "2026-11-24T06:00:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "1971"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "1971"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T11:00",
+             "utc": "2026-11-24T08:00:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T12:05",
+             "utc": "2026-11-24T12:05:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "77W",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 475
+         }
+        ],
+        "validatingCarrier": "TK",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "EcoFly"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 5,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1yjcbo71alzjd9",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 595,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "VIE",
+        "departAirport": "VIE",
+        "layoverMin": 200,
+        "requiredMin": 60,
+        "inPreferredWindow": false,
+        "protected": true,
+        "overnight": true,
+        "flags": [
+         "OVERNIGHT"
+        ],
+        "ruleId": "global"
+       }
+      ],
+      "gateway": {
+       "iata": "EVN",
+       "dayOffset": 1,
+       "access": "سفر زمینی از طریق مرز نوردوز–آگارک",
+       "country": "AM"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "OVERNIGHT"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T00:15:00Z",
+      "lastArrival": "2026-11-24T10:10:00Z",
+      "carriers": [
+       "OS"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNjRdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzQxNzAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuOTg3WiJ9",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "EVN",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "origin": {
+             "iata": "EVN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "departure": {
+             "local": "2026-11-24T04:15",
+             "utc": "2026-11-24T00:15:00Z",
+             "tz": "Asia/Yerevan"
+            },
+            "arrival": {
+             "local": "2026-11-24T05:20",
+             "utc": "2026-11-24T04:20:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "E90",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "451"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "451"
+            },
+            "origin": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T08:40",
+             "utc": "2026-11-24T07:40:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "arrival": {
+             "local": "2026-11-24T10:10",
+             "utc": "2026-11-24T10:10:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "320",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 595
+         }
+        ],
+        "validatingCarrier": "OS",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Classic"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 2,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1cjfzf10wfxftl",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 720,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "WAW",
+        "departAirport": "WAW",
+        "layoverMin": 295,
+        "requiredMin": 60,
+        "inPreferredWindow": true,
+        "protected": true,
+        "overnight": true,
+        "flags": [
+         "OVERNIGHT"
+        ],
+        "ruleId": "global"
+       }
+      ],
+      "gateway": {
+       "iata": "EVN",
+       "dayOffset": 1,
+       "access": "سفر زمینی از طریق مرز نوردوز–آگارک",
+       "country": "AM"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "OVERNIGHT"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-23T23:35:00Z",
+      "lastArrival": "2026-11-24T11:35:00Z",
+      "carriers": [
+       "LO"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNzBdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzM1MDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuOTg3WiJ9",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "EVN",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "LO",
+             "flightNumber": "730"
+            },
+            "operating": {
+             "carrier": "LO",
+             "flightNumber": "730"
+            },
+            "origin": {
+             "iata": "EVN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "WAW",
+             "terminal": "A"
+            },
+            "departure": {
+             "local": "2026-11-24T03:35",
+             "utc": "2026-11-23T23:35:00Z",
+             "tz": "Asia/Yerevan"
+            },
+            "arrival": {
+             "local": "2026-11-24T04:55",
+             "utc": "2026-11-24T03:55:00Z",
+             "tz": "Europe/Warsaw"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "738",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "LO",
+             "flightNumber": "281"
+            },
+            "operating": {
+             "carrier": "LO",
+             "flightNumber": "281"
+            },
+            "origin": {
+             "iata": "WAW",
+             "terminal": "A"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T09:50",
+             "utc": "2026-11-24T08:50:00Z",
+             "tz": "Europe/Warsaw"
+            },
+            "arrival": {
+             "local": "2026-11-24T11:35",
+             "utc": "2026-11-24T11:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "738",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 720
+         }
+        ],
+        "validatingCarrier": "LO",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Standard"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 2,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1g1j4ar1ipbvud",
+      "construction": "GATEWAY",
+      "ticketing": "SINGLE_TICKET",
+      "durationMin": 840,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "IST",
+        "departAirport": "IST",
+        "layoverMin": 470,
+        "requiredMin": 60,
+        "inPreferredWindow": false,
+        "protected": true,
+        "overnight": false,
+        "flags": [],
+        "ruleId": "airport-IST,global"
+       }
+      ],
+      "gateway": {
+       "iata": "ERZ",
+       "dayOffset": 1,
+       "access": "سفر زمینی از طریق مرز بازرگان–گوربولاغ",
+       "country": "TR"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T05:30:00Z",
+      "lastArrival": "2026-11-24T19:30:00Z",
+      "carriers": [
+       "TK"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNThdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzMwNjAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuOTcxWiJ9",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "ERZ",
+          "destination": "LGW",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "2649"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "2649"
+            },
+            "origin": {
+             "iata": "ERZ",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "departure": {
+             "local": "2026-11-24T08:30",
+             "utc": "2026-11-24T05:30:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T10:30",
+             "utc": "2026-11-24T07:30:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           },
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "1985"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "1985"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LGW",
+             "terminal": "S"
+            },
+            "departure": {
+             "local": "2026-11-24T18:20",
+             "utc": "2026-11-24T15:20:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T19:30",
+             "utc": "2026-11-24T19:30:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 840
+         }
+        ],
+        "validatingCarrier": "TK",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "EcoFly"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         },
+         {
+          "segmentIndex": 1,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 2,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST",
+       "SINGLE_TICKET"
+      ]
+     },
+     {
+      "id": "itn_1numh1p09g0drn",
+      "construction": "GATEWAY",
+      "ticketing": "SEPARATE_TICKETS",
+      "durationMin": 685,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "IST",
+        "departAirport": "IST",
+        "layoverMin": 290,
+        "requiredMin": 180,
+        "inPreferredWindow": true,
+        "protected": false,
+        "overnight": false,
+        "flags": [
+         "SEPARATE_TICKETS",
+         "ENTRY_REQUIRED"
+        ],
+        "advisory": "ترانزیت با بلیت جداگانه در استانبول یعنی ورود به ترکیه: کنترل گذرنامه، تحویل بار و پذیرش دوباره. قوانین ورود به گذرنامه شما بستگی دارد و تیم ما پیش از ارسال پیشنهاد آن را تأیید می‌کند.",
+        "ruleId": "airport-IST,global"
+       }
+      ],
+      "gateway": {
+       "iata": "VAN",
+       "dayOffset": 1,
+       "access": "سفر زمینی از طریق مرز رازی–کاپی‌کوی",
+       "country": "TR"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       },
+       {
+        "component": 2,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:32Z",
+        "expiresAt": "2026-10-24T13:58:32Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "UNKNOWN"
+        },
+        "cabin": {
+         "status": "UNKNOWN"
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "SEPARATE_TICKETS",
+       "ENTRY_REQUIRED"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T04:10:00Z",
+      "lastArrival": "2026-11-24T15:35:00Z",
+      "carriers": [
+       "TK",
+       "BA"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbMjRdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzY0MDBdLCJmIjoiMjAyNi0xMC0yNFQxMzoyODozMy41MzhaIn0",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "VAN",
+          "destination": "IST",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "operating": {
+             "carrier": "TK",
+             "flightNumber": "2721"
+            },
+            "origin": {
+             "iata": "VAN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "departure": {
+             "local": "2026-11-24T07:10",
+             "utc": "2026-11-24T04:10:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T09:00",
+             "utc": "2026-11-24T06:00:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "321",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 110
+         }
+        ],
+        "validatingCarrier": "TK",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "UNKNOWN"
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "UNKNOWN"
+          },
+          "cabin": {
+           "status": "UNKNOWN"
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 5,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "UNKNOWN"
+         },
+         "refund": {
+          "status": "UNKNOWN"
+         }
+        }
+       },
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbMzRdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzI5NDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzIuNzY4WiJ9",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:32Z",
+         "expiresAt": "2026-10-24T13:58:32Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "IST",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "operating": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "5"
+            },
+            "departure": {
+             "local": "2026-11-24T13:50",
+             "utc": "2026-11-24T10:50:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-11-24T15:35",
+             "utc": "2026-11-24T15:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "320",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 285
+         }
+        ],
+        "validatingCarrier": "BA",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Euro Traveller"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 8,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST"
+      ]
+     },
+     {
+      "id": "itn_1cjldi504zk20p",
+      "construction": "GATEWAY",
+      "ticketing": "SEPARATE_TICKETS",
+      "durationMin": 860,
+      "connections": [
+       {
+        "sliceIndex": 0,
+        "at": "VIE",
+        "departAirport": "VIE",
+        "layoverMin": 465,
+        "requiredMin": 180,
+        "inPreferredWindow": false,
+        "protected": false,
+        "overnight": true,
+        "flags": [
+         "SEPARATE_TICKETS",
+         "OVERNIGHT",
+         "ENTRY_REQUIRED"
+        ],
+        "ruleId": "global"
+       }
+      ],
+      "gateway": {
+       "iata": "EVN",
+       "dayOffset": 1,
+       "access": "سفر زمینی از طریق مرز نوردوز–آگارک",
+       "country": "AM"
+      },
+      "truth": [
+       {
+        "component": 1,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:32Z",
+        "expiresAt": "2026-10-24T13:58:32Z",
+        "fake": true
+       },
+       {
+        "component": 2,
+        "provider": "fake",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       }
+      ],
+      "baggage": [
+       {
+        "segmentIndex": 0,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       },
+       {
+        "segmentIndex": 1,
+        "passengerType": "ADT",
+        "checked": {
+         "status": "KNOWN",
+         "value": {
+          "pieces": 1,
+          "kgPerPiece": 23
+         }
+        },
+        "cabin": {
+         "status": "KNOWN",
+         "value": true
+        }
+       }
+      ],
+      "riskFlags": [
+       "SEPARATE_TICKETS",
+       "OVERNIGHT",
+       "ENTRY_REQUIRED"
+      ],
+      "stops": 1,
+      "firstDeparture": "2026-11-24T00:15:00Z",
+      "lastArrival": "2026-11-24T14:35:00Z",
+      "carriers": [
+       "OS"
+      ],
+      "components": [
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNjZdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzE2OTAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzIuNDI5WiJ9",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:32Z",
+         "expiresAt": "2026-10-24T13:58:32Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "EVN",
+          "destination": "VIE",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "632"
+            },
+            "origin": {
+             "iata": "EVN",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "departure": {
+             "local": "2026-11-24T04:15",
+             "utc": "2026-11-24T00:15:00Z",
+             "tz": "Asia/Yerevan"
+            },
+            "arrival": {
+             "local": "2026-11-24T05:20",
+             "utc": "2026-11-24T04:20:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "E90",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 245
+         }
+        ],
+        "validatingCarrier": "OS",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Light"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 6,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        }
+       },
+       {
+        "source": {
+         "provider": "fake",
+         "providerOfferId": "fake_eyJ0IjpbNjhdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzE0NzAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuMTY0WiJ9",
+         "rung": "CACHED_OFFER",
+         "fetchedAt": "2026-10-24T13:28:33Z",
+         "expiresAt": "2026-10-24T13:58:33Z",
+         "fake": true
+        },
+        "slices": [
+         {
+          "origin": "VIE",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "OS",
+             "flightNumber": "455"
+            },
+            "operating": {
+             "carrier": "OS",
+             "flightNumber": "455"
+            },
+            "origin": {
+             "iata": "VIE",
+             "terminal": "3"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-11-24T13:05",
+             "utc": "2026-11-24T12:05:00Z",
+             "tz": "Europe/Vienna"
+            },
+            "arrival": {
+             "local": "2026-11-24T14:35",
+             "utc": "2026-11-24T14:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "aircraft": "320",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 150
+         }
+        ],
+        "validatingCarrier": "OS",
+        "ticketing": "SINGLE_TICKET",
+        "brand": {
+         "status": "KNOWN",
+         "value": {
+          "name": "Economy Light"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "seatSelection": {
+         "status": "KNOWN",
+         "value": "PAID"
+        },
+        "seatsRemaining": 8,
+        "seatMapAvailable": true,
+        "restrictions": [
+         "FAKE_SUPPLIER"
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        }
+       }
+      ],
+      "tabs": [
+       "BEST",
+       "FASTEST"
+      ]
+     }
+    ],
+    "nextCursor": null,
+    "total": 6
+   }
+  },
+  "fa GET /v1/itineraries/itn_0nf5i350dhh0qr": {
+   "status": 200,
+   "body": {
+    "searchId": "01a16e19-8b6e-70fe-b9e9-eb2372f9960d",
+    "itinerary": {
+     "id": "itn_0nf5i350dhh0qr",
+     "construction": "GATEWAY",
+     "ticketing": "SINGLE_TICKET",
+     "durationMin": 475,
+     "connections": [
+      {
+       "sliceIndex": 0,
+       "at": "IST",
+       "departAirport": "IST",
+       "layoverMin": 120,
+       "requiredMin": 60,
+       "inPreferredWindow": false,
+       "protected": true,
+       "overnight": false,
+       "flags": [],
+       "ruleId": "airport-IST,global"
+      }
+     ],
+     "gateway": {
+      "iata": "VAN",
+      "dayOffset": 1,
+      "access": "سفر زمینی از طریق مرز رازی–کاپی‌کوی",
+      "country": "TR"
+     },
+     "truth": [
+      {
+       "component": 1,
+       "provider": "fake",
+       "rung": "CACHED_OFFER",
+       "fetchedAt": "2026-10-24T13:28:33Z",
+       "expiresAt": "2026-10-24T13:58:33Z",
+       "fake": true
+      }
+     ],
+     "baggage": [
+      {
+       "segmentIndex": 0,
+       "passengerType": "ADT",
+       "checked": {
+        "status": "KNOWN",
+        "value": {
+         "pieces": 1,
+         "kgPerPiece": 23
+        }
+       },
+       "cabin": {
+        "status": "KNOWN",
+        "value": true
+       }
+      },
+      {
+       "segmentIndex": 1,
+       "passengerType": "ADT",
+       "checked": {
+        "status": "KNOWN",
+        "value": {
+         "pieces": 1,
+         "kgPerPiece": 23
+        }
+       },
+       "cabin": {
+        "status": "KNOWN",
+        "value": true
+       }
+      }
+     ],
+     "riskFlags": [],
+     "stops": 1,
+     "firstDeparture": "2026-11-24T04:10:00Z",
+     "lastArrival": "2026-11-24T12:05:00Z",
+     "carriers": [
+      "TK"
+     ],
+     "components": [
+      {
+       "source": {
+        "provider": "fake",
+        "providerOfferId": "fake_eyJ0IjpbNTZdLCJkIjpbIjIwMjYtMTEtMjQiXSwiYyI6IkVDT05PTVkiLCJwIjoiQURUIiwiciI6WzMzNDAwXSwiZiI6IjIwMjYtMTAtMjRUMTM6Mjg6MzMuMzc3WiJ9",
+        "rung": "CACHED_OFFER",
+        "fetchedAt": "2026-10-24T13:28:33Z",
+        "expiresAt": "2026-10-24T13:58:33Z",
+        "fake": true
+       },
+       "slices": [
+        {
+         "origin": "VAN",
+         "destination": "LHR",
+         "segments": [
+          {
+           "marketing": {
+            "carrier": "TK",
+            "flightNumber": "2721"
+           },
+           "operating": {
+            "carrier": "TK",
+            "flightNumber": "2721"
+           },
+           "origin": {
+            "iata": "VAN",
+            "terminal": "1"
+           },
+           "destination": {
+            "iata": "IST",
+            "terminal": "1"
+           },
+           "departure": {
+            "local": "2026-11-24T07:10",
+            "utc": "2026-11-24T04:10:00Z",
+            "tz": "Europe/Istanbul"
+           },
+           "arrival": {
+            "local": "2026-11-24T09:00",
+            "utc": "2026-11-24T06:00:00Z",
+            "tz": "Europe/Istanbul"
+           },
+           "cabin": "ECONOMY",
+           "aircraft": "321",
+           "technicalStops": []
+          },
+          {
+           "marketing": {
+            "carrier": "TK",
+            "flightNumber": "1971"
+           },
+           "operating": {
+            "carrier": "TK",
+            "flightNumber": "1971"
+           },
+           "origin": {
+            "iata": "IST",
+            "terminal": "1"
+           },
+           "destination": {
+            "iata": "LHR",
+            "terminal": "2"
+           },
+           "departure": {
+            "local": "2026-11-24T11:00",
+            "utc": "2026-11-24T08:00:00Z",
+            "tz": "Europe/Istanbul"
+           },
+           "arrival": {
+            "local": "2026-11-24T12:05",
+            "utc": "2026-11-24T12:05:00Z",
+            "tz": "Europe/London"
+           },
+           "cabin": "ECONOMY",
+           "aircraft": "77W",
+           "technicalStops": []
+          }
+         ],
+         "durationMin": 475
+        }
+       ],
+       "validatingCarrier": "TK",
+       "ticketing": "SINGLE_TICKET",
+       "brand": {
+        "status": "KNOWN",
+        "value": {
+         "name": "EcoFly"
+        }
+       },
+       "baggage": [
+        {
+         "segmentIndex": 0,
+         "passengerType": "ADT",
+         "checked": {
+          "status": "KNOWN",
+          "value": {
+           "pieces": 1,
+           "kgPerPiece": 23
+          }
+         },
+         "cabin": {
+          "status": "KNOWN",
+          "value": true
+         }
+        },
+        {
+         "segmentIndex": 1,
+         "passengerType": "ADT",
+         "checked": {
+          "status": "KNOWN",
+          "value": {
+           "pieces": 1,
+           "kgPerPiece": 23
+          }
+         },
+         "cabin": {
+          "status": "KNOWN",
+          "value": true
+         }
+        }
+       ],
+       "seatSelection": {
+        "status": "KNOWN",
+        "value": "PAID"
+       },
+       "seatsRemaining": 5,
+       "seatMapAvailable": true,
+       "restrictions": [
+        "FAKE_SUPPLIER"
+       ],
+       "conditions": {
+        "change": {
+         "status": "KNOWN",
+         "value": {
+          "allowed": true
+         }
+        },
+        "refund": {
+         "status": "KNOWN",
+         "value": {
+          "allowed": true
+         }
+        }
+       }
+      }
+     ],
+     "tabs": [
+      "BEST",
+      "FASTEST",
+      "SINGLE_TICKET"
+     ]
+    },
+    "query": {
+     "cabin": "ECONOMY",
+     "slices": [
+      {
+       "to": {
+        "city": "LON"
+       },
+       "date": "2026-11-23",
+       "from": {
+        "city": "THR"
+       },
+       "flexDays": 0
+      }
+     ],
+     "tripType": "ONE_WAY",
+     "passengers": [
+      {
+       "type": "ADT"
+      }
+     ],
+     "preferences": {
+      "maxStops": 2,
+      "studentFare": false,
+      "nearestCabin": false,
+      "allowOvernight": true,
+      "includeGateways": true,
+      "allowSelfTransfer": true,
+      "allowAirportChange": false,
+      "preferredLayoverMin": [
+       240,
+       360
+      ]
+     }
+    }
+   }
+  },
+  "fa GET /v1/itineraries/itn_0nf5i350dhh0qr/seat-maps": {
+   "status": 200,
+   "body": {
+    "available": false,
+    "reason": "SEATMAPS_DISABLED",
+    "maps": []
+   }
+  },
+  "fa GET /v1/me/travellers": {
+   "status": 200,
+   "body": [
+    {
+     "id": "01a16e19-3779-7449-937b-6468a2f1925e",
+     "title": "MS",
+     "givenNames": "LEILA",
+     "surname": "SHIPPER",
+     "nameFa": null,
+     "dateOfBirth": "1998-05-02",
+     "genderOnDocument": "F",
+     "nationality": "IR",
+     "relationship": "SELF",
+     "document": {
+      "type": "PASSPORT",
+      "last4": "5678",
+      "issuingCountry": "IR",
+      "expiryDate": "2030-01-01"
+     },
+     "documentComplete": true,
+     "verification": {
+      "status": "VERIFIED",
+      "confirmedAt": null,
+      "reviewHash": "471764a2da71674bd458c966c682b30921f8981d8ab4a3ca41bb9b6e979237f5",
+      "reason": null,
+      "scan": null
+     }
+    }
+   ]
+  },
+  "fa GET /v1/requests": {
+   "status": 200,
+   "body": [
+    {
+     "ref": "UT-F-MP97Y0",
+     "productType": "FLIGHT",
+     "status": "QUOTED",
+     "statusLabel": "گزینه‌ها ارسال شد",
+     "routeLabel": "تهران → لندن",
+     "firstDate": "2026-12-14",
+     "submittedAt": "2026-10-24T13:28:28.843Z",
+     "updatedAt": "2026-10-24T13:28:29.261Z",
+     "unread": 0
+    },
+    {
+     "ref": "UT-C-A987BD",
+     "productType": "CARGO",
+     "status": "RECEIVED",
+     "statusLabel": "توسط ما دریافت شد",
+     "routeLabel": "بریتانیا → ترکیه",
+     "firstDate": "2026-11-02",
+     "submittedAt": "2026-10-24T13:28:28.226Z",
+     "updatedAt": "2026-10-24T13:28:28.745Z",
+     "unread": 0
+    }
+   ]
+  },
+  "fa GET /v1/flight-requests/UT-F-MP97Y0": {
+   "status": 200,
+   "body": {
+    "ref": "UT-F-MP97Y0",
+    "kind": "MANUAL",
+    "status": "QUOTED",
+    "statusLabel": "گزینه‌ها ارسال شد",
+    "paymentStatus": "NONE",
+    "tripType": "ONE_WAY",
+    "query": {
+     "tripType": "ONE_WAY",
+     "slices": [
+      {
+       "from": {
+        "city": "THR"
+       },
+       "to": {
+        "city": "LON"
+       },
+       "date": "2026-12-14",
+       "flexDays": 2
+      }
+     ],
+     "passengers": [
+      {
+       "type": "ADT"
+      }
+     ],
+     "cabin": "ECONOMY",
+     "preferences": {
+      "allowSelfTransfer": true,
+      "allowAirportChange": false,
+      "allowOvernight": true,
+      "maxStops": 2,
+      "nearestCabin": false,
+      "studentFare": false
+     }
+    },
+    "routeLabel": "تهران → لندن",
+    "firstTravelDate": "2026-12-14",
+    "submittedAt": "2026-10-24T13:28:28.843Z",
+    "updatedAt": "2026-10-24T13:28:29.261Z",
+    "snapshot": null,
+    "travellers": [
+     {
+      "travellerId": "01a16e19-3779-7449-937b-6468a2f1925e",
+      "passengerType": "ADT",
+      "name": "LEILA SHIPPER",
+      "documentComplete": true
+     }
+    ],
+    "timeline": [
+     {
+      "at": "2026-10-24T13:28:28.843Z",
+      "kind": "STATUS",
+      "label": "دریافت شد",
+      "toStatus": "SUBMITTED"
+     },
+     {
+      "at": "2026-10-24T13:28:29.220Z",
+      "kind": "STATUS",
+      "label": "در حال بررسی",
+      "fromStatus": "NEW",
+      "toStatus": "IN_REVIEW"
+     },
+     {
+      "at": "2026-10-24T13:28:29.256Z",
+      "kind": "STATUS",
+      "label": "گزینه‌ها ارسال شد",
+      "fromStatus": "IN_REVIEW",
+      "toStatus": "QUOTED"
+     }
+    ],
+    "messages": [],
+    "quotes": [
+     {
+      "id": "01a16e19-393f-7644-bd7e-7b7b8065ee25",
+      "version": 1,
+      "status": "SENT",
+      "currency": "GBP",
+      "validUntil": "2026-10-25T13:28:29.247Z",
+      "sentAt": "2026-10-24T13:28:29.264Z",
+      "acceptedOptionId": null,
+      "acceptedAt": null,
+      "acceptedVia": null,
+      "options": [
+       {
+        "label": "BA via Istanbul",
+        "source": "MANUAL",
+        "slices": [
+         {
+          "origin": "IST",
+          "destination": "LHR",
+          "segments": [
+           {
+            "marketing": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "operating": {
+             "carrier": "BA",
+             "flightNumber": "675"
+            },
+            "origin": {
+             "iata": "IST",
+             "terminal": "1"
+            },
+            "destination": {
+             "iata": "LHR",
+             "terminal": "2"
+            },
+            "departure": {
+             "local": "2026-12-14T13:50",
+             "utc": "2026-12-14T10:50:00Z",
+             "tz": "Europe/Istanbul"
+            },
+            "arrival": {
+             "local": "2026-12-14T15:35",
+             "utc": "2026-12-14T15:35:00Z",
+             "tz": "Europe/London"
+            },
+            "cabin": "ECONOMY",
+            "technicalStops": []
+           }
+          ],
+          "durationMin": 285
+         }
+        ],
+        "priceBreakdown": {
+         "fare": {
+          "amountMinor": 30000,
+          "currency": "GBP"
+         },
+         "taxes": {
+          "amountMinor": 9000,
+          "currency": "GBP"
+         },
+         "serviceFee": {
+          "amountMinor": 2500,
+          "currency": "GBP"
+         },
+         "total": {
+          "amountMinor": 41500,
+          "currency": "GBP"
+         }
+        },
+        "baggage": [
+         {
+          "segmentIndex": 0,
+          "passengerType": "ADT",
+          "checked": {
+           "status": "KNOWN",
+           "value": {
+            "pieces": 1,
+            "kgPerPiece": 23
+           }
+          },
+          "cabin": {
+           "status": "KNOWN",
+           "value": true
+          }
+         }
+        ],
+        "conditions": {
+         "change": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": true,
+           "penalty": {
+            "amountMinor": 5000,
+            "currency": "GBP"
+           }
+          }
+         },
+         "refund": {
+          "status": "KNOWN",
+          "value": {
+           "allowed": false
+          }
+         }
+        },
+        "ticketingModel": "SINGLE_TICKET",
+        "id": "01a16e19-3940-7674-b48f-5c4c069e43dc",
+        "attestedBy": "Olivia Owner",
+        "unknownFields": []
+       }
+      ],
+      "rowVersion": 1
+     }
+    ],
+    "reservation": null,
+    "tickets": [],
+    "documents": [
+     {
+      "id": "01a16e19-3960-737d-85d6-27e5e25744a2",
+      "type": "QUOTE_PDF",
+      "filename": "quotation-QT-2026-000144.pdf",
+      "createdAt": "2026-10-24T13:28:29.268Z"
+     }
+    ],
+    "actions": [
+     "ACCEPT_QUOTE",
+     "CANCEL",
+     "MESSAGE"
+    ],
+    "truthBadge": "REQUEST"
+   }
+  },
+  "fa GET /v1/cargo-requests/UT-C-A987BD": {
+   "status": 200,
+   "body": {
+    "ref": "UT-C-A987BD",
+    "service": "PARCEL",
+    "status": "RECEIVED",
+    "statusLabel": "توسط ما دریافت شد",
+    "paymentStatus": "NONE",
+    "lane": {
+     "origin": "GB",
+     "destination": "TR"
+    },
+    "shipper": {
+     "name": "Leila Shipper",
+     "address": {
+      "line1": "1 Test Street",
+      "city": "London",
+      "postcode": "N1 1AA",
+      "country": "GB"
+     },
+     "phone": "+989127450992"
+    },
+    "consignee": {
+     "name": "Mina Receiver",
+     "address": {
+      "line1": "1 Test Street",
+      "city": "Istanbul",
+      "postcode": "N1 1AA",
+      "country": "TR"
+     },
+     "phone": "+447700900555"
+    },
+    "readyDate": "2026-11-02",
+    "handoverMode": "PICKUP",
+    "pieces": [
+     {
+      "lengthCm": 20,
+      "widthCm": 20,
+      "heightCm": 20,
+      "weightKg": 8,
+      "id": "01a16e19-355d-7621-b5d7-7ec79fd848c2",
+      "verifiedWeightKg": 8
+     }
+    ],
+    "items": [
+     {
+      "description": "Winter clothes",
+      "category": "CLOTHING",
+      "quantity": 1,
+      "unitValue": {
+       "amountMinor": 5000,
+       "currency": "GBP"
+      },
+      "originCountry": "GB",
+      "purpose": "PERSONAL_EFFECTS",
+      "id": "01a16e19-355e-7158-98a9-f6966e473bbd"
+     }
+    ],
+    "weights": {
+     "actualKg": 8,
+     "volumetricKg": 1.6,
+     "chargeableKg": 8,
+     "divisor": 5000,
+     "estimate": true
+    },
+    "declaredTotal": {
+     "amountMinor": 5000,
+     "currency": "GBP"
+    },
+    "submittedAt": "2026-10-24T13:28:28.226Z",
+    "timeline": [
+     {
+      "at": "2026-10-24T13:28:28.226Z",
+      "label": "دریافت شد"
+     },
+     {
+      "at": "2026-10-24T13:28:28.522Z",
+      "label": "دریافت شد"
+     },
+     {
+      "at": "2026-10-24T13:28:28.592Z",
+      "label": "در حال بررسی"
+     },
+     {
+      "at": "2026-10-24T13:28:28.616Z",
+      "label": "پیشنهاد قیمت ارسال شد"
+     },
+     {
+      "at": "2026-10-24T13:28:28.645Z",
+      "label": "در حال رزرو با حمل‌کننده"
+     },
+     {
+      "at": "2026-10-24T13:28:28.668Z",
+      "label": "رزرو شد"
+     },
+     {
+      "at": "2026-10-24T13:28:28.682Z",
+      "label": "در انتظار تحویل محموله"
+     },
+     {
+      "at": "2026-10-24T13:28:28.700Z",
+      "label": "توسط ما دریافت شد"
+     }
+    ],
+    "tracking": [
+     {
+      "id": "01a16e19-370f-75a8-a3ce-f9ae0a3b6362",
+      "eventCode": "NOTE",
+      "label": "به‌روزرسانی",
+      "location": "Pickup scheduled",
+      "occurredAt": "2026-10-24T13:28:28.686Z",
+      "description": "Courier pickup",
+      "corrected": false
+     },
+     {
+      "id": "01a16e19-3723-752d-86f0-b15deae8c44f",
+      "eventCode": "RECEIVED",
+      "label": "نزد شریک ما دریافت شد",
+      "location": "London hub",
+      "occurredAt": "2026-10-24T13:28:28.706Z",
+      "corrected": false
+     },
+     {
+      "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+      "eventCode": "AT_CUSTOMS",
+      "label": "در گمرک",
+      "location": "IST customs",
+      "occurredAt": "2026-10-24T13:31:28.734Z",
+      "corrected": true
+     }
+    ],
+    "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+    "quotes": [
+     {
+      "id": "01a16e19-36c2-7632-964a-9c7d3361092e",
+      "version": 1,
+      "status": "ACCEPTED",
+      "validUntil": "2026-10-25T13:28:28.610Z",
+      "lines": {
+       "freight": {
+        "ratePerKg": {
+         "amountMinor": 450,
+         "currency": "GBP"
+        },
+        "chargeableKg": 8,
+        "amount": {
+         "amountMinor": 3600,
+         "currency": "GBP"
+        }
+       },
+       "fuelSurcharge": {
+        "amountMinor": 600,
+        "currency": "GBP"
+       },
+       "securitySurcharge": {
+        "amountMinor": 300,
+        "currency": "GBP"
+       },
+       "handling": {
+        "amountMinor": 500,
+        "currency": "GBP"
+       },
+       "customsBrokerage": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "dutiesTaxes": "PAYABLE_BY_CONSIGNEE",
+       "dutiesEstimate": true,
+       "insurance": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "pickup": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "delivery": {
+        "amountMinor": 0,
+        "currency": "GBP"
+       },
+       "total": {
+        "amountMinor": 5000,
+        "currency": "GBP"
+       }
+      },
+      "transitNote": "3–6 working days",
+      "sentAt": "2026-10-24T13:28:28.620Z",
+      "acceptedAt": "2026-10-24T13:28:28.648Z",
+      "partnerName": "Uni Travel partner"
+     }
+    ],
+    "messages": [],
+    "documents": [
+     {
+      "id": "01a16e19-36d9-775f-9c28-836cda4e392d",
+      "type": "QUOTE_PDF",
+      "filename": "quotation-QT-2026-000143.pdf",
+      "createdAt": "2026-10-24T13:28:28.616Z"
+     },
+     {
+      "id": "01a16e19-3768-71cb-8d7d-636206f6d716",
+      "type": "INVOICE",
+      "filename": "invoice-INV-2026-000107.pdf",
+      "createdAt": "2026-10-24T13:28:28.763Z"
+     }
+    ],
+    "booking": {
+     "partnerName": "Uni Travel partner",
+     "awbNumber": "176-12345675"
+    },
+    "actions": [
+     "MESSAGE"
+    ]
+   }
+  },
+  "fa GET /v1/me/sessions": {
+   "status": 200,
+   "body": [
+    {
+     "id": "01a16e19-3529-70e0-8afb-0f612b39990c",
+     "client": "WEB",
+     "ip": "10.237.88.148",
+     "userAgent": "node",
+     "createdAt": "2026-10-24T13:28:28.196Z",
+     "lastSeenAt": "2026-10-24T13:28:28.210Z",
+     "current": true,
+     "mfaLevel": 0
+    }
+   ]
+  },
+  "fa GET /v1/me/details": {
+   "status": 200,
+   "body": {
+    "givenNamesLatin": "Leila",
+    "surnameLatin": "Shipper",
+    "nameFa": null,
+    "contactTimePref": null,
+    "address": null,
+    "identities": [
+     {
+      "id": "01a16e19-3525-73d0-b99e-16079cff0670",
+      "type": "PHONE",
+      "value": "+989127450992",
+      "verified": true
+     }
+    ],
+    "self": {
+     "id": "01a16e19-3779-7449-937b-6468a2f1925e",
+     "title": "MS",
+     "givenNames": "LEILA",
+     "surname": "SHIPPER",
+     "nameFa": null,
+     "dateOfBirth": "1998-05-02",
+     "genderOnDocument": "F",
+     "nationality": "IR",
+     "relationship": "SELF",
+     "document": {
+      "type": "PASSPORT",
+      "last4": "5678",
+      "issuingCountry": "IR",
+      "expiryDate": "2030-01-01"
+     },
+     "documentComplete": true,
+     "verification": {
+      "status": "VERIFIED",
+      "confirmedAt": null,
+      "reviewHash": "471764a2da71674bd458c966c682b30921f8981d8ab4a3ca41bb9b6e979237f5",
+      "reason": null,
+      "scan": null
+     }
+    }
+   }
+  },
+  "fa GET /v1/shipments": {
+   "status": 200,
+   "body": [
+    {
+     "ref": "UT-C-A987BD",
+     "service": "PARCEL",
+     "status": "RECEIVED",
+     "statusLabel": "توسط ما دریافت شد",
+     "laneLabel": "بریتانیا → ترکیه",
+     "awbNumber": "176-12345675",
+     "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+     "lastEvent": {
+      "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+      "eventCode": "AT_CUSTOMS",
+      "label": "در گمرک",
+      "location": "IST customs",
+      "occurredAt": "2026-10-24T13:31:28.734Z",
+      "corrected": true
+     },
+     "timeline": [
+      {
+       "id": "01a16e19-370f-75a8-a3ce-f9ae0a3b6362",
+       "eventCode": "NOTE",
+       "label": "به‌روزرسانی",
+       "location": "Pickup scheduled",
+       "occurredAt": "2026-10-24T13:28:28.686Z",
+       "description": "Courier pickup",
+       "corrected": false
+      },
+      {
+       "id": "01a16e19-3723-752d-86f0-b15deae8c44f",
+       "eventCode": "RECEIVED",
+       "label": "نزد شریک ما دریافت شد",
+       "location": "London hub",
+       "occurredAt": "2026-10-24T13:28:28.706Z",
+       "corrected": false
+      },
+      {
+       "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+       "eventCode": "AT_CUSTOMS",
+       "label": "در گمرک",
+       "location": "IST customs",
+       "occurredAt": "2026-10-24T13:31:28.734Z",
+       "corrected": true
+      }
+     ]
+    }
+   ]
+  },
+  "fa GET /v1/shipments/summary": {
+   "status": 200,
+   "body": {
+    "total": 1,
+    "inTransit": 1,
+    "delivered": 0,
+    "next": {
+     "ref": "UT-C-A987BD",
+     "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+     "lastEvent": {
+      "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+      "eventCode": "AT_CUSTOMS",
+      "label": "در گمرک",
+      "location": "IST customs",
+      "occurredAt": "2026-10-24T13:31:28.734Z",
+      "corrected": true
+     },
+     "laneLabel": "بریتانیا → ترکیه"
+    }
+   }
+  },
+  "fa GET /v1/billing/documents": {
+   "status": 200,
+   "body": {
+    "quotations": [
+     {
+      "number": "QT-2026-000144",
+      "requestRef": "UT-F-MP97Y0",
+      "productType": "FLIGHT",
+      "status": "SENT",
+      "sentAt": "2026-10-24T13:28:29.264Z",
+      "validUntil": "2026-10-25T13:28:29.247Z",
+      "documentId": "01a16e19-3960-737d-85d6-27e5e25744a2"
+     },
+     {
+      "number": "QT-2026-000143",
+      "requestRef": "UT-C-A987BD",
+      "productType": "CARGO",
+      "status": "ACCEPTED",
+      "sentAt": "2026-10-24T13:28:28.620Z",
+      "validUntil": "2026-10-25T13:28:28.610Z",
+      "documentId": "01a16e19-36d9-775f-9c28-836cda4e392d"
+     }
+    ],
+    "invoices": [
+     {
+      "number": "INV-2026-000107",
+      "status": "ISSUED",
+      "requestRef": "UT-C-A987BD",
+      "productType": "CARGO",
+      "lines": [
+       {
+        "description": "Freight (8 kg)",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 3600,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 3600,
+         "currency": "GBP"
+        }
+       },
+       {
+        "description": "Fuel surcharge",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 600,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 600,
+         "currency": "GBP"
+        }
+       },
+       {
+        "description": "Security surcharge",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 300,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 300,
+         "currency": "GBP"
+        }
+       },
+       {
+        "description": "Handling",
+        "quantity": 1,
+        "unitAmount": {
+         "amountMinor": 500,
+         "currency": "GBP"
+        },
+        "amount": {
+         "amountMinor": 500,
+         "currency": "GBP"
+        }
+       }
+      ],
+      "total": {
+       "amountMinor": 5000,
+       "currency": "GBP"
+      },
+      "issuedAt": "2026-10-24T13:28:28.763Z",
+      "expiresAt": "2026-11-07T13:28:28.763Z",
+      "paidAt": null,
+      "cancelledAt": null,
+      "cancelReason": null,
+      "documentId": "01a16e19-3768-71cb-8d7d-636206f6d716"
+     }
+    ]
+   }
+  },
+  "fa GET /v1/billing/invoices/INV-2026-000107": {
+   "status": 200,
+   "body": {
+    "number": "INV-2026-000107",
+    "status": "ISSUED",
+    "requestRef": "UT-C-A987BD",
+    "productType": "CARGO",
+    "lines": [
+     {
+      "description": "Freight (8 kg)",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 3600,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 3600,
+       "currency": "GBP"
+      }
+     },
+     {
+      "description": "Fuel surcharge",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 600,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 600,
+       "currency": "GBP"
+      }
+     },
+     {
+      "description": "Security surcharge",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 300,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 300,
+       "currency": "GBP"
+      }
+     },
+     {
+      "description": "Handling",
+      "quantity": 1,
+      "unitAmount": {
+       "amountMinor": 500,
+       "currency": "GBP"
+      },
+      "amount": {
+       "amountMinor": 500,
+       "currency": "GBP"
+      }
+     }
+    ],
+    "total": {
+     "amountMinor": 5000,
+     "currency": "GBP"
+    },
+    "issuedAt": "2026-10-24T13:28:28.763Z",
+    "expiresAt": "2026-11-07T13:28:28.763Z",
+    "paidAt": null,
+    "cancelledAt": null,
+    "cancelReason": null,
+    "documentId": "01a16e19-3768-71cb-8d7d-636206f6d716"
+   }
+  },
+  "fa GET /v1/billing/invoices/INV-2026-000107/payment": {
+   "status": 200,
+   "body": {
+    "invoiceNumber": "INV-2026-000107",
+    "requestRef": "UT-C-A987BD",
+    "invoiceStatus": "ISSUED",
+    "total": {
+     "amountMinor": 5000,
+     "currency": "GBP"
+    },
+    "expiresAt": "2026-11-07T13:28:28.763Z",
+    "offered": false,
+    "reasons": [
+     "FLAG_OFF"
+    ],
+    "provider": "FAKE",
+    "session": null,
+    "processing": false,
+    "paidAt": null
+   }
+  },
+  "fa GET /v1/notifications?limit=50": {
+   "status": 200,
+   "body": {
+    "items": [
+     {
+      "id": "01a16e19-3ab6-7191-9c97-e9a36ac15fa2",
+      "eventType": "quotation.sent",
+      "title": "Quotation QT-2026-000144 · UT-F-MP97Y0",
+      "body": "Your quotation QT-2026-000144 for UT-F-MP97Y0 is ready. It is valid until {expires_at_local}.",
+      "data": {
+       "linkPath": "/requests/UT-F-MP97Y0"
+      },
+      "critical": true,
+      "readAt": "2026-10-24T13:28:37.192Z",
+      "createdAt": "2026-10-24T13:28:29.622Z"
+     },
+     {
+      "id": "01a16e19-3ab1-77e2-a27d-519bc69aa1c5",
+      "eventType": "request.status_changed",
+      "title": "UT-F-MP97Y0 · Being reviewed",
+      "body": "Your request UT-F-MP97Y0 is now: Being reviewed.",
+      "data": {
+       "linkPath": "/requests/UT-F-MP97Y0"
+      },
+      "critical": false,
+      "readAt": "2026-10-24T13:28:37.192Z",
+      "createdAt": "2026-10-24T13:28:29.617Z"
+     },
+     {
+      "id": "01a16e19-3883-764d-af3b-faadc1561052",
+      "eventType": "request.submitted",
+      "title": "Request received · UT-F-MP97Y0",
+      "body": "We received your request UT-F-MP97Y0 (Tehran → London). Our team will call you. Requesting does not book a seat.",
+      "data": {
+       "linkPath": "/requests/UT-F-MP97Y0"
+      },
+      "critical": true,
+      "readAt": "2026-10-24T13:28:37.192Z",
+      "createdAt": "2026-10-24T13:28:29.059Z"
+     },
+     {
+      "id": "01a16e19-3879-7474-8e6d-fe4450d164f9",
+      "eventType": "invoice.issued",
+      "title": "Invoice INV-2026-000107 · UT-C-A987BD",
+      "body": "Invoice INV-2026-000107 for UT-C-A987BD has been issued. If it is still unpaid it expires on {expires_at_local}.",
+      "data": {
+       "linkPath": "/billing/INV-2026-000107"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.049Z"
+     },
+     {
+      "id": "01a16e19-3875-7588-8eca-9736377c4dc4",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Departed · LHR",
+      "body": "Your request UT-C-A987BD is now: Departed · LHR.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.045Z"
+     },
+     {
+      "id": "01a16e19-3870-7095-93c5-d151403b976e",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Received by us",
+      "body": "Your request UT-C-A987BD is now: Received by us.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.040Z"
+     },
+     {
+      "id": "01a16e19-3869-7009-82c7-ceb320f6d6d5",
+      "eventType": "cargo.status_changed",
+      "title": "UT-C-A987BD · Awaiting pickup / drop-off",
+      "body": "Your shipment UT-C-A987BD is now: Awaiting pickup / drop-off.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.034Z"
+     },
+     {
+      "id": "01a16e19-3864-7074-b995-00a2615769ad",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Booked",
+      "body": "Your request UT-C-A987BD is now: Booked.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.028Z"
+     },
+     {
+      "id": "01a16e19-385f-7333-b688-6cc04e31eed4",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Booking with carrier",
+      "body": "Your request UT-C-A987BD is now: Booking with carrier.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.024Z"
+     },
+     {
+      "id": "01a16e19-385d-73c9-8622-6646b500fafe",
+      "eventType": "quotation.sent",
+      "title": "Quotation QT-2026-000143 · UT-C-A987BD",
+      "body": "Your quotation QT-2026-000143 for UT-C-A987BD is ready. It is valid until {expires_at_local}.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.021Z"
+     },
+     {
+      "id": "01a16e19-3858-7336-b827-43837bca592a",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Quote sent",
+      "body": "Your request UT-C-A987BD is now: Quote sent.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.016Z"
+     },
+     {
+      "id": "01a16e19-3851-73af-a097-5d94e2167f0e",
+      "eventType": "request.status_changed",
+      "title": "UT-C-A987BD · Received",
+      "body": "Your request UT-C-A987BD is now: Received.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:29.009Z"
+     },
+     {
+      "id": "01a16e19-3680-7513-b4cf-7412a504f92e",
+      "eventType": "cargo.submitted",
+      "title": "Cargo request received · UT-C-A987BD",
+      "body": "We received your cargo request UT-C-A987BD (United Kingdom → Türkiye). Nothing is booked until we send a quote and you accept it.",
+      "data": {
+       "linkPath": "/cargo/UT-C-A987BD"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-10-24T13:28:28.544Z"
+     }
+    ],
+    "nextCursor": null,
+    "unread": 10
+   }
+  }
+ }
+}

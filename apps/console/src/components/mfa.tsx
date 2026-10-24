@@ -35,7 +35,7 @@ export function TotpVerify({ onDone, submitLabel = "Verify", passkey = false }: 
       </label>
       <Button type="submit" className="w-full" loading={busy} disabled={code.length !== 6}>{submitLabel}</Button>
       {passkey && webauthnSupported() && <Button type="button" variant="outline" className="w-full" onClick={() => void withPasskey()} disabled={busy}><KeyRound /> Use a passkey</Button>}
-      {err && <p id="totp-err" role="alert" className="rounded-sm bg-[#fbeee9] px-3 py-2 text-brick">{err}</p>}
+      {err && <p id="totp-err" role="alert" className="rounded-sm bg-danger-subtle px-3 py-2 text-danger">{err}</p>}
     </form>
   )
 }
@@ -50,18 +50,18 @@ export function TotpEnrol({ onDone }: { onDone: () => void | Promise<void> }) {
     started.current = true
     api<{ secret: string; otpauthUrl: string }>("/v1/auth/mfa/totp/enrol", { body: {} }).then(setEnrol, (e) => setErr(errText(e)))
   }, [])
-  if (err) return <p role="alert" className="rounded-sm bg-[#fbeee9] px-3 py-2 text-brick">{err}</p>
-  if (!enrol) return <p className="text-slate">Preparing your authenticator secret…</p>
+  if (err) return <p role="alert" className="rounded-sm bg-danger-subtle px-3 py-2 text-danger">{err}</p>
+  if (!enrol) return <p className="text-steel">Preparing your authenticator secret…</p>
   return (
     <div className="space-y-4">
-      <ol className="list-decimal space-y-1 ps-5 text-slate">
+      <ol className="list-decimal space-y-1 ps-5 text-steel">
         <li>Open your authenticator app and add an account by key (or open the link on this device).</li>
         <li>Enter the six-digit code it shows. The secret is not shown again.</li>
       </ol>
       <div className="rounded-md border border-rule bg-ledger p-3">
         <p className="cap">Secret</p>
         <p className="mt-1 break-all font-mono text-base tracking-wider" dir="ltr" data-testid="totp-secret">{enrol.secret.match(/.{1,4}/g)?.join(" ")}</p>
-        <a className="mt-2 inline-block text-copper-700 underline underline-offset-4" href={enrol.otpauthUrl}>Open in authenticator app</a>
+        <a className="mt-2 inline-block text-orange-700 underline underline-offset-4" href={enrol.otpauthUrl}>Open in authenticator app</a>
       </div>
       <TotpVerify onDone={onDone} submitLabel="Confirm and continue" />
     </div>
@@ -82,7 +82,7 @@ export function AddPasskey() {
   return (
     <span className="inline-flex items-center gap-2">
       <Button size="xs" variant="outline" onClick={() => void add()}><KeyRound /> Add passkey</Button>
-      {state && <span className="text-slate">{state}</span>}
+      {state && <span className="text-steel">{state}</span>}
     </span>
   )
 }

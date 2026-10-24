@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kit_ui/kit_ui.dart' show XfamTone;
 
 import '../../core/api_error.dart';
@@ -7,8 +8,11 @@ import '../../core/errors_l10n.dart';
 import '../../core/providers.dart';
 import '../../core/repos.dart';
 import '../../core/session.dart';
+import '../../ui/bento.dart';
 import '../../ui/theme.dart';
+import '../admin/settings_sheet.dart';
 import '../../ui/widgets.dart';
+import '../../ui/patterns.dart';
 import 'traveller_form.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
@@ -69,7 +73,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: Brand.navy,
+                    backgroundColor: Brand.navy950,
                     child: Text(
                       me.displayName.isEmpty ? '?' : me.displayName.characters.first.toUpperCase(),
                       style: const TextStyle(color: Colors.white),
@@ -122,7 +126,32 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                 value: me.onDuty,
                 onChanged: _busy ? null : (v) => _patch({'onDuty': v}),
               ),
+              ListTile(
+                key: const Key('admin-settings-link'),
+                contentPadding: EdgeInsets.zero,
+                minTileHeight: 56,
+                leading: const Icon(Icons.tune),
+                title: Text(l.settingsTitle),
+                subtitle: Text(l.settingsHelp),
+                trailing: Icon(chevronIcon(context)),
+                onTap: () => showAdminSettings(context),
+              ),
             ] else ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.badge_outlined),
+                title: Text(l.detailsLink),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/account/details'),
+              ),
+              ListTile(
+                key: const Key('billing-link'),
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.receipt_long_outlined),
+                title: Text(l.billingTitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/account/billing'),
+              ),
               SectionTitle(l.myTravellers),
               const _TravellerList(),
             ],
@@ -157,6 +186,7 @@ class _TravellerList extends ConsumerWidget {
               leading: const Icon(Icons.person_outline),
               title: Text(t.fullName),
               subtitle: t.documentComplete ? null : Text(l.documentMissing),
+              trailing: t.document == null ? null : ToneChip(verificationLook(l, t.verification.status).$2, tone: verificationLook(l, t.verification.status).$1),
             ),
           TextButton.icon(
             onPressed: () => showTravellerSheet(context),

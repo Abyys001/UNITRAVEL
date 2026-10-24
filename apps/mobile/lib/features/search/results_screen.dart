@@ -13,7 +13,7 @@ import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import 'truth_badges.dart';
 
-const _tabs = ['BEST', 'CHEAPEST', 'FASTEST', 'SINGLE_TICKET'];
+const _tabs = ['BEST', 'FASTEST', 'SINGLE_TICKET'];
 
 class ResultsScreen extends ConsumerStatefulWidget {
   const ResultsScreen({super.key, required this.searchId});
@@ -47,7 +47,6 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
   }
 
   String _tabLabel(AppL10n l, String t) => switch (t) {
-    'CHEAPEST' => l.tabCheapest,
     'FASTEST' => l.tabFastest,
     'SINGLE_TICKET' => l.tabSingle,
     _ => l.tabBest,
@@ -184,8 +183,8 @@ class _ProgressLine extends StatelessWidget {
             LinearProgressIndicator(
               value: s == null || s.running ? (total == 0 ? null : done / total) : 1,
               minHeight: 3,
-              color: Brand.copper,
-              backgroundColor: Brand.mist,
+              color: Brand.orange,
+              backgroundColor: Brand.line,
             ),
           ],
         ),
@@ -204,10 +203,9 @@ class ResultCard extends ConsumerWidget {
     final l = context.l;
     final lang = context.lang;
     final slices = it.slices;
-    final price = formatMoney(it.total, lang);
     final route = slices.isEmpty ? '' : slices.map((s) => '${s.origin} → ${s.destination}').join(sep(lang));
     return AppCard(
-      semanticLabel: '$route, $price',
+      semanticLabel: route,
       onTap: () => context.push('/search/itinerary/${Uri.encodeComponent(it.id)}?search=$searchId'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +215,6 @@ class ResultCard extends ConsumerWidget {
             children: [
               Expanded(child: TruthBadges(it)),
               const SizedBox(width: 8),
-              Text(price, style: Theme.of(context).textTheme.titleLarge),
             ],
           ),
           const SizedBox(height: 10),

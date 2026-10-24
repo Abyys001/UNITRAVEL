@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from "@nestjs/common"
 import { and, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
-import type { NotificationEvent, NotificationRule } from "@unitravel/contracts"
+import { DEFAULT_NOTIFICATION_MATRIX, type NotificationEvent, type NotificationRule } from "@unitravel/contracts"
 import {
   type Db, devices, notificationDeliveries, notifications, notificationTemplates, otpChallenges, shortLinks, smsRoutes, userIdentities, users,
 } from "@unitravel/db"
@@ -33,6 +33,11 @@ export interface NotifyInput {
   linkPath?: string
   /** Data-only push to trigger a client refresh (permission change). */
   silentPush?: boolean
+  /**
+   * Quotations and invoices (ADR-0006 C8): always inbox and email whatever the stored matrix says, so databases that
+   * predate this phase need no matrix migration; with no verified email the same event goes by SMS (decision 6).
+   */
+  documentDelivery?: boolean
 }
 
 interface Recipient {
@@ -109,8 +114,10 @@ export class NotificationsService {
   /** Delivery decision for one notification to many users (Figure 17.1). Idempotent per (event, recipient). */
   async notify(input: NotifyInput): Promise<void> {
     const matrix = this.config.get("NOTIFICATION_MATRIX")
-    const rule: NotificationRule = matrix.rules.find((r) => r.event === input.eventType && r.audience === input.audience)
+    const find = (rules: NotificationRule[]) => rules.find((r) => r.event === input.eventType && r.audience === input.audience)
+    const stored: NotificationRule = find(matrix.rules) ?? (input.documentDelivery ? find(DEFAULT_NOTIFICATION_MATRIX.rules) : undefined)
       ?? { event: input.eventType, audience: input.audience, channels: ["INBOX"], sms: "NONE", critical: false, locked: false }
+    const rule: NotificationRule = input.documentDelivery ? { ...stored, channels: [...new Set([...stored.channels, "INBOX" as const, "EMAIL" as const])] } : stored
     const link = input.linkPath ? await this.shortLink(input.linkPath) : undefined
     for (const userId of [...new Set(input.userIds)]) {
       const r = await this.recipient(userId)
@@ -136,6 +143,7 @@ export class NotificationsService {
         await this.queueDelivery(n.id, "PUSH", "notify.push", input.silentPush ? 0 : defer, { silent: !!input.silentPush })
       }
       if (rule.channels.includes("EMAIL") && r.email && allowed("EMAIL")) await this.queueDelivery(n.id, "EMAIL", "notify.email", defer)
+      else if (input.documentDelivery && !r.email && r.phone && allowed("SMS")) await this.queueDelivery(n.id, "SMS", "notify.sms", defer)
       if (rule.channels.includes("SMS") && r.phone && allowed("SMS")) {
         // +98 users without a working push token get escalation immediately (ch. 17.3 rule 4).
         const iranNoPush = r.phone.startsWith("+98") && devs.length === 0

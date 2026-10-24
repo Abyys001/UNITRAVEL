@@ -1,1 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="#13263f"/><path d="M7 21 C 11 9, 21 9, 25 13" stroke="#c98d5b" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="7" cy="21" r="2.4" fill="#fbf9f5"/><circle cx="25" cy="13" r="2.4" fill="#c98d5b"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 128 128" role="img" aria-label="Uni Travel">
+  <defs>
+    <radialGradient id="ut-globe" cx="38%" cy="32%" r="75%">
+      <stop offset="0" stop-color="#8fd4ff"/><stop offset=".45" stop-color="#2a9bf5"/><stop offset="1" stop-color="#0a4596"/>
+    </radialGradient>
+    <linearGradient id="ut-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c67b9"/><stop offset="1" stop-color="#061f4c"/>
+    </linearGradient>
+    <linearGradient id="ut-swoosh" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e4f4ff"/>
+    </linearGradient>
+    <linearGradient id="ut-orange" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8617"/><stop offset="1" stop-color="#ffac50"/>
+    </linearGradient>
+    <clipPath id="ut-clip"><circle cx="60" cy="60" r="45"/></clipPath>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#ut-ring)"/>
+  <circle cx="60" cy="60" r="54.5" fill="none" stroke="#a9dcfb" stroke-width="2.2" opacity=".9"/>
+  <circle cx="60" cy="60" r="45" fill="url(#ut-globe)"/>
+  <g clip-path="url(#ut-clip)">
+    <g fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="1.1">
+      <ellipse cx="60" cy="60" rx="20" ry="45"/><ellipse cx="60" cy="60" rx="36" ry="45"/>
+      <path d="M15 60h90M20 38h80M20 82h80"/>
+    </g>
+    <path fill="#d7efff" fill-opacity=".85" d="M33 30c6-5 15-6 21-3 3 2 1 6-2 7-4 1-5 4-3 7 2 4 7 3 9 7 2 5-2 9-6 12-3 3-3 8-6 10-3-4-2-9-5-12-4-3-9-4-11-9-2-6 0-14 3-19z"/>
+    <path fill="#d7efff" fill-opacity=".7" d="M66 22c7-1 15 2 20 7-4 0-7 2-6 5 1 4 6 4 7 8-4 2-9-1-12 2-2 2 0 6-3 7-3-3-6-6-6-11 0-6 6-8 0-12z"/>
+    <path fill="#d7efff" fill-opacity=".55" d="M74 62c5-1 9 2 10 6 1 5-2 10-6 13-3-3-6-7-6-12 0-3 0-5 2-7z"/>
+  </g>
+  <circle cx="60" cy="60" r="45" fill="none" stroke="#061f4c" stroke-opacity=".25" stroke-width="1"/>
+  <path fill="url(#ut-orange)" d="M6 88c28 22 80 10 104-40-14 36-62 54-104 40z"/>
+  <path fill="url(#ut-swoosh)" d="M-2 74c30 30 88 14 112-42-6 2-10 4-13 6-20 40-60 52-99 36z"/>
+  <g transform="translate(83 11) rotate(-38 13 13)">
+    <path fill="#ffffff" stroke="#0c67b9" stroke-width="1.1" stroke-linejoin="round"
+      d="M2 13.2 9.5 12 14 3h2.6l-2.2 9 7.1-.6 2.2-3h1.8l-1 4.8 1 4.8h-1.8l-2.2-3-7.1-.6 2.2 9H14l-4.5-9L2 15.2z"/>
+  </g>
+</svg>

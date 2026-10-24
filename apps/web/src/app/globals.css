@@ -1,2 +1,11 @@
 @import "@unitravel/ui/styles.css";
 @source "../../node_modules/@unitravel/ui/src";
+
+/* Native controls on the customer site: radius 12, cloud fill, orange focus ring (DESIGN.md). */
+@utility field {
+  border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-cloud); color: var(--color-navy-950);
+  padding-inline: 0.75rem; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  &:focus-visible { border-color: var(--color-orange); background: #fff; box-shadow: 0 0 0 3px rgb(255 134 23 / 0.35); }
+  &:disabled { opacity: 0.6; }
+}

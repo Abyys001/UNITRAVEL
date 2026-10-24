@@ -8,7 +8,7 @@ English and Persian (RTL), Gregorian or Jalali dates, bearer-token auth. ADR-000
 
 Flutter 3.47 / Dart 3.13, Riverpod 3, go_router, Dio, `kit_ui` (copied from the engineering kit into
 `packages/kit_ui`), `flutter_secure_storage` (refresh token), `shared_preferences` (offline JSON cache),
-`shamsi_date` (Jalali), `crypto` (proof of work), `url_launcher` (`tel:`). Fonts: Inter, Vazirmatn, Fraunces
+`shamsi_date` (Jalali), `crypto` (proof of work), `url_launcher` (`tel:`). Fonts: Montserrat, Vazirmatn
 (self-hosted in `assets/fonts`, no CDN; the web build is made with `--no-web-resources-cdn`).
 
 ```

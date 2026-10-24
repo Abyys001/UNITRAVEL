@@ -13,7 +13,7 @@ import { NotificationsService } from "./notifications.service"
 interface RequestPayload {
   requestId: string; ref: string; customerUserId: string; assigneeUserId?: string | null; from?: string; to?: string; command?: string;
   actorUserId?: string | null; routeLabel?: string; message?: string; validUntil?: string; urgent?: boolean; deadline?: string; ticketNumbers?: string[];
-  productType?: "FLIGHT" | "CARGO"; statusLabels?: { en: string; fa: string }; direction?: string; locale?: "en" | "fa"
+  productType?: "FLIGHT" | "CARGO"; documentNumber?: string; statusLabels?: { en: string; fa: string }; direction?: string; locale?: "en" | "fa"
 }
 
 /** Maps domain events onto the event catalogue and its audiences (Table 17.1). */
@@ -44,6 +44,18 @@ export class NotificationRouter {
   }
 
   async handle(e: DispatchedEvent): Promise<void> {
+    if (e.type === "identity.verification_decided") {
+      const v = e.payload as unknown as { customerUserId: string; decision: "VERIFIED" | "REJECTED" | "CORRECTION_REQUIRED"; travellerName: string; message: string }
+      const eventType = v.decision === "VERIFIED" ? "identity.verification_verified" : v.decision === "REJECTED" ? "identity.verification_rejected" : "identity.verification_correction"
+      return this.n.notify({ eventId: e.id, eventType, audience: "CUSTOMER", userIds: [v.customerUserId], vars: { name: v.travellerName, message: v.message }, linkPath: "/account/details", data: { decision: v.decision } })
+    }
+    if (e.type === "invoice.issued" || e.type === "invoice.cancelled" || e.type === "invoice.expired") {
+      const v = e.payload as unknown as { number: string; ref: string; customerUserId: string; expiresAt?: string }
+      return this.n.notify({
+        eventId: e.id, eventType: e.type, audience: "CUSTOMER", userIds: [v.customerUserId], documentDelivery: true, requestKey: v.ref,
+        vars: { ref: v.ref, number: v.number, expires_at: v.expiresAt }, linkPath: `/billing/${v.number}`, data: { ref: v.ref, number: v.number },
+      })
+    }
     const p = e.payload as unknown as RequestPayload
     const base = { eventId: e.id, requestKey: p.ref, data: { ref: p.ref } }
     switch (e.type) {
@@ -79,7 +91,8 @@ export class NotificationRouter {
         }
         return this.n.notify({ ...base, eventType: "request.message_from_staff", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, message_preview: preview(p.message) }, linkPath: this.requestPath(p.ref) })
       case "quote.sent":
-        return this.n.notify({ ...base, eventType: "quote.sent", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, expires_at: p.validUntil }, linkPath: this.requestPath(p.ref) })
+        // The sent quote is the quotation (ADR-0006 C1): numbered, delivered by email with a sign-in-protected link, SMS when no email is verified.
+        return this.n.notify({ ...base, eventType: "quotation.sent", audience: "CUSTOMER", userIds: [p.customerUserId], documentDelivery: true, vars: { ref: p.ref, number: p.documentNumber ?? p.ref, expires_at: p.validUntil }, linkPath: this.requestPath(p.ref), data: { ref: p.ref, number: p.documentNumber } })
       case "quote.accepted":
         await this.n.notify({ ...base, eventType: "quote.accepted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref } })
         if (p.assigneeUserId) await this.n.notify({ ...base, eventType: "quote.accepted", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref } })

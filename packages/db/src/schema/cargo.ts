@@ -1,4 +1,4 @@
-import { bigint, boolean, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core"
+import { type AnyPgColumn, bigint, boolean, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
 
 import { createdAt, id, rowVersion, timestamps, tstz } from "./columns"
 import { userIdentities, users } from "./identity"
@@ -71,6 +71,8 @@ export const cargoRequests = pgTable("cargo_requests", {
   version: rowVersion(),
   submittedAt: tstz().notNull().defaultNow(),
   closedAt: tstz(),
+  /** Phase E: an estimate shown as such to the customer, never a promise. */
+  estimatedDeliveryAt: tstz(),
   ...timestamps,
 }, (t) => [index("cargo_queue_idx").on(t.status, t.slaDueAt), index("cargo_customer_idx").on(t.customerUserId)])
 
@@ -119,9 +121,14 @@ export const trackingEvents = pgTable("tracking_events", {
   occurredAt: tstz().notNull(),
   description: text(),
   source: text({ enum: ["STAFF", "PARTNER_API"] }).notNull().default("STAFF"),
+  /** The source's own id; unique per source so a replayed partner event is a no-op. */
+  externalEventId: varchar({ length: 120 }),
+  /** Append-only: a correction is a new row pointing at the event it replaces (never an update in place). */
+  correctsEventId: uuid().references((): AnyPgColumn => trackingEvents.id),
+  correctionReason: text(),
   createdBy: uuid(),
   createdAt: createdAt(),
-}, (t) => [index("tracking_req_idx").on(t.cargoRequestId, t.occurredAt)])
+}, (t) => [index("tracking_req_idx").on(t.cargoRequestId, t.occurredAt), uniqueIndex("tracking_source_external_uq").on(t.source, t.externalEventId)])
 
 /** Which carriers and couriers currently serve a lane (ch. 14.7); entries older than 30 days are flagged. */
 export const serviceAvailability = pgTable("service_availability", {

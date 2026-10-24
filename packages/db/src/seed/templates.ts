@@ -15,6 +15,20 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     fa: { title: "درخواست دریافت شد · {ref}", body: "درخواست {ref} ({route}) دریافت شد. تیم ما با شما تماس می‌گیرد. ثبت درخواست به معنای رزرو صندلی نیست." },
     smsEn: "Uni Travel: request {ref} received. We will call you. {link}", smsFa: "یونی‌تراول: درخواست {ref} دریافت شد. با شما تماس می‌گیریم. {link}",
   },
+  "identity.verification_verified": {
+    vars: ["name", "link"],
+    en: { title: "Passport verified", body: "Your passport details for {name} have been verified." }, fa: { title: "گذرنامه تأیید شد", body: "مشخصات گذرنامهٔ {name} تأیید شد." },
+  },
+  "identity.verification_rejected": {
+    vars: ["name", "message", "link"],
+    en: { title: "Passport could not be verified", body: "We could not verify the passport for {name}: {message}" }, fa: { title: "تأیید گذرنامه انجام نشد", body: "گذرنامهٔ {name} تأیید نشد: {message}" },
+    smsEn: "Uni Travel: we could not verify a passport on your account. {link}", smsFa: "یونی‌تراول: گذرنامهٔ ثبت‌شده در حساب شما تأیید نشد. {link}",
+  },
+  "identity.verification_correction": {
+    vars: ["name", "message", "link"],
+    en: { title: "Please correct your passport details", body: "For {name}: {message}" }, fa: { title: "لطفاً مشخصات گذرنامه را اصلاح کنید", body: "برای {name}: {message}" },
+    smsEn: "Uni Travel: please correct your passport details. {link}", smsFa: "یونی‌تراول: لطفاً مشخصات گذرنامهٔ خود را اصلاح کنید. {link}",
+  },
   "request.assigned": { vars: ["ref", "route"], en: { title: "Assigned to you · {ref}", body: "{ref} ({route}) is now yours." }, fa: { title: "به شما واگذار شد · {ref}", body: "درخواست {ref} ({route}) به شما واگذار شد." } },
   "request.info_requested": {
     vars: ["ref", "message_preview", "link"],
@@ -40,6 +54,39 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     en: { title: "Options ready · {ref}", body: "Your options are ready. They are valid until {expires_at_local}." },
     fa: { title: "گزینه‌ها آماده است · {ref}", body: "گزینه‌های سفر شما آماده است و تا {expires_at_local} اعتبار دارد." },
     smsEn: "Uni Travel: options for {ref} ready until {expires_at_local}. {link}", smsFa: "یونی‌تراول: گزینه‌های {ref} تا {expires_at_local} معتبر است. {link}",
+  },
+  // ADR-0006: commercial documents. The email carries a short link, never the PDF; the page behind it needs a sign-in.
+  "quotation.sent": {
+    vars: ["ref", "number", "expires_at_local", "link"],
+    en: { title: "Quotation {number} · {ref}", body: "Your quotation {number} for {ref} is ready. It is valid until {expires_at_local}." },
+    fa: { title: "پیش‌فاکتور {number} · {ref}", body: "پیش‌فاکتور {number} برای {ref} آماده است و تا {expires_at_local} اعتبار دارد." },
+    emailEn: { title: "Your Uni Travel quotation {number}", body: "Your quotation {number} for request {ref} is ready and valid until {expires_at_local}.\n\nSign in to view it and download the PDF:\n{link}\n\nThis is a quotation, not a booking." },
+    emailFa: { title: "پیش‌فاکتور یونی‌تراول {number}", body: "پیش‌فاکتور {number} برای درخواست {ref} آماده است و تا {expires_at_local} اعتبار دارد.\n\nبرای مشاهده و دریافت PDF وارد شوید:\n{link}\n\nاین یک پیش‌فاکتور است و به معنای رزرو نیست." },
+    smsEn: "Uni Travel: quotation {number} for {ref} is ready until {expires_at_local}. {link}", smsFa: "یونی‌تراول: پیش‌فاکتور {number} برای {ref} تا {expires_at_local} معتبر است. {link}",
+  },
+  "invoice.issued": {
+    vars: ["ref", "number", "expires_at_local", "link"],
+    en: { title: "Invoice {number} · {ref}", body: "Invoice {number} for {ref} has been issued. If it is still unpaid it expires on {expires_at_local}." },
+    fa: { title: "فاکتور {number} · {ref}", body: "فاکتور {number} برای {ref} صادر شد. اگر پرداخت نشده باشد در {expires_at_local} منقضی می‌شود." },
+    emailEn: { title: "Your Uni Travel invoice {number}", body: "Invoice {number} for request {ref} has been issued. If it is still unpaid it expires on {expires_at_local}.\n\nSign in to view it and download the PDF:\n{link}" },
+    emailFa: { title: "فاکتور یونی‌تراول {number}", body: "فاکتور {number} برای درخواست {ref} صادر شد. اگر پرداخت نشده باشد در {expires_at_local} منقضی می‌شود.\n\nبرای مشاهده و دریافت PDF وارد شوید:\n{link}" },
+    smsEn: "Uni Travel: invoice {number} for {ref} issued; unpaid it expires {expires_at_local}. {link}", smsFa: "یونی‌تراول: فاکتور {number} برای {ref} صادر شد؛ در صورت عدم پرداخت {expires_at_local} منقضی می‌شود. {link}",
+  },
+  "invoice.cancelled": {
+    vars: ["ref", "number", "link"],
+    en: { title: "Invoice {number} cancelled", body: "Invoice {number} for {ref} was cancelled. Do not pay it; if a corrected invoice is needed we will send it separately." },
+    fa: { title: "فاکتور {number} لغو شد", body: "فاکتور {number} برای {ref} لغو شد. آن را پرداخت نکنید؛ در صورت نیاز، فاکتور اصلاح‌شده جداگانه ارسال می‌شود." },
+    emailEn: { title: "Uni Travel invoice {number} cancelled", body: "Invoice {number} for request {ref} was cancelled. Please do not pay it. If a corrected invoice is needed we will send it separately.\n\nView it after signing in:\n{link}" },
+    emailFa: { title: "فاکتور یونی‌تراول {number} لغو شد", body: "فاکتور {number} برای درخواست {ref} لغو شد. لطفاً آن را پرداخت نکنید. در صورت نیاز، فاکتور اصلاح‌شده جداگانه ارسال می‌شود.\n\nپس از ورود مشاهده کنید:\n{link}" },
+    smsEn: "Uni Travel: invoice {number} was cancelled. Do not pay it. {link}", smsFa: "یونی‌تراول: فاکتور {number} لغو شد. آن را پرداخت نکنید. {link}",
+  },
+  "invoice.expired": {
+    vars: ["ref", "number", "link"],
+    en: { title: "Invoice {number} expired", body: "Invoice {number} for {ref} is no longer payable because it expired. Contact us if you still need it." },
+    fa: { title: "فاکتور {number} منقضی شد", body: "فاکتور {number} برای {ref} منقضی شده و دیگر قابل پرداخت نیست. در صورت نیاز با ما تماس بگیرید." },
+    emailEn: { title: "Uni Travel invoice {number} expired", body: "Invoice {number} for request {ref} has expired and can no longer be paid. Contact us if you still need it.\n\nView it after signing in:\n{link}" },
+    emailFa: { title: "فاکتور یونی‌تراول {number} منقضی شد", body: "فاکتور {number} برای درخواست {ref} منقضی شده و دیگر قابل پرداخت نیست. در صورت نیاز با ما تماس بگیرید.\n\nپس از ورود مشاهده کنید:\n{link}" },
+    smsEn: "Uni Travel: invoice {number} expired and cannot be paid. {link}", smsFa: "یونی‌تراول: فاکتور {number} منقضی شد و قابل پرداخت نیست. {link}",
   },
   "quote.expiring": {
     vars: ["ref", "expires_at_local", "link"],

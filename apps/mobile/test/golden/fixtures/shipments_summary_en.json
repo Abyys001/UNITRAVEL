@@ -1,0 +1,18 @@
+{
+ "total": 1,
+ "inTransit": 1,
+ "delivered": 0,
+ "next": {
+  "ref": "UT-C-A987BD",
+  "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+  "lastEvent": {
+   "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+   "eventCode": "AT_CUSTOMS",
+   "label": "At customs",
+   "location": "IST customs",
+   "occurredAt": "2026-10-24T13:31:28.734Z",
+   "corrected": true
+  },
+  "laneLabel": "United Kingdom → Türkiye"
+ }
+}

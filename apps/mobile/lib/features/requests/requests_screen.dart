@@ -74,7 +74,7 @@ class RequestTile extends ConsumerWidget {
         children: [
           Row(
             children: [
-              LtrText(item.ref, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Brand.copperDark, letterSpacing: 0.8)),
+              LtrText(item.ref, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Brand.orange700, letterSpacing: 0.8)),
               if (item.isCargo) ...[const SizedBox(width: 8), ToneChip(l.navCargo)],
               const Spacer(),
               ToneChip(item.statusLabel, tone: toneForStatus(item.status)),

@@ -10,6 +10,7 @@ import '../../core/session.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/json.dart';
 import '../../models/search.dart';
+import '../../ui/brand_logo.dart';
 import '../../ui/route_arcs.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
@@ -74,20 +75,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           padding: EdgeInsets.zero,
           children: [
             RouteArcsHeader(
-              height: 170,
+              height: 285,
               child: SafeArea(
                 bottom: false,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    const BrandLogo(onDark: true, markSize: 40),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     Semantics(header: true, child: Text(l.searchTitle, style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white))),
                     const SizedBox(height: 4),
-                    Text(l.searchSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD9D2C4))),
+                    Text(l.searchSubtitle, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Brand.onDarkMuted)),
+                      ],
+                    ),
                   ],
                 ),
               ),
             ),
+            const Padding(padding: EdgeInsets.fromLTRB(16, 4, 16, 0), child: _ServiceRow()),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -153,7 +161,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       liveRegion: true,
                       child: Text(
                         _problem != null ? _problemText(l, _problem!) : errorMessage(l, _error!),
-                        style: const TextStyle(color: Brand.brick),
+                        style: const TextStyle(color: Brand.danger),
                       ),
                     ),
                   ],
@@ -210,7 +218,7 @@ class _RouteFields extends ConsumerWidget {
                     style: TextStyle(color: value == null ? xc(context).fgSubtle : null),
                   ),
                 ),
-                if (value != null) LtrText(value.code, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Brand.copperDark)),
+                if (value != null) LtrText(value.code, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Brand.orange700)),
               ],
             ),
           ),
@@ -442,4 +450,68 @@ class _PreferencesCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Round outline service shortcuts: orange ring, white fill (brand artwork).
+class _ServiceRow extends StatelessWidget {
+  const _ServiceRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _ServiceIcon(icon: Icons.flight_takeoff, label: l.navSearch, selected: true),
+        _ServiceIcon(icon: Icons.inventory_2_outlined, label: l.navCargo, onTap: () => context.go('/cargo')),
+        _ServiceIcon(icon: Icons.receipt_long_outlined, label: l.navRequests, onTap: () => context.go('/requests')),
+      ],
+    );
+  }
+}
+
+class _ServiceIcon extends StatelessWidget {
+  const _ServiceIcon({required this.icon, required this.label, this.onTap, this.selected = false});
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: onTap != null,
+    selected: selected,
+    label: label,
+    excludeSemantics: true,
+    child: InkResponse(
+      onTap: onTap,
+      radius: 44,
+      child: SizedBox(
+        width: 88,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(color: Brand.orange, width: 2.5),
+                boxShadow: selected ? Brand.cardShadow : null,
+              ),
+              child: Icon(icon, color: Brand.navy950, size: 26),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: selected ? FontWeight.w700 : FontWeight.w500),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

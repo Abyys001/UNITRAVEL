@@ -29,7 +29,7 @@ class ToneChip extends StatelessWidget {
     final (fg, border, fill) = switch (tone) {
       XfamTone.success => (c.success, c.successBorder, c.successSubtle),
       XfamTone.danger => (c.danger, c.dangerBorder, c.dangerSubtle),
-      XfamTone.warning => (Brand.copperDark, Brand.copper, c.warningSubtle),
+      XfamTone.warning => (c.warningSubtleFg, c.warningBorder, c.warningSubtle),
       XfamTone.info => (c.infoSubtleFg, c.infoBorder, c.infoSubtle),
       XfamTone.neutral => (c.neutralSubtleFg, c.neutralBorder, c.neutralSubtle),
     };
@@ -43,11 +43,11 @@ class ToneChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[Icon(icon, size: 12, color: solid && tone == XfamTone.success ? Colors.white : fg), const SizedBox(width: 4)],
+          if (icon != null) ...[Icon(icon, size: 12, color: solid && tone == XfamTone.success ? c.successFg : fg), const SizedBox(width: 4)],
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: solid && tone == XfamTone.success ? Colors.white : fg,
+              color: solid && tone == XfamTone.success ? c.successFg : fg,
               fontWeight: FontWeight.w600,
               letterSpacing: context.isFa ? 0 : 0.4,
             ),
@@ -98,7 +98,7 @@ class LtrText extends StatelessWidget {
     child: Text(
       text,
       style: (style ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
-        fontFamily: mono ? 'Inter' : null,
+        fontFamily: mono ? 'Montserrat' : null,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
     ),
@@ -201,7 +201,7 @@ class StaleBanner extends ConsumerWidget {
 void showMessage(BuildContext context, String text, {bool error = false}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(text), backgroundColor: error ? Brand.brick : null));
+    ..showSnackBar(SnackBar(content: Text(text), backgroundColor: error ? Brand.danger : null));
 }
 
 /// Page body width cap so the app stays phone-shaped in a desktop browser.

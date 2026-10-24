@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url"
 
 import { type BrowserContext, expect, type Page } from "@playwright/test"
 
+import { Session } from "../../api/test/client"
+
 export const API = process.env.API_URL ?? "http://localhost:4100"
 export const ADMIN = process.env.CONSOLE_ADMIN_URL ?? "http://admin.localhost:4200"
 export const DEV = process.env.CONSOLE_DEV_URL ?? "http://dev.localhost:4200"
@@ -13,9 +15,11 @@ export const STAFF = { owner: "+447700900001", admin: "+447700900002", cargo: "+
 export const DEMO_TOTP = "KVXGSVDSMF3GK3CEMVWW6VCPKRIDEMBSGY"
 
 const here = dirname(fileURLToPath(import.meta.url))
+/** Tracked reference screenshots. Only rewritten on purpose (UPDATE_SCREENS=1); ordinary runs write to test-results/shots. */
 export const SCREENS = resolve(here, "../../../docs/screens/console")
-mkdirSync(SCREENS, { recursive: true })
-export const shot = (page: Page, name: string) => page.screenshot({ path: `${SCREENS}/${name}.png`, fullPage: false })
+const SHOT_DIR = process.env.UPDATE_SCREENS === "1" ? SCREENS : resolve(here, "../test-results/shots")
+mkdirSync(SHOT_DIR, { recursive: true })
+export const shot = (page: Page, name: string) => page.screenshot({ path: `${SHOT_DIR}/${name}.png`, fullPage: false })
 
 function base32Decode(str: string): Buffer {
   const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
@@ -174,4 +178,21 @@ export async function ensureNewRequest(page: Page, phone = "+447700900010"): Pro
     await page.waitForTimeout(500)
   }
   return r.body.ref as string
+}
+
+/**
+ * An API session for the staff member signed in on `page`, built from the browser's own cookies. Seeding data through
+ * the API as that user needs no second OTP request, so it cannot spend the phone's resend cooldown (which doubles with
+ * every request in the hour) and starve a later UI sign-in of the same phone. The second factor is confirmed again with
+ * a fresh code, exactly as the console's step-up does.
+ */
+export async function apiSessionFrom(page: Page, base: string): Promise<Session> {
+  const s = new Session("CONSOLE", new URL(base).host)
+  for (const c of await page.context().cookies(base)) s.cookies.set(c.name, c.value)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const r = await s.post("/v1/auth/mfa/totp/verify", { type: "TOTP", code: await freshTotp(page) })
+    if (r.status === 200) return s
+    await page.waitForTimeout(31_000)
+  }
+  throw new Error("could not refresh the second factor for the API session")
 }

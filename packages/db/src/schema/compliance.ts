@@ -55,7 +55,7 @@ export const screeningHits = pgTable("screening_hits", {
 
 export const compliancePolicies = pgTable("compliance_policies", {
   id: id(),
-  type: text({ enum: ["CARRIER", "AIRPORT", "COUNTRY_ROUTE", "GOODS_CATEGORY", "KEYWORD", "LANE"] }).notNull(),
+  type: text({ enum: ["CARRIER", "AIRPORT", "COUNTRY_ROUTE", "GOODS_CATEGORY", "KEYWORD", "LANE", "ONLINE_PAYMENT"] }).notNull(),
   key: varchar({ length: 120 }).notNull(),
   action: text({ enum: ["BLOCK", "REVIEW", "ALLOW"] }).notNull(),
   reason: text().notNull(),

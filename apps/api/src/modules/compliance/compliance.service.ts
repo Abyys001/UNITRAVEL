@@ -3,7 +3,7 @@ import { createHash } from "node:crypto"
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm"
 
-import type { CaseView, GoodsCategory, PolicyView, ScreeningResult } from "@unitravel/contracts"
+import { type CaseView, type GoodsCategory, type OnlinePaymentPolicy, OnlinePaymentPolicyKey, type PolicyView, type ScreeningResult } from "@unitravel/contracts"
 import {
   complianceCases, complianceDecisions, compliancePolicies, type Db, type DbOrTx, sanctionEntries, sanctionLists, screeningHits, screenings, settings, type Tx, users,
 } from "@unitravel/db"
@@ -225,6 +225,12 @@ export class ComplianceService implements OnModuleInit {
     return { blockedCarriers: set("CARRIER", "BLOCK"), reviewCarriers: set("CARRIER", "REVIEW"), blockedAirports: set("AIRPORT", "BLOCK"), reviewAirports: set("AIRPORT", "REVIEW") }
   }
 
+  /** Eligibility for online card payment is policy data (ADR-0007 P11): ALLOW and BLOCK rows of type ONLINE_PAYMENT. */
+  async onlinePaymentPolicies(): Promise<OnlinePaymentPolicy[]> {
+    const rows = await this.activePolicies()
+    return rows.filter((r) => r.type === "ONLINE_PAYMENT" && r.action !== "REVIEW" && OnlinePaymentPolicyKey.safeParse(r.key).success).map((r) => ({ key: r.key, action: r.action as "ALLOW" | "BLOCK" }))
+  }
+
   async routeReview(countries: string[]): Promise<string[]> {
     const rows = await this.activePolicies()
     return rows.filter((r) => r.type === "COUNTRY_ROUTE" && r.action !== "ALLOW" && countries.includes(r.key)).map((r) => r.key)
@@ -267,6 +273,7 @@ export class ComplianceService implements OnModuleInit {
 
   /** Compliance officers edit; an owner approves before a policy takes effect (ch. 27.4). */
   async proposePolicy(body: { type: PolicyView["type"]; key: string; action: PolicyView["action"]; reason: string; counselReference?: string }, actorId: string) {
+    if (body.type === "ONLINE_PAYMENT" && (body.action === "REVIEW" || !OnlinePaymentPolicyKey.safeParse(body.key).success)) throw new AppError("VALIDATION_FAILED", "An online payment policy is ALLOW or BLOCK on product:, currency:, max_minor: or customer: keys")
     return this.uow.run(async (tx) => {
       const prev = await tx.select().from(compliancePolicies).where(and(eq(compliancePolicies.type, body.type), eq(compliancePolicies.key, body.key))).orderBy(desc(compliancePolicies.version)).limit(1)
       const [row] = await tx.insert(compliancePolicies).values({ ...body, version: (prev[0]?.version ?? 0) + 1, status: "PENDING_APPROVAL", createdBy: actorId }).returning()

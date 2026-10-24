@@ -5,7 +5,7 @@ import type { Request } from "express"
 
 import { AddIdentityBody, DeviceBody, Me, UpdateMeBody } from "@unitravel/contracts"
 import {
-  customerProfiles, type Db, devices, flightRequests, cargoRequests, notifications, travellerDocuments, travellers, userIdentities, users,
+  customerProfiles, type Db, devices, documents, flightRequests, cargoRequests, notifications, travellerDocuments, travellers, userIdentities, users,
 } from "@unitravel/db"
 
 import { AppError } from "../../core/errors"
@@ -15,6 +15,7 @@ import { ApiZodResponse, serialise, zbody } from "../../core/http/zod"
 import { AccessService } from "../access/access.service"
 import { AuditService } from "../audit/audit.service"
 import { ConfigService } from "../config/config.service"
+import { DocumentsService, isIdentityType } from "../documents/documents.service"
 import { MfaService } from "./mfa.service"
 import { OtpService } from "./otp.service"
 import { SessionsService } from "./sessions.service"
@@ -32,6 +33,7 @@ export class MeController {
     private readonly otp: OtpService,
     private readonly sessions: SessionsService,
     private readonly audit: AuditService,
+    private readonly documents: DocumentsService,
   ) {}
 
   /** The clients render what GET /v1/me returns; they never decide permissions themselves (ch. 10.4). */
@@ -86,7 +88,7 @@ export class MeController {
   @Authenticated()
   @HttpCode(202)
   addIdentity(@Body(zbody(AddIdentityBody)) body: import("zod").infer<typeof AddIdentityBody>, @CurrentActor() actor: Actor, @Req() req: Request, @Ctx() ctx: RequestContext) {
-    return this.otp.request({ channel: body.type, value: body.value, defaultCountry: body.defaultCountry, deviceId: body.deviceId, client: actor.audience === "mobile" ? "MOBILE" : "WEB", purpose: body.type === "PHONE" ? "VERIFY_PHONE" : "VERIFY_EMAIL", voice: false }, { ip: req.ip ?? "", requestId: ctx.id, locale: ctx.locale, userId: actor.userId })
+    return this.otp.request({ channel: body.type, value: body.value, defaultCountry: body.defaultCountry, deviceId: body.deviceId, challenge: body.challenge, client: actor.audience === "mobile" ? "MOBILE" : "WEB", purpose: body.type === "PHONE" ? "VERIFY_PHONE" : "VERIFY_EMAIL", voice: false }, { ip: req.ip ?? "", requestId: ctx.id, locale: ctx.locale, userId: actor.userId })
   }
 
   @Get("sessions")
@@ -147,7 +149,8 @@ export class MeController {
     await this.uow.run(async (tx) => {
       await tx.update(users).set({ status: "DELETED", displayName: "Deleted user", notificationPrefs: {} }).where(eq(users.id, actor.userId))
       await tx.update(userIdentities).set({ revokedAt: new Date() }).where(eq(userIdentities.userId, actor.userId))
-      await tx.update(customerProfiles).set({ givenNamesLatin: null, surnameLatin: null, nameFa: null, contactTimePref: null }).where(eq(customerProfiles.userId, actor.userId))
+      await tx.update(customerProfiles).set({ givenNamesLatin: null, surnameLatin: null, nameFa: null, contactTimePref: null, addressLine1: null, addressLine2: null, addressCity: null, addressPostcode: null, addressCountry: null }).where(eq(customerProfiles.userId, actor.userId))
+      for (const d of await tx.select().from(documents).where(and(eq(documents.ownerUserId, actor.userId), isNull(documents.erasedAt)))) if (isIdentityType(d.type)) await this.documents.erase(tx, d)
       const trav = await tx.select({ id: travellers.id }).from(travellers).where(eq(travellers.ownerUserId, actor.userId))
       for (const t of trav) {
         await tx.update(travellerDocuments).set({ numberCiphertext: "erased", numberLast4: "0000", erasedAt: new Date() }).where(eq(travellerDocuments.travellerId, t.id))

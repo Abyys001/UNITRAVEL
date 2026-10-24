@@ -25,6 +25,23 @@ export function useFallbackInterval(ms: number): number | false {
   return useLive() ? false : ms
 }
 
+/**
+ * What arrived over the stream in this tab, newest first (dashboard activity feed). Only real events are recorded:
+ * a queue-counts push stores the counts that changed, a request-changed push stores the reference.
+ */
+export type ActivityEntry =
+  | { id: number; at: number; kind: "queue"; changes: { key: keyof Omit<QueueSummary, "deadlinesNext24h">; from: number; to: number }[] }
+  | { id: number; at: number; kind: "request"; requestType: "FLIGHT" | "CARGO"; ref: string }
+const COUNT_KEYS = ["new", "mine", "awaitingCustomer", "quoted", "reserved", "complianceHolds", "slaBreaches"] as const
+const NO_ACTIVITY: ActivityEntry[] = []
+let activity = NO_ACTIVITY
+let activitySeq = 0
+const activitySubs = new Set<() => void>()
+const pushActivity = (e: ActivityEntry extends infer E ? (E extends unknown ? Omit<E, "id" | "at"> : never) : never) => { activity = [{ ...e, id: ++activitySeq, at: Date.now() } as ActivityEntry, ...activity].slice(0, 25); for (const f of activitySubs) f() }
+export function useActivity(): ActivityEntry[] {
+  return useSyncExternalStore((fn) => { activitySubs.add(fn); return () => { activitySubs.delete(fn) } }, () => activity, () => NO_ACTIVITY)
+}
+
 export function useQueueSummary(enabled = true) {
   const interval = useFallbackInterval(15_000)
   return useQuery({ queryKey: ["queue-summary"], queryFn: () => api<QueueSummary>("/v1/admin/queues/summary"), refetchInterval: interval, enabled })
@@ -42,9 +59,16 @@ export function useStaffStream(enabled: boolean) {
       void qc.invalidateQueries({ queryKey: ["fr-version"] })
     }
     es.onerror = () => setLive(es.readyState === EventSource.OPEN)
-    es.addEventListener("queue-counts", (e) => qc.setQueryData(["queue-summary"], JSON.parse((e as MessageEvent<string>).data) as QueueSummary))
+    es.addEventListener("queue-counts", (e) => {
+      const next = JSON.parse((e as MessageEvent<string>).data) as QueueSummary
+      const prev = qc.getQueryData<QueueSummary>(["queue-summary"])
+      const changes = prev ? COUNT_KEYS.filter((k) => prev[k] !== next[k]).map((key) => ({ key, from: prev[key], to: next[key] })) : []
+      if (changes.length) pushActivity({ kind: "queue", changes })
+      qc.setQueryData(["queue-summary"], next)
+    })
     es.addEventListener("request-changed", (e) => {
       const r = JSON.parse((e as MessageEvent<string>).data) as { requestType: "FLIGHT" | "CARGO"; ref: string; version: number }
+      pushActivity({ kind: "request", requestType: r.requestType, ref: r.ref })
       if (r.requestType === "FLIGHT") qc.setQueryData(["fr-version", r.ref], r.version)
       else void qc.invalidateQueries({ queryKey: ["cargo-detail", r.ref] })
       lists ??= setTimeout(() => { lists = undefined; void qc.invalidateQueries({ queryKey: ["fr"] }); void qc.invalidateQueries({ queryKey: ["cargo-list"] }) }, 500)

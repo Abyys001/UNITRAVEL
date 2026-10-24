@@ -5,10 +5,18 @@ import { AdminCargoController, CustomerCargoController, DevCargoController } fro
 import { CargoService } from "./cargo/cargo.service"
 import { ComplianceController } from "./compliance/compliance.controller"
 import { ComplianceService } from "./compliance/compliance.service"
-import { AdminCustomersController, TravellersController } from "./customers/customers.controller"
+import { AdminCustomersController, AdminVerificationsController, MyDetailsController, TravellersController } from "./customers/customers.controller"
 import { CustomersService } from "./customers/customers.service"
+import { IdentityVerificationService } from "./customers/identity-verification.service"
 import { DocumentsController } from "./documents/documents.controller"
 import { DocumentsService } from "./documents/documents.service"
+import { DocumentNumbersService } from "./invoices/document-numbers.service"
+import { AdminInvoicesController, CustomerBillingController } from "./invoices/invoices.controller"
+import { InvoicesService } from "./invoices/invoices.service"
+import { PaymentConfigService } from "./payments/payment-config.service"
+import { AdminPaymentsController, CustomerPaymentsController, DevPaymentSinkController, DevPaymentsController, StripeWebhookController } from "./payments/payments.controller"
+import { PaymentsService } from "./payments/payments.service"
+import { RefundsService } from "./payments/refunds.service"
 import { NotificationsModule } from "./notifications/notifications.module"
 import { StaffEvents } from "./platform/staff-events"
 import { TimersService } from "./platform/timers.service"
@@ -21,11 +29,12 @@ import { SearchService } from "./search/search.service"
 
 /** Business modules (Figure 20.1 middle row) and their HTTP controllers, registered as each stage is built. */
 export const BUSINESS_CONTROLLERS: Type[] = [
-  DocumentsController, TravellersController, AdminCustomersController, ComplianceController, CustomerFlightRequestsController, AdminFlightRequestsController, SearchController, StaffSearchController,
-  CustomerCargoController, AdminCargoController, DevCargoController,
+  DocumentsController, TravellersController, MyDetailsController, AdminCustomersController, AdminVerificationsController, ComplianceController, CustomerFlightRequestsController, AdminFlightRequestsController, SearchController, StaffSearchController,
+  CustomerCargoController, AdminCargoController, DevCargoController, CustomerBillingController, AdminInvoicesController,
+  CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, ComplianceService, TimersService, RequestsService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

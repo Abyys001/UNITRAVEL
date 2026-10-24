@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/json.dart';
+import '../models/my_details.dart';
 import '../models/requests.dart';
+import '../models/billing.dart';
+import '../models/shipments.dart';
 import '../models/search.dart';
 import 'api_client.dart';
 import 'api_error.dart';
@@ -53,6 +56,11 @@ final requestDetailProvider = FutureProvider.autoDispose.family<Cached<Json>, St
   return readThrough(ref, 'request.$id', () => api.get(path), (raw) => raw as Json);
 });
 
+final myDetailsProvider = FutureProvider.autoDispose<MyDetails>((ref) async {
+  final raw = await ref.watch(apiClientProvider).get('/v1/me/details');
+  return MyDetails.fromJson(raw as Json);
+});
+
 final travellersProvider = FutureProvider.autoDispose<List<Traveller>>((ref) async {
   final raw = await ref.watch(apiClientProvider).get('/v1/me/travellers');
   return (raw as List).whereType<Json>().map(Traveller.fromJson).toList();
@@ -75,6 +83,21 @@ final inboxProvider = FutureProvider.autoDispose<Cached<InboxData>>((ref) {
       return InboxData(j.objs('items').map(InboxEntry.fromJson).toList(), j.integer('unread'));
     },
   );
+});
+
+final shipmentsProvider = FutureProvider.autoDispose<Cached<List<ShipmentItem>>>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return readThrough(
+    ref,
+    'shipments',
+    () => api.get('/v1/shipments'),
+    (raw) => (raw as List).whereType<Json>().map(ShipmentItem.fromJson).toList(),
+  );
+});
+
+final shipmentSummaryProvider = FutureProvider.autoDispose<Cached<ShipmentSummary>>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return readThrough(ref, 'shipments.summary', () => api.get('/v1/shipments/summary'), (raw) => ShipmentSummary.fromJson(raw as Json));
 });
 
 final cargoLanesProvider = FutureProvider.autoDispose<List<CargoLane>>((ref) async {
@@ -197,3 +220,20 @@ class SearchSnapshot {
 
   List<Itinerary> get items => [...?state?.results, ...more];
 }
+
+final billingProvider = FutureProvider.autoDispose<Cached<BillingDocs>>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return readThrough(ref, 'billing', () => api.get('/v1/billing/documents'), (raw) => BillingDocs.fromJson(raw as Json));
+});
+
+/// Whether the server offers online card payment for an invoice (feature flag, eligibility policy, time left). The app never decides.
+final invoicePaymentProvider = FutureProvider.autoDispose.family<InvoicePayment, String>((ref, number) async {
+  final raw = await ref.watch(apiClientProvider).get('/v1/billing/invoices/$number/payment') as Json;
+  return InvoicePayment.fromJson(raw);
+});
+
+/// One own invoice by number; a non-owner (or unknown number) is a 404 from the API.
+final invoiceProvider = FutureProvider.autoDispose.family<Cached<Invoice>, String>((ref, number) {
+  final api = ref.watch(apiClientProvider);
+  return readThrough(ref, 'billing.$number', () => api.get('/v1/billing/invoices/$number'), (raw) => Invoice.fromJson(raw as Json));
+});

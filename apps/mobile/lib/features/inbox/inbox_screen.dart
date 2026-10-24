@@ -66,7 +66,7 @@ class InboxScreen extends ConsumerWidget {
                                   children: [
                                     Padding(
                                       padding: const EdgeInsets.only(top: 6, right: 10, left: 0),
-                                      child: Icon(Icons.circle, size: 8, color: n.read ? Colors.transparent : Brand.copper),
+                                      child: Icon(Icons.circle, size: 8, color: n.read ? Colors.transparent : Brand.orange),
                                     ),
                                     Expanded(
                                       child: Column(

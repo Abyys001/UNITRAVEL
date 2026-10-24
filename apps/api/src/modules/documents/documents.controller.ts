@@ -2,10 +2,10 @@ import { Body, Controller, Get, HttpCode, Param, Post } from "@nestjs/common"
 import { ApiTags } from "@nestjs/swagger"
 import { z } from "zod"
 
-import { DocumentType } from "@unitravel/contracts"
+import { DocumentType, IDENTITY_DOCUMENT_TYPES } from "@unitravel/contracts"
 
 import { AppError } from "../../core/errors"
-import { type Actor, Authenticated, CurrentActor, RateLimit } from "../../core/http/decorators"
+import { type Actor, Authenticated, Ctx, CurrentActor, RateLimit, type RequestContext } from "../../core/http/decorators"
 import { zbody } from "../../core/http/zod"
 import { DocumentsService } from "./documents.service"
 
@@ -39,15 +39,27 @@ export class DocumentsController {
     return { documentId: d.id, scanStatus: d.scanStatus, filename: d.filename }
   }
 
-  /** Short-lived signed URL after an ownership or staff permission check; no existence leaks (404). */
+  /**
+   * Short-lived signed URL after an ownership or staff permission check; no existence leaks (404).
+   * Identity documents need `customer.read.documents` (the broad request-read permissions are not enough) and every
+   * staff download is written to the audit log (ADR-0005 V8).
+   */
   @Get("documents/:id/download")
   @Authenticated()
-  async download(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor) {
+  async download(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     const d = await this.docs.get(id)
     if (!d) throw new AppError("NOT_FOUND")
-    const staff = actor.permissions.has("flight_request.read.any") || actor.permissions.has("cargo_request.read.any") || actor.permissions.has("compliance.case.read")
     const owner = d.ownerUserId === actor.userId && (d.visibility === "CUSTOMER" || d.createdBy === actor.userId)
-    if (!staff && !owner) throw new AppError("NOT_FOUND")
+    const identity = (IDENTITY_DOCUMENT_TYPES as readonly string[]).includes(d.type)
+    // Quotation and invoice PDFs carry amounts: staff need `pricing.read.internal` like in the API views (ADR-0006 C9).
+    const priced = d.type === "QUOTE_PDF" || d.type === "INVOICE"
+    const staff = identity
+      ? actor.permissions.has("customer.read.documents")
+      : priced
+        ? actor.permissions.has("pricing.read.internal")
+        : actor.permissions.has("flight_request.read.any") || actor.permissions.has("cargo_request.read.any") || actor.permissions.has("compliance.case.read") || actor.permissions.has("customer.read.documents")
+    if (!owner && !staff) throw new AppError("NOT_FOUND")
+    if (!owner) await this.docs.auditStaffDownload(d, actor.userId, actor.ip, ctx.id)
     return this.docs.downloadUrl(d)
   }
 }

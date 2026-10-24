@@ -4,16 +4,16 @@
 import 'package:flutter/material.dart';
 
 abstract final class XfamFonts {
-  static const sansLatin = 'Inter';
+  static const sansLatin = 'Montserrat';
   static const sansFa = 'Vazirmatn';
   static const sansAr = 'Vazirmatn';
   static const mono = 'JetBrains Mono';
 }
 
 abstract final class XfamFontFallback {
-  static const sansLatin = <String>[];
-  static const sansFa = <String>['Inter'];
-  static const sansAr = <String>['IBM Plex Sans Arabic', 'Inter'];
+  static const sansLatin = <String>['Vazirmatn'];
+  static const sansFa = <String>['Montserrat'];
+  static const sansAr = <String>['IBM Plex Sans Arabic', 'Montserrat'];
   static const mono = <String>[];
 }
 

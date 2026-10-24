@@ -25,7 +25,7 @@ export default function VendorsPage() {
       <PageHead kicker="Integrations" title="SMS, push & email vendors" />
       <div className="px-5">
         <Panel title="Vendors">
-          <ul className="ledger-rows">{q.data.map((v) => <li key={v.vendor} className="flex items-center justify-between py-1.5"><span className="font-mono">{v.vendor}</span><span className="flex items-center gap-3"><span className="text-[12px] text-slate">{v.credentials ? `rotated ${fmtDateTime(v.credentials.rotatedAt)}` : "not set"}</span>{can("provider.config.write") && <Button size="xs" variant="outline" onClick={() => setOpen(v.vendor)}>{v.credentials ? "Rotate" : "Enter"}…</Button>}</span></li>)}</ul>
+          <ul className="ledger-rows">{q.data.map((v) => <li key={v.vendor} className="flex items-center justify-between py-1.5"><span className="font-mono">{v.vendor}</span><span className="flex items-center gap-3"><span className="text-[12px] text-steel">{v.credentials ? `rotated ${fmtDateTime(v.credentials.rotatedAt)}` : "not set"}</span>{can("provider.config.write") && <Button size="xs" variant="outline" onClick={() => setOpen(v.vendor)}>{v.credentials ? "Rotate" : "Enter"}…</Button>}</span></li>)}</ul>
         </Panel>
       </div>
       {open && <SecretDialog open onOpenChange={(o) => !o && setOpen(null)} title={`${open} credentials…`} hintKeys={["apiKey"]} onSave={async (values) => { await api(`/v1/dev/vendors/${encodeURIComponent(open)}/credentials`, { method: "PUT", body: { values } }); await q.refetch() }} />}

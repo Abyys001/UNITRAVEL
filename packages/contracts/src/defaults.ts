@@ -1,4 +1,5 @@
 import type { AppSettings, AuthConfig, EngineRules, HubsConfig, NotificationMatrix, WorkflowConfig } from "./config"
+import { DEFAULT_COMMERCIAL_DOCUMENTS } from "./invoices"
 
 // Defaults are the booklet's proposals (Table 22.1, ch. 13.5, 16.2, 17.2, 36.2). They seed version 1 of each
 // configuration domain; operations tune them in the Developer Panel.
@@ -157,6 +158,10 @@ export const DEFAULT_NOTIFICATION_MATRIX: NotificationMatrix = {
     { event: "request.cancelled", audience: "ASSIGNEE", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
     { event: "request.status_changed", audience: "CUSTOMER", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
     { event: "quote.sent", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
+    { event: "quotation.sent", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
+    { event: "invoice.issued", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
+    { event: "invoice.cancelled", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
+    { event: "invoice.expired", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "quote.expiring", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
     { event: "quote.expiring", audience: "ASSIGNEE", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
     { event: "quote.accepted", audience: "CUSTOMER", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
@@ -166,6 +171,9 @@ export const DEFAULT_NOTIFICATION_MATRIX: NotificationMatrix = {
     { event: "reservation.deadline_approaching", audience: "ASSIGNEE", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "reservation.deadline_approaching", audience: "OWNERS", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "ticket.issued", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS", "EMAIL"], sms: "IMMEDIATE", critical: true, locked: false },
+    { event: "identity.verification_verified", audience: "CUSTOMER", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
+    { event: "identity.verification_rejected", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
+    { event: "identity.verification_correction", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
     { event: "sla.unassigned", audience: "ON_DUTY_ADMINS", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
     { event: "sla.unassigned", audience: "OWNERS", channels: ["INBOX", "EMAIL"], sms: "NONE", critical: false, locked: false },
     { event: "sla.first_contact_due", audience: "ASSIGNEE", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
@@ -209,4 +217,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   maintenanceBanner: { en: "We are carrying out maintenance. Requests you have already sent are safe.", fa: "در حال انجام کارهای نگهداری هستیم. درخواست‌های ارسال‌شدهٔ شما محفوظ است." },
   requestsRevalidateOnSubmit: true,
   freeTextSmsRoles: [],
+  identityScanRetentionDays: null,
+  commercialDocuments: DEFAULT_COMMERCIAL_DOCUMENTS,
 }

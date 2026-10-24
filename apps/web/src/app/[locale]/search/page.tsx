@@ -1,19 +1,20 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { AlertTriangle, Loader2 } from "lucide-react"
+import { AlertTriangle, ArrowRight, Loader2, SearchX } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 
-import type { ResultTab, SearchState } from "@unitravel/contracts"
+import type { CustomerSearchState, ResultTab } from "@unitravel/contracts"
+import { EmptyState } from "@unitravel/ui/product/states"
 
 import { ResultCard } from "@/components/result-card"
 import { type SearchParamsShape, SearchForm, toQuery } from "@/components/search-form"
 import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
 
-const TABS: ResultTab[] = ["BEST", "CHEAPEST", "FASTEST", "SINGLE_TICKET"]
+const TABS: ResultTab[] = ["BEST", "FASTEST", "SINGLE_TICKET"]
 
 function decode(q: string | null): SearchParamsShape | null {
   try { return q ? (JSON.parse(decodeURIComponent(escape(atob(q)))) as SearchParamsShape) : null } catch { return null }
@@ -50,47 +51,45 @@ function Results() {
 
   const q = useQuery({
     queryKey: ["search", searchId, tab, version],
-    queryFn: () => api<SearchState & { total: number }>(`/v1/flight-searches/${searchId}?tab=${tab}&limit=40`),
+    queryFn: () => api<CustomerSearchState>(`/v1/flight-searches/${searchId}?tab=${tab}&limit=40`),
     enabled: !!searchId,
     refetchInterval: (query) => (query.state.data?.status === "RUNNING" ? 1500 : false),
     placeholderData: (prev) => prev,
   })
   const s = q.data
-  if (!params) return <p className="p-8">{t("common.error")}</p>
+  if (!params) return <p className="mx-auto max-w-6xl p-8">{t("common.error")}</p>
   const running = !s || s.status === "RUNNING"
   const manualHref = href(`/request/new?manual=${encodeURIComponent(sp.get("q") ?? "")}`)
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <details className="mb-5 rounded-lg border border-border bg-white"><summary className="cursor-pointer px-4 py-3 text-sm"><span className="font-medium">{params.from.label} → {params.to.label}</span>{sep}{date(params.date, { dateOnly: true, weekday: true })}</summary><div className="p-3"><SearchForm initial={params} /></div></details>
-      <div aria-live="polite" className="mb-4 flex flex-wrap items-center gap-3 text-sm text-slate">
-        {running && <Loader2 className="size-4 animate-spin text-copper-700" />}
+    <div className="mx-auto max-w-6xl px-4 py-8 md:py-10">
+      <h1 className="font-display text-3xl md:text-4xl">{params.from.label} <ArrowRight className="mx-1 inline size-7 text-orange rtl:rotate-180" aria-label="→" /> {params.to.label}</h1>
+      <p className="mb-6 mt-2 text-steel">{date(params.date, { dateOnly: true, weekday: true })}</p>
+      <details className="card-brand mb-5"><summary className="cursor-pointer rounded-2xl px-4 py-3 text-sm font-semibold text-navy-900">{t("results.change")}</summary><div className="p-3"><SearchForm initial={params} /></div></details>
+      <div aria-live="polite" className="mb-4 flex flex-wrap items-center gap-3 text-sm font-medium text-steel">
+        {running && <Loader2 className="size-4 animate-spin text-orange-700" />}
         <span>{s ? (running ? t("results.progress", { total: s.progress.sourcesTotal || "…", done: s.progress.sourcesDone }) : t("results.complete", { count: (s as { total: number }).total })) : t("common.loading")}</span>
-        {s?.notices.includes("POLICY_HIDDEN") && <span className="rounded bg-warning-subtle px-2 py-0.5 text-warning-subtle-fg">{t("results.policyHidden")}</span>}
-        {s?.notices.includes("NO_SOURCES") && <span className="rounded bg-warning-subtle px-2 py-0.5 text-warning-subtle-fg">{t("results.noSources")}</span>}
+        {s?.notices.includes("POLICY_HIDDEN") && <span className="rounded-full bg-warning-subtle px-3 py-1 text-warning-subtle-fg">{t("results.policyHidden")}</span>}
+        {s?.notices.includes("NO_SOURCES") && <span className="rounded-full bg-warning-subtle px-3 py-1 text-warning-subtle-fg">{t("results.noSources")}</span>}
         {!!s?.progress.slowSources.length && <span>{t("results.slow")}</span>}
       </div>
-      {s?.historical && <p className="mb-4 rounded-md bg-info-subtle px-3 py-2 text-sm text-info-subtle-fg">{t("results.historical")}</p>}
-      {err && <p className="mb-4 flex items-center gap-2 rounded-md bg-warning-subtle px-3 py-2 text-sm text-warning-subtle-fg"><AlertTriangle className="size-4" />{err}</p>}
+      {s?.historical && <p className="mb-4 rounded-xl bg-info-subtle px-4 py-2.5 text-sm text-info-subtle-fg">{t("results.historical")}</p>}
+      {err && <p className="mb-4 flex items-center gap-2 rounded-xl bg-warning-subtle px-4 py-2.5 text-sm text-warning-subtle-fg"><AlertTriangle className="size-4" />{err}</p>}
       <div className="grid gap-6 md:grid-cols-[1fr_280px]">
         <div>
-          <div role="tablist" className="mb-4 flex gap-1 overflow-x-auto border-b border-border">
-            {TABS.map((k) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm ${tab === k ? "border-copper font-medium text-ink" : "border-transparent text-slate"}`}>{t(`results.tabs.${k}`)}</button>)}
+          <div role="tablist" className="mb-4 flex gap-2 overflow-x-auto pb-1">
+            {TABS.map((k) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? "border-navy-900 bg-navy-900 text-white" : "border-line bg-white text-steel hover:border-navy-900/40 hover:text-navy-950"}`}>{t(`results.tabs.${k}`)}</button>)}
           </div>
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {s?.results.map((it) => <li key={it.id}><ResultCard it={it} searchId={s.id} /></li>)}
-            {running && !s?.results.length && Array.from({ length: 3 }).map((_, i) => <li key={i} className="h-32 animate-pulse rounded-lg bg-muted" />)}
+            {running && !s?.results.length && Array.from({ length: 3 }).map((_, i) => <li key={i} aria-hidden className="shimmer h-40 rounded-2xl" />)}
           </ul>
           {!running && !s?.results.length && (
-            <div className="rounded-lg border border-dashed border-copper/60 bg-white p-8 text-center">
-              <h2 className="font-display text-2xl">{t("results.empty")}</h2>
-              <p className="mx-auto mt-2 max-w-md text-slate">{t("results.emptyBody")}</p>
-              <Link href={manualHref} className="mt-5 inline-block rounded-md bg-primary px-4 py-2.5 text-primary-foreground">{t("results.askTeam")}</Link>
-            </div>
+            <EmptyState icon={<SearchX />} title={t("results.empty")} body={t("results.emptyBody")} action={<Link href={manualHref} className="btn-orange">{t("results.askTeam")}</Link>} />
           )}
         </div>
         <aside className="space-y-4 text-sm">
-          <div className="rounded-lg border border-border bg-sand p-4"><p className="text-slate">{t("results.illustrative")}</p></div>
-          <div className="rounded-lg border border-border bg-white p-4"><p className="font-medium">{t("results.talk")}</p><p className="mt-1 text-slate">{t("results.emptyBody")}</p><Link href={manualHref} className="mt-3 inline-block text-copper-700 underline underline-offset-4">{t("results.askTeam")}</Link></div>
+          <div className="rounded-2xl border border-dashed border-haze bg-white/60 p-4"><p className="text-steel">{t("results.illustrative")}</p></div>
+          <div className="card-brand p-5"><p className="font-semibold">{t("results.talk")}</p><p className="mt-1 text-steel">{t("results.emptyBody")}</p><Link href={manualHref} className="mt-3 inline-block font-semibold text-orange-700 underline underline-offset-4">{t("results.askTeam")}</Link></div>
         </aside>
       </div>
     </div>

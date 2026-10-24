@@ -4,6 +4,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 
+import { FlightPath, GlobeLines } from "@unitravel/ui/brand/art"
+import { Logo } from "@unitravel/ui/brand/logo"
 import { Button } from "@unitravel/ui/components/button"
 
 import { api, ApiError, errText } from "@/lib/api"
@@ -66,20 +68,20 @@ function SignInInner({ surface }: { surface: Surface }) {
 
   return (
     <main className="grid min-h-dvh md:grid-cols-[1fr_minmax(380px,460px)]">
-      <section className="relative hidden overflow-hidden bg-ink text-paper md:block" aria-hidden>
+      <section className="bg-brand relative hidden overflow-hidden text-white md:block" aria-hidden>
         {surface === "dev" && <div className="workshop-strip absolute inset-x-0 top-0 h-2" />}
-        <svg viewBox="0 0 600 600" className="absolute inset-0 h-full w-full opacity-60">
-          {[0, 1, 2, 3, 4, 5].map((i) => <path key={i} d={`M ${40 + i * 30} 520 C ${160 + i * 40} ${120 - i * 10}, ${380 + i * 20} ${90 + i * 12}, ${560 - i * 10} ${260 + i * 24}`} stroke={i % 2 ? "#5b6573" : "#c98d5b"} strokeWidth={i % 2 ? 0.8 : 1.4} fill="none" />)}
-        </svg>
+        <GlobeLines className="absolute -end-32 -top-24 w-[560px] text-white/15" />
+        <div className="absolute inset-x-0 top-24 flex justify-center"><Logo variant="stacked" tone="onDark" size={44} /></div>
+        <FlightPath className="absolute inset-x-0 top-1/2 w-full -translate-y-1/2 opacity-80" />
         <div className="absolute bottom-10 start-10 max-w-md">
-          <p className="cap text-copper">{surface === "dev" ? "Developer Panel · workshop" : "Admin Panel"}</p>
-          <p className="mt-3 font-display text-4xl leading-tight">{surface === "dev" ? "Every change versioned, validated and audited." : "Requests become reservations, tickets and shipments here."}</p>
+          <p className="cap text-orange-300">{surface === "dev" ? "Developer Panel · workshop" : "Admin Panel"}</p>
+          <p className="mt-3 font-display text-3xl leading-tight">{surface === "dev" ? "Every change versioned, validated and audited." : "Requests become reservations, tickets and shipments here."}</p>
         </div>
       </section>
-      <section className="flex flex-col justify-center bg-paper px-8 py-12">
-        <Brand surface={surface} />
+      <section className="flex flex-col justify-center bg-surface-raised px-8 py-12">
+        <Brand surface={surface} tone="onLight" />
         <h1 className="mt-8 font-display text-2xl">{step.startsWith("mfa") ? "Second factor" : "Staff sign-in"}</h1>
-        <p className="mt-1 text-slate">{step === "mfa-enrol" ? "Staff accounts need an authenticator app. Set it up once." : step === "mfa-verify" ? "Enter the code from your authenticator app." : "One-time code to your work phone. No passwords."}</p>
+        <p className="mt-1 text-steel">{step === "mfa-enrol" ? "Staff accounts need an authenticator app. Set it up once." : step === "mfa-verify" ? "Enter the code from your authenticator app." : "One-time code to your work phone. No passwords."}</p>
         <div className="mt-6">
           {step === "phone" && (
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void send() }}>
@@ -95,17 +97,17 @@ function SignInInner({ surface }: { surface: Surface }) {
                 <input name="otp" className="field-input mt-1 h-11 text-center font-mono text-xl tracking-[0.5em]" dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} autoFocus required />
               </label>
               <Button type="submit" className="w-full" loading={busy} disabled={code.length < 6}>Verify</Button>
-              <div className="flex justify-between text-slate">
+              <div className="flex justify-between text-steel">
                 <button type="button" className="underline underline-offset-4" onClick={() => { setStep("phone"); setErr(null) }}>Change number</button>
-                {wait > 0 ? <span className="num">Resend in {wait}s</span> : <button type="button" className="text-copper-700 underline underline-offset-4" onClick={() => void send()}>Resend code</button>}
+                {wait > 0 ? <span className="num">Resend in {wait}s</span> : <button type="button" className="text-orange-700 underline underline-offset-4" onClick={() => void send()}>Resend code</button>}
               </div>
             </form>
           )}
           {step === "mfa-enrol" && <TotpEnrol onDone={finish} />}
           {step === "mfa-verify" && <TotpVerify onDone={finish} passkey />}
-          {err && <p role="alert" className="mt-3 rounded-sm bg-[#fbeee9] px-3 py-2 text-brick">{err}</p>}
+          {err && <p role="alert" className="mt-3 rounded-sm border border-danger/30 bg-danger-subtle px-3 py-2 text-danger">{err}</p>}
         </div>
-        <p className="mt-10 text-[11px] text-slate">Sessions end after 30 minutes idle and 12 hours in total. Every action here is audited.</p>
+        <p className="mt-10 text-[11px] text-steel">Sessions end after 30 minutes idle and 12 hours in total. Every action here is audited.</p>
       </section>
     </main>
   )

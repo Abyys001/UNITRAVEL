@@ -27,6 +27,10 @@ UniTravel is a request-based travel and cargo service (ch. 1.2). Customers searc
 | Account and contact | Phone number, email, name (Latin and Persian), locale | Customers, travellers | Phone verified by OTP |
 | Traveller identity | Date of birth, nationality, passport/ID number, expiry, issuing country | Travellers (may differ from the account holder; may be minors) | Collected only after a quote is accepted (ch. 28.6). Passport number AES-256-GCM field-encrypted with key id; only last4 in clear; decrypted only by the audited Reveal action (ch. 28.3) |
 | Request and booking | Routes, dates, quotes, reservations, tickets, payment status, messages and notes | Customers | Free-text may contain unexpected data; medical details discouraged (ch. 28.6) |
+| Passport scans (Phase B, ADR-0005) | Image of the passport photo page: face, name, number, date of birth, nationality | Travellers (may differ from the account holder; may be minors) | Uploaded by the customer; JPEG or PNG only; virus-scanned, camera and location metadata stripped before it is available; stored in a separate private bucket with server-side encryption (SSE-S3); opened only by holders of `customer.read.documents`, every open audited. A passport photo is a facial image: biometric data only if processed for unique identification, which the platform does not do (UNKNOWN: counsel to confirm). |
+| Address (Phase B) | Residential address lines, city, postcode, country | Customers | Optional (owner decision 9); requested only when an invoice or a cargo request needs it |
+| Quotations and invoices (Phase C, ADR-0006) | Document number, request reference, line descriptions and amounts, bill-to name and address (if given), issue and expiry dates, status history, generated PDF | Customers | The email vendor is unchanged (existing sender; Brevo listed, not contracted). Email carries the document number and a short link, never the PDF or an amount; the link needs a sign-in. Without a verified email the same notice goes by SMS (number and link only) and in-app. PDFs sit in the private document bucket and open through 5-minute signed URLs after an ownership check. Company registration, VAT and address printed on the PDFs are UNKNOWN until the accountant answers (owner decision 5). Retention of invoices (statutory accounting period): UNKNOWN, accountant and counsel |
+| Online card payment (Phase D, ADR-0007, test mode only) | Checkout Session id, PaymentIntent and charge ids, amount, currency, payer name as given to Stripe (else the customer's name), payment and refund status, webhook event ids and types. **No card number, expiry or CVC ever reaches Uni Travel**: the card form is Stripe's embedded checkout in Stripe's frames | Customers | Stripe Payments Europe/Stripe, Inc. acts as processor (and independent controller for its own fraud and compliance duties: counsel to confirm the roles). The feature flag is off by default and live mode is blocked in code, so no real cardholder data is processed today. Stripe keys are encrypted at rest, write-only. Stripe event rows store ids, types and outcomes, not payloads. Retention of payment records follows the accounting period: UNKNOWN (accountant, counsel) |
 | Cargo | Consignor, consignee, goods descriptions, documents | Customers, third-party consignees | Documents scanned for malware; private object storage |
 | Screening | Names, nationalities used for matching; matches, cases, decisions, list versions | Customers, travellers, consignees, partners | Names only for matching; no inference of ethnicity or religion |
 | Technical | IP address, device id, session records, OTP challenge records, audit log | All users, staff | Logs redact phone numbers, emails, names, document numbers, OTP codes, tokens (ch. 28.5) |
@@ -56,6 +60,7 @@ Controller-processor agreements are required with hosting, SMS, push and email p
 | Hosting (UK/EU; Hetzner non-German region possible, OVHcloud after terms review; DigitalOcean unsuitable; Vercel not used) | Hosting, database, backups, object storage | All | Region UNKNOWN (ch. 30.1, 34.4) | Selection and terms UNKNOWN |
 | Kavenegar, SMS.ir | SMS to +98 numbers (OTP and notifications) | Phone number, message content | Iran | Contract route and payment to be confirmed with counsel (ch. 8.6); terms for foreign customers UNKNOWN (ch. 34.4) |
 | Sinch (Stockholm) or Infobip (London) | SMS elsewhere | Phone number, message content | EU/UK per booklet; Iranian number support UNKNOWN | Sanctions terms to be confirmed in writing |
+| Stripe (Payments Europe Ltd / Stripe, Inc.) | Card payments, refunds, disputes (test mode only until live is approved) | Payer name, amount, currency, ids, card data entered in Stripe's own form (not seen by us), email if the customer enters one at checkout | Ireland/US per Stripe terms (UNKNOWN until the agreement is reviewed) | **BLOCKED for live**: Stripe's written approval for this business and counsel's advice on sanctions exposure, Iran-connected customers and the processor/controller roles are outstanding. Data processing agreement and transfer mechanism UNKNOWN |
 | Brevo (Paris), fallback Mailjet | Email | Email address, message content | EU | Customer organisation must not be Iran-based (ch. 8.3) |
 | Expo (iOS and Android outside Iran), Pushy (Android in Iran, pilot) | Push | Device token, notification text | Not stated in booklet | Delivery inside Iran UNKNOWN (ch. 34.4); processing terms UNKNOWN |
 | Flight suppliers (Amadeus, Duffel) | Search and, in later stages, booking | Search criteria; passenger data at booking (Stage 7) | Not stated | Contracts BLOCKED/pending (STAGE-0.md) |
@@ -72,12 +77,13 @@ International transfers: phone numbers and message content sent to an Iranian pr
 | OTP challenges | 90 days |
 | Requests, quotes, reservations, tickets, payments | 6 years after travel or closure, then deleted or anonymised |
 | Passport numbers | Until 12 months after last travel date unless the customer keeps the profile |
+| Passport scans (ADR-0005) | **UNKNOWN** (owner decision 7, DPIA owner to set). The platform has a configurable `identityScanRetentionDays` setting (Developer Panel, settings), default unset: while unset, scans are kept until the customer replaces or deletes the traveller, or deletes the account, and no automatic deletion runs. When set, a daily maintenance job deletes the stored object and marks the row erased for scans older than that many days from upload. A replaced scan is deleted at once |
 | Compliance screenings, cases, decisions, list versions | 6 years after the relationship ends |
 | Audit log | 6 years (partition dropped) |
 | Application logs | 30 days |
 | Backups | 35 days rolling |
 
-Implementation status of automated deletion jobs for each row has not been verified in this draft: check before sign-off.
+Implementation status of automated deletion jobs for each row has not been verified in this draft: check before sign-off. Passport-scan retention is the one row with an implemented job (inactive until a value is set).
 
 ### 2.8 Data flows
 Customer devices -> Caddy edge (TLS 1.2+, HSTS) -> web/console/api -> PostgreSQL, Valkey (queues, rate-limit state), object storage (documents, signed URLs of 5 minutes) -> processors above. Worker sends SMS, email and push via the notification router; the inbox is always written first. Compliance module downloads public lists and screens locally; no customer data is sent to list publishers.
@@ -152,6 +158,7 @@ Implemented measures cite the platform; planned ones are marked.
 | M16 | Plain-language bilingual notices; no detail in SMS beyond need | Templates seeded (en/fa); wording review owed |
 | M17 | Incident response runbook with ICO 72-hour steps (docs/runbooks/security-incident.md) | Drafted |
 | M18 | Privacy notice covers third-party data; collect only what the service needs | Notice owed |
+| M19 | Online card payment: test mode only, feature flag off by default, live mode impossible in code (domain constant, database CHECK, key-prefix refusal), eligibility policy as compliance data (default deny), webhook signature verified on the raw body, events deduplicated, only verified events settle an invoice, refunds with four-eyes above the existing threshold, audit of refunds and mode changes (ADR-0007) | Implemented (test mode); live BLOCKED |
 
 ## 7. Sign-off and outcomes
 
@@ -173,3 +180,5 @@ Implemented measures cite the platform; planned ones are marked.
 5. Verify deletion/anonymisation jobs against 2.7.
 6. Complete the independent penetration test and review findings (not done in this build).
 7. Write the Persian and English privacy notices.
+8. Set the passport-scan retention period (`identityScanRetentionDays`) or record why scans are kept longer; confirm with counsel whether passport photos are biometric data in this use (ADR-0005, owner decision 7). Status: UNKNOWN.
+9. Review who needs `customer.read.documents` (passport scans and Reveal): `cargo_admin` holds it from table 10.1 and can open scans (audited). Candidate for removal at the next access review (ch. 28.1).

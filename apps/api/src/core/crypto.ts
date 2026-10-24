@@ -80,3 +80,8 @@ export function randomDigits(length: number): string {
 export function hmacSign(value: string, purpose: string): string {
   return createHmac("sha256", masterKey()).update(`${purpose}:${value}`).digest("base64url")
 }
+
+/** Keyed hash (hex, 64 chars) that binds a confirmation or a decision to exact values; unlike a plain hash it cannot be brute-forced from the database alone. */
+export function keyedHash(value: string, purpose: string): string {
+  return createHmac("sha256", masterKey()).update(`${purpose}:${value}`).digest("hex")
+}

@@ -10,6 +10,7 @@ import '../../core/format.dart';
 import '../../core/providers.dart';
 import '../../core/session.dart';
 import '../../models/me.dart';
+import '../../ui/brand_logo.dart';
 import '../../ui/route_arcs.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
@@ -105,7 +106,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           child: ListView(
             children: [
               RouteArcsHeader(
-                height: 220,
+                height: 270,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -117,9 +118,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(l.appName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white)),
-                        const SizedBox(height: 6),
-                        Text(l.signInIntro, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD9D2C4))),
+                        const BrandLogo(onDark: true, markSize: 48),
+                        const SizedBox(height: 12),
+                        Text(l.signInIntro, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Brand.onDarkMuted)),
                       ],
                     ),
                   ],
@@ -133,7 +134,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     Text(l.signInTitle, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 16),
                     if (notice != null) ...[
-                      Text(notice, style: TextStyle(color: Brand.brick)),
+                      Text(notice, style: TextStyle(color: Brand.danger)),
                       const SizedBox(height: 12),
                     ],
                     if (!awaitingCode) ...[
@@ -170,7 +171,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       const SizedBox(height: 8),
                       Semantics(
                         liveRegion: true,
-                        child: Text(errorMessage(l, _error!), style: const TextStyle(color: Brand.brick)),
+                        child: Text(errorMessage(l, _error!), style: const TextStyle(color: Brand.danger)),
                       ),
                     ],
                     const SizedBox(height: 16),
@@ -236,11 +237,11 @@ class _LanguageToggle extends ConsumerWidget {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: selected ? Brand.copper : Colors.transparent,
+              color: selected ? Brand.orange : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
             child: ExcludeSemantics(
-              child: Text(label, style: TextStyle(color: selected ? Brand.navy : Colors.white, fontWeight: FontWeight.w600)),
+              child: Text(label, style: TextStyle(color: selected ? Brand.navy950 : Colors.white, fontWeight: FontWeight.w600)),
             ),
           ),
         ),

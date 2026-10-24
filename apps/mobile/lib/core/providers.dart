@@ -56,6 +56,24 @@ class LocaleNotifier extends Notifier<Locale> {
 
 final localeProvider = NotifierProvider<LocaleNotifier, Locale>(LocaleNotifier.new);
 
+/// Light / dark / system, persisted. Only admin mode follows it (see app.dart); customer screens stay light.
+class ThemeModeNotifier extends Notifier<ThemeMode> {
+  static const _key = 'ut.theme_mode';
+
+  @override
+  ThemeMode build() {
+    final saved = ref.watch(sharedPreferencesProvider).getString(_key);
+    return ThemeMode.values.where((m) => m.name == saved).firstOrNull ?? ThemeMode.system;
+  }
+
+  Future<void> set(ThemeMode mode) async {
+    state = mode;
+    await ref.read(sharedPreferencesProvider).setString(_key, mode.name);
+  }
+}
+
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(
     ref.watch(dioProvider),

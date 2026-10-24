@@ -1,0 +1,3569 @@
+{
+ "capturedAt": "2026-10-24T13:55:12.783Z",
+ "meta": {},
+ "entries": {
+  "en GET /v1/me": {
+   "status": 200,
+   "body": {
+    "id": "01a1643f-d2c1-75b4-95d1-0b3889fd3196",
+    "displayName": "Dev Patel",
+    "status": "ACTIVE",
+    "preferredLocale": "en",
+    "calendar": "GREGORIAN",
+    "timezone": "Europe/London",
+    "identities": [
+     {
+      "id": "01a1643f-d2c2-71fa-9911-3264db11a31a",
+      "type": "PHONE",
+      "value": "+447700900005",
+      "verifiedAt": "2026-10-22T15:34:26.754Z",
+      "isPrimary": true
+     },
+     {
+      "id": "01a1643f-d2c3-7777-abd2-d8bb5dda4e28",
+      "type": "EMAIL",
+      "value": "dev@unitravel.example",
+      "verifiedAt": "2026-10-22T15:34:26.755Z",
+      "isPrimary": false
+     }
+    ],
+    "roles": [
+     "developer"
+    ],
+    "permissions": [
+     "audit.read",
+     "diagnostics.read",
+     "engine.rules.publish",
+     "engine.rules.read",
+     "flags.write",
+     "flight_search.run",
+     "notification.template.write",
+     "payments.configure",
+     "provider.config.read",
+     "provider.config.write",
+     "settings.write",
+     "user.read",
+     "user.role.assign"
+    ],
+    "flags": {
+     "cargo.enabled": true,
+     "search.gateways.enabled": true,
+     "seatmaps.enabled": false,
+     "payments.online.enabled": false,
+     "search.self_transfer.enabled": true,
+     "sms.free_text.enabled": false,
+     "push.pushy_pilot.enabled": false,
+     "maintenance.enabled": false
+    },
+    "permVersion": 2,
+    "profile": {
+     "givenNamesLatin": "Dev",
+     "surnameLatin": "Patel",
+     "nameFa": null,
+     "contactTimePref": null
+    },
+    "notificationPrefs": {},
+    "mfa": {
+     "level": 1,
+     "enrolled": [
+      "TOTP"
+     ],
+     "stepUpValidUntil": "2026-10-24T14:05:12.724Z"
+    },
+    "onDuty": false,
+    "surfaces": {
+     "customer": false,
+     "admin": false,
+     "developer": true
+    }
+   }
+  },
+  "en GET /v1/dev/health": {
+   "status": 200,
+   "body": {
+    "version": "1.0.0",
+    "commit": "local",
+    "env": "local",
+    "uptimeSeconds": 3888,
+    "database": {
+     "ok": true,
+     "latencyMs": 1,
+     "migrations": {
+      "applied": 8,
+      "latest": "1792778000000"
+     }
+    },
+    "redis": {
+     "ok": true,
+     "latencyMs": 0
+    },
+    "queues": [
+     {
+      "name": "search.execute",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 1,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "supplier.call",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "notify.route",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "notify.sms",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "notify.push",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "notify.email",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "notify.escalate",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "timers.sla",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 539,
+      "failed": 808,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "compliance.screen",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "compliance.lists-sync",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 1,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "reference.sync",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "documents.scan",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "maintenance",
+      "waiting": 0,
+      "active": 0,
+      "delayed": 5,
+      "failed": 1,
+      "oldestWaitingSeconds": null
+     },
+     {
+      "name": "events.misc",
+      "waiting": 21,
+      "active": 0,
+      "delayed": 0,
+      "failed": 0,
+      "oldestWaitingSeconds": 152321
+     }
+    ],
+    "workers": [
+     {
+      "id": "kali:157802",
+      "role": "api",
+      "configVersions": {
+       "AUTH": 1,
+       "HUBS": 1,
+       "WORKFLOW": 43,
+       "ENGINE_RULES": 1,
+       "NOTIFICATION_MATRIX": 1
+      },
+      "lastHeartbeat": "2026-10-24T13:55:15.918Z"
+     },
+     {
+      "id": "kali:157806",
+      "role": "worker",
+      "configVersions": {
+       "AUTH": 1,
+       "HUBS": 1,
+       "WORKFLOW": 43,
+       "ENGINE_RULES": 1,
+       "NOTIFICATION_MATRIX": 1
+      },
+      "lastHeartbeat": "2026-10-24T13:55:15.583Z"
+     }
+    ],
+    "configVersions": {
+     "ENGINE_RULES": 1,
+     "HUBS": 1,
+     "NOTIFICATION_MATRIX": 1,
+     "AUTH": 1,
+     "WORKFLOW": 43
+    },
+    "flags": {
+     "cargo.enabled": true,
+     "search.gateways.enabled": true,
+     "seatmaps.enabled": false,
+     "payments.online.enabled": false,
+     "search.self_transfer.enabled": true,
+     "sms.free_text.enabled": false,
+     "push.pushy_pilot.enabled": false,
+     "maintenance.enabled": false
+    },
+    "dependencies": [
+     {
+      "name": "Duffel",
+      "kind": "flight-provider",
+      "ok": null,
+      "successRate": null,
+      "p50": null,
+      "p95": null,
+      "lastError": null,
+      "circuit": "CLOSED"
+     },
+     {
+      "name": "Amadeus Enterprise (Master Pricer)",
+      "kind": "flight-provider",
+      "ok": null,
+      "successRate": null,
+      "p50": null,
+      "p95": null,
+      "lastError": null,
+      "circuit": "CLOSED"
+     },
+     {
+      "name": "Manual inventory (staff-entered)",
+      "kind": "flight-provider",
+      "ok": true,
+      "successRate": null,
+      "p50": null,
+      "p95": null,
+      "lastError": null,
+      "circuit": "CLOSED"
+     },
+     {
+      "name": "Fake supplier (local and tests only)",
+      "kind": "flight-provider",
+      "ok": true,
+      "successRate": 0.5766158315177923,
+      "p50": 693,
+      "p95": 1914,
+      "lastError": "NO_AVAILABILITY · 2026-10-24T13:28:50.839Z",
+      "circuit": "CLOSED"
+     },
+     {
+      "name": "sms +98 → kavenegar",
+      "kind": "sms",
+      "ok": null,
+      "successRate": null,
+      "p50": null,
+      "p95": null,
+      "lastError": null,
+      "circuit": null
+     },
+     {
+      "name": "sms +98 → smsir",
+      "kind": "sms",
+      "ok": null,
+      "successRate": null,
+      "p50": null,
+      "p95": null,
+      "lastError": null,
+      "circuit": null
+     },
+     {
+      "name": "sms default → sinch",
+      "kind": "sms",
+      "ok": null,
+      "successRate": null,
+      "p50": null,
+      "p95": null,
+      "lastError": null,
+      "circuit": null
+     },
+     {
+      "name": "sms default → infobip",
+      "kind": "sms",
+      "ok": null,
+      "successRate": null,
+      "p50": null,
+      "p95": null,
+      "lastError": null,
+      "circuit": null
+     }
+    ],
+    "outbox": {
+     "pending": 0,
+     "oldestSeconds": null
+    }
+   }
+  },
+  "en GET /v1/dev/payments": {
+   "status": 200,
+   "body": {
+    "provider": "FAKE",
+    "mode": "test",
+    "liveBlocked": true,
+    "flagEnabled": false,
+    "fakeAvailable": true,
+    "webhookUrl": "http://localhost:4100/v1/webhooks/stripe",
+    "credentials": {
+     "secretKey": false,
+     "publishableKey": false,
+     "webhookSecret": false,
+     "rotatedAt": null
+    },
+    "pendingModeRequest": null,
+    "events": [
+     {
+      "id": "evt_fake_b6d365ee40356485ce71",
+      "type": "checkout.session.async_payment_failed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T13:05:43.343Z",
+      "processedAt": "2026-10-24T13:05:43.346Z"
+     },
+     {
+      "id": "evt_fake_5006ce1fd30cb0f95802",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T13:05:40.849Z",
+      "processedAt": "2026-10-24T13:05:40.874Z"
+     },
+     {
+      "id": "evt_e2e_8c1fb253e0d9",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "IGNORED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:57.530Z",
+      "processedAt": "2026-10-24T12:59:57.531Z"
+     },
+     {
+      "id": "evt_fake_a897927a5b42999c2457",
+      "type": "charge.refunded",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:52.091Z",
+      "processedAt": "2026-10-24T12:59:52.101Z"
+     },
+     {
+      "id": "evt_fake_c9ca4f9e40441343114d",
+      "type": "charge.refunded",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:52.054Z",
+      "processedAt": "2026-10-24T12:59:52.060Z"
+     },
+     {
+      "id": "evt_fake_6293944947a8c4fda1a6",
+      "type": "charge.refunded",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:51.974Z",
+      "processedAt": "2026-10-24T12:59:51.980Z"
+     },
+     {
+      "id": "evt_fake_735ce3f1662ec1bd7969",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:51.887Z",
+      "processedAt": "2026-10-24T12:59:51.911Z"
+     },
+     {
+      "id": "evt_fake_6b4ff98d7c8d5a519af1",
+      "type": "charge.dispute.created",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:46.675Z",
+      "processedAt": "2026-10-24T12:59:46.680Z"
+     },
+     {
+      "id": "evt_fake_d922053a021fb99806b8",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:46.645Z",
+      "processedAt": "2026-10-24T12:59:46.668Z"
+     },
+     {
+      "id": "evt_fake_69b674bfdcae21d6b3f6",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "MISMATCH",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:45.733Z",
+      "processedAt": "2026-10-24T12:59:45.739Z"
+     },
+     {
+      "id": "evt_fake_74e6f178ac03522e4ded",
+      "type": "checkout.session.expired",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:44.310Z",
+      "processedAt": "2026-10-24T12:59:44.313Z"
+     },
+     {
+      "id": "evt_fake_b03fbbe3ad1286f64359",
+      "type": "checkout.session.async_payment_failed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:44.255Z",
+      "processedAt": "2026-10-24T12:59:44.259Z"
+     },
+     {
+      "id": "evt_fake_6f45d10434ebae24d0b7",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:44.227Z",
+      "processedAt": "2026-10-24T12:59:44.229Z"
+     },
+     {
+      "id": "evt_fake_c1f7d67d20f9759c71bb",
+      "type": "checkout.session.async_payment_succeeded",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:42.945Z",
+      "processedAt": "2026-10-24T12:59:42.948Z"
+     },
+     {
+      "id": "evt_fake_6eaae81bd0a2849f8e91",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:59:42.814Z",
+      "processedAt": "2026-10-24T12:59:42.877Z"
+     },
+     {
+      "id": "evt_fake_f792e3469b16480db771",
+      "type": "checkout.session.async_payment_failed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:42:56.263Z",
+      "processedAt": "2026-10-24T12:42:56.267Z"
+     },
+     {
+      "id": "evt_fake_edece799672b74f5e45c",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:42:53.707Z",
+      "processedAt": "2026-10-24T12:42:53.740Z"
+     },
+     {
+      "id": "evt_fake_2bc99dce4ab099719399",
+      "type": "checkout.session.async_payment_failed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:42:40.031Z",
+      "processedAt": "2026-10-24T12:42:40.034Z"
+     },
+     {
+      "id": "evt_fake_545b2e018fe611cdd67a",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:42:37.529Z",
+      "processedAt": "2026-10-24T12:42:37.561Z"
+     },
+     {
+      "id": "evt_e2e_a02f9ed84e87",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "IGNORED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:37:44.670Z",
+      "processedAt": "2026-10-24T12:37:44.672Z"
+     },
+     {
+      "id": "evt_fake_2e377dda7cc7a63c5af5",
+      "type": "charge.refunded",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:37:39.548Z",
+      "processedAt": "2026-10-24T12:37:39.555Z"
+     },
+     {
+      "id": "evt_fake_e10da75f02cfe27847e3",
+      "type": "charge.refunded",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:37:39.404Z",
+      "processedAt": "2026-10-24T12:37:39.409Z"
+     },
+     {
+      "id": "evt_fake_e15711ceccea9ff33eac",
+      "type": "charge.refunded",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:37:39.214Z",
+      "processedAt": "2026-10-24T12:37:39.219Z"
+     },
+     {
+      "id": "evt_fake_fc6e4347f064bc66dc2d",
+      "type": "checkout.session.completed",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:37:39.097Z",
+      "processedAt": "2026-10-24T12:37:39.118Z"
+     },
+     {
+      "id": "evt_fake_a0a64a28a9412aa6cb25",
+      "type": "charge.dispute.created",
+      "mode": "test",
+      "outcome": "PROCESSED",
+      "error": null,
+      "receivedAt": "2026-10-24T12:37:33.838Z",
+      "processedAt": "2026-10-24T12:37:33.842Z"
+     }
+    ],
+    "failedEvents": 0,
+    "openSessions": 0
+   }
+  },
+  "en GET /v1/dev/roles": {
+   "status": 200,
+   "body": {
+    "catalogue": [
+     "flight_search.run",
+     "flight_request.create.own",
+     "flight_request.read.own",
+     "flight_request.read.any",
+     "flight_request.assign",
+     "flight_request.transition",
+     "flight_request.note.internal",
+     "quote.create",
+     "pricing.read.internal",
+     "pricing.write",
+     "commercial_document.issue",
+     "reservation.record",
+     "ticket.record",
+     "payment.record",
+     "payment.refund.request",
+     "payment.refund.approve",
+     "payments.configure",
+     "payments.mode.approve",
+     "cargo_request.create.own",
+     "cargo_request.read.own",
+     "cargo_request.read.any",
+     "cargo_request.transition",
+     "customer.read.pii",
+     "customer.read.documents",
+     "identity.verify",
+     "compliance.case.read",
+     "compliance.case.decide",
+     "user.read",
+     "user.role.assign",
+     "user.role.assign.privileged",
+     "provider.config.read",
+     "provider.config.write",
+     "engine.rules.read",
+     "engine.rules.publish",
+     "settings.write",
+     "flags.write",
+     "notification.template.write",
+     "audit.read",
+     "diagnostics.read"
+    ],
+    "roles": [
+     {
+      "id": "01a1643f-d247-74c8-b9a3-94b13c577461",
+      "key": "customer",
+      "name": "Customer",
+      "builtIn": true,
+      "privileged": false,
+      "permissions": [
+       "flight_search.run",
+       "flight_request.create.own",
+       "flight_request.read.own",
+       "cargo_request.create.own",
+       "cargo_request.read.own"
+      ],
+      "members": 818
+     },
+     {
+      "id": "01a1643f-d24c-7254-9c83-2a47c635905e",
+      "key": "admin",
+      "name": "Administrator",
+      "builtIn": true,
+      "privileged": false,
+      "permissions": [
+       "flight_search.run",
+       "flight_request.read.any",
+       "flight_request.assign",
+       "flight_request.transition",
+       "flight_request.note.internal",
+       "quote.create",
+       "reservation.record",
+       "ticket.record",
+       "payment.record",
+       "customer.read.pii",
+       "customer.read.documents",
+       "engine.rules.read",
+       "pricing.read.internal",
+       "pricing.write",
+       "commercial_document.issue",
+       "identity.verify",
+       "payment.refund.approve",
+       "payment.refund.request"
+      ],
+      "members": 19
+     },
+     {
+      "id": "01a1643f-d24f-7482-8b8f-e237ca667b5d",
+      "key": "cargo_admin",
+      "name": "Cargo administrator",
+      "builtIn": true,
+      "privileged": false,
+      "permissions": [
+       "flight_search.run",
+       "flight_request.note.internal",
+       "payment.record",
+       "cargo_request.read.any",
+       "cargo_request.transition",
+       "customer.read.pii",
+       "customer.read.documents"
+      ],
+      "members": 1
+     },
+     {
+      "id": "01a1643f-d251-7054-b6db-1b83a8beaf41",
+      "key": "compliance_officer",
+      "name": "Compliance officer",
+      "builtIn": true,
+      "privileged": true,
+      "permissions": [
+       "flight_request.read.any",
+       "flight_request.note.internal",
+       "cargo_request.read.any",
+       "customer.read.pii",
+       "customer.read.documents",
+       "compliance.case.read",
+       "compliance.case.decide",
+       "audit.read"
+      ],
+      "members": 1
+     },
+     {
+      "id": "01a1643f-d254-7356-b705-90d9144ddeed",
+      "key": "developer",
+      "name": "Developer",
+      "builtIn": true,
+      "privileged": true,
+      "permissions": [
+       "flight_search.run",
+       "user.read",
+       "user.role.assign",
+       "provider.config.read",
+       "provider.config.write",
+       "engine.rules.read",
+       "engine.rules.publish",
+       "settings.write",
+       "flags.write",
+       "notification.template.write",
+       "audit.read",
+       "diagnostics.read",
+       "payments.configure"
+      ],
+      "members": 1
+     },
+     {
+      "id": "01a1643f-d256-76c3-865b-02e1eae9af53",
+      "key": "owner",
+      "name": "Owner",
+      "builtIn": true,
+      "privileged": true,
+      "permissions": [
+       "flight_search.run",
+       "flight_request.create.own",
+       "flight_request.read.own",
+       "flight_request.read.any",
+       "flight_request.assign",
+       "flight_request.transition",
+       "flight_request.note.internal",
+       "quote.create",
+       "reservation.record",
+       "ticket.record",
+       "payment.record",
+       "cargo_request.create.own",
+       "cargo_request.read.own",
+       "cargo_request.read.any",
+       "cargo_request.transition",
+       "customer.read.pii",
+       "customer.read.documents",
+       "compliance.case.read",
+       "compliance.case.decide",
+       "user.read",
+       "user.role.assign",
+       "user.role.assign.privileged",
+       "provider.config.read",
+       "provider.config.write",
+       "engine.rules.read",
+       "engine.rules.publish",
+       "settings.write",
+       "flags.write",
+       "notification.template.write",
+       "audit.read",
+       "diagnostics.read",
+       "pricing.read.internal",
+       "pricing.write",
+       "commercial_document.issue",
+       "identity.verify",
+       "payments.mode.approve",
+       "payments.configure",
+       "payment.refund.approve",
+       "payment.refund.request"
+      ],
+      "members": 1
+     },
+     {
+      "id": "7d24fa74-8080-42e2-bbe0-8792cd9d84c1",
+      "key": "viewer_1792768086280",
+      "name": "Request reader (test)",
+      "builtIn": false,
+      "privileged": false,
+      "permissions": [
+       "flight_request.read.any"
+      ],
+      "members": 1
+     }
+    ]
+   }
+  },
+  "en GET /v1/dev/users?limit=50": {
+   "status": 200,
+   "body": {
+    "items": [
+     {
+      "id": "01a16e31-0d48-7688-a514-8020f643478d",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989128147959",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:54:30.855Z"
+     },
+     {
+      "id": "01a16e2c-ee89-7028-90a5-2f3f8ee50c97",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989123975168",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:50:00.839Z"
+     },
+     {
+      "id": "01a16e1e-be3b-7192-a438-fa618136a8e0",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989124378669",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:34:30.968Z"
+     },
+     {
+      "id": "01a16e19-3524-7648-87f6-b0733654f859",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989127450992",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:28:28.196Z"
+     },
+     {
+      "id": "01a16e11-7b9e-7757-bfc0-1d77c84f5007",
+      "displayName": "Console Tester",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989120114255",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:20:01.947Z"
+     },
+     {
+      "id": "01a16e0f-2e42-75fe-b09e-745528cd8f91",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989121678502",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:17:31.073Z"
+     },
+     {
+      "id": "01a16e0e-43e4-71a1-a5cb-0b762fddf8f5",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989121092277",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:16:31.073Z"
+     },
+     {
+      "id": "01a16e0d-cef0-7474-a34a-b3d41725e6c3",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989126597243",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:16:01.133Z"
+     },
+     {
+      "id": "01a16e0c-ab3c-7457-8bfd-1ba580228ac5",
+      "displayName": "Console Tester",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989127297924",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:14:46.459Z"
+     },
+     {
+      "id": "01a16e0c-a0a3-7699-8300-65fd4c973045",
+      "displayName": "Console Tester",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989128822173",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:14:43.745Z"
+     },
+     {
+      "id": "01a16e0b-67e7-737a-b18a-82c0ea779833",
+      "displayName": "Console Tester",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989126046258",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:13:23.684Z"
+     },
+     {
+      "id": "01a16e09-879d-7425-97fe-75bd22f39a79",
+      "displayName": "Console Tester",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989127703881",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:11:20.730Z"
+     },
+     {
+      "id": "01a16e08-f7af-763a-b31b-94c844098824",
+      "displayName": "Console Tester",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989121753125",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:10:43.884Z"
+     },
+     {
+      "id": "01a16e06-7b62-7223-8a8a-5821d705a8c3",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989121426206",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:08:00.992Z"
+     },
+     {
+      "id": "01a16e06-59de-7137-bf32-d7d3765c011d",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989129752924",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:07:52.409Z"
+     },
+     {
+      "id": "01a16e04-6556-7133-a004-4deffff9e6eb",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989126612421",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:05:44.277Z"
+     },
+     {
+      "id": "01a16e04-5d1a-740f-9f22-02f3cf1bf68b",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989128743652",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:05:42.170Z"
+     },
+     {
+      "id": "01a16e04-4c37-7075-a67c-c47303cc63d7",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989128730620",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:05:37.845Z"
+     },
+     {
+      "id": "01a16e04-30d7-74ce-9f25-2db9bda4b048",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989128643000",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:05:30.838Z"
+     },
+     {
+      "id": "01a16e03-7e55-718d-800a-e290b3f3f0f9",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989120702961",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:04:45.140Z"
+     },
+     {
+      "id": "01a16e02-621f-76d7-8c77-169860769458",
+      "displayName": "Daniel Shaw",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989124934273",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:03:32.382Z"
+     },
+     {
+      "id": "01a16e02-5cfe-77b7-98f0-35c2f5443257",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989123571421",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:03:31.069Z"
+     },
+     {
+      "id": "01a16e01-114f-756a-8d18-b0df45f8a954",
+      "displayName": "Sara Rezaei",
+      "status": "ACTIVE",
+      "roles": [
+       "customer",
+       "admin"
+      ],
+      "primaryPhone": "+989121739292",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:02:06.158Z"
+     },
+     {
+      "id": "01a16e00-b28a-74b0-9b75-1cd96e39a626",
+      "displayName": "Other Person",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989129203794",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:41.897Z"
+     },
+     {
+      "id": "01a16e00-ad04-75a7-a8e9-60c5c9022492",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989124656124",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:40.482Z"
+     },
+     {
+      "id": "01a16e00-a933-713e-b9b7-bee867eddc43",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989121789435",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:39.505Z"
+     },
+     {
+      "id": "01a16e00-a34b-7621-a27f-246bf799fda2",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989124995156",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:37.994Z"
+     },
+     {
+      "id": "01a16e00-9cd6-7556-a224-a7be08fd834c",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989125545002",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:36.341Z"
+     },
+     {
+      "id": "01a16e00-9b8e-76d6-9e24-e9932f7e2b12",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989126914900",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:36.013Z"
+     },
+     {
+      "id": "01a16e00-9919-7179-a6d8-bb0bc34debcf",
+      "displayName": "Customer",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989127118034",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:35.384Z"
+     },
+     {
+      "id": "01a16e00-96fa-714a-b570-8a6644ca1667",
+      "displayName": "Customer",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+447700900628",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:34.841Z"
+     },
+     {
+      "id": "01a16e00-95dd-74f2-8514-9225e87e09b6",
+      "displayName": "Customer",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989129595428",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:34.556Z"
+     },
+     {
+      "id": "01a16e00-9491-73ee-94c8-8ae3c2741695",
+      "displayName": "Customer",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989125327179",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:34.224Z"
+     },
+     {
+      "id": "01a16e00-913a-777c-b47a-47de40181b89",
+      "displayName": "Ali Promoted",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989125501149",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:33.368Z"
+     },
+     {
+      "id": "01a16e00-8fe8-7510-be80-de38b660e78a",
+      "displayName": "Maryam Testpour",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989123889646",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:33.030Z"
+     },
+     {
+      "id": "01a16e00-74c7-73b9-98a6-beeddbb887c0",
+      "displayName": "Customer",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989129667151",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:26.085Z"
+     },
+     {
+      "id": "01a16e00-727f-75cb-bfed-33c60fe8e262",
+      "displayName": "Sara Owner",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989123455145",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:25.502Z"
+     },
+     {
+      "id": "01a16e00-6e50-74ab-a389-2a9c6ccd2a5f",
+      "displayName": "Kurosh Testfarzane",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989128423190",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:24.431Z"
+     },
+     {
+      "id": "01a16e00-68ab-77e0-9f6f-7ced0a0152f0",
+      "displayName": "Arash Foureyes",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989125551418",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:22.986Z"
+     },
+     {
+      "id": "01a16e00-613a-7106-9f75-2552bc9cb68b",
+      "displayName": "Neda Testtraveller",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989125335865",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:21.080Z"
+     },
+     {
+      "id": "01a16e00-1213-75ca-a5ba-68945f918460",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989120373055",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:01:00.818Z"
+     },
+     {
+      "id": "01a16dff-e1c7-744f-949e-1cef05d13b26",
+      "displayName": "Neda Ticketguard",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989127713418",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:48.454Z"
+     },
+     {
+      "id": "01a16dff-db74-75a2-9807-7a73082f3e5b",
+      "displayName": "Read Only",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989120855351",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:46.835Z"
+     },
+     {
+      "id": "01a16dff-d9af-70c1-8ffe-928f881d115a",
+      "displayName": "Other Person",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989129459553",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:46.382Z"
+     },
+     {
+      "id": "01a16dff-d5c0-7343-90d0-25e1c5f22205",
+      "displayName": "Neda Verifyme",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989127554340",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:45.374Z"
+     },
+     {
+      "id": "01a16dff-d21c-77f8-885d-9639f588b892",
+      "displayName": "Neda Verifyme",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989128560821",
+      "email": "phaseb-1792846844463@example.test",
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:44.443Z"
+     },
+     {
+      "id": "01a16dff-cfda-7017-bb6a-bdea7af38826",
+      "displayName": "Neda Verifyme",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989121406022",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:43.865Z"
+     },
+     {
+      "id": "01a16dff-ca27-7416-a0cd-156ac743b699",
+      "displayName": "Neda Invoice",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989127706468",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:42.405Z"
+     },
+     {
+      "id": "01a16dff-c4c0-73a4-b522-2208e48a10f1",
+      "displayName": "Leila Shipper",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989122473327",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:41.023Z"
+     },
+     {
+      "id": "01a16dff-b965-7681-9ca2-3ac15cfe233b",
+      "displayName": "Customer",
+      "status": "ACTIVE",
+      "roles": [
+       "customer"
+      ],
+      "primaryPhone": "+989121559768",
+      "email": null,
+      "phoneVerified": true,
+      "lastActiveAt": null,
+      "createdAt": "2026-10-24T13:00:38.116Z"
+     }
+    ],
+    "nextCursor": "2026-10-24T13:00:38.116Z"
+   }
+  },
+  "en GET /v1/dev/audit-log?limit=100": {
+   "status": 200,
+   "body": {
+    "items": [
+     {
+      "id": "7364",
+      "occurredAt": "2026-10-24T13:55:12.726Z",
+      "actorUserId": "01a1643f-d2c1-75b4-95d1-0b3889fd3196",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "3bd65164-5b79-41e9-9385-1968476cebe9",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "::1",
+      "userAgent": null,
+      "requestId": "req_a52352b5a5e44f9d81248b45b673758c",
+      "prevHash": "010a33e7f9a62ba216f1078d15b9f16bf7af8af156fb5ce440a09682af652a30",
+      "hash": "06ec24e0c7153b69bbe0757829643eb02ad2b5a96b15fc8c4f8a9c9ac2d53d6a"
+     },
+     {
+      "id": "7363",
+      "occurredAt": "2026-10-24T13:55:12.654Z",
+      "actorUserId": "01a1643f-d2c1-75b4-95d1-0b3889fd3196",
+      "actorKind": "STAFF",
+      "action": "user.signed_in",
+      "entityType": "session",
+      "entityId": "01a16e31-b085-7180-9b76-4d0d08b9dcc6",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "CONSOLE",
+       "identityType": "PHONE"
+      },
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+      "requestId": "req_e1eae894d08e4d43b1f3c272ac3053ea",
+      "prevHash": "9a21021de99c15244390eb2f2f79d39d096c2a8f864cb319d95f21be2145dc95",
+      "hash": "010a33e7f9a62ba216f1078d15b9f16bf7af8af156fb5ce440a09682af652a30"
+     },
+     {
+      "id": "7362",
+      "occurredAt": "2026-10-24T13:54:32.600Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.send_quote",
+      "entityType": "flight_request",
+      "entityId": "01a16e31-113d-7033-a583-5433730c9df3",
+      "contextRef": "UT-F-GZ0R3A",
+      "before": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "after": {
+       "status": "QUOTED",
+       "version": 4
+      },
+      "ip": "10.178.170.66",
+      "userAgent": null,
+      "requestId": "req_7595994d71a3410daa8383a444b74b07",
+      "prevHash": "dc42b0b8dc67f97026b7bf090d163a03a3f17f6f3144c6820469526f5b564a8b",
+      "hash": "9a21021de99c15244390eb2f2f79d39d096c2a8f864cb319d95f21be2145dc95"
+     },
+     {
+      "id": "7361",
+      "occurredAt": "2026-10-24T13:54:32.587Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "quote.drafted",
+      "entityType": "quote",
+      "entityId": "01a16e31-1408-7794-ae4d-2b4262c0f596",
+      "contextRef": "UT-F-GZ0R3A",
+      "before": null,
+      "after": {
+       "options": 1,
+       "version": 1
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "ed32cd8b2553a7efc882e6c2d2344bcdd78c5c59acf65f6f73b9803fb8a91e6f",
+      "hash": "dc42b0b8dc67f97026b7bf090d163a03a3f17f6f3144c6820469526f5b564a8b"
+     },
+     {
+      "id": "7360",
+      "occurredAt": "2026-10-24T13:54:32.561Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.claim",
+      "entityType": "flight_request",
+      "entityId": "01a16e31-113d-7033-a583-5433730c9df3",
+      "contextRef": "UT-F-GZ0R3A",
+      "before": {
+       "status": "NEW",
+       "version": 2
+      },
+      "after": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "ip": "10.178.170.66",
+      "userAgent": null,
+      "requestId": "req_a8b19f7f9a94408085215411e1357713",
+      "prevHash": "402a5a6e3e7c48cf4e825ee491055da4f73456bbf71589177fc840fef36d5c37",
+      "hash": "ed32cd8b2553a7efc882e6c2d2344bcdd78c5c59acf65f6f73b9803fb8a91e6f"
+     },
+     {
+      "id": "7359",
+      "occurredAt": "2026-10-24T13:54:32.350Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "flight_request.screen_pass",
+      "entityType": "flight_request",
+      "entityId": "01a16e31-113d-7033-a583-5433730c9df3",
+      "contextRef": "UT-F-GZ0R3A",
+      "before": {
+       "status": "SUBMITTED",
+       "version": 1
+      },
+      "after": {
+       "status": "NEW",
+       "version": 2
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "9d896307da74994d202781da22b1d2c8b5747c81e0f9e43782173ac939807144",
+      "hash": "402a5a6e3e7c48cf4e825ee491055da4f73456bbf71589177fc840fef36d5c37"
+     },
+     {
+      "id": "7358",
+      "occurredAt": "2026-10-24T13:54:31.877Z",
+      "actorUserId": "01a16e31-0d48-7688-a514-8020f643478d",
+      "actorKind": "CUSTOMER",
+      "action": "flight_request.submitted",
+      "entityType": "flight_request",
+      "entityId": "01a16e31-113d-7033-a583-5433730c9df3",
+      "contextRef": "UT-F-GZ0R3A",
+      "before": null,
+      "after": {
+       "kind": "MANUAL",
+       "snapshot": false,
+       "tripType": "ONE_WAY",
+       "travellers": 1
+      },
+      "ip": "10.182.211.213",
+      "userAgent": null,
+      "requestId": "req_40329df5ed19444e9d8b1c35d37453c8",
+      "prevHash": "40d6ef2190366e33ee669a3a41387e1a04cbe6127365e6575fcaba4b4d7ad67f",
+      "hash": "9d896307da74994d202781da22b1d2c8b5747c81e0f9e43782173ac939807144"
+     },
+     {
+      "id": "7357",
+      "occurredAt": "2026-10-24T13:54:31.790Z",
+      "actorUserId": "01a16e31-0d48-7688-a514-8020f643478d",
+      "actorKind": "CUSTOMER",
+      "action": "traveller.created",
+      "entityType": "traveller",
+      "entityId": "01a16e31-10ea-7547-8d51-3aff74d7d174",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "hasDocument": true,
+       "nationality": "IR"
+      },
+      "ip": "10.182.211.213",
+      "userAgent": null,
+      "requestId": "req_d32ccce106af4c5382f50cb9ee2f1c16",
+      "prevHash": "da247cdfea6b5bcb3b41f846c4278549be05f2a1d9de5f3fd7bfa420133ec5f4",
+      "hash": "40d6ef2190366e33ee669a3a41387e1a04cbe6127365e6575fcaba4b4d7ad67f"
+     },
+     {
+      "id": "7356",
+      "occurredAt": "2026-10-24T13:54:31.772Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.issued",
+      "entityType": "invoice",
+      "entityId": "01a16e31-10c2-7173-9b0b-d9cd22c65ee8",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": null,
+      "after": {
+       "number": "I••••••",
+       "currency": "GBP",
+       "expiresAt": "2026-11-07T13:54:31.757Z",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "2fd16810146210e829f4b71a91f409e5bea51551851a5a66aa73bb36a386eb05",
+      "hash": "da247cdfea6b5bcb3b41f846c4278549be05f2a1d9de5f3fd7bfa420133ec5f4"
+     },
+     {
+      "id": "7355",
+      "occurredAt": "2026-10-24T13:54:31.750Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.draft_created",
+      "entityType": "invoice",
+      "entityId": "01a16e31-10c2-7173-9b0b-d9cd22c65ee8",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": null,
+      "after": {
+       "quoteId": "01a16e31-1030-7475-bf16-e8c22cb59a2c",
+       "currency": "GBP",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "a070dac35c4e58659cfcdd2431b7c41284869c9e88d9c2f1d4a3b6c9c3ad34db",
+      "hash": "2fd16810146210e829f4b71a91f409e5bea51551851a5a66aa73bb36a386eb05"
+     },
+     {
+      "id": "7354",
+      "occurredAt": "2026-10-24T13:54:31.740Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.eta_set",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "estimatedDeliveryAt": null
+      },
+      "after": {
+       "estimatedDeliveryAt": "2026-10-27T13:54:31.735Z"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "9de345886a21e8d6b83936982202aa5fdabb35fc128f83b835e858c32d01ca94",
+      "hash": "a070dac35c4e58659cfcdd2431b7c41284869c9e88d9c2f1d4a3b6c9c3ad34db"
+     },
+     {
+      "id": "7353",
+      "occurredAt": "2026-10-24T13:54:31.733Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.tracking_corrected",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "eventId": "01a16e31-10a4-7440-b1cb-830f48ad26ea",
+       "location": "LHR",
+       "eventCode": "DEPARTED",
+       "occurredAt": "2026-10-24T13:55:31.711Z"
+      },
+      "after": {
+       "reason": "Wrong scan",
+       "location": "IST customs",
+       "eventCode": "AT_CUSTOMS",
+       "occurredAt": "2026-10-24T13:57:31.728Z",
+       "correctionId": "01a16e31-10b4-73f8-b1e9-264e4116ab56"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "a52962b453cfbb5a0591baef3a51a8112c05b2642f61e490e8d18e918d4391dd",
+      "hash": "9de345886a21e8d6b83936982202aa5fdabb35fc128f83b835e858c32d01ca94"
+     },
+     {
+      "id": "7352",
+      "occurredAt": "2026-10-24T13:54:31.701Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.receive",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "after": {
+       "status": "RECEIVED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "92c002c1a5252041f2f67872c19f1d8ff71b21abc645fdd1a9be5a4afb7f7f55",
+      "hash": "a52962b453cfbb5a0591baef3a51a8112c05b2642f61e490e8d18e918d4391dd"
+     },
+     {
+      "id": "7351",
+      "occurredAt": "2026-10-24T13:54:31.683Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.schedule_handover",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "status": "BOOKED"
+      },
+      "after": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "f516c87d52f6a3abe09b0f29a53a1d95bd794f24e3a26ffeac38aeda9d68bd9c",
+      "hash": "92c002c1a5252041f2f67872c19f1d8ff71b21abc645fdd1a9be5a4afb7f7f55"
+     },
+     {
+      "id": "7350",
+      "occurredAt": "2026-10-24T13:54:31.666Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.record_booking",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "status": "ACCEPTED"
+      },
+      "after": {
+       "status": "BOOKED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "ea649b860ed45122a5df824057b60a98a14b1cadcc8a4a10f8107357771ce876",
+      "hash": "f516c87d52f6a3abe09b0f29a53a1d95bd794f24e3a26ffeac38aeda9d68bd9c"
+     },
+     {
+      "id": "7349",
+      "occurredAt": "2026-10-24T13:54:31.640Z",
+      "actorUserId": "01a16e31-0d48-7688-a514-8020f643478d",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.accept_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "status": "QUOTED"
+      },
+      "after": {
+       "status": "ACCEPTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "b490deec1ec29f95babc6451eaeb1ead8362ff870106514d1caa6bfcb4336d32",
+      "hash": "ea649b860ed45122a5df824057b60a98a14b1cadcc8a4a10f8107357771ce876"
+     },
+     {
+      "id": "7348",
+      "occurredAt": "2026-10-24T13:54:31.609Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.send_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "status": "IN_REVIEW"
+      },
+      "after": {
+       "status": "QUOTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "7b913e9d1dfddce738eaa0ba03584ae8546a0aa3f532275d8526fc92c4d00d4a",
+      "hash": "b490deec1ec29f95babc6451eaeb1ead8362ff870106514d1caa6bfcb4336d32"
+     },
+     {
+      "id": "7347",
+      "occurredAt": "2026-10-24T13:54:31.602Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo.quote_drafted",
+      "entityType": "quote",
+      "entityId": "01a16e31-1030-7475-bf16-e8c22cb59a2c",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": null,
+      "after": null,
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "0f1952baec83c0f6290dcc79e10a286be56b8a3b750374548f3f02a42eaaa152",
+      "hash": "7b913e9d1dfddce738eaa0ba03584ae8546a0aa3f532275d8526fc92c4d00d4a"
+     },
+     {
+      "id": "7346",
+      "occurredAt": "2026-10-24T13:54:31.586Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.claim",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "status": "NEW"
+      },
+      "after": {
+       "status": "IN_REVIEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "1c9ce6df803ab3155e06dba87ab4eed3cb2add29e7dd50c104fe589ef0d947e9",
+      "hash": "0f1952baec83c0f6290dcc79e10a286be56b8a3b750374548f3f02a42eaaa152"
+     },
+     {
+      "id": "7345",
+      "occurredAt": "2026-10-24T13:54:31.379Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "cargo_request.screen_pass",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": {
+       "status": "SUBMITTED"
+      },
+      "after": {
+       "status": "NEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "2eab6b8093e987fa5984049f3a17f51d89f94186b94e00582465a052759575eb",
+      "hash": "1c9ce6df803ab3155e06dba87ab4eed3cb2add29e7dd50c104fe589ef0d947e9"
+     },
+     {
+      "id": "7344",
+      "occurredAt": "2026-10-24T13:54:30.924Z",
+      "actorUserId": "01a16e31-0d48-7688-a514-8020f643478d",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.submitted",
+      "entityType": "cargo_request",
+      "entityId": "01a16e31-0d85-74a3-935b-fe94e880a892",
+      "contextRef": "UT-C-M6ZNMN",
+      "before": null,
+      "after": {
+       "lane": "United Kingdom → Türkiye",
+       "items": 1,
+       "pieces": 1,
+       "service": "PARCEL"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "c040aa9bc257053739ebd366e92dc02d5767f49c8c82a5b58deb74dcee013d36",
+      "hash": "2eab6b8093e987fa5984049f3a17f51d89f94186b94e00582465a052759575eb"
+     },
+     {
+      "id": "7343",
+      "occurredAt": "2026-10-24T13:54:30.867Z",
+      "actorUserId": "01a16e31-0d48-7688-a514-8020f643478d",
+      "actorKind": "CUSTOMER",
+      "action": "user.signed_up",
+      "entityType": "session",
+      "entityId": "01a16e31-0d4f-758f-a68c-2f8d90e211bd",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "WEB",
+       "identityType": "PHONE"
+      },
+      "ip": "10.182.211.213",
+      "userAgent": "node",
+      "requestId": "req_299e8180ce50444e92785eeb9d1fa3d1",
+      "prevHash": "4283056198300d7430e1e86f9cf07d5c41cec9197eed4a90ac0ef82764edbecd",
+      "hash": "c040aa9bc257053739ebd366e92dc02d5767f49c8c82a5b58deb74dcee013d36"
+     },
+     {
+      "id": "7342",
+      "occurredAt": "2026-10-24T13:54:30.573Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "10.178.170.66",
+      "userAgent": null,
+      "requestId": "req_f095814d1dba49c19b699091e2c99f4a",
+      "prevHash": "54de18cde0ec2d9ec64e07d402af8087d224bd6eecde7014272fc6461b0bd29c",
+      "hash": "4283056198300d7430e1e86f9cf07d5c41cec9197eed4a90ac0ef82764edbecd"
+     },
+     {
+      "id": "7341",
+      "occurredAt": "2026-10-24T13:54:17.567Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "::1",
+      "userAgent": null,
+      "requestId": "req_ceda218aab134c3e83d21b6281b83784",
+      "prevHash": "25bc3f9ff468c67d8df45c3ae40a6788873cb63d4254a96d6b5332683762cd86",
+      "hash": "54de18cde0ec2d9ec64e07d402af8087d224bd6eecde7014272fc6461b0bd29c"
+     },
+     {
+      "id": "7340",
+      "occurredAt": "2026-10-24T13:54:17.477Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "user.signed_in",
+      "entityType": "session",
+      "entityId": "01a16e30-d8fd-7555-985c-f0873d2028d7",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "CONSOLE",
+       "identityType": "PHONE"
+      },
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+      "requestId": "req_7d504214d7c640fa8b1b9f52f340cb6b",
+      "prevHash": "643c7483979f6e77f3dfa2690618fd6938f0abc1549d9531aa53e1cb0233cd24",
+      "hash": "25bc3f9ff468c67d8df45c3ae40a6788873cb63d4254a96d6b5332683762cd86"
+     },
+     {
+      "id": "7339",
+      "occurredAt": "2026-10-24T13:50:01.954Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.send_quote",
+      "entityType": "flight_request",
+      "entityId": "01a16e2c-f149-703f-9d2e-c410f37cbf8b",
+      "contextRef": "UT-F-42BRRQ",
+      "before": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "after": {
+       "status": "QUOTED",
+       "version": 4
+      },
+      "ip": "10.6.129.213",
+      "userAgent": null,
+      "requestId": "req_42e1ddf0e0164e79a5cccb4c52c463cd",
+      "prevHash": "c7c13452a468b5c7b9f9fde25761541eb9d3d2a877491b9d54a920a6ef51a158",
+      "hash": "643c7483979f6e77f3dfa2690618fd6938f0abc1549d9531aa53e1cb0233cd24"
+     },
+     {
+      "id": "7338",
+      "occurredAt": "2026-10-24T13:50:01.938Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "quote.drafted",
+      "entityType": "quote",
+      "entityId": "01a16e2c-f2d0-775b-b688-393210192b5e",
+      "contextRef": "UT-F-42BRRQ",
+      "before": null,
+      "after": {
+       "options": 1,
+       "version": 1
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "3736d4d635e41a781048a1b44a62b871d20c9a746cc99028e90ea833b4e9f699",
+      "hash": "c7c13452a468b5c7b9f9fde25761541eb9d3d2a877491b9d54a920a6ef51a158"
+     },
+     {
+      "id": "7337",
+      "occurredAt": "2026-10-24T13:50:01.915Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.claim",
+      "entityType": "flight_request",
+      "entityId": "01a16e2c-f149-703f-9d2e-c410f37cbf8b",
+      "contextRef": "UT-F-42BRRQ",
+      "before": {
+       "status": "NEW",
+       "version": 2
+      },
+      "after": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "ip": "10.6.129.213",
+      "userAgent": null,
+      "requestId": "req_8f8c54bc6c59497e94dceaff48954d7e",
+      "prevHash": "c91052eeb14d947431c9c998294cf8b3c01cb4d67194b40ac34820653221107d",
+      "hash": "3736d4d635e41a781048a1b44a62b871d20c9a746cc99028e90ea833b4e9f699"
+     },
+     {
+      "id": "7336",
+      "occurredAt": "2026-10-24T13:50:01.717Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "flight_request.screen_pass",
+      "entityType": "flight_request",
+      "entityId": "01a16e2c-f149-703f-9d2e-c410f37cbf8b",
+      "contextRef": "UT-F-42BRRQ",
+      "before": {
+       "status": "SUBMITTED",
+       "version": 1
+      },
+      "after": {
+       "status": "NEW",
+       "version": 2
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "d0c45444bb29da8b8b7b5794b4dad4fd9b40ed4e0c13ad1a823d56c1856e4003",
+      "hash": "c91052eeb14d947431c9c998294cf8b3c01cb4d67194b40ac34820653221107d"
+     },
+     {
+      "id": "7335",
+      "occurredAt": "2026-10-24T13:50:01.552Z",
+      "actorUserId": "01a16e2c-ee89-7028-90a5-2f3f8ee50c97",
+      "actorKind": "CUSTOMER",
+      "action": "flight_request.submitted",
+      "entityType": "flight_request",
+      "entityId": "01a16e2c-f149-703f-9d2e-c410f37cbf8b",
+      "contextRef": "UT-F-42BRRQ",
+      "before": null,
+      "after": {
+       "kind": "MANUAL",
+       "snapshot": false,
+       "tripType": "ONE_WAY",
+       "travellers": 1
+      },
+      "ip": "10.219.131.166",
+      "userAgent": null,
+      "requestId": "req_609e6b267fd7401c852737236db3360a",
+      "prevHash": "fcd58d3586127bcf05a95c45e9bf311d6f0b1a51deb5920de4897513cf1c7b3d",
+      "hash": "d0c45444bb29da8b8b7b5794b4dad4fd9b40ed4e0c13ad1a823d56c1856e4003"
+     },
+     {
+      "id": "7334",
+      "occurredAt": "2026-10-24T13:50:01.482Z",
+      "actorUserId": "01a16e2c-ee89-7028-90a5-2f3f8ee50c97",
+      "actorKind": "CUSTOMER",
+      "action": "traveller.created",
+      "entityType": "traveller",
+      "entityId": "01a16e2c-f107-70d9-862b-d6e1be6b117d",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "hasDocument": true,
+       "nationality": "IR"
+      },
+      "ip": "10.219.131.166",
+      "userAgent": null,
+      "requestId": "req_a729d1a7896842e0a0b719859df20af5",
+      "prevHash": "f90ca1457ae9fde71d2d6de649a2af24cc745baac660d6ef93a89da1ddf1576a",
+      "hash": "fcd58d3586127bcf05a95c45e9bf311d6f0b1a51deb5920de4897513cf1c7b3d"
+     },
+     {
+      "id": "7333",
+      "occurredAt": "2026-10-24T13:50:01.465Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.issued",
+      "entityType": "invoice",
+      "entityId": "01a16e2c-f0de-7719-9d98-125d8855571e",
+      "contextRef": "UT-C-NQVCD1",
+      "before": null,
+      "after": {
+       "number": "I••••••",
+       "currency": "GBP",
+       "expiresAt": "2026-11-07T13:50:01.449Z",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "d2c31e9265aadc1b5f1b68d1d7ae55bf527fdb0a60e7216b32bfc583029d106c",
+      "hash": "f90ca1457ae9fde71d2d6de649a2af24cc745baac660d6ef93a89da1ddf1576a"
+     },
+     {
+      "id": "7332",
+      "occurredAt": "2026-10-24T13:50:01.442Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.draft_created",
+      "entityType": "invoice",
+      "entityId": "01a16e2c-f0de-7719-9d98-125d8855571e",
+      "contextRef": "UT-C-NQVCD1",
+      "before": null,
+      "after": {
+       "quoteId": "01a16e2c-f03b-761d-97f4-d8a3e8b9d463",
+       "currency": "GBP",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "4aaf094e9b552601ef7ae3f3f47eaf91933bd7ccf62f4fcd2ca7b1b4690fe281",
+      "hash": "d2c31e9265aadc1b5f1b68d1d7ae55bf527fdb0a60e7216b32bfc583029d106c"
+     },
+     {
+      "id": "7331",
+      "occurredAt": "2026-10-24T13:50:01.432Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.eta_set",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "estimatedDeliveryAt": null
+      },
+      "after": {
+       "estimatedDeliveryAt": "2026-10-27T13:50:01.427Z"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "24e6575183d045d88d93d351b4dd09bfcc44cb0c734455daf03d1e3e8ef93a0c",
+      "hash": "4aaf094e9b552601ef7ae3f3f47eaf91933bd7ccf62f4fcd2ca7b1b4690fe281"
+     },
+     {
+      "id": "7330",
+      "occurredAt": "2026-10-24T13:50:01.425Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.tracking_corrected",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "eventId": "01a16e2c-f0bf-7040-9e67-8f377830769c",
+       "location": "LHR",
+       "eventCode": "DEPARTED",
+       "occurredAt": "2026-10-24T13:51:01.403Z"
+      },
+      "after": {
+       "reason": "Wrong scan",
+       "location": "IST customs",
+       "eventCode": "AT_CUSTOMS",
+       "occurredAt": "2026-10-24T13:53:01.420Z",
+       "correctionId": "01a16e2c-f0d0-7292-920c-d50b971aa987"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "d8df368ee9a9a3eca4a57092603b7e8829110ad51c712981fccf552f8dd55591",
+      "hash": "24e6575183d045d88d93d351b4dd09bfcc44cb0c734455daf03d1e3e8ef93a0c"
+     },
+     {
+      "id": "7329",
+      "occurredAt": "2026-10-24T13:50:01.391Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.receive",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "after": {
+       "status": "RECEIVED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "faf6c561eef429ff1799570e35ad126a3b88f6e113f7d266a95009365d72d5e3",
+      "hash": "d8df368ee9a9a3eca4a57092603b7e8829110ad51c712981fccf552f8dd55591"
+     },
+     {
+      "id": "7328",
+      "occurredAt": "2026-10-24T13:50:01.367Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.schedule_handover",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "status": "BOOKED"
+      },
+      "after": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "c8727694904ef3a5aea574cb6b0f487aa1e29721263ae3aef9b5cd12f65c6cfc",
+      "hash": "faf6c561eef429ff1799570e35ad126a3b88f6e113f7d266a95009365d72d5e3"
+     },
+     {
+      "id": "7327",
+      "occurredAt": "2026-10-24T13:50:01.349Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.record_booking",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "status": "ACCEPTED"
+      },
+      "after": {
+       "status": "BOOKED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "7baa21dec9de66efaeee29b9b39a8905bda215bb3224ac7edd6e3eaffb16d525",
+      "hash": "c8727694904ef3a5aea574cb6b0f487aa1e29721263ae3aef9b5cd12f65c6cfc"
+     },
+     {
+      "id": "7326",
+      "occurredAt": "2026-10-24T13:50:01.323Z",
+      "actorUserId": "01a16e2c-ee89-7028-90a5-2f3f8ee50c97",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.accept_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "status": "QUOTED"
+      },
+      "after": {
+       "status": "ACCEPTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "aaa60a9d6aebc13c1c24b8e42c6fe494fe3adc0ddcb076c86c7e3ad5b5eef1ac",
+      "hash": "7baa21dec9de66efaeee29b9b39a8905bda215bb3224ac7edd6e3eaffb16d525"
+     },
+     {
+      "id": "7325",
+      "occurredAt": "2026-10-24T13:50:01.283Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.send_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "status": "IN_REVIEW"
+      },
+      "after": {
+       "status": "QUOTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "983cb4a96ddc12ee6d10f3e8964b3d2caa43a8aabf0ae6397bdcdb797f9a4d76",
+      "hash": "aaa60a9d6aebc13c1c24b8e42c6fe494fe3adc0ddcb076c86c7e3ad5b5eef1ac"
+     },
+     {
+      "id": "7324",
+      "occurredAt": "2026-10-24T13:50:01.276Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo.quote_drafted",
+      "entityType": "quote",
+      "entityId": "01a16e2c-f03b-761d-97f4-d8a3e8b9d463",
+      "contextRef": "UT-C-NQVCD1",
+      "before": null,
+      "after": null,
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "900c5ce0fb458f2b87aa6920adc708758341808856a74bcc84e4a23de3603faf",
+      "hash": "983cb4a96ddc12ee6d10f3e8964b3d2caa43a8aabf0ae6397bdcdb797f9a4d76"
+     },
+     {
+      "id": "7323",
+      "occurredAt": "2026-10-24T13:50:01.259Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.claim",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "status": "NEW"
+      },
+      "after": {
+       "status": "IN_REVIEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "85a2e05be6aab18dbe38370451abf4013390b46b3aedab75bc717c509d097dc3",
+      "hash": "900c5ce0fb458f2b87aa6920adc708758341808856a74bcc84e4a23de3603faf"
+     },
+     {
+      "id": "7322",
+      "occurredAt": "2026-10-24T13:50:01.174Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "cargo_request.screen_pass",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": {
+       "status": "SUBMITTED"
+      },
+      "after": {
+       "status": "NEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "e24345e0560e6e20f334a946f788211a32763470d8593974293c2b11cb6e1fa9",
+      "hash": "85a2e05be6aab18dbe38370451abf4013390b46b3aedab75bc717c509d097dc3"
+     },
+     {
+      "id": "7321",
+      "occurredAt": "2026-10-24T13:50:00.906Z",
+      "actorUserId": "01a16e2c-ee89-7028-90a5-2f3f8ee50c97",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.submitted",
+      "entityType": "cargo_request",
+      "entityId": "01a16e2c-eec4-7192-9283-74821472886b",
+      "contextRef": "UT-C-NQVCD1",
+      "before": null,
+      "after": {
+       "lane": "United Kingdom → Türkiye",
+       "items": 1,
+       "pieces": 1,
+       "service": "PARCEL"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "a21862a55ee0c6856da9324a3d81b89bf75fe5ab240dacc441225b2d9df5b64c",
+      "hash": "e24345e0560e6e20f334a946f788211a32763470d8593974293c2b11cb6e1fa9"
+     },
+     {
+      "id": "7320",
+      "occurredAt": "2026-10-24T13:50:00.852Z",
+      "actorUserId": "01a16e2c-ee89-7028-90a5-2f3f8ee50c97",
+      "actorKind": "CUSTOMER",
+      "action": "user.signed_up",
+      "entityType": "session",
+      "entityId": "01a16e2c-ee90-772f-acdf-d9588ff2ef6f",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "WEB",
+       "identityType": "PHONE"
+      },
+      "ip": "10.219.131.166",
+      "userAgent": "node",
+      "requestId": "req_0068f748a49046c1af18f176f6204e9c",
+      "prevHash": "121700ce4e2876d038d9d47cdeee216c1533e311487b1f5672353797bddece62",
+      "hash": "a21862a55ee0c6856da9324a3d81b89bf75fe5ab240dacc441225b2d9df5b64c"
+     },
+     {
+      "id": "7319",
+      "occurredAt": "2026-10-24T13:50:00.560Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "10.6.129.213",
+      "userAgent": null,
+      "requestId": "req_f712e2163bb8423a8f962601e829818e",
+      "prevHash": "b607c27abcb3e80a625ae316dd96273c9921c32402231dc0b453db206fd3e0d8",
+      "hash": "121700ce4e2876d038d9d47cdeee216c1533e311487b1f5672353797bddece62"
+     },
+     {
+      "id": "7318",
+      "occurredAt": "2026-10-24T13:49:33.355Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "::1",
+      "userAgent": null,
+      "requestId": "req_cad791602e024e2cbcd042a002898468",
+      "prevHash": "8be843c010ec4efe9a47be887fbf6dabf48a29e47a82aff4416216e67c2fd2d2",
+      "hash": "b607c27abcb3e80a625ae316dd96273c9921c32402231dc0b453db206fd3e0d8"
+     },
+     {
+      "id": "7317",
+      "occurredAt": "2026-10-24T13:49:33.290Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "user.signed_in",
+      "entityType": "session",
+      "entityId": "01a16e2c-82e1-7027-8348-d17e3cd05228",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "CONSOLE",
+       "identityType": "PHONE"
+      },
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+      "requestId": "req_215033cd43444cdcaf392a9bed2c845e",
+      "prevHash": "9f65e31a8135678bc6ee47fbb430aace35ad58570d7d96df5220b23461407f98",
+      "hash": "8be843c010ec4efe9a47be887fbf6dabf48a29e47a82aff4416216e67c2fd2d2"
+     },
+     {
+      "id": "7316",
+      "occurredAt": "2026-10-24T13:40:44.029Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "flight_request.expire_quote",
+      "entityType": "flight_request",
+      "entityId": "01a16e0c-811a-70fa-a69d-b929d0f6c746",
+      "contextRef": "UT-F-CMM5SD",
+      "before": {
+       "status": "QUOTED",
+       "version": 4
+      },
+      "after": {
+       "status": "EXPIRED",
+       "version": 5
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "b98ab462c813fc764c90f460218b80dc82d50955faea33cecd2d11c8d6221bd4",
+      "hash": "9f65e31a8135678bc6ee47fbb430aace35ad58570d7d96df5220b23461407f98"
+     },
+     {
+      "id": "7315",
+      "occurredAt": "2026-10-24T13:34:33.476Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.send_quote",
+      "entityType": "flight_request",
+      "entityId": "01a16e1e-c423-75f2-8cd4-9990ea7d5c30",
+      "contextRef": "UT-F-FQWZR2",
+      "before": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "after": {
+       "status": "QUOTED",
+       "version": 4
+      },
+      "ip": "10.1.67.10",
+      "userAgent": null,
+      "requestId": "req_b845f367fd6847038387a9bc368104a0",
+      "prevHash": "bc2fdbfcfa7f0aa3995076d9a332f2a9720e959389887066550723ab5f191ac5",
+      "hash": "b98ab462c813fc764c90f460218b80dc82d50955faea33cecd2d11c8d6221bd4"
+     },
+     {
+      "id": "7314",
+      "occurredAt": "2026-10-24T13:34:33.409Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "quote.drafted",
+      "entityType": "quote",
+      "entityId": "01a16e1e-c7be-77ff-8c53-3a9bd03c9ff5",
+      "contextRef": "UT-F-FQWZR2",
+      "before": null,
+      "after": {
+       "options": 1,
+       "version": 1
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "d3698725ccf88ce6ab30c2b6ce718d79b3abdf628de723de6ad69285102b405e",
+      "hash": "bc2fdbfcfa7f0aa3995076d9a332f2a9720e959389887066550723ab5f191ac5"
+     },
+     {
+      "id": "7313",
+      "occurredAt": "2026-10-24T13:34:33.349Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.claim",
+      "entityType": "flight_request",
+      "entityId": "01a16e1e-c423-75f2-8cd4-9990ea7d5c30",
+      "contextRef": "UT-F-FQWZR2",
+      "before": {
+       "status": "NEW",
+       "version": 2
+      },
+      "after": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "ip": "10.1.67.10",
+      "userAgent": null,
+      "requestId": "req_3c3998f18e504fcda4714b5bf9baaf19",
+      "prevHash": "02b62dfacb94816cf50a692608f529724a7b8b2e375e658b4ab2820af3edd03d",
+      "hash": "d3698725ccf88ce6ab30c2b6ce718d79b3abdf628de723de6ad69285102b405e"
+     },
+     {
+      "id": "7312",
+      "occurredAt": "2026-10-24T13:34:32.937Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "flight_request.screen_pass",
+      "entityType": "flight_request",
+      "entityId": "01a16e1e-c423-75f2-8cd4-9990ea7d5c30",
+      "contextRef": "UT-F-FQWZR2",
+      "before": {
+       "status": "SUBMITTED",
+       "version": 1
+      },
+      "after": {
+       "status": "NEW",
+       "version": 2
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "9886e6761076d3e25f53992f20fd988a5f35fb9a94b495f279cc17dc3db249e0",
+      "hash": "02b62dfacb94816cf50a692608f529724a7b8b2e375e658b4ab2820af3edd03d"
+     },
+     {
+      "id": "7311",
+      "occurredAt": "2026-10-24T13:34:32.488Z",
+      "actorUserId": "01a16e1e-be3b-7192-a438-fa618136a8e0",
+      "actorKind": "CUSTOMER",
+      "action": "flight_request.submitted",
+      "entityType": "flight_request",
+      "entityId": "01a16e1e-c423-75f2-8cd4-9990ea7d5c30",
+      "contextRef": "UT-F-FQWZR2",
+      "before": null,
+      "after": {
+       "kind": "MANUAL",
+       "snapshot": false,
+       "tripType": "ONE_WAY",
+       "travellers": 1
+      },
+      "ip": "10.5.153.142",
+      "userAgent": null,
+      "requestId": "req_ea8a3d34ae464d7fb63b47e8591dd9ec",
+      "prevHash": "a5aee9747712940b96ce250fa8724786cd0383fb134a0d61447d927f921dcbb7",
+      "hash": "9886e6761076d3e25f53992f20fd988a5f35fb9a94b495f279cc17dc3db249e0"
+     },
+     {
+      "id": "7310",
+      "occurredAt": "2026-10-24T13:34:32.293Z",
+      "actorUserId": "01a16e1e-be3b-7192-a438-fa618136a8e0",
+      "actorKind": "CUSTOMER",
+      "action": "traveller.created",
+      "entityType": "traveller",
+      "entityId": "01a16e1e-c359-7166-ab6d-e6348f09aa02",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "hasDocument": true,
+       "nationality": "IR"
+      },
+      "ip": "10.5.153.142",
+      "userAgent": null,
+      "requestId": "req_9a16bff37db149a5b861756702e62640",
+      "prevHash": "035c8da276edc17424ff6e4bc12b72028f0a3b08081e565a6f175d274bf6cde5",
+      "hash": "a5aee9747712940b96ce250fa8724786cd0383fb134a0d61447d927f921dcbb7"
+     },
+     {
+      "id": "7309",
+      "occurredAt": "2026-10-24T13:34:32.238Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.issued",
+      "entityType": "invoice",
+      "entityId": "01a16e1e-c2f4-7006-a964-eefad3142ca9",
+      "contextRef": "UT-C-X1RWX7",
+      "before": null,
+      "after": {
+       "number": "I••••••",
+       "currency": "GBP",
+       "expiresAt": "2026-11-07T13:34:32.193Z",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "85b20054cfc8c47768933ef175d1fe972c02a0c9ade8da1f6f01bea9c8b86381",
+      "hash": "035c8da276edc17424ff6e4bc12b72028f0a3b08081e565a6f175d274bf6cde5"
+     },
+     {
+      "id": "7308",
+      "occurredAt": "2026-10-24T13:34:32.185Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.draft_created",
+      "entityType": "invoice",
+      "entityId": "01a16e1e-c2f4-7006-a964-eefad3142ca9",
+      "contextRef": "UT-C-X1RWX7",
+      "before": null,
+      "after": {
+       "quoteId": "01a16e1e-c145-76ab-8a34-025dae9f369d",
+       "currency": "GBP",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "78a83a86cbecc62c53dcd8f25025dd15d53238b36f3e8ec3cbf6c890f740db87",
+      "hash": "85b20054cfc8c47768933ef175d1fe972c02a0c9ade8da1f6f01bea9c8b86381"
+     },
+     {
+      "id": "7307",
+      "occurredAt": "2026-10-24T13:34:32.171Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.eta_set",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "estimatedDeliveryAt": null
+      },
+      "after": {
+       "estimatedDeliveryAt": "2026-10-27T13:34:32.161Z"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "5341f8e05f67a659dfeb4c46f2403e8647ea9609b383b7a6c10855ac4a0c5607",
+      "hash": "78a83a86cbecc62c53dcd8f25025dd15d53238b36f3e8ec3cbf6c890f740db87"
+     },
+     {
+      "id": "7306",
+      "occurredAt": "2026-10-24T13:34:32.157Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.tracking_corrected",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "eventId": "01a16e1e-c2ac-724d-a4c6-cad56a1f2cc5",
+       "location": "LHR",
+       "eventCode": "DEPARTED",
+       "occurredAt": "2026-10-24T13:35:32.103Z"
+      },
+      "after": {
+       "reason": "Wrong scan",
+       "location": "IST customs",
+       "eventCode": "AT_CUSTOMS",
+       "occurredAt": "2026-10-24T13:37:32.144Z",
+       "correctionId": "01a16e1e-c2da-7328-81f1-7e3a2e42baa7"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "4cf00b0767380ba3cb66027bf4cea98ffa73ded4458f4ddf48415f3ff63d8fb0",
+      "hash": "5341f8e05f67a659dfeb4c46f2403e8647ea9609b383b7a6c10855ac4a0c5607"
+     },
+     {
+      "id": "7305",
+      "occurredAt": "2026-10-24T13:34:32.087Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.receive",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "after": {
+       "status": "RECEIVED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "b0843fb4e6dcd7e63a57cdbf879f19bc12ee23f62d30958cab7b26f8e7322355",
+      "hash": "4cf00b0767380ba3cb66027bf4cea98ffa73ded4458f4ddf48415f3ff63d8fb0"
+     },
+     {
+      "id": "7304",
+      "occurredAt": "2026-10-24T13:34:32.039Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.schedule_handover",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "status": "BOOKED"
+      },
+      "after": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "51fe71a201a79b5d24d1171db7b62716e032eabb61718066772b74994064793d",
+      "hash": "b0843fb4e6dcd7e63a57cdbf879f19bc12ee23f62d30958cab7b26f8e7322355"
+     },
+     {
+      "id": "7303",
+      "occurredAt": "2026-10-24T13:34:32.006Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.record_booking",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "status": "ACCEPTED"
+      },
+      "after": {
+       "status": "BOOKED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "03729a6ae74071f0637cd5a9dc5817acc5a3672eb303eb4ea43198e254f9a8f7",
+      "hash": "51fe71a201a79b5d24d1171db7b62716e032eabb61718066772b74994064793d"
+     },
+     {
+      "id": "7302",
+      "occurredAt": "2026-10-24T13:34:31.896Z",
+      "actorUserId": "01a16e1e-be3b-7192-a438-fa618136a8e0",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.accept_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "status": "QUOTED"
+      },
+      "after": {
+       "status": "ACCEPTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "0171128b047cb5827e69e0f2eb2d356c6348386f8e5a99c4d2beb4084fd29b6b",
+      "hash": "03729a6ae74071f0637cd5a9dc5817acc5a3672eb303eb4ea43198e254f9a8f7"
+     },
+     {
+      "id": "7301",
+      "occurredAt": "2026-10-24T13:34:31.779Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.send_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "status": "IN_REVIEW"
+      },
+      "after": {
+       "status": "QUOTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "1fbf5a0ab9cb7e92f3f6719fe90566927209cc75f734230642adad0fe4111835",
+      "hash": "0171128b047cb5827e69e0f2eb2d356c6348386f8e5a99c4d2beb4084fd29b6b"
+     },
+     {
+      "id": "7300",
+      "occurredAt": "2026-10-24T13:34:31.754Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo.quote_drafted",
+      "entityType": "quote",
+      "entityId": "01a16e1e-c145-76ab-8a34-025dae9f369d",
+      "contextRef": "UT-C-X1RWX7",
+      "before": null,
+      "after": null,
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "4f05159bc833664ba5950849ee224ac2cc6dbd45229f06071c185649294fa6ce",
+      "hash": "1fbf5a0ab9cb7e92f3f6719fe90566927209cc75f734230642adad0fe4111835"
+     },
+     {
+      "id": "7299",
+      "occurredAt": "2026-10-24T13:34:31.678Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.claim",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "status": "NEW"
+      },
+      "after": {
+       "status": "IN_REVIEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "dd953869fdb6047bdd2575d7acf2fa7a4754d9a89decfca93da129e8dfcd5505",
+      "hash": "4f05159bc833664ba5950849ee224ac2cc6dbd45229f06071c185649294fa6ce"
+     },
+     {
+      "id": "7298",
+      "occurredAt": "2026-10-24T13:34:31.527Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "cargo_request.screen_pass",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": {
+       "status": "SUBMITTED"
+      },
+      "after": {
+       "status": "NEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "10bc3a6a85729a46ead719a75c2eda1126f7d29ef3a8ee31431504223515d434",
+      "hash": "dd953869fdb6047bdd2575d7acf2fa7a4754d9a89decfca93da129e8dfcd5505"
+     },
+     {
+      "id": "7297",
+      "occurredAt": "2026-10-24T13:34:31.219Z",
+      "actorUserId": "01a16e1e-be3b-7192-a438-fa618136a8e0",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.submitted",
+      "entityType": "cargo_request",
+      "entityId": "01a16e1e-bf1e-707d-aba0-4a4c4c3a5813",
+      "contextRef": "UT-C-X1RWX7",
+      "before": null,
+      "after": {
+       "lane": "United Kingdom → Türkiye",
+       "items": 1,
+       "pieces": 1,
+       "service": "PARCEL"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "fc9623024fe0d086879706e1a5ab8819992ea3bdde56add7c4869c0b4613698d",
+      "hash": "10bc3a6a85729a46ead719a75c2eda1126f7d29ef3a8ee31431504223515d434"
+     },
+     {
+      "id": "7296",
+      "occurredAt": "2026-10-24T13:34:30.998Z",
+      "actorUserId": "01a16e1e-be3b-7192-a438-fa618136a8e0",
+      "actorKind": "CUSTOMER",
+      "action": "user.signed_up",
+      "entityType": "session",
+      "entityId": "01a16e1e-be43-76dc-90a1-d84db99afce9",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "WEB",
+       "identityType": "PHONE"
+      },
+      "ip": "10.5.153.142",
+      "userAgent": "node",
+      "requestId": "req_2384b0c215e04befb1e899aaaee70597",
+      "prevHash": "a567a35b82f99baad58a8e8278f66c781e9ddff68fbbc39b607aaefc692e8965",
+      "hash": "fc9623024fe0d086879706e1a5ab8819992ea3bdde56add7c4869c0b4613698d"
+     },
+     {
+      "id": "7295",
+      "occurredAt": "2026-10-24T13:34:30.671Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "10.1.67.10",
+      "userAgent": null,
+      "requestId": "req_610765ea47d04304a57e1cefa81bae03",
+      "prevHash": "c336da886e55d1511acd467a25c0d57bf2c1a2abbee03cada0bf04e15188ceb1",
+      "hash": "a567a35b82f99baad58a8e8278f66c781e9ddff68fbbc39b607aaefc692e8965"
+     },
+     {
+      "id": "7294",
+      "occurredAt": "2026-10-24T13:34:12.947Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "::1",
+      "userAgent": null,
+      "requestId": "req_01b00545b5fa479fb9387f6d2eadb842",
+      "prevHash": "b4ce0828a5544e54a45973ddfdf3a0faa1a270e445d1811004791ce04bd74047",
+      "hash": "c336da886e55d1511acd467a25c0d57bf2c1a2abbee03cada0bf04e15188ceb1"
+     },
+     {
+      "id": "7293",
+      "occurredAt": "2026-10-24T13:34:12.803Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "user.signed_in",
+      "entityType": "session",
+      "entityId": "01a16e1e-7735-7402-b5ca-332bed5eff50",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "CONSOLE",
+       "identityType": "PHONE"
+      },
+      "ip": "::1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+      "requestId": "req_db0327308d7c4e61a7244a473093d2c1",
+      "prevHash": "f018dbbd543d03b8870971e6e7aad239600f19bfb97108a510a73fc1262d99c1",
+      "hash": "b4ce0828a5544e54a45973ddfdf3a0faa1a270e445d1811004791ce04bd74047"
+     },
+     {
+      "id": "7292",
+      "occurredAt": "2026-10-24T13:28:29.263Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.send_quote",
+      "entityType": "flight_request",
+      "entityId": "01a16e19-37c5-779e-93a1-5fc77e52dac4",
+      "contextRef": "UT-F-MP97Y0",
+      "before": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "after": {
+       "status": "QUOTED",
+       "version": 4
+      },
+      "ip": "10.238.105.62",
+      "userAgent": null,
+      "requestId": "req_9bd7495c9e9e41cfbd03eef82d4ce1c3",
+      "prevHash": "2651a762b6e351d0108db6b234b1af6c00a14559f844807f44dcaa77d6e2d1d0",
+      "hash": "f018dbbd543d03b8870971e6e7aad239600f19bfb97108a510a73fc1262d99c1"
+     },
+     {
+      "id": "7291",
+      "occurredAt": "2026-10-24T13:28:29.249Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "quote.drafted",
+      "entityType": "quote",
+      "entityId": "01a16e19-393f-7644-bd7e-7b7b8065ee25",
+      "contextRef": "UT-F-MP97Y0",
+      "before": null,
+      "after": {
+       "options": 1,
+       "version": 1
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "22b92df225ec56ccba0d95c304f75c78743a958c89c6462647464fa50b7d415d",
+      "hash": "2651a762b6e351d0108db6b234b1af6c00a14559f844807f44dcaa77d6e2d1d0"
+     },
+     {
+      "id": "7290",
+      "occurredAt": "2026-10-24T13:28:29.226Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.claim",
+      "entityType": "flight_request",
+      "entityId": "01a16e19-37c5-779e-93a1-5fc77e52dac4",
+      "contextRef": "UT-F-MP97Y0",
+      "before": {
+       "status": "NEW",
+       "version": 2
+      },
+      "after": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "ip": "10.238.105.62",
+      "userAgent": null,
+      "requestId": "req_9b5f9f001fe34a4985bd9480dc833efe",
+      "prevHash": "f7fcfaa170b9630bb134fc38df68e227dfcb3ab2dc27cde19c5bf9deb23c3a16",
+      "hash": "22b92df225ec56ccba0d95c304f75c78743a958c89c6462647464fa50b7d415d"
+     },
+     {
+      "id": "7289",
+      "occurredAt": "2026-10-24T13:28:29.103Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "flight_request.screen_pass",
+      "entityType": "flight_request",
+      "entityId": "01a16e19-37c5-779e-93a1-5fc77e52dac4",
+      "contextRef": "UT-F-MP97Y0",
+      "before": {
+       "status": "SUBMITTED",
+       "version": 1
+      },
+      "after": {
+       "status": "NEW",
+       "version": 2
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "1b46275288be75f8a4fce4e59d1d8287a10f1f229576bf3019c377fb0b8a0ace",
+      "hash": "f7fcfaa170b9630bb134fc38df68e227dfcb3ab2dc27cde19c5bf9deb23c3a16"
+     },
+     {
+      "id": "7288",
+      "occurredAt": "2026-10-24T13:28:28.874Z",
+      "actorUserId": "01a16e19-3524-7648-87f6-b0733654f859",
+      "actorKind": "CUSTOMER",
+      "action": "flight_request.submitted",
+      "entityType": "flight_request",
+      "entityId": "01a16e19-37c5-779e-93a1-5fc77e52dac4",
+      "contextRef": "UT-F-MP97Y0",
+      "before": null,
+      "after": {
+       "kind": "MANUAL",
+       "snapshot": false,
+       "tripType": "ONE_WAY",
+       "travellers": 1
+      },
+      "ip": "10.237.88.148",
+      "userAgent": null,
+      "requestId": "req_9285938dffcb42fcb8749485eda4ebb6",
+      "prevHash": "82d076c8b9795f7539e424f34736ed056677595248cd1e1e50d21bc0e285c746",
+      "hash": "1b46275288be75f8a4fce4e59d1d8287a10f1f229576bf3019c377fb0b8a0ace"
+     },
+     {
+      "id": "7287",
+      "occurredAt": "2026-10-24T13:28:28.796Z",
+      "actorUserId": "01a16e19-3524-7648-87f6-b0733654f859",
+      "actorKind": "CUSTOMER",
+      "action": "traveller.created",
+      "entityType": "traveller",
+      "entityId": "01a16e19-3779-7449-937b-6468a2f1925e",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "hasDocument": true,
+       "nationality": "IR"
+      },
+      "ip": "10.237.88.148",
+      "userAgent": null,
+      "requestId": "req_11ddc9245fce43c480e8b690fe33cbee",
+      "prevHash": "3a28d1c4e73a2047fb2c76e0e4237792b72ce41ea9ba214df36f998b6ab1cf72",
+      "hash": "82d076c8b9795f7539e424f34736ed056677595248cd1e1e50d21bc0e285c746"
+     },
+     {
+      "id": "7286",
+      "occurredAt": "2026-10-24T13:28:28.779Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.issued",
+      "entityType": "invoice",
+      "entityId": "01a16e19-3750-74b4-81ac-a769a684a3d4",
+      "contextRef": "UT-C-A987BD",
+      "before": null,
+      "after": {
+       "number": "I••••••",
+       "currency": "GBP",
+       "expiresAt": "2026-11-07T13:28:28.763Z",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "c50b38c03e64e3739aafed66363a4d74c1e785e842dc82e5b2469a038b3ac89b",
+      "hash": "3a28d1c4e73a2047fb2c76e0e4237792b72ce41ea9ba214df36f998b6ab1cf72"
+     },
+     {
+      "id": "7285",
+      "occurredAt": "2026-10-24T13:28:28.757Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "invoice.draft_created",
+      "entityType": "invoice",
+      "entityId": "01a16e19-3750-74b4-81ac-a769a684a3d4",
+      "contextRef": "UT-C-A987BD",
+      "before": null,
+      "after": {
+       "quoteId": "01a16e19-36c2-7632-964a-9c7d3361092e",
+       "currency": "GBP",
+       "totalMinor": 5000
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "802e8b3e8dedd4edb09c8df34aab524d08b290204b65b9400aeeac166faa32e7",
+      "hash": "c50b38c03e64e3739aafed66363a4d74c1e785e842dc82e5b2469a038b3ac89b"
+     },
+     {
+      "id": "7284",
+      "occurredAt": "2026-10-24T13:28:28.747Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.eta_set",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "estimatedDeliveryAt": null
+      },
+      "after": {
+       "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "0aa372d367e76ad90170df7518457780be91841879ac4b6c01b21cadc66e0ca3",
+      "hash": "802e8b3e8dedd4edb09c8df34aab524d08b290204b65b9400aeeac166faa32e7"
+     },
+     {
+      "id": "7283",
+      "occurredAt": "2026-10-24T13:28:28.739Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.tracking_corrected",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "eventId": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+       "location": "LHR",
+       "eventCode": "DEPARTED",
+       "occurredAt": "2026-10-24T13:29:28.717Z"
+      },
+      "after": {
+       "reason": "Wrong scan",
+       "location": "IST customs",
+       "eventCode": "AT_CUSTOMS",
+       "occurredAt": "2026-10-24T13:31:28.734Z",
+       "correctionId": "01a16e19-3742-76cb-87b3-188b3be2e3f6"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "7449d11df1af160cc784ecd972c6396a9cb8e6deff7e4d773bcf7f72c7f08b8f",
+      "hash": "0aa372d367e76ad90170df7518457780be91841879ac4b6c01b21cadc66e0ca3"
+     },
+     {
+      "id": "7282",
+      "occurredAt": "2026-10-24T13:28:28.705Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.receive",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "after": {
+       "status": "RECEIVED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "2a7ea0d2ce3d16260431db28881a0f99341b055959514c2a36c9cbc274b61054",
+      "hash": "7449d11df1af160cc784ecd972c6396a9cb8e6deff7e4d773bcf7f72c7f08b8f"
+     },
+     {
+      "id": "7281",
+      "occurredAt": "2026-10-24T13:28:28.685Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.schedule_handover",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "status": "BOOKED"
+      },
+      "after": {
+       "status": "AWAITING_HANDOVER"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "da2a40fff018ee2b86c3854d922ff137180eb6fe014ed4abf7ecede0af33ba37",
+      "hash": "2a7ea0d2ce3d16260431db28881a0f99341b055959514c2a36c9cbc274b61054"
+     },
+     {
+      "id": "7280",
+      "occurredAt": "2026-10-24T13:28:28.671Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.record_booking",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "status": "ACCEPTED"
+      },
+      "after": {
+       "status": "BOOKED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "626ca4a6adc4107c3356d0bc1cdca3b85ddf9026c3829926baad033b4cf45e18",
+      "hash": "da2a40fff018ee2b86c3854d922ff137180eb6fe014ed4abf7ecede0af33ba37"
+     },
+     {
+      "id": "7279",
+      "occurredAt": "2026-10-24T13:28:28.648Z",
+      "actorUserId": "01a16e19-3524-7648-87f6-b0733654f859",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.accept_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "status": "QUOTED"
+      },
+      "after": {
+       "status": "ACCEPTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "a9d9e16ef4d1a92fef6d16889c24b8511a512474ad040560c95fdb6880c45c8c",
+      "hash": "626ca4a6adc4107c3356d0bc1cdca3b85ddf9026c3829926baad033b4cf45e18"
+     },
+     {
+      "id": "7278",
+      "occurredAt": "2026-10-24T13:28:28.619Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.send_quote",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "status": "IN_REVIEW"
+      },
+      "after": {
+       "status": "QUOTED"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "8623dcb323b02dd48b57ffdc338cec06fade1d72e59fa329119a588a47b9bba7",
+      "hash": "a9d9e16ef4d1a92fef6d16889c24b8511a512474ad040560c95fdb6880c45c8c"
+     },
+     {
+      "id": "7277",
+      "occurredAt": "2026-10-24T13:28:28.612Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo.quote_drafted",
+      "entityType": "quote",
+      "entityId": "01a16e19-36c2-7632-964a-9c7d3361092e",
+      "contextRef": "UT-C-A987BD",
+      "before": null,
+      "after": null,
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "8d364ab6d9c37e4e3bfe082d0f9c2e48d27e7a61564ebc66788a5e040ef88ad1",
+      "hash": "8623dcb323b02dd48b57ffdc338cec06fade1d72e59fa329119a588a47b9bba7"
+     },
+     {
+      "id": "7276",
+      "occurredAt": "2026-10-24T13:28:28.596Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "cargo_request.claim",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "status": "NEW"
+      },
+      "after": {
+       "status": "IN_REVIEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "38594fbfa970e127441c2abfb833dd87fed2c672ab5257454d4f8fc58c113ed8",
+      "hash": "8d364ab6d9c37e4e3bfe082d0f9c2e48d27e7a61564ebc66788a5e040ef88ad1"
+     },
+     {
+      "id": "7275",
+      "occurredAt": "2026-10-24T13:28:28.554Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "cargo_request.screen_pass",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": {
+       "status": "SUBMITTED"
+      },
+      "after": {
+       "status": "NEW"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "79fab3039d74eec4576ed66cc4b045c46c01cca44a662fedc0e885ab803416c5",
+      "hash": "38594fbfa970e127441c2abfb833dd87fed2c672ab5257454d4f8fc58c113ed8"
+     },
+     {
+      "id": "7274",
+      "occurredAt": "2026-10-24T13:28:28.258Z",
+      "actorUserId": "01a16e19-3524-7648-87f6-b0733654f859",
+      "actorKind": "CUSTOMER",
+      "action": "cargo_request.submitted",
+      "entityType": "cargo_request",
+      "entityId": "01a16e19-355b-7455-a2fc-839c09590c93",
+      "contextRef": "UT-C-A987BD",
+      "before": null,
+      "after": {
+       "lane": "United Kingdom → Türkiye",
+       "items": 1,
+       "pieces": 1,
+       "service": "PARCEL"
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "04db8442daaea189286cb2690f4dae4a4b72d7e744e626b5ae822b63b35b2282",
+      "hash": "79fab3039d74eec4576ed66cc4b045c46c01cca44a662fedc0e885ab803416c5"
+     },
+     {
+      "id": "7273",
+      "occurredAt": "2026-10-24T13:28:28.204Z",
+      "actorUserId": "01a16e19-3524-7648-87f6-b0733654f859",
+      "actorKind": "CUSTOMER",
+      "action": "user.signed_up",
+      "entityType": "session",
+      "entityId": "01a16e19-3529-70e0-8afb-0f612b39990c",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "WEB",
+       "identityType": "PHONE"
+      },
+      "ip": "10.237.88.148",
+      "userAgent": "node",
+      "requestId": "req_b5e466129df24aaaad9f99afbaff1768",
+      "prevHash": "8cc1d7f792c87bc41e18102c6817a50a48a9a701db3b5ce91e035ab946a1ef62",
+      "hash": "04db8442daaea189286cb2690f4dae4a4b72d7e744e626b5ae822b63b35b2282"
+     },
+     {
+      "id": "7272",
+      "occurredAt": "2026-10-24T13:28:27.666Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "10.238.105.62",
+      "userAgent": null,
+      "requestId": "req_a821486c9daf4ba6b8fcdd9aa76221b0",
+      "prevHash": "3414a9b588d49e6b2c7288a6b22dd6294794208ff95c4f70621c8c82ed2c3762",
+      "hash": "8cc1d7f792c87bc41e18102c6817a50a48a9a701db3b5ce91e035ab946a1ef62"
+     },
+     {
+      "id": "7271",
+      "occurredAt": "2026-10-24T13:28:27.655Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "user.signed_in",
+      "entityType": "session",
+      "entityId": "01a16e19-3300-743d-9362-024d7f2f3098",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "client": "CONSOLE",
+       "identityType": "PHONE"
+      },
+      "ip": "10.238.105.62",
+      "userAgent": "node",
+      "requestId": "req_b5c05b7c2ee74f46b39a335d4d26cc72",
+      "prevHash": "0a59467929db908a76513ec915cdcc921dc481430948f24578ee6661d2ee043f",
+      "hash": "3414a9b588d49e6b2c7288a6b22dd6294794208ff95c4f70621c8c82ed2c3762"
+     },
+     {
+      "id": "7270",
+      "occurredAt": "2026-10-24T13:20:30.606Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "quote.drafted",
+      "entityType": "quote",
+      "entityId": "01a16e11-eb8b-7565-b91e-a1a0c51858cf",
+      "contextRef": "UT-F-DMX2BH",
+      "before": null,
+      "after": {
+       "options": 1,
+       "version": 1
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "41b25d812e1f7d59a14796b375012db78d3ee310075b21de5b6128ab070c8a3a",
+      "hash": "0a59467929db908a76513ec915cdcc921dc481430948f24578ee6661d2ee043f"
+     },
+     {
+      "id": "7269",
+      "occurredAt": "2026-10-24T13:20:30.571Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "flight_request.claim",
+      "entityType": "flight_request",
+      "entityId": "01a16e11-7f36-74af-97f4-fab22c015ae0",
+      "contextRef": "UT-F-DMX2BH",
+      "before": {
+       "status": "NEW",
+       "version": 2
+      },
+      "after": {
+       "status": "IN_REVIEW",
+       "version": 3
+      },
+      "ip": "10.143.115.248",
+      "userAgent": null,
+      "requestId": "req_a1d028298b6c438c9862b15c579a4189",
+      "prevHash": "b9d3cad213456e03429229dc5eb43565cad23524ce4297b103f71007be85d87e",
+      "hash": "41b25d812e1f7d59a14796b375012db78d3ee310075b21de5b6128ab070c8a3a"
+     },
+     {
+      "id": "7268",
+      "occurredAt": "2026-10-24T13:20:30.528Z",
+      "actorUserId": "01a1643f-d2ac-74e1-9fec-a8630b80ee35",
+      "actorKind": "STAFF",
+      "action": "mfa.verified",
+      "entityType": "mfa_factor",
+      "entityId": "f4120d64-15c3-4870-a8d5-877b5831a798",
+      "contextRef": null,
+      "before": null,
+      "after": null,
+      "ip": "10.143.115.248",
+      "userAgent": null,
+      "requestId": "req_52c8e4d6d06d4d5e8d81c77cff6436c9",
+      "prevHash": "dd4043115fdb4e11b6c20ad43d1ba3888179476d7f154909e166887636ad84a8",
+      "hash": "b9d3cad213456e03429229dc5eb43565cad23524ce4297b103f71007be85d87e"
+     },
+     {
+      "id": "7267",
+      "occurredAt": "2026-10-24T13:20:03.091Z",
+      "actorUserId": null,
+      "actorKind": "SYSTEM",
+      "action": "flight_request.screen_pass",
+      "entityType": "flight_request",
+      "entityId": "01a16e11-7f36-74af-97f4-fab22c015ae0",
+      "contextRef": "UT-F-DMX2BH",
+      "before": {
+       "status": "SUBMITTED",
+       "version": 1
+      },
+      "after": {
+       "status": "NEW",
+       "version": 2
+      },
+      "ip": null,
+      "userAgent": null,
+      "requestId": null,
+      "prevHash": "5dd223e2e3604fb9ddc15bb10e540afb2f7e1df80609dd0e167cc1f038df3e2b",
+      "hash": "dd4043115fdb4e11b6c20ad43d1ba3888179476d7f154909e166887636ad84a8"
+     },
+     {
+      "id": "7266",
+      "occurredAt": "2026-10-24T13:20:02.876Z",
+      "actorUserId": "01a16e11-7b9e-7757-bfc0-1d77c84f5007",
+      "actorKind": "CUSTOMER",
+      "action": "flight_request.submitted",
+      "entityType": "flight_request",
+      "entityId": "01a16e11-7f36-74af-97f4-fab22c015ae0",
+      "contextRef": "UT-F-DMX2BH",
+      "before": null,
+      "after": {
+       "kind": "ITINERARY",
+       "snapshot": true,
+       "tripType": "ONE_WAY",
+       "travellers": 1
+      },
+      "ip": "10.73.53.193",
+      "userAgent": null,
+      "requestId": "req_7ed9bd19a55544caa5f7fc73b00ea0bd",
+      "prevHash": "b225753764c905959cdc06c77a9e27da40557588fbcfc83d3c5bc8704334a70b",
+      "hash": "5dd223e2e3604fb9ddc15bb10e540afb2f7e1df80609dd0e167cc1f038df3e2b"
+     },
+     {
+      "id": "7265",
+      "occurredAt": "2026-10-24T13:20:01.990Z",
+      "actorUserId": "01a16e11-7b9e-7757-bfc0-1d77c84f5007",
+      "actorKind": "CUSTOMER",
+      "action": "traveller.created",
+      "entityType": "traveller",
+      "entityId": "01a16e11-7bc2-732b-be7c-fc69ba6a4aff",
+      "contextRef": null,
+      "before": null,
+      "after": {
+       "hasDocument": true,
+       "nationality": "GB"
+      },
+      "ip": "10.73.53.193",
+      "userAgent": null,
+      "requestId": "req_f160b21f5391467db274f2f25c9a3fcb",
+      "prevHash": "3c080eda112e345911fb87401eda7844fea2b28c0b694234e12755047a184cb3",
+      "hash": "b225753764c905959cdc06c77a9e27da40557588fbcfc83d3c5bc8704334a70b"
+     }
+    ],
+    "nextCursor": "7265"
+   }
+  }
+ }
+}

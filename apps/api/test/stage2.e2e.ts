@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 
 import { describe, expect, it } from "vitest"
 
-import { ADMIN_HOST, API, randomPhone, Session, signIn, STAFF, staffSession } from "./client"
+import { ADMIN_HOST, API, markVerifiedForTest, randomPhone, Session, signIn, STAFF, staffSession } from "./client"
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 async function until<T>(fn: () => Promise<T>, ok: (v: T) => boolean, ms = 15000): Promise<T> {
@@ -25,6 +25,7 @@ async function customerWithTraveller(name = { givenNames: "Neda", surname: "Test
   const me = await c.get("/v1/me")
   const t = await c.post("/v1/me/travellers", { title: "MS", givenNames: name.givenNames, surname: name.surname, dateOfBirth: dob, genderOnDocument: "F", nationality: "IR", relationship: "SELF", ...(doc ? { document: { number: "X12345678", issuingCountry: "IR", expiryDate: "2030-01-01" } } : {}) })
   expect(t.status).toBe(201)
+  if (doc) await markVerifiedForTest(t.body.id)
   return { c, me: me.body, traveller: t.body }
 }
 

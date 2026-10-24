@@ -413,6 +413,96 @@
   "typeAdult": "adult",
   "typeChild": "child",
   "typeInfant": "infant",
+  "detailsTitle": "My details",
+  "detailsLink": "My details and passport",
+  "detailsIntro": "Names and passport details must match your passport exactly.",
+  "contactTitle": "Phone and email",
+  "contactHelp": "A verified phone lets you send requests; a verified email lets us send documents.",
+  "addContact": "Add a phone or email",
+  "detPhone": "Phone",
+  "emailLabel": "Email",
+  "detCodeSent": "We sent a code to {value}.",
+  "@detCodeSent": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyCode": "Verify",
+  "verifiedLabel": "Verified",
+  "notVerifiedLabel": "Not verified",
+  "verifyPhoneInline": "Add and verify a phone number to send your request.",
+  "detProfile": "Profile",
+  "nameFaLabel": "Name in Persian (optional)",
+  "contactTimeLabel": "Best time to call",
+  "addressTitle": "Address",
+  "addressHelp": "Optional. We ask for it only when an invoice or a cargo shipment needs it.",
+  "addressLine1": "Address line 1",
+  "addressLine2": "Address line 2",
+  "addressCity": "City",
+  "addressPostcode": "Postcode",
+  "addressCountry": "Country (2 letters, e.g. GB)",
+  "removeAddress": "Remove address",
+  "savedLabel": "Saved",
+  "passportTitle": "Passport and verification",
+  "passportHelp": "Our team checks your passport details against a scan before tickets are issued.",
+  "passportAddDetails": "Add your passport details to start verification.",
+  "passportEdit": "Edit passport details",
+  "verifUnverified": "Not verified",
+  "verifSubmitted": "Waiting for review",
+  "verifVerified": "Verified",
+  "verifRejected": "Not accepted",
+  "verifCorrection": "Correction needed",
+  "verifHelpUnverified": "Upload a scan, check your details and send them for review.",
+  "verifHelpSubmitted": "Our team is reviewing your passport. You do not need to do anything.",
+  "verifHelpVerified": "Your passport is verified. Changing the passport number, names, date of birth, nationality, issuing country or expiry date, or replacing the scan, sends it back for review.",
+  "verifHelpRejected": "We could not accept this passport as submitted. Upload a better scan or correct the details and send it again.",
+  "verifHelpCorrection": "Please correct the details and send them again.",
+  "reasonTitle": "Message from our team",
+  "reasonUnreadableScan": "The scan is not readable",
+  "reasonNameMismatch": "The name does not match",
+  "reasonNumberMismatch": "The passport number does not match",
+  "reasonDobMismatch": "The date of birth does not match",
+  "reasonNationalityMismatch": "The nationality does not match",
+  "reasonExpiryMismatch": "The expiry date does not match",
+  "reasonExpiredDocument": "The passport has expired",
+  "reasonNotAPassport": "This is not a passport photo page",
+  "reasonScanIncomplete": "The scan is cut off or incomplete",
+  "reasonOther": "Other",
+  "scanTitle": "Passport scan",
+  "scanHelp": "Upload a clear JPG or PNG of the photo page, held upright. PDF files are not accepted. We remove location and camera data from the file.",
+  "scanNone": "No scan yet",
+  "scanReceived": "Scan received: {name}",
+  "@scanReceived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scanReady": "Scan received",
+  "scanUpload": "Upload scan",
+  "scanReplace": "Replace scan",
+  "scanChecking": "Checking the file…",
+  "scanFailed": "The file did not pass our checks. Please upload another.",
+  "scanReplaceWarn": "Replacing the scan sends a verified passport back for review.",
+  "reviewTitle": "Check before you send",
+  "reviewHelp": "Compare each detail with your passport. When it all matches, confirm and send it for review.",
+  "confirmSend": "Confirm and send for review",
+  "confirmSent": "Sent for review",
+  "confirmNeedScan": "Upload a scan first.",
+  "confirmChanged": "Your details changed. Check them again.",
+  "fieldName": "Name",
+  "fieldDob": "Date of birth",
+  "fieldNationality": "Nationality",
+  "fieldNumber": "Passport number",
+  "fieldIssuing": "Issuing country",
+  "fieldExpiry": "Expiry date",
+  "passportNumberLabel": "Passport number",
+  "issuingCountryLabel": "Issuing country (2 letters)",
+  "expiryLabel": "Expiry date (YYYY-MM-DD)",
+  "priceInQuote": "Price confirmed in your quote",
   "documentMissing": "Passport details still needed",
   "noteLabel": "Note for our team",
   "flexibility": "Date flexibility",
@@ -643,5 +733,320 @@
         "type": "String"
       }
     }
-  }
+  },
+  "navHome": "Home",
+  "navAlerts": "Alerts",
+  "navMe": "Me",
+  "homeTitle": "Control deck",
+  "homeGreeting": "Signed in as {name}",
+  "@homeGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "heroNeedsYou": "Needs you now",
+  "heroAllClear": "All clear",
+  "heroAllClearHelp": "Nothing is past SLA, waiting to be claimed, or close to a ticketing deadline.",
+  "heroSlaBreached": "{count, plural, one{1 case is past its SLA} other{{count} cases are past their SLA}}",
+  "@heroSlaBreached": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "heroNewUnclaimed": "{count, plural, one{1 new case is unclaimed} other{{count} new cases are unclaimed}}",
+  "@heroNewUnclaimed": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "heroDeadlines": "{count, plural, one{1 ticketing deadline within 24 h} other{{count} ticketing deadlines within 24 h}}",
+  "@heroDeadlines": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "heroNextUp": "Most urgent unclaimed",
+  "trendUp": "Rising",
+  "trendDown": "Falling",
+  "trendFlat": "Unchanged",
+  "trendSince": "{word} since {when}",
+  "@trendSince": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "trendNone": "Trend builds up as this device refreshes",
+  "queueMix": "Queue mix",
+  "queueMixEmpty": "No open cases right now.",
+  "openCases": "{count, plural, one{1 open} other{{count} open}}",
+  "@openCases": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "complianceHolds": "Compliance holds",
+  "complianceOpen": "Open compliance cases",
+  "verificationsWaiting": "ID checks waiting",
+  "ticketingSoon": "Ticketing within 24 h",
+  "decideInPanel": "Decided in the Admin Panel",
+  "deadlineIn": "Next {ref} in {time}",
+  "@deadlineIn": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "deadlinePast": "{ref} is {time} late",
+  "@deadlinePast": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tileFailed": "Could not load. Tap to retry.",
+  "quickActions": "Quick actions",
+  "qaUnclaimed": "Unclaimed cases",
+  "qaFind": "Find a case",
+  "dataNote": "Counts come from the live queue. Trends are what this device has seen, not a server history.",
+  "settingsTitle": "Settings",
+  "settingsHelp": "Appearance and language",
+  "appearance": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "tabMine": "Mine",
+  "urgent": "Urgent",
+  "filterAtRisk": "SLA at risk",
+  "filterAll": "All",
+  "clear": "Clear",
+  "queueFilterHint": "Filter by reference, route or customer",
+  "queueNoMatch": "No case matches these filters",
+  "clearFilters": "Clear filters",
+  "casesCount": "{count, plural, one{1 case} other{{count} cases}}",
+  "@casesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "casesShownOf": "Showing {shown} of {total}",
+  "@casesShownOf": {
+    "placeholders": {
+      "shown": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "slaLeft": "{time} left",
+  "slaOverdue": "Overdue by {time}",
+  "durDays": "{n}d",
+  "@durDays": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "durHours": "{n}h",
+  "@durHours": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "durMinutes": "{n}m",
+  "@durMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "adminSearchTitle": "Find a case",
+  "adminSearchHint": "Reference or phone number",
+  "adminSearchIntro": "Type at least 3 characters of a reference or phone number.",
+  "adminSearchNone": "No case found",
+  "caseActions": "Case actions",
+  "moreActions": "More actions",
+  "customerNote": "Customer note",
+  "caseTruthTitle": "What we know",
+  "activityTitle": "Activity",
+  "activityEmpty": "No activity of this kind yet.",
+  "msgFromCustomer": "Message from customer",
+  "msgToCustomer": "Sent to customer",
+  "noteKind": "Internal note",
+  "truthRequest": "Request",
+  "truthSnapshot": "Offer snapshot",
+  "truthNoSnapshot": "Manual request, no offer was frozen",
+  "truthChange": "Changes",
+  "truthRefund": "Refund",
+  "truthQuote": "Quote",
+  "truthReservation": "Reservation",
+  "truthTicket": "Ticket",
+  "truthPayment": "Payment",
+  "truthOnFile": "On file",
+  "truthNone": "None yet",
+  "truthDraftOnly": "Draft only",
+  "truthVaries": "varies by ticket or segment",
+  "truthUnknownValue": "Not supplied, confirm before quoting",
+  "truthUnknownBlocks": "UNKNOWN items must be confirmed before a quote can be sent.",
+  "truthPaymentNote": "Payment, reservation and ticket are separate facts. A payment never means a booking.",
+  "triKnown": "Known",
+  "triNotIncluded": "Not included",
+  "triUnknown": "UNKNOWN",
+  "condAllowed": "Allowed",
+  "condNotAllowed": "Not allowed",
+  "resHeld": "Held",
+  "resConfirmed": "Confirmed",
+  "deadlineAt": "ticket by {when}",
+  "@deadlineAt": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "ticketCount": "{count, plural, one{1 ticket issued} other{{count} tickets issued}}",
+  "@ticketCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "payNone": "No payment",
+  "payPartial": "Partly paid",
+  "payPaid": "Paid",
+  "payRefundPending": "Refund pending",
+  "payRefunded": "Refunded",
+  "shipmentsTitle": "Shipments",
+  "shipmentsIntro": "Follow your cargo from collection to delivery.",
+  "shipmentsEmpty": "No shipments yet. Once a quote is accepted, your shipment appears here.",
+  "shipmentsTotal": "Shipments",
+  "shipmentsInTransit": "On the way",
+  "shipmentsDelivered": "Delivered",
+  "shipmentsNext": "Next to arrive",
+  "etaLabel": "Estimated delivery",
+  "etaNote": "An estimate, not a promise. It can change.",
+  "etaNone": "No estimate yet",
+  "trackingNoEvents": "Nothing scanned yet. Updates appear here as our partner reports them.",
+  "trackingUpdated": "Updated",
+  "awbLabel": "AWB {awb}",
+  "@awbLabel": {
+    "placeholders": {
+      "awb": {
+        "type": "String"
+      }
+    }
+  },
+  "trackEventPickedUp": "Picked up",
+  "trackEventReceived": "Received at our partner",
+  "trackEventDeparted": "Departed",
+  "trackEventArrived": "Arrived",
+  "trackEventAtCustoms": "At customs",
+  "trackEventCleared": "Cleared customs",
+  "trackEventOutForDelivery": "Out for delivery",
+  "trackEventDelivered": "Delivered",
+  "trackEventHeld": "On hold",
+  "trackEventDamaged": "Damage reported",
+  "trackEventReturned": "Returned",
+  "trackEventNote": "Update",
+  "billingTitle": "Documents & billing",
+  "billingIntro": "Your quotations and invoices in one place. Documents are issued in English.",
+  "billingInvoices": "Invoices",
+  "billingQuotations": "Quotations",
+  "billingEmptyInvoices": "No invoices yet. When we issue one it appears here.",
+  "billingEmptyQuotations": "No quotations yet. When we send you a quote it appears here.",
+  "billingIssuedOn": "Issued {date}",
+  "@billingIssuedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "billingSentOn": "Sent {date}",
+  "@billingSentOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "billingTotal": "Total",
+  "billingCharges": "Charges",
+  "billingDownload": "Download PDF",
+  "billingViewQuote": "View the quote",
+  "billingUnpaidExpires": "If it is still unpaid, this invoice expires on {date}.",
+  "@billingUnpaidExpires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "billingPayNote": "Your Uni Travel contact tells you how to pay.",
+  "billingPayOnline": "Pay by card on our website",
+  "billingPayOnlineNote": "The payment page opens in your browser. Card details are entered there and never pass through this app.",
+  "billingPayProcessing": "Your payment is being processed. You do not need to pay again.",
+  "progressLabel": "Request progress",
+  "progressReceived": "Received",
+  "progressReview": "In review",
+  "progressQuote": "Options sent",
+  "progressBooked": "Accepted",
+  "progressTicketed": "Ticketed",
+  "progressDone": "done",
+  "progressCurrent": "current",
+  "progressTodo": "to do",
+  "billingPaidBanner": "This invoice is paid. Thank you.",
+  "billingNotFound": "We could not find this document in your account.",
+  "billingOpenFailed": "The document could not be opened. Try again.",
+  "invoiceIssued": "Awaiting payment",
+  "invoicePaid": "Paid",
+  "invoiceCancelled": "Cancelled",
+  "invoiceRefunded": "Refunded",
+  "quoteSent": "Open",
+  "quoteDeclined": "Declined",
+  "quoteSuperseded": "Replaced",
+  "cancelReasonExpired": "This invoice expired and can no longer be paid.",
+  "cancelReasonCorrection": "This invoice was withdrawn, usually because a corrected one replaces it. Do not pay it.",
+  "cancelReasonCustomerRequest": "Cancelled at your request. Do not pay it.",
+  "cancelReasonDuplicate": "Cancelled because it was a duplicate. Do not pay it.",
+  "cancelReasonOther": "This invoice was cancelled. Do not pay it."
 }

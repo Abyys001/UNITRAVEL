@@ -1,25 +1,18 @@
 "use client"
 
-import { Inbox, Menu, Plane, Package, UserRound, X } from "lucide-react"
+import { Inbox, Menu, Plane, Package, ReceiptText, Truck, UserRound, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+import { Ribbon } from "@unitravel/ui/brand/art"
+import { Logo as BrandLogo } from "@unitravel/ui/brand/logo"
 
 import { useI18n } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 
-export function Logo({ className = "" }: { className?: string }) {
-  const { locale } = useI18n()
-  return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden className="shrink-0">
-        <circle cx="16" cy="16" r="15" fill="#13263f" />
-        <path d="M7 21 C 11 9, 21 9, 25 13" stroke="#c98d5b" strokeWidth="2" fill="none" strokeLinecap="round" />
-        <circle cx="7" cy="21" r="2.2" fill="#fbf9f5" /><circle cx="25" cy="13" r="2.2" fill="#c98d5b" />
-      </svg>
-      <span className="font-display text-lg tracking-tight">{locale === "fa" ? "یونی‌تراول" : "Uni Travel"}</span>
-    </span>
-  )
+export function Logo({ className = "", tone = "onDark" }: { className?: string; tone?: "onDark" | "onLight" }) {
+  return <BrandLogo tone={tone} size={38} className={className} />
 }
 
 export function Header() {
@@ -27,57 +20,100 @@ export function Header() {
   const { me } = useSession()
   const path = usePathname()
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const home = /^\/(en|fa)\/?$/.test(path)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
   const other = locale === "en" ? "fa" : "en"
   const switchTo = `/${other}${path.replace(/^\/(en|fa)/, "")}`
   const links = [
     { href: href("/"), label: t("nav.search"), icon: Plane },
     { href: href("/cargo"), label: t("nav.cargo"), icon: Package },
+    { href: href("/shipments"), label: t("nav.shipments"), icon: Truck },
     { href: href("/requests"), label: t("nav.requests"), icon: UserRound },
+    ...(me ? [{ href: href("/billing"), label: t("nav.billing"), icon: ReceiptText }] : []),
   ]
+  // Over the home hero the bar starts transparent; everywhere else (and once scrolled) it is solid navy glass.
+  const solid = !home || scrolled || open
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-        <Link href={href("/")} aria-label="Uni Travel home"><Logo /></Link>
-        <nav className="hidden items-center gap-6 text-sm md:flex" aria-label="Main">
-          {links.map((l) => <Link key={l.href} href={l.href} className={`hover:text-copper-700 ${path === l.href ? "text-copper-700 font-medium" : ""}`}>{l.label}</Link>)}
-        </nav>
-        <div className="flex items-center gap-3 text-sm">
-          <Link href={switchTo} hrefLang={other} className="rounded-md px-2 py-1 hover:bg-muted" lang={other}>{t("nav.language")}</Link>
-          {me ? (
-            <>
-              <Link href={href("/inbox")} aria-label={t("nav.inbox")} className="rounded-md p-2 hover:bg-muted"><Inbox className="size-4" /></Link>
-              <Link href={href("/account")} className="hidden rounded-md px-3 py-1.5 hover:bg-muted sm:inline">{me.displayName}</Link>
-            </>
-          ) : (
-            <Link href={href(`/sign-in?next=${encodeURIComponent(path)}`)} className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground hover:bg-deep">{t("nav.signIn")}</Link>
-          )}
-          <button className="rounded-md p-2 md:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? <X className="size-5" /> : <Menu className="size-5" />}</button>
+    <>
+      <header className={`${home ? "fixed inset-x-0" : "sticky"} top-0 z-40 text-white transition-[background-color,box-shadow] duration-300 ${solid ? "bg-navy-950/92 shadow-[0_10px_30px_-18px_rgb(0_0_0/0.6)] backdrop-blur-md" : "bg-transparent"}`}>
+        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 md:px-6">
+          <Link href={href("/")} aria-label="Uni Travel home" className="rounded-lg"><Logo /></Link>
+          <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1 text-sm font-semibold md:flex" aria-label="Main">
+            {links.map((l) => {
+              const active = path === l.href
+              return <Link key={l.href} href={l.href} aria-current={active ? "page" : undefined} className={`rounded-full px-4 py-2 transition-colors ${active ? "bg-white text-navy-950" : "text-white/85 hover:bg-white/10 hover:text-white"}`}>{l.label}</Link>
+            })}
+          </nav>
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Link href={switchTo} hrefLang={other} className="rounded-full px-3 py-2 text-white/85 hover:bg-white/10 hover:text-white" lang={other}>{t("nav.language")}</Link>
+            {me ? (
+              <>
+                <Link href={href("/inbox")} aria-label={t("nav.inbox")} className="rounded-full p-2.5 hover:bg-white/10"><Inbox className="size-4" /></Link>
+                <Link href={href("/account")} className="btn-glass hidden !py-2 sm:inline-flex">{me.displayName}</Link>
+              </>
+            ) : (
+              <Link href={href(`/sign-in?next=${encodeURIComponent(path)}`)} className="btn-orange !rounded-full !px-5 !py-2">{t("nav.signIn")}</Link>
+            )}
+            <button className="rounded-full p-2.5 hover:bg-white/10 md:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? <X className="size-5" /> : <Menu className="size-5" />}</button>
+          </div>
         </div>
-      </div>
-      {open && (
-        <nav className="border-t border-border px-4 py-3 md:hidden" aria-label="Mobile">
-          {[...links, ...(me ? [{ href: href("/inbox"), label: t("nav.inbox"), icon: Inbox }, { href: href("/account"), label: t("nav.account"), icon: UserRound }] : [])].map((l) => (
-            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="flex items-center gap-3 py-2.5"><l.icon className="size-4 text-copper-700" />{l.label}</Link>
-          ))}
-        </nav>
+        {open && (
+          <nav className="border-t border-white/10 px-4 pb-4 pt-2 md:hidden" aria-label="Mobile">
+            {[...links, ...(me ? [{ href: href("/inbox"), label: t("nav.inbox"), icon: Inbox }, { href: href("/account"), label: t("nav.account"), icon: UserRound }] : [])].map((l) => (
+              <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-2 py-3 font-semibold hover:bg-white/10"><span className="grid size-9 place-items-center rounded-full border-2 border-orange/80"><l.icon className="size-4" /></span>{l.label}</Link>
+            ))}
+          </nav>
+        )}
+      </header>
+      {!home && (
+        <div aria-hidden className="relative bg-brand">
+          <div className="bg-dots h-6 md:h-8" />
+          <Ribbon className="relative -mt-px" />
+        </div>
       )}
-    </header>
+    </>
   )
 }
 
 export function Footer() {
   const { t, href } = useI18n()
   return (
-    <footer className="mt-16 border-t border-border bg-sand">
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 text-sm text-slate md:grid-cols-3">
-        <div><Logo className="text-ink" /><p className="mt-3 max-w-xs">{t("brand.tagline")}</p></div>
-        <p className="max-w-sm">{t("footer.notAtol")}</p>
-        <div className="flex flex-col gap-2 md:items-end">
-          <Link href={href("/terms")} className="hover:text-ink">{t("footer.terms")}</Link>
-          <Link href={href("/privacy")} className="hover:text-ink">{t("footer.privacy")}</Link>
+    <footer className="relative mt-20 overflow-hidden bg-navy-950 text-white/80">
+      <Ribbon className="relative rotate-180" fill="var(--background)" />
+      <div aria-hidden className="pointer-events-none absolute -end-32 top-48 size-[420px] rounded-full bg-royal/25 blur-3xl" />
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-8 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-6">
+        <div>
+          <Logo />
+          <p className="mt-5 max-w-sm text-sm leading-relaxed">{t("brand.tagline")}</p>
+          <p className="mt-5 max-w-sm border-s-2 border-orange ps-3 text-xs leading-relaxed text-white/65">{t("footer.notAtol")}</p>
+        </div>
+        <FooterCol title={t("footer.explore")} links={[[href("/"), t("nav.search")], [href("/cargo"), t("nav.cargo")], [href("/shipments"), t("nav.shipments")]]} />
+        <FooterCol title={t("footer.help")} links={[[href("/requests"), t("nav.requests")], [href("/billing"), t("nav.billing")], [href("/inbox"), t("nav.inbox")]]} />
+        <FooterCol title={t("footer.legal")} links={[[href("/terms"), t("footer.terms")], [href("/privacy"), t("footer.privacy")], [href("/credits"), t("footer.credits")]]} />
+      </div>
+      <div className="relative border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-2 px-4 py-5 text-xs text-white/60 md:flex-row md:items-center md:px-6">
           <span>{t("footer.company")}</span>
+          <span dir="ltr">unitravels.co.uk</span>
         </div>
       </div>
     </footer>
+  )
+}
+
+function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
+  return (
+    <div>
+      <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-orange-300">{title}</h2>
+      <ul className="mt-4 space-y-2.5 text-sm">
+        {links.map(([h, l]) => <li key={h}><Link href={h} className="hover:text-white">{l}</Link></li>)}
+      </ul>
+    </div>
   )
 }

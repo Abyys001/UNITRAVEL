@@ -87,16 +87,33 @@ export const SeatElement = z.discriminatedUnion("type", [
 ])
 export type SeatElement = z.infer<typeof SeatElement>
 
-export const SeatMap = z.object({
-  segmentRef: z.string(),
-  source: z.object({ provider: ProviderId, fetchedAt: IsoDateTime }),
-  cabins: z.array(
-    z.object({
-      cabinClass: Cabin,
-      deck: z.union([z.literal(0), z.literal(1)]),
-      wings: z.object({ firstRow: z.number().int(), lastRow: z.number().int() }).optional(),
-      rows: z.array(z.object({ sections: z.array(z.object({ elements: z.array(SeatElement) })) })),
-    }),
-  ),
-})
+const seatMapOf = <E extends z.ZodType>(element: E) =>
+  z.object({
+    segmentRef: z.string(),
+    source: z.object({ provider: ProviderId, fetchedAt: IsoDateTime }),
+    cabins: z.array(
+      z.object({
+        cabinClass: Cabin,
+        deck: z.union([z.literal(0), z.literal(1)]),
+        wings: z.object({ firstRow: z.number().int(), lastRow: z.number().int() }).optional(),
+        rows: z.array(z.object({ sections: z.array(z.object({ elements: z.array(element) })) })),
+      }),
+    ),
+  })
+
+export const SeatMap = seatMapOf(SeatElement)
 export type SeatMap = z.infer<typeof SeatMap>
+
+// ADR-0004: customers see no amounts before a sent quote, so their seat map has no seat prices.
+export const CustomerSeatElement = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("seat"), designator: z.string(), available: z.boolean(), characteristics: z.array(z.string()).default([]) }),
+  z.object({ type: z.enum(["empty", "exit_row", "lavatory", "galley", "closet", "stairs", "bassinet"]) }),
+])
+export const CustomerSeatMap = seatMapOf(CustomerSeatElement)
+export type CustomerSeatMap = z.infer<typeof CustomerSeatMap>
+
+/** The same offer without `price` or fee amounts (ADR-0004). */
+export const CustomerOffer = NormalisedOffer.omit({ price: true, conditions: true }).extend({
+  conditions: z.object({ change: tri(z.object({ allowed: z.boolean() })), refund: tri(z.object({ allowed: z.boolean() })) }),
+})
+export type CustomerOffer = z.infer<typeof CustomerOffer>

@@ -73,6 +73,9 @@ export const documents = pgTable("documents", {
   scanStatus: text({ enum: ["PENDING", "CLEAN", "INFECTED"] }).notNull().default("PENDING"),
   visibility: text({ enum: ["INTERNAL", "CUSTOMER"] }).notNull().default("INTERNAL"),
   uploadCompletedAt: tstz(),
+  /** Null = the main bucket; identity scans live in a separate encrypted bucket (ADR-0005 V6). */
+  storageBucket: varchar({ length: 80 }),
+  erasedAt: tstz(),
   createdBy: uuid(),
   ...timestamps,
 }, (t) => [index("documents_request_idx").on(t.requestType, t.requestId)])

@@ -2,20 +2,28 @@ import { createHash } from "node:crypto"
 import { Socket } from "node:net"
 
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common"
-import { and, eq, inArray } from "drizzle-orm"
+import { and, eq, inArray, isNull, lt } from "drizzle-orm"
 
+import { IDENTITY_DOCUMENT_TYPES } from "@unitravel/contracts"
 import { type Db, type DbOrTx, documents } from "@unitravel/db"
 
 import { env } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { DB } from "../../core/infra.module"
+import { Queues } from "../../core/queues"
 import { ObjectStorage } from "../../core/storage"
 import { WorkerRegistry } from "../../core/workers"
+import { AuditService } from "../audit/audit.service"
+import { ConfigService } from "../config/config.service"
+import { stripImageMetadata, UnsupportedImageError } from "./image-sanitise"
 import { OutboxService } from "../platform/outbox.service"
 
 export const UPLOAD_TYPES: Record<string, string[]> = {
   "application/pdf": [".pdf"], "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"],
 }
+/** Identity scans are images only: a PDF can carry metadata and active content a lossless stripper cannot vouch for (ADR-0005 V6). */
+export const IDENTITY_UPLOAD_TYPES: Record<string, string[]> = { "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"] }
+export const isIdentityType = (type: string) => (IDENTITY_DOCUMENT_TYPES as readonly string[]).includes(type)
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 const EICAR = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
@@ -50,20 +58,30 @@ async function clamScan(host: string, port: number, body: Buffer): Promise<{ cle
 export class DocumentsService implements OnModuleInit {
   private readonly log = new Logger("Documents")
 
-  constructor(@Inject(DB) private readonly db: Db, private readonly storage: ObjectStorage, private readonly outbox: OutboxService, private readonly workers: WorkerRegistry) {}
+  constructor(@Inject(DB) private readonly db: Db, private readonly storage: ObjectStorage, private readonly outbox: OutboxService, private readonly workers: WorkerRegistry, private readonly config: ConfigService, private readonly queues: Queues, private readonly audit: AuditService) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     this.workers.register("documents.scan", (job) => this.scan((job.data as { payload: { documentId: string } }).payload.documentId), 3)
+    this.workers.registerJob("maintenance", "identity.scan-retention", () => this.purgeExpiredScans())
+    await this.queues.get("maintenance").upsertJobScheduler("identity-scan-retention-daily", { every: 24 * 3600_000 }, { name: "identity.scan-retention" }).catch(() => undefined)
+  }
+
+  private bucketOf(d: { storageBucket: string | null }) {
+    return d.storageBucket ?? this.storage.bucket
   }
 
   async createUpload(input: { ownerUserId: string | null; filename: string; mime: string; size: number; type: string; requestType?: "FLIGHT" | "CARGO" | "AFTER_SALES"; requestId?: string; visibility?: "INTERNAL" | "CUSTOMER"; createdBy: string }) {
     const ext = input.filename.toLowerCase().slice(input.filename.lastIndexOf("."))
-    if (!UPLOAD_TYPES[input.mime]?.includes(ext)) throw new AppError("VALIDATION_FAILED", "Only PDF, JPG and PNG files are accepted", [{ path: "mime", code: "TYPE_NOT_ALLOWED" }])
+    const identity = isIdentityType(input.type)
+    if (identity) {
+      if (!IDENTITY_UPLOAD_TYPES[input.mime]?.includes(ext)) throw new AppError("VALIDATION_FAILED", "Passport scans must be JPG or PNG images", [{ path: "mime", code: "TYPE_NOT_ALLOWED" }])
+    } else if (!UPLOAD_TYPES[input.mime]?.includes(ext)) throw new AppError("VALIDATION_FAILED", "Only PDF, JPG and PNG files are accepted", [{ path: "mime", code: "TYPE_NOT_ALLOWED" }])
     if (input.size <= 0 || input.size > MAX_UPLOAD_BYTES) throw new AppError("VALIDATION_FAILED", "Files must be 10 MB or smaller", [{ path: "size", code: "TOO_LARGE" }])
     const storageKey = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}${ext}`
-    const [doc] = await this.db.insert(documents).values({ ownerUserId: input.ownerUserId, requestType: input.requestType, requestId: input.requestId, type: input.type, filename: input.filename.slice(0, 200), mime: input.mime, size: input.size, storageKey, visibility: input.visibility ?? "INTERNAL", createdBy: input.createdBy }).returning()
-    const { url } = await this.storage.presignPut(storageKey, input.mime, MAX_UPLOAD_BYTES)
-    return { documentId: doc!.id, uploadUrl: url, method: "PUT", headers: { "content-type": input.mime }, expiresInSeconds: 300 }
+    const storageBucket = identity ? this.storage.identityBucket : null
+    const [doc] = await this.db.insert(documents).values({ ownerUserId: input.ownerUserId, requestType: input.requestType, requestId: input.requestId, type: input.type, filename: input.filename.slice(0, 200), mime: input.mime, size: input.size, storageKey, storageBucket, visibility: identity ? "INTERNAL" : input.visibility ?? "INTERNAL", createdBy: input.createdBy }).returning()
+    const { url } = await this.storage.presignPut(storageKey, input.mime, MAX_UPLOAD_BYTES, 300, storageBucket ?? this.storage.bucket)
+    return { documentId: doc!.id, uploadUrl: url, method: "PUT", headers: { "content-type": input.mime, ...(identity ? { "x-amz-server-side-encryption": "AES256" } : {}) }, expiresInSeconds: 300 }
   }
 
   async complete(documentId: string, userId: string) {
@@ -85,7 +103,8 @@ export class DocumentsService implements OnModuleInit {
   async scan(documentId: string) {
     const [doc] = await this.db.select().from(documents).where(eq(documents.id, documentId))
     if (!doc || doc.scanStatus !== "PENDING") return
-    const body = await this.storage.get(doc.storageKey)
+    const bucket = this.bucketOf(doc)
+    let body = await this.storage.get(doc.storageKey, bucket)
     const sha256 = createHash("sha256").update(body).digest("hex")
     let clean: boolean
     let engine: string
@@ -99,8 +118,24 @@ export class DocumentsService implements OnModuleInit {
       clean = !body.toString("latin1").includes(EICAR)
       engine = "dev-signature-check"
     }
-    await this.db.update(documents).set({ scanStatus: clean ? "CLEAN" : "INFECTED", sha256, size: body.length }).where(eq(documents.id, documentId))
-    if (!clean) await this.storage.delete(doc.storageKey).catch(() => undefined)
+    let finalSha = sha256
+    if (clean && isIdentityType(doc.type)) {
+      // Metadata is removed before the scan becomes available; an image that cannot be parsed is refused (ADR-0005 V7).
+      try {
+        const stripped = stripImageMetadata(body)
+        await this.storage.put(doc.storageKey, stripped.body, stripped.mime, bucket)
+        if ((await this.storage.encryptionOf(doc.storageKey, bucket)) !== "AES256") throw new Error("identity bucket did not confirm server-side encryption")
+        body = stripped.body
+        finalSha = createHash("sha256").update(body).digest("hex")
+        engine += "; metadata stripped"
+      } catch (err) {
+        if (!(err instanceof UnsupportedImageError)) throw err
+        clean = false
+        engine += `; ${err.message}`
+      }
+    }
+    await this.db.update(documents).set({ scanStatus: clean ? "CLEAN" : "INFECTED", sha256: finalSha, size: body.length }).where(eq(documents.id, documentId))
+    if (!clean) await this.storage.delete(doc.storageKey, bucket).catch(() => undefined)
     this.log.log({ documentId, clean, engine }, "document scanned")
     return { clean, engine }
   }
@@ -126,8 +161,37 @@ export class DocumentsService implements OnModuleInit {
     await tx.update(documents).set({ visibility: "CUSTOMER" }).where(eq(documents.id, id))
   }
 
+  /** Deletes the stored object and keeps the row (and its audit trail) marked as erased. */
+  async erase(tx: DbOrTx, d: typeof documents.$inferSelect) {
+    await tx.update(documents).set({ erasedAt: new Date() }).where(eq(documents.id, d.id))
+    await this.storage.delete(d.storageKey, this.bucketOf(d)).catch((err) => this.log.warn({ err: String(err), documentId: d.id }, "object delete failed"))
+  }
+
+  /** ADR-0005 V9: only when the retention setting is configured; unset (UNKNOWN) keeps scans until the customer or an account deletion erases them. */
+  async purgeExpiredScans() {
+    const days = this.config.settings().identityScanRetentionDays
+    if (!days) return { purged: 0, retentionDays: null }
+    const cutoff = new Date(Date.now() - days * 86400_000)
+    const rows = await this.db.select().from(documents).where(and(inArray(documents.type, [...IDENTITY_DOCUMENT_TYPES]), isNull(documents.erasedAt), lt(documents.createdAt, cutoff)))
+    for (const d of rows) await this.erase(this.db, d)
+    return { purged: rows.length, retentionDays: days }
+  }
+
+  /** Written before the URL is issued, so a failed audit write means no download (ADR-0005 V8). */
+  async auditStaffDownload(d: typeof documents.$inferSelect, staffUserId: string, ip: string | undefined, requestId: string) {
+    await this.db.transaction((tx) => this.audit.record(tx, { actorUserId: staffUserId, actorKind: "STAFF", action: "document.downloaded", entityType: "document", entityId: d.id, contextRef: d.requestId ?? null, after: { type: d.type, ownerUserId: d.ownerUserId }, ip, requestId }))
+  }
+
+  /** Bytes of an available document for same-origin inline viewing by staff (the console CSP only allows blob: images). */
+  async readBytes(d: typeof documents.$inferSelect) {
+    if (d.erasedAt) throw new AppError("NOT_FOUND")
+    if (d.scanStatus !== "CLEAN") throw new AppError("VALIDATION_FAILED", "The file is not available")
+    return this.storage.get(d.storageKey, this.bucketOf(d))
+  }
+
   async downloadUrl(d: typeof documents.$inferSelect) {
+    if (d.erasedAt) throw new AppError("NOT_FOUND")
     if (d.scanStatus !== "CLEAN") throw new AppError("VALIDATION_FAILED", d.scanStatus === "PENDING" ? "The file is still being checked" : "The file failed the virus check")
-    return { url: await this.storage.presignGet(d.storageKey, d.filename), expiresInSeconds: 300 }
+    return { url: await this.storage.presignGet(d.storageKey, d.filename, 300, this.bucketOf(d)), expiresInSeconds: 300 }
   }
 }

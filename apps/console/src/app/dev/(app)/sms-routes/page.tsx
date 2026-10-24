@@ -24,9 +24,9 @@ export default function SmsRoutesPage() {
       <PageHead kicker="Notifications" title="SMS routes">{can("notification.template.write") && <Button size="sm" variant="outline" onClick={() => setEdit({ prefix: "", providers: "", enabled: true })}>New route</Button>}</PageHead>
       <div className="px-5 py-3">
         {!q.data.length ? <Empty>No routes.</Empty> : (
-          <table className="w-full bg-white" data-testid="sms-routes">
-            <thead className="bg-paper"><tr className="border-b border-rule">{["Prefix", "Providers (fallback order)", "Enabled", "Success 24h", "Sent 24h", ""].map((h) => <th key={h} className="cap px-2 py-1.5 text-start font-normal">{h}</th>)}</tr></thead>
-            <tbody>{q.data.map((r) => <tr key={r.id} className="border-b border-rule/70"><td className="num px-2 py-1.5">{r.prefix}</td><td className="px-2 py-1.5 font-mono text-[12px]">{r.providers.join(" → ")}</td><td className="px-2 py-1.5"><Tag value={r.enabled ? "ON" : "OFF"} className={r.enabled ? "border-moss text-moss" : ""} /></td><td className="num px-2 py-1.5">{r.successRate == null ? "—" : `${Math.round(r.successRate * 100)}%`}</td><td className="num px-2 py-1.5">{r.sent24h}</td><td className="px-2 py-1.5">{can("notification.template.write") && <Button size="xs" variant="ghost" onClick={() => setEdit({ prefix: r.prefix, providers: r.providers.join(", "), enabled: r.enabled })}>Edit</Button>}</td></tr>)}</tbody>
+          <table className="w-full bg-surface-raised" data-testid="sms-routes">
+            <thead className="bg-surface-raised"><tr className="border-b border-rule">{["Prefix", "Providers (fallback order)", "Enabled", "Success 24h", "Sent 24h", ""].map((h) => <th key={h} className="cap px-2 py-1.5 text-start font-normal">{h}</th>)}</tr></thead>
+            <tbody>{q.data.map((r) => <tr key={r.id} className="border-b border-rule/70"><td className="num px-2 py-1.5">{r.prefix}</td><td className="px-2 py-1.5 font-mono text-[12px]">{r.providers.join(" → ")}</td><td className="px-2 py-1.5"><Tag value={r.enabled ? "ON" : "OFF"} className={r.enabled ? "border-success text-success" : ""} /></td><td className="num px-2 py-1.5">{r.successRate == null ? "—" : `${Math.round(r.successRate * 100)}%`}</td><td className="num px-2 py-1.5">{r.sent24h}</td><td className="px-2 py-1.5">{can("notification.template.write") && <Button size="xs" variant="ghost" onClick={() => setEdit({ prefix: r.prefix, providers: r.providers.join(", "), enabled: r.enabled })}>Edit</Button>}</td></tr>)}</tbody>
           </table>
         )}
       </div>

@@ -98,7 +98,12 @@ export class DevSystemController {
   @RequirePermission("flags.write")
   async putFlag(@Param("key") key: string, @Body(zbody(z.object({ enabled: z.boolean() }))) body: { enabled: boolean }, @CurrentActor() actor: Actor) {
     if (!FEATURE_FLAGS.includes(key as FeatureFlag)) throw new AppError("NOT_FOUND")
-    if (key === "payments.online.enabled" && body.enabled) throw new AppError("FORBIDDEN", "Online payments stay off in version 1 (decision D-03)")
+    // ADR-0007 amends D-03: online payment (test mode only) may be switched on by an owner after a fresh second-factor check.
+    if (key === "payments.online.enabled" && body.enabled) {
+      if (!actor.permissions.has("payments.mode.approve")) throw new AppError("FORBIDDEN", "Only an owner can switch online payments on (ADR-0007)")
+      const fresh = actor.mfaVerifiedAt && Date.now() - actor.mfaVerifiedAt.getTime() < 10 * 60_000
+      if (!fresh) throw new AppError("STEP_UP_REQUIRED", "Switching online payments on needs a fresh second-factor check")
+    }
     await this.uow.run((tx) => this.config.setFlag(key as FeatureFlag, body.enabled, actor.userId, tx))
     await this.config.reload()
     return { key, enabled: body.enabled }

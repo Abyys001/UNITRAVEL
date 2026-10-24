@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import { and, asc, desc, eq, max } from "drizzle-orm"
+import { and, asc, desc, eq, isNotNull, max } from "drizzle-orm"
 
 import type { QuoteOptionInput } from "@unitravel/contracts"
 import { type Db, offerSnapshots, quoteOptions, quotes } from "@unitravel/db"
@@ -56,7 +56,7 @@ export class QuotesService {
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "quote.drafted", entityType: "quote", entityId: q!.id, contextRef: r.ref, after: { version: q!.version, options: body.options.length } })
       return q!.id
     })
-    return this.view(id)
+    return this.view(id, actor)
   }
 
   async updateDraft(ref: string, quoteId: string, body: { currency: string; validUntil?: string; options: QuoteOptionInput[] }, actor: Actor, expectedRowVersion?: number) {
@@ -66,13 +66,17 @@ export class QuotesService {
       const [q] = await tx.select().from(quotes).where(and(eq(quotes.id, quoteId), eq(quotes.requestId, r.id))).for("update")
       if (!q) throw notFound("Quote")
       if (q.status !== "DRAFT") throw new AppError("INVALID_TRANSITION", "Only drafts can be edited; create a new version")
+      // Replacing options rewrites their cost fields; an editor who cannot see them must not silently erase them.
+      if (!actor.permissions.has("pricing.read.internal") && (await tx.select({ id: quoteOptions.id }).from(quoteOptions).where(and(eq(quoteOptions.quoteId, q.id), isNotNull(quoteOptions.internalCostMinor)))).length) {
+        throw new AppError("FORBIDDEN", "This draft holds internal cost data; editing it needs pricing.read.internal")
+      }
       if (expectedRowVersion !== undefined && expectedRowVersion !== q.rowVersion) throw new AppError("VERSION_CONFLICT", "Quote changed; reload")
       await tx.delete(quoteOptions).where(eq(quoteOptions.quoteId, q.id))
       await this.insertOptions(tx, q.id, body.options, actor.userId)
       await tx.update(quotes).set({ currency: body.currency, validUntil: this.validity(body.options, body.validUntil), rowVersion: q.rowVersion + 1 }).where(eq(quotes.id, q.id))
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "quote.updated", entityType: "quote", entityId: q.id, contextRef: r.ref })
     })
-    return this.view(quoteId)
+    return this.view(quoteId, actor)
   }
 
   private async insertOptions(tx: Parameters<Parameters<Db["transaction"]>[0]>[0], quoteId: string, options: QuoteOptionInput[], actorId: string) {
@@ -87,13 +91,15 @@ export class QuotesService {
     })))
   }
 
-  async view(quoteId: string) {
+  /** Cost and supplier fields only for `pricing.read.internal` (ADR-0004); the customer-facing price breakdown is always shown. */
+  async view(quoteId: string, actor: Actor) {
+    const internal = actor.permissions.has("pricing.read.internal")
     const [q] = await this.db.select().from(quotes).where(eq(quotes.id, quoteId))
     if (!q) throw notFound("Quote")
     const opts = await this.db.select().from(quoteOptions).where(eq(quoteOptions.quoteId, q.id)).orderBy(asc(quoteOptions.position))
     return {
       id: q.id, version: q.version, status: q.status, currency: q.currency, validUntil: q.validUntil?.toISOString() ?? null, rowVersion: q.rowVersion,
-      options: opts.map((o) => ({ id: o.id, label: o.label, source: o.source, slices: (o.itinerary as { slices: unknown[] }).slices, priceBreakdown: o.priceBreakdown, baggage: o.baggage, conditions: o.conditions, ticketingModel: o.ticketingModel, internalCostMinor: o.internalCostMinor, unknownFields: optionUnknowns(o), supplierPrice: o.supplierPrice, supplierFetchedAt: o.supplierFetchedAt?.toISOString() ?? null })),
+      options: opts.map((o) => ({ id: o.id, label: o.label, source: o.source, slices: (o.itinerary as { slices: unknown[] }).slices, priceBreakdown: o.priceBreakdown, baggage: o.baggage, conditions: o.conditions, ticketingModel: o.ticketingModel, unknownFields: optionUnknowns(o), ...(internal ? { internalCostMinor: o.internalCostMinor, supplierPrice: o.supplierPrice, supplierFetchedAt: o.supplierFetchedAt?.toISOString() ?? null } : {}) })),
       sendBlockedBy: opts.length === 0 ? ["Add at least one option"] : opts.flatMap((o, i) => optionUnknowns(o).map((f) => `Option ${i + 1} needs confirmed ${f}`)),
     }
   }

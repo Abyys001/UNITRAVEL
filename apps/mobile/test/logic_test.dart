@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,39 @@ import 'package:unitravel_mobile/router.dart';
 import 'support/fake_api.dart';
 
 void main() {
+  group('price confidentiality (ADR-0004)', () {
+    test('a customer itinerary carries no amounts and parses without a price block', () {
+      final it = Itinerary.fromJson({
+        'id': 'itn_1',
+        'construction': 'THROUGH',
+        'ticketing': 'SINGLE_TICKET',
+        'durationMin': 420,
+        'stops': 0,
+        'components': [
+          {
+            'source': {'provider': 'duffel', 'rung': 'LIVE_OFFER', 'fake': false},
+            'slices': [],
+            'baggage': [],
+          },
+        ],
+        'connections': [],
+        'truth': [],
+        'riskFlags': [],
+        'carriers': ['TK'],
+        'baggage': [],
+      });
+      expect(it.id, 'itn_1');
+      expect(it.components, hasLength(1));
+    });
+
+    test('pre-quote models never read price, score or fee fields', () {
+      final src = File('lib/models/search.dart').readAsStringSync();
+      expect(src, isNot(contains("'price'")));
+      expect(src, isNot(contains("'penalty'")));
+      expect(src, isNot(contains("'score'")));
+    });
+  });
+
   group('proof of work', () {
     test('finds the number whose sha256(salt+n) matches and encodes the payload', () {
       const salt = 'abc123';
@@ -59,7 +93,7 @@ void main() {
 
     test('customers cannot enter admin routes; admins land in admin mode', () {
       expect(redirectFor(signedIn(), Uri.parse('/admin/queue')), '/search');
-      expect(redirectFor(signedIn(admin: true), Uri.parse('/search')), '/admin/queue');
+      expect(redirectFor(signedIn(admin: true), Uri.parse('/search')), '/admin/home');
       expect(redirectFor(signedIn(admin: true), Uri.parse('/admin/queue')), isNull);
     });
 

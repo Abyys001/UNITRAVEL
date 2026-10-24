@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kit_ui/kit_ui.dart' show XfamTone;
 
-import '../../core/api_error.dart';
-import '../../core/errors_l10n.dart';
 import '../../core/format.dart';
 import '../../core/providers.dart';
 import '../../core/session.dart';
@@ -35,52 +33,6 @@ class ItineraryScreen extends ConsumerStatefulWidget {
 }
 
 class _ItineraryScreenState extends ConsumerState<ItineraryScreen> {
-  Itinerary? _rechecked;
-  String? _checkMessage;
-  bool _checkError = false;
-  bool _checking = false;
-
-  Future<void> _recheck() async {
-    final l = context.l;
-    final lang = context.lang;
-    setState(() {
-      _checking = true;
-      _checkMessage = null;
-    });
-    try {
-      final res = await ref.read(apiClientProvider).post('/v1/itineraries/${Uri.encodeComponent(widget.itineraryId)}/price-check') as Json;
-      final updated = res.objOrNull('itinerary');
-      final current = Money.from(res['currentTotal']);
-      if (!mounted) return;
-      setState(() {
-        if (updated != null) _rechecked = Itinerary.fromJson(updated);
-        switch (res.str('outcome')) {
-          case 'CONFIRMED':
-            _checkMessage = l.priceConfirmed;
-            _checkError = false;
-          case 'PRICE_CHANGED':
-            _checkMessage = l.priceChangedTo(formatMoney(current, lang));
-            _checkError = true;
-          case 'OFFER_EXPIRED':
-            _checkMessage = l.offerExpired;
-            _checkError = true;
-          default:
-            _checkMessage = l.offerUnavailable;
-            _checkError = true;
-        }
-      });
-    } on ApiException catch (e) {
-      if (mounted) {
-        setState(() {
-          _checkMessage = errorMessage(l, e);
-          _checkError = true;
-        });
-      }
-    } finally {
-      if (mounted) setState(() => _checking = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = context.l;
@@ -91,7 +43,7 @@ class _ItineraryScreenState extends ConsumerState<ItineraryScreen> {
         child: async.when(
           loading: () => const LoadingList(count: 3),
           error: (e, _) => ErrorBox(e, onRetry: () => ref.invalidate(itineraryProvider(widget.itineraryId))),
-          data: (d) => _content(context, d, _rechecked ?? d.itinerary),
+          data: (d) => _content(context, d, d.itinerary),
         ),
       ),
     );
@@ -108,7 +60,6 @@ class _ItineraryScreenState extends ConsumerState<ItineraryScreen> {
         : (it.anyCached
               ? l.priceFreshnessCached(formatDateTime(fetched, lang: lang, jalali: jalali))
               : l.priceFreshness(formatDateTime(fetched, lang: lang, jalali: jalali)));
-    final multiTicket = it.components.length > 1;
 
     return Column(
       children: [
@@ -118,18 +69,7 @@ class _ItineraryScreenState extends ConsumerState<ItineraryScreen> {
             children: [
               TruthBadges(it, risk: false),
               const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(child: Text(l.priceTotal, style: theme.textTheme.bodySmall)),
-                  Text(formatMoney(it.total, lang), style: theme.textTheme.displaySmall),
-                ],
-              ),
-              if (it.isSumOfTickets || multiTicket)
-                Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Text(l.sumOfTickets, style: theme.textTheme.bodySmall?.copyWith(color: xc(context).fgMuted)),
-                ),
+              Text(l.priceInQuote, style: theme.textTheme.titleMedium),
               if (freshness != null) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -140,24 +80,6 @@ class _ItineraryScreenState extends ConsumerState<ItineraryScreen> {
                   ],
                 ),
               ],
-              if (_checkMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Text(_checkMessage!, style: TextStyle(color: _checkError ? Brand.brick : Brand.moss, fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton.icon(
-                  onPressed: _checking ? null : _recheck,
-                  icon: _checking
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.refresh),
-                  label: Text(l.recheckPrice),
-                ),
-              ),
               if (it.anyFake) _Notice(text: l.fakeNotice, tone: XfamTone.danger),
               if (it.startsAtGateway && it.gateway != null)
                 _Notice(
@@ -166,7 +88,7 @@ class _ItineraryScreenState extends ConsumerState<ItineraryScreen> {
                 ),
               if (it.separateTickets) _Notice(text: l.selfTransferAdvice, tone: XfamTone.danger),
               for (var c = 0; c < it.components.length; c++) ...[
-                SectionTitle(multiTicket ? l.ticketN(c + 1) : l.segments),
+                SectionTitle(it.components.length > 1 ? l.ticketN(c + 1) : l.segments),
                 for (var s = 0; s < it.components[c].slices.length; s++)
                   _SliceCard(
                     slice: it.components[c].slices[s],
@@ -290,7 +212,7 @@ class _SliceCard extends StatelessWidget {
           padding: const EdgeInsetsDirectional.only(start: 8, top: 4, bottom: 4),
           child: Row(
             children: [
-              Icon(Icons.flight, size: 14, color: Brand.copperDark),
+              Icon(Icons.flight, size: 14, color: Brand.orange700),
               const SizedBox(width: 6),
               LtrText('${s.carrier} ${s.flightNumber}', style: theme.textTheme.bodySmall, mono: true),
               if (s.duration != null) Text('${sep(lang)}${formatDuration(l, s.duration!.inMinutes, lang)}', style: theme.textTheme.bodySmall),
@@ -335,7 +257,7 @@ class _SliceCard extends StatelessWidget {
       Container(
         width: double.infinity,
         padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: xc(context).surfaceSunken, border: Border.all(color: Brand.mist), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(color: xc(context).surfaceSunken, border: Border.all(color: Brand.line), borderRadius: BorderRadius.circular(8)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

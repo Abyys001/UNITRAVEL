@@ -168,7 +168,7 @@ class _TravellerFormState extends ConsumerState<_TravellerForm> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
-                Text(errorMessage(l, _error!), style: const TextStyle(color: Brand.brick)),
+                Text(errorMessage(l, _error!), style: const TextStyle(color: Brand.danger)),
               ],
               const SizedBox(height: 16),
               Row(

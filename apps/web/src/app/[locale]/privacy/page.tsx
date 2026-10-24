@@ -15,10 +15,13 @@ export default function Page() {
   const { t, locale } = useI18n()
   const paras = (locale === "fa" ? FA : EN)["privacy"]
   return (
-    <article className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="font-display text-3xl">{t("footer.privacy")}</h1>
-      {paras.map((p, i) => <p key={i} className="mt-4 leading-7 text-slate">{p}</p>)}
-      <p className="mt-6 text-xs text-slate">Draft wording — counsel review pending (booklet ch. 4.8 question 10).</p>
+    <article className="mx-auto max-w-3xl px-4 py-8 md:py-10">
+      <div className="card-brand p-6 md:p-10">
+        <h1 className="font-display text-3xl md:text-4xl">{t("footer.privacy")}</h1>
+        <span aria-hidden className="mt-4 block h-1 w-16 rounded-full bg-orange" />
+        {paras.map((p, i) => <p key={i} className="mt-5 leading-7 text-steel">{p}</p>)}
+        <p className="mt-8 border-t border-line pt-4 text-xs text-steel">Draft wording — counsel review pending (booklet ch. 4.8 question 10).</p>
+      </div>
     </article>
   )
 }

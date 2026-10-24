@@ -2,6 +2,7 @@ import type { FlightRequestStatus, PaymentStatus } from "@unitravel/contracts"
 
 import type { TransitionTable } from "./machine"
 import { isRecordLocator } from "./formats"
+import { TRAVELLERS_NOT_VERIFIED } from "./identity-verification"
 
 export const FLIGHT_TERMINAL: readonly FlightRequestStatus[] = ["COMPLETED", "DECLINED", "CANCELLED"]
 const NON_TERMINAL: FlightRequestStatus[] = ["SUBMITTED", "COMPLIANCE_HOLD", "NEW", "IN_REVIEW", "AWAITING_CUSTOMER", "QUOTED", "ACCEPTED", "RESERVED", "TICKETED", "EXPIRED"]
@@ -38,6 +39,8 @@ export interface FlightFacts {
   }
   activeReservation?: { status: "HELD" | "CONFIRMED" | "CANCELLED" | "LAPSED"; ticketingDeadline: Date } | null
   ticketsIssuedForEveryTraveller?: boolean
+  /** Every traveller on the request holds a VERIFIED document (ADR-0005, owner decision 4). */
+  allTravellersVerified?: boolean
   creditOverrideApproved?: boolean
   lastSegmentDeparture?: Date | null
   decisionReason?: string
@@ -98,7 +101,7 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
     guard: (f) => (f.responseProvided ? null : "A message or the requested data is required"),
   },
   // Re-quoting from QUOTED or ACCEPTED supersedes the earlier quote and needs a new acceptance (ch. 13.6, ADR-0003).
-  send_quote: { from: ["IN_REVIEW", "QUOTED", "ACCEPTED"], to: "QUOTED", actor: "STAFF", permissions: ["quote.create"], guard: quoteSendable },
+  send_quote: { from: ["IN_REVIEW", "QUOTED", "ACCEPTED"], to: "QUOTED", actor: "STAFF", permissions: ["commercial_document.issue"], guard: quoteSendable },
   accept_quote: {
     from: ["QUOTED"], to: "ACCEPTED", actor: "CUSTOMER",
     guard: (f) => quoteAcceptable(f) ?? (f.travellerDocumentsComplete ? null : "Passport details are needed for every traveller"),
@@ -122,6 +125,7 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
   record_tickets: {
     from: ["RESERVED"], to: "TICKETED", actor: "STAFF", permissions: ["ticket.record"],
     guard: (f) => {
+      if (!f.allTravellersVerified) return TRAVELLERS_NOT_VERIFIED
       if (!f.ticketsIssuedForEveryTraveller) return "Every traveller needs one ISSUED ticket"
       if (f.paymentStatus !== "PAID" && !f.creditOverrideApproved) return "Payment status must be PAID, or an owner-approved credit override"
       return null

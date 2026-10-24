@@ -1,6 +1,8 @@
 import { expect, type Page, test } from "@playwright/test"
 
-import { ADMIN, DEV, ensureNewRequest, shot, STAFF, staffPage } from "./helpers"
+import { iso, receivedShipment } from "../../api/test/cargo-fixture"
+import { dbQuery } from "../../api/test/client"
+import { ADMIN, apiSessionFrom, DEV, ensureNewRequest, shot, STAFF, staffPage } from "./helpers"
 
 test.describe.configure({ mode: "serial" })
 
@@ -163,6 +165,99 @@ test.describe("Admin Panel", () => {
     await expect(page.getByTestId("goods")).toBeVisible()
     await shot(page, "admin-cargo-detail")
   })
+
+  test("cargo admin corrects a tracking event (appended, original kept) and sets the delivery estimate", async ({ browser }) => {
+    // Seeded as the cargo admin already signed in on this page (no second OTP request for that phone).
+    const page = await staffPage(browser, ADMIN, STAFF.cargo)
+    const shipment = await receivedShipment("MOBILE", await apiSessionFrom(page, ADMIN))
+    expect((await shipment.admin.post(`/v1/admin/cargo/requests/${shipment.ref}/tracking-events`, { eventCode: "DEPARTED", location: "LHR", occurredAt: iso(1) })).status).toBe(201)
+    await page.goto(`${ADMIN}/cargo/${shipment.ref}`)
+    const history = page.getByTestId("tracking-history")
+    const departed = history.locator("li").filter({ hasText: "DEPARTED" })
+    await departed.getByRole("button", { name: "Correct" }).click()
+    const dlg = page.getByTestId("dlg-correct-tracking")
+    await dlg.locator("select").selectOption("AT_CUSTOMS")
+    await dlg.getByLabel("Location").fill("IST customs")
+    await dlg.getByLabel(/Reason/).fill("Partner entered the wrong scan")
+    await dlg.getByRole("button", { name: "Append correction" }).click()
+    await expect(dlg).toBeHidden()
+    await expect(history.locator("li[data-effective=false]").filter({ hasText: "DEPARTED" })).toContainText("superseded")
+    await expect(history.locator("li[data-effective=true]").filter({ hasText: "AT_CUSTOMS" })).toContainText("Partner entered the wrong scan")
+    await page.getByRole("button", { name: "Set" }).click()
+    const eta = page.getByTestId("dlg-eta")
+    await eta.getByLabel("Estimated delivery").fill(new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 16))
+    await eta.getByRole("button", { name: "Save estimate" }).click()
+    await expect(eta).toBeHidden()
+    await expect(page.getByTestId("eta")).not.toContainText("No estimate set")
+    await shot(page, "admin-cargo-tracking-correction")
+  })
+
+  test("owner creates, issues and cancels an invoice on a shipment; the invoice list and history show it", async ({ browser }) => {
+    const cargoPage = await staffPage(browser, ADMIN, STAFF.cargo)
+    const shipment = await receivedShipment("MOBILE", await apiSessionFrom(cargoPage, ADMIN))
+    // The cargo admin cannot create invoices (no commercial_document.issue) and sees the panel without amounts.
+    await cargoPage.goto(`${ADMIN}/cargo/${shipment.ref}`)
+    await expect(cargoPage.getByTestId("create-invoice")).toHaveCount(0)
+
+    const page = await staffPage(browser, ADMIN, STAFF.owner)
+    await page.goto(`${ADMIN}/cargo/${shipment.ref}`)
+    await page.getByTestId("create-invoice").click()
+    const item = page.getByTestId("invoice-item")
+    await expect(item).toContainText("Draft")
+    await expect(item).toContainText("£50")
+    await item.getByRole("button", { name: "Issue" }).click()
+    await expect(item).toContainText(/INV-\d{4}-\d{6}/)
+    await expect(item.locator("span").filter({ hasText: /^ISSUED$/i }).first()).toBeVisible()
+    await item.getByText("History").click()
+    await expect(item.getByTestId("invoice-history")).toContainText("Create")
+    await expect(item.getByTestId("invoice-history")).toContainText("Issue")
+    await shot(page, "admin-invoice-issued")
+
+    await item.getByRole("button", { name: "Cancel…" }).click()
+    const dlg = page.getByTestId("dlg-cancel-invoice")
+    await dlg.getByLabel("Internal note").fill("Wrong consignee name")
+    await dlg.getByRole("button", { name: "Cancel invoice" }).click()
+    await expect(item.locator("span").filter({ hasText: /^CANCELLED$/i }).first()).toBeVisible()
+    await item.getByText("History").click()
+    await expect(item.getByTestId("invoice-history")).toContainText("Wrong consignee name")
+
+    await page.goto(`${ADMIN}/invoices`)
+    await expect(page.getByTestId("invoice-table")).toContainText(shipment.ref)
+    await shot(page, "admin-invoices")
+  })
+
+  test("owner sees the payment status of a card-paid invoice and requests a refund; the refund waits for the provider's confirmation", async ({ browser }) => {
+    const cargoPage = await staffPage(browser, ADMIN, STAFF.cargo)
+    const shipment = await receivedShipment("MOBILE", await apiSessionFrom(cargoPage, ADMIN))
+    const page = await staffPage(browser, ADMIN, STAFF.owner)
+    const owner = await apiSessionFrom(page, ADMIN)
+    const draft = await owner.post(`/v1/admin/requests/${shipment.ref}/invoices`)
+    expect((await owner.post(`/v1/admin/invoices/${draft.body.id}/issue`)).status).toBe(200)
+    // A card payment as the verified webhook would have recorded it (the webhook path itself is covered by stage11.e2e.ts).
+    const inv = (await dbQuery<{ id: string; request_type: string; request_id: string; currency: string; total_minor: string }>("select id, request_type, request_id, currency, total_minor from invoices where id = $1", [draft.body.id]))[0]!
+    await dbQuery("insert into payment_records (id, request_type, request_id, amount_minor, currency, method, received_at, external_reference, payer_name, status, verified_at, invoice_id, provider, provider_ref) values (gen_random_uuid(), $1, $2, $3, $4, 'CARD_ONLINE', now(), $5, 'Console Tester', 'VERIFIED', now(), $6, 'FAKE', $5)", [inv.request_type, inv.request_id, inv.total_minor, inv.currency, `pi_fake_console${Date.now()}`, inv.id])
+    await dbQuery("update invoices set status = 'PAID', paid_at = now() where id = $1", [inv.id])
+    const dev = await apiSessionFrom(await staffPage(browser, DEV, STAFF.developer), DEV)
+    expect((await dev.patch("/v1/dev/payments/config", { provider: "FAKE" })).status).toBe(200)
+
+    await page.goto(`${ADMIN}/cargo/${shipment.ref}`)
+    const item = page.getByTestId("invoice-item")
+    const panel = item.getByTestId("payment-panel")
+    await expect(panel).toContainText("Payment")
+    await expect(panel.getByTestId("payment-item")).toContainText("Card online")
+    await expect(panel.getByTestId("payment-item")).toContainText("£50")
+    await shot(page, "admin-payment-panel")
+    await item.getByRole("button", { name: "Request refund…" }).click()
+    const dlg = page.getByTestId("dlg-refund")
+    await expect(dlg).toContainText("a second person must approve it")
+    await dlg.getByTestId("refund-amount").fill("10")
+    await dlg.getByRole("button", { name: "Request refund" }).click()
+    await expect(panel.getByTestId("refund-item")).toContainText("SUBMITTED", { ignoreCase: true })
+    await expect(panel.getByTestId("refund-item")).toContainText("£10")
+    // The invoice is still PAID until the provider confirms with a verified charge.refunded event.
+    await expect(item.locator("span").filter({ hasText: /^PAID$/i }).first()).toBeVisible()
+    await shot(page, "admin-refund-requested")
+  })
 })
 
 test.describe("Developer Panel", () => {
@@ -205,6 +300,19 @@ test.describe("Developer Panel", () => {
       await shot(page, name)
     }
   })
+
+  test("developer sees the online payment settings: live is blocked, keys are write-only, FAKE health is green", async ({ browser }) => {
+    const page = await staffPage(browser, DEV, STAFF.developer)
+    expect((await (await apiSessionFrom(page, DEV)).patch("/v1/dev/payments/config", { provider: "FAKE" })).status).toBe(200)
+    await page.goto(`${DEV}/payments`)
+    await expect(page.locator("h1")).toContainText("Online payments")
+    await expect(page.getByTestId("live-blocked")).toContainText("Live mode is blocked")
+    await expect(page.getByTestId("webhook-url")).toContainText("/v1/webhooks/stripe")
+    await expect(page.getByTestId("payments-config")).not.toContainText(/sk_test_|whsec_/)
+    await page.getByRole("button", { name: "Run health check" }).click()
+    await expect(page.getByTestId("payments-health")).toContainText("Healthy")
+    await shot(page, "dev-payments")
+  })
 })
 
 test.describe("Host isolation", () => {
@@ -222,11 +330,13 @@ test.describe("Host isolation", () => {
 })
 
 test.describe("Mobile admin mode @mobile", () => {
-  test("owner triages on a phone: queue cards and a case", async ({ browser }) => {
+  // The admin signed in once in the desktop project, minutes earlier; the owner is used by the invoice test, so a second
+  // owner sign-in here would fall inside that phone's resend cooldown.
+  test("admin triages on a phone: queue cards and a case", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2.6 })
     const page = await ctx.newPage()
     const { staffSignIn } = await import("./helpers")
-    await staffSignIn(page, ADMIN, STAFF.owner)
+    await staffSignIn(page, ADMIN, STAFF.admin)
     await page.goto(`${ADMIN}/queues?tab=new`)
     await expect(page.getByTestId("queue-cards").locator("li").first()).toBeVisible()
     await shot(page, "mobile-queue")

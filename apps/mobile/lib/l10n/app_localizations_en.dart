@@ -733,6 +733,253 @@ class AppL10nEn extends AppL10n {
   String get typeInfant => 'infant';
 
   @override
+  String get detailsTitle => 'My details';
+
+  @override
+  String get detailsLink => 'My details and passport';
+
+  @override
+  String get detailsIntro =>
+      'Names and passport details must match your passport exactly.';
+
+  @override
+  String get contactTitle => 'Phone and email';
+
+  @override
+  String get contactHelp =>
+      'A verified phone lets you send requests; a verified email lets us send documents.';
+
+  @override
+  String get addContact => 'Add a phone or email';
+
+  @override
+  String get detPhone => 'Phone';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String detCodeSent(String value) {
+    return 'We sent a code to $value.';
+  }
+
+  @override
+  String get verifyCode => 'Verify';
+
+  @override
+  String get verifiedLabel => 'Verified';
+
+  @override
+  String get notVerifiedLabel => 'Not verified';
+
+  @override
+  String get verifyPhoneInline =>
+      'Add and verify a phone number to send your request.';
+
+  @override
+  String get detProfile => 'Profile';
+
+  @override
+  String get nameFaLabel => 'Name in Persian (optional)';
+
+  @override
+  String get contactTimeLabel => 'Best time to call';
+
+  @override
+  String get addressTitle => 'Address';
+
+  @override
+  String get addressHelp =>
+      'Optional. We ask for it only when an invoice or a cargo shipment needs it.';
+
+  @override
+  String get addressLine1 => 'Address line 1';
+
+  @override
+  String get addressLine2 => 'Address line 2';
+
+  @override
+  String get addressCity => 'City';
+
+  @override
+  String get addressPostcode => 'Postcode';
+
+  @override
+  String get addressCountry => 'Country (2 letters, e.g. GB)';
+
+  @override
+  String get removeAddress => 'Remove address';
+
+  @override
+  String get savedLabel => 'Saved';
+
+  @override
+  String get passportTitle => 'Passport and verification';
+
+  @override
+  String get passportHelp =>
+      'Our team checks your passport details against a scan before tickets are issued.';
+
+  @override
+  String get passportAddDetails =>
+      'Add your passport details to start verification.';
+
+  @override
+  String get passportEdit => 'Edit passport details';
+
+  @override
+  String get verifUnverified => 'Not verified';
+
+  @override
+  String get verifSubmitted => 'Waiting for review';
+
+  @override
+  String get verifVerified => 'Verified';
+
+  @override
+  String get verifRejected => 'Not accepted';
+
+  @override
+  String get verifCorrection => 'Correction needed';
+
+  @override
+  String get verifHelpUnverified =>
+      'Upload a scan, check your details and send them for review.';
+
+  @override
+  String get verifHelpSubmitted =>
+      'Our team is reviewing your passport. You do not need to do anything.';
+
+  @override
+  String get verifHelpVerified =>
+      'Your passport is verified. Changing the passport number, names, date of birth, nationality, issuing country or expiry date, or replacing the scan, sends it back for review.';
+
+  @override
+  String get verifHelpRejected =>
+      'We could not accept this passport as submitted. Upload a better scan or correct the details and send it again.';
+
+  @override
+  String get verifHelpCorrection =>
+      'Please correct the details and send them again.';
+
+  @override
+  String get reasonTitle => 'Message from our team';
+
+  @override
+  String get reasonUnreadableScan => 'The scan is not readable';
+
+  @override
+  String get reasonNameMismatch => 'The name does not match';
+
+  @override
+  String get reasonNumberMismatch => 'The passport number does not match';
+
+  @override
+  String get reasonDobMismatch => 'The date of birth does not match';
+
+  @override
+  String get reasonNationalityMismatch => 'The nationality does not match';
+
+  @override
+  String get reasonExpiryMismatch => 'The expiry date does not match';
+
+  @override
+  String get reasonExpiredDocument => 'The passport has expired';
+
+  @override
+  String get reasonNotAPassport => 'This is not a passport photo page';
+
+  @override
+  String get reasonScanIncomplete => 'The scan is cut off or incomplete';
+
+  @override
+  String get reasonOther => 'Other';
+
+  @override
+  String get scanTitle => 'Passport scan';
+
+  @override
+  String get scanHelp =>
+      'Upload a clear JPG or PNG of the photo page, held upright. PDF files are not accepted. We remove location and camera data from the file.';
+
+  @override
+  String get scanNone => 'No scan yet';
+
+  @override
+  String scanReceived(String name) {
+    return 'Scan received: $name';
+  }
+
+  @override
+  String get scanReady => 'Scan received';
+
+  @override
+  String get scanUpload => 'Upload scan';
+
+  @override
+  String get scanReplace => 'Replace scan';
+
+  @override
+  String get scanChecking => 'Checking the file…';
+
+  @override
+  String get scanFailed =>
+      'The file did not pass our checks. Please upload another.';
+
+  @override
+  String get scanReplaceWarn =>
+      'Replacing the scan sends a verified passport back for review.';
+
+  @override
+  String get reviewTitle => 'Check before you send';
+
+  @override
+  String get reviewHelp =>
+      'Compare each detail with your passport. When it all matches, confirm and send it for review.';
+
+  @override
+  String get confirmSend => 'Confirm and send for review';
+
+  @override
+  String get confirmSent => 'Sent for review';
+
+  @override
+  String get confirmNeedScan => 'Upload a scan first.';
+
+  @override
+  String get confirmChanged => 'Your details changed. Check them again.';
+
+  @override
+  String get fieldName => 'Name';
+
+  @override
+  String get fieldDob => 'Date of birth';
+
+  @override
+  String get fieldNationality => 'Nationality';
+
+  @override
+  String get fieldNumber => 'Passport number';
+
+  @override
+  String get fieldIssuing => 'Issuing country';
+
+  @override
+  String get fieldExpiry => 'Expiry date';
+
+  @override
+  String get passportNumberLabel => 'Passport number';
+
+  @override
+  String get issuingCountryLabel => 'Issuing country (2 letters)';
+
+  @override
+  String get expiryLabel => 'Expiry date (YYYY-MM-DD)';
+
+  @override
+  String get priceInQuote => 'Price confirmed in your quote';
+
+  @override
   String get documentMissing => 'Passport details still needed';
 
   @override
@@ -1236,4 +1483,617 @@ class AppL10nEn extends AppL10n {
   String commandNotAllowed(String reason) {
     return 'Not available: $reason';
   }
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navAlerts => 'Alerts';
+
+  @override
+  String get navMe => 'Me';
+
+  @override
+  String get homeTitle => 'Control deck';
+
+  @override
+  String homeGreeting(String name) {
+    return 'Signed in as $name';
+  }
+
+  @override
+  String get heroNeedsYou => 'Needs you now';
+
+  @override
+  String get heroAllClear => 'All clear';
+
+  @override
+  String get heroAllClearHelp =>
+      'Nothing is past SLA, waiting to be claimed, or close to a ticketing deadline.';
+
+  @override
+  String heroSlaBreached(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString cases are past their SLA',
+      one: '1 case is past its SLA',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String heroNewUnclaimed(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString new cases are unclaimed',
+      one: '1 new case is unclaimed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String heroDeadlines(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString ticketing deadlines within 24 h',
+      one: '1 ticketing deadline within 24 h',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get heroNextUp => 'Most urgent unclaimed';
+
+  @override
+  String get trendUp => 'Rising';
+
+  @override
+  String get trendDown => 'Falling';
+
+  @override
+  String get trendFlat => 'Unchanged';
+
+  @override
+  String trendSince(String word, String when) {
+    return '$word since $when';
+  }
+
+  @override
+  String get trendNone => 'Trend builds up as this device refreshes';
+
+  @override
+  String get queueMix => 'Queue mix';
+
+  @override
+  String get queueMixEmpty => 'No open cases right now.';
+
+  @override
+  String openCases(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString open',
+      one: '1 open',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get complianceHolds => 'Compliance holds';
+
+  @override
+  String get complianceOpen => 'Open compliance cases';
+
+  @override
+  String get verificationsWaiting => 'ID checks waiting';
+
+  @override
+  String get ticketingSoon => 'Ticketing within 24 h';
+
+  @override
+  String get decideInPanel => 'Decided in the Admin Panel';
+
+  @override
+  String deadlineIn(String ref, String time) {
+    return 'Next $ref in $time';
+  }
+
+  @override
+  String deadlinePast(String ref, String time) {
+    return '$ref is $time late';
+  }
+
+  @override
+  String get tileFailed => 'Could not load. Tap to retry.';
+
+  @override
+  String get quickActions => 'Quick actions';
+
+  @override
+  String get qaUnclaimed => 'Unclaimed cases';
+
+  @override
+  String get qaFind => 'Find a case';
+
+  @override
+  String get dataNote =>
+      'Counts come from the live queue. Trends are what this device has seen, not a server history.';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsHelp => 'Appearance and language';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get tabMine => 'Mine';
+
+  @override
+  String get urgent => 'Urgent';
+
+  @override
+  String get filterAtRisk => 'SLA at risk';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String get queueFilterHint => 'Filter by reference, route or customer';
+
+  @override
+  String get queueNoMatch => 'No case matches these filters';
+
+  @override
+  String get clearFilters => 'Clear filters';
+
+  @override
+  String casesCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString cases',
+      one: '1 case',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String casesShownOf(int shown, int total) {
+    final intl.NumberFormat shownNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String shownString = shownNumberFormat.format(shown);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'Showing $shownString of $totalString';
+  }
+
+  @override
+  String slaLeft(Object time) {
+    return '$time left';
+  }
+
+  @override
+  String slaOverdue(Object time) {
+    return 'Overdue by $time';
+  }
+
+  @override
+  String durDays(String n) {
+    return '${n}d';
+  }
+
+  @override
+  String durHours(String n) {
+    return '${n}h';
+  }
+
+  @override
+  String durMinutes(String n) {
+    return '${n}m';
+  }
+
+  @override
+  String get adminSearchTitle => 'Find a case';
+
+  @override
+  String get adminSearchHint => 'Reference or phone number';
+
+  @override
+  String get adminSearchIntro =>
+      'Type at least 3 characters of a reference or phone number.';
+
+  @override
+  String get adminSearchNone => 'No case found';
+
+  @override
+  String get caseActions => 'Case actions';
+
+  @override
+  String get moreActions => 'More actions';
+
+  @override
+  String get customerNote => 'Customer note';
+
+  @override
+  String get caseTruthTitle => 'What we know';
+
+  @override
+  String get activityTitle => 'Activity';
+
+  @override
+  String get activityEmpty => 'No activity of this kind yet.';
+
+  @override
+  String get msgFromCustomer => 'Message from customer';
+
+  @override
+  String get msgToCustomer => 'Sent to customer';
+
+  @override
+  String get noteKind => 'Internal note';
+
+  @override
+  String get truthRequest => 'Request';
+
+  @override
+  String get truthSnapshot => 'Offer snapshot';
+
+  @override
+  String get truthNoSnapshot => 'Manual request, no offer was frozen';
+
+  @override
+  String get truthChange => 'Changes';
+
+  @override
+  String get truthRefund => 'Refund';
+
+  @override
+  String get truthQuote => 'Quote';
+
+  @override
+  String get truthReservation => 'Reservation';
+
+  @override
+  String get truthTicket => 'Ticket';
+
+  @override
+  String get truthPayment => 'Payment';
+
+  @override
+  String get truthOnFile => 'On file';
+
+  @override
+  String get truthNone => 'None yet';
+
+  @override
+  String get truthDraftOnly => 'Draft only';
+
+  @override
+  String get truthVaries => 'varies by ticket or segment';
+
+  @override
+  String get truthUnknownValue => 'Not supplied, confirm before quoting';
+
+  @override
+  String get truthUnknownBlocks =>
+      'UNKNOWN items must be confirmed before a quote can be sent.';
+
+  @override
+  String get truthPaymentNote =>
+      'Payment, reservation and ticket are separate facts. A payment never means a booking.';
+
+  @override
+  String get triKnown => 'Known';
+
+  @override
+  String get triNotIncluded => 'Not included';
+
+  @override
+  String get triUnknown => 'UNKNOWN';
+
+  @override
+  String get condAllowed => 'Allowed';
+
+  @override
+  String get condNotAllowed => 'Not allowed';
+
+  @override
+  String get resHeld => 'Held';
+
+  @override
+  String get resConfirmed => 'Confirmed';
+
+  @override
+  String deadlineAt(String when) {
+    return 'ticket by $when';
+  }
+
+  @override
+  String ticketCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString tickets issued',
+      one: '1 ticket issued',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get payNone => 'No payment';
+
+  @override
+  String get payPartial => 'Partly paid';
+
+  @override
+  String get payPaid => 'Paid';
+
+  @override
+  String get payRefundPending => 'Refund pending';
+
+  @override
+  String get payRefunded => 'Refunded';
+
+  @override
+  String get shipmentsTitle => 'Shipments';
+
+  @override
+  String get shipmentsIntro => 'Follow your cargo from collection to delivery.';
+
+  @override
+  String get shipmentsEmpty =>
+      'No shipments yet. Once a quote is accepted, your shipment appears here.';
+
+  @override
+  String get shipmentsTotal => 'Shipments';
+
+  @override
+  String get shipmentsInTransit => 'On the way';
+
+  @override
+  String get shipmentsDelivered => 'Delivered';
+
+  @override
+  String get shipmentsNext => 'Next to arrive';
+
+  @override
+  String get etaLabel => 'Estimated delivery';
+
+  @override
+  String get etaNote => 'An estimate, not a promise. It can change.';
+
+  @override
+  String get etaNone => 'No estimate yet';
+
+  @override
+  String get trackingNoEvents =>
+      'Nothing scanned yet. Updates appear here as our partner reports them.';
+
+  @override
+  String get trackingUpdated => 'Updated';
+
+  @override
+  String awbLabel(String awb) {
+    return 'AWB $awb';
+  }
+
+  @override
+  String get trackEventPickedUp => 'Picked up';
+
+  @override
+  String get trackEventReceived => 'Received at our partner';
+
+  @override
+  String get trackEventDeparted => 'Departed';
+
+  @override
+  String get trackEventArrived => 'Arrived';
+
+  @override
+  String get trackEventAtCustoms => 'At customs';
+
+  @override
+  String get trackEventCleared => 'Cleared customs';
+
+  @override
+  String get trackEventOutForDelivery => 'Out for delivery';
+
+  @override
+  String get trackEventDelivered => 'Delivered';
+
+  @override
+  String get trackEventHeld => 'On hold';
+
+  @override
+  String get trackEventDamaged => 'Damage reported';
+
+  @override
+  String get trackEventReturned => 'Returned';
+
+  @override
+  String get trackEventNote => 'Update';
+
+  @override
+  String get billingTitle => 'Documents & billing';
+
+  @override
+  String get billingIntro =>
+      'Your quotations and invoices in one place. Documents are issued in English.';
+
+  @override
+  String get billingInvoices => 'Invoices';
+
+  @override
+  String get billingQuotations => 'Quotations';
+
+  @override
+  String get billingEmptyInvoices =>
+      'No invoices yet. When we issue one it appears here.';
+
+  @override
+  String get billingEmptyQuotations =>
+      'No quotations yet. When we send you a quote it appears here.';
+
+  @override
+  String billingIssuedOn(String date) {
+    return 'Issued $date';
+  }
+
+  @override
+  String billingSentOn(String date) {
+    return 'Sent $date';
+  }
+
+  @override
+  String get billingTotal => 'Total';
+
+  @override
+  String get billingCharges => 'Charges';
+
+  @override
+  String get billingDownload => 'Download PDF';
+
+  @override
+  String get billingViewQuote => 'View the quote';
+
+  @override
+  String billingUnpaidExpires(String date) {
+    return 'If it is still unpaid, this invoice expires on $date.';
+  }
+
+  @override
+  String get billingPayNote => 'Your Uni Travel contact tells you how to pay.';
+
+  @override
+  String get billingPayOnline => 'Pay by card on our website';
+
+  @override
+  String get billingPayOnlineNote =>
+      'The payment page opens in your browser. Card details are entered there and never pass through this app.';
+
+  @override
+  String get billingPayProcessing =>
+      'Your payment is being processed. You do not need to pay again.';
+
+  @override
+  String get progressLabel => 'Request progress';
+
+  @override
+  String get progressReceived => 'Received';
+
+  @override
+  String get progressReview => 'In review';
+
+  @override
+  String get progressQuote => 'Options sent';
+
+  @override
+  String get progressBooked => 'Accepted';
+
+  @override
+  String get progressTicketed => 'Ticketed';
+
+  @override
+  String get progressDone => 'done';
+
+  @override
+  String get progressCurrent => 'current';
+
+  @override
+  String get progressTodo => 'to do';
+
+  @override
+  String get billingPaidBanner => 'This invoice is paid. Thank you.';
+
+  @override
+  String get billingNotFound =>
+      'We could not find this document in your account.';
+
+  @override
+  String get billingOpenFailed =>
+      'The document could not be opened. Try again.';
+
+  @override
+  String get invoiceIssued => 'Awaiting payment';
+
+  @override
+  String get invoicePaid => 'Paid';
+
+  @override
+  String get invoiceCancelled => 'Cancelled';
+
+  @override
+  String get invoiceRefunded => 'Refunded';
+
+  @override
+  String get quoteSent => 'Open';
+
+  @override
+  String get quoteDeclined => 'Declined';
+
+  @override
+  String get quoteSuperseded => 'Replaced';
+
+  @override
+  String get cancelReasonExpired =>
+      'This invoice expired and can no longer be paid.';
+
+  @override
+  String get cancelReasonCorrection =>
+      'This invoice was withdrawn, usually because a corrected one replaces it. Do not pay it.';
+
+  @override
+  String get cancelReasonCustomerRequest =>
+      'Cancelled at your request. Do not pay it.';
+
+  @override
+  String get cancelReasonDuplicate =>
+      'Cancelled because it was a duplicate. Do not pay it.';
+
+  @override
+  String get cancelReasonOther => 'This invoice was cancelled. Do not pay it.';
 }

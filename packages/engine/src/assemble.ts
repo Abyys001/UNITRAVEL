@@ -123,7 +123,7 @@ type Scored = ReturnType<typeof scoreAll>[number]
 
 /** Step 8 — diversity and tabs (ch. 22.7). */
 export function diversify(sorted: Scored[], ctx: EngineContext): Itinerary[] {
-  const { maxSameFirstFlight, maxSameLastFlight, maxResults, singleTicketPreferenceWithinPct } = ctx.rules.limits
+  const { maxSameFirstFlight, maxSameLastFlight, maxResults } = ctx.rules.limits
   const firstCount = new Map<string, number>()
   const lastCount = new Map<string, number>()
   const kept: Scored[] = []
@@ -145,14 +145,15 @@ export function diversify(sorted: Scored[], ctx: EngineContext): Itinerary[] {
     }
   }
 
-  // BEST: by cost, single tickets lifted above separate tickets priced within N% (worked example ch. 22.11).
+  // BEST: by cost, single tickets lifted above separate tickets. The "priced within N%" test of ch. 22.11 is dropped
+  // because price is not a customer ranking input (ADR-0004); `singleTicketPreferenceWithinPct` is therefore unused.
   const best = [...capped].sort(byCost)
   for (let i = 1; i < best.length; i++) {
     const it = best[i]!
     if (it.ticketing !== "SINGLE_TICKET") continue
     for (let j = 0; j < i; j++) {
       const above = best[j]!
-      if (above.ticketing === "SEPARATE_TICKETS" && it.price.total.amountMinor <= above.price.total.amountMinor * (1 + singleTicketPreferenceWithinPct / 100)) {
+      if (above.ticketing === "SEPARATE_TICKETS") {
         best.splice(i, 1); best.splice(j, 0, it); break
       }
     }

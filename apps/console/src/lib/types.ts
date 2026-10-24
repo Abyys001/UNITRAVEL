@@ -42,7 +42,7 @@ export interface FlightDetail {
     history: { ref: string; status: string; submittedAt: string; productType: string }[]
   }
   travellers: StaffTraveller[]
-  snapshot: { id: string; itinerary: Itinerary; priceAtSubmit: Money; priceRevalidated: Money | null; revalidatedAt: string | null; ruleVersion: number; engineVersion: string; contentHash: string; createdAt: string } | null
+  snapshot: { id: string; itinerary: Itinerary; priceAtSubmit?: Money; priceRevalidated?: Money | null; revalidatedAt?: string | null; ruleVersion: number; engineVersion: string; contentHash: string; createdAt: string } | null
   timeline: TimelineEntry[]
   messages: { id: string; direction: "TO_CUSTOMER" | "FROM_CUSTOMER"; body: string; authorName: string; createdAt: string; readAt: string | null; documentIds: string[] }[]
   notes: { id: string; body: string; author: string | null; createdAt: string }[]
@@ -68,7 +68,8 @@ export interface CargoDetail {
   weights: { actualKg: number; volumetricKg: number; chargeableKg: number; divisor: number }
   declaredTotal: Money; submittedAt: string
   timeline: { at: string; label: string; detail?: string }[]
-  tracking: { id: string; eventCode: string; location: string; occurredAt: string; description?: string; source: string }[]
+  tracking: { id: string; eventCode: string; location: string; occurredAt: string; description: string | null; source: string; externalEventId: string | null; correctsEventId: string | null; correctionReason: string | null; createdBy: string | null; createdAt: string; effective: boolean }[]
+  estimatedDeliveryAt: string | null
   quotes: { id: string; version: number; status: string; validUntil: string | null; lines: CargoLines; transitNote: string | null; sentAt: string | null; acceptedAt: string | null; partnerName: string; partnerId?: string }[]
   messages: { id: string; direction: string; body: string; authorName: string; createdAt: string }[]
   documents: { id: string; type: string; filename: string; createdAt: string }[]

@@ -1,0 +1,46 @@
+[
+ {
+  "ref": "UT-C-A987BD",
+  "service": "PARCEL",
+  "status": "RECEIVED",
+  "statusLabel": "توسط ما دریافت شد",
+  "laneLabel": "بریتانیا → ترکیه",
+  "awbNumber": "176-12345675",
+  "estimatedDeliveryAt": "2026-10-27T13:28:28.741Z",
+  "lastEvent": {
+   "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+   "eventCode": "AT_CUSTOMS",
+   "label": "در گمرک",
+   "location": "IST customs",
+   "occurredAt": "2026-10-24T13:31:28.734Z",
+   "corrected": true
+  },
+  "timeline": [
+   {
+    "id": "01a16e19-370f-75a8-a3ce-f9ae0a3b6362",
+    "eventCode": "NOTE",
+    "label": "به‌روزرسانی",
+    "location": "Pickup scheduled",
+    "occurredAt": "2026-10-24T13:28:28.686Z",
+    "description": "Courier pickup",
+    "corrected": false
+   },
+   {
+    "id": "01a16e19-3723-752d-86f0-b15deae8c44f",
+    "eventCode": "RECEIVED",
+    "label": "نزد شریک ما دریافت شد",
+    "location": "London hub",
+    "occurredAt": "2026-10-24T13:28:28.706Z",
+    "corrected": false
+   },
+   {
+    "id": "01a16e19-3731-70f4-8c51-e2cf3c717b61",
+    "eventCode": "AT_CUSTOMS",
+    "label": "در گمرک",
+    "location": "IST customs",
+    "occurredAt": "2026-10-24T13:31:28.734Z",
+    "corrected": true
+   }
+  ]
+ }
+]

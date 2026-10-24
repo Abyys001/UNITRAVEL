@@ -43,6 +43,11 @@ describe("Stage 3 — search and itinerary engine (ch. 31.5)", () => {
         }
         expect(it.truth.length).toBe(it.components.length)
         expect(it.components[0].slices[0].segments[0].fareBasis).toBeUndefined()
+        // ADR-0004: no amount, price-derived score or CHEAPEST tab reaches a customer.
+        expect(it.price).toBeUndefined()
+        expect(it.score).toBeUndefined()
+        expect(it.tabs).not.toContain("CHEAPEST")
+        expect(JSON.stringify(it)).not.toMatch(/amountMinor/)
       }
       // Every benchmark must produce options; Iran origins must include at least one gateway start (ch. 32.4).
       expect(state.results.length).toBeGreaterThan(0)
@@ -52,7 +57,7 @@ describe("Stage 3 — search and itinerary engine (ch. 31.5)", () => {
         const hub = state.results.find((x: { construction: string; connections: { at: string }[] }) => x.construction === "SELF_TRANSFER" && x.connections[0]?.at === "MCT")
         expect(hub).toBeTruthy()
         expect(hub.connections[0].layoverMin).toBe(370) // 6 h 10 m, just outside the preferred window (ch. 22.11)
-        expect(hub.explain.layoverFit).toBeGreaterThan(0)
+        expect(hub.connections[0].inPreferredWindow).toBe(false)
       }
     })
   }
@@ -67,13 +72,11 @@ describe("Stage 3 — search and itinerary engine (ch. 31.5)", () => {
     expect(st).toBeTruthy()
     const detail = await c.get(`/v1/itineraries/${st.id}`)
     expect(detail.body.itinerary.id).toBe(st.id)
-    const pc = await c.post(`/v1/itineraries/${st.id}/price-check`)
-    expect(["CONFIRMED", "PRICE_CHANGED"]).toContain(pc.body.outcome)
-    if (pc.body.outcome === "PRICE_CHANGED") expect(pc.body.currentTotal.amountMinor).not.toBe(pc.body.previousTotal.amountMinor)
+    expect(JSON.stringify(detail.body)).not.toMatch(/amountMinor/)
+    expect((await c.post(`/v1/itineraries/${st.id}/price-check`)).status).toBe(404) // customers have no price check (ADR-0004)
     const body = { kind: "ITINERARY", searchId: id, itineraryId: st.id, contactIdentityId: me.identities[0].id, travellers: [{ travellerId: trav.id, passengerType: "ADT" }], seatPreference: "AISLE", acknowledgements: { notABooking: true, privacy: true } }
     const noAck = await c.post("/v1/flight-requests", body)
     expect(noAck.body.errors?.[0]?.path).toBe("acknowledgements.selfTransfer")
-    // The customer has just seen the re-checked price, so submitting must not ask them to confirm it again.
     const sub = await c.post("/v1/flight-requests", { ...body, acknowledgements: { notABooking: true, privacy: true, selfTransfer: true } })
     expect(sub.status).toBe(201)
     const view = (await c.get(`/v1/flight-requests/${sub.body.ref}`)).body
@@ -88,36 +91,29 @@ describe("Stage 3 — search and itinerary engine (ch. 31.5)", () => {
     expect(opt.body.conditions.change.status).toBe("UNKNOWN") // separate tickets: staff confirm conditions per ticket
   })
 
-  it("a price the customer already re-checked is honoured at submit; an unseen change still asks first", async () => {
+  it("a price change between search and submit never blocks or prompts the customer; staff see both prices on the snapshot", async () => {
+    const admin = await staffSession(STAFF.admin, ADMIN_HOST)
     const c = new Session("MOBILE")
     await signIn(c, randomPhone("+98912"), { givenNamesLatin: "Leila", surnameLatin: "Pricecheck" })
     const me = (await c.get("/v1/me")).body
     const trav = (await c.post("/v1/me/travellers", { title: "MS", givenNames: "Leila", surname: "Pricecheck", dateOfBirth: "1994-05-05", genderOnDocument: "F", nationality: "IR" })).body
-    // One FAKE offer in six re-prices on revalidation; walk a few dates so both paths are exercised.
-    let checked = 0, unseen = 0
+    // One FAKE offer in six re-prices on revalidation; staff find one with the (staff-only) price check, then the customer submits it.
     for (const date of Array.from({ length: 12 }, (_, i) => `2026-11-${String(21 + i).padStart(2, "0")}`)) {
-      if (checked && unseen) break
       const { id, state } = await runSearch(c, "THR", "LON", date)
-      const base = (itineraryId: string, separate: boolean) => ({ kind: "ITINERARY", searchId: id, itineraryId, contactIdentityId: me.identities[0].id, travellers: [{ travellerId: trav.id, passengerType: "ADT" }], acknowledgements: { notABooking: true, privacy: true, selfTransfer: separate || undefined } })
       for (const it of state.results as { id: string; ticketing: string }[]) {
-        const separate = it.ticketing === "SEPARATE_TICKETS"
-        if (checked === 0) {
-          const pc = await c.post(`/v1/itineraries/${it.id}/price-check`)
-          if (pc.body.outcome !== "PRICE_CHANGED") continue
-          const sub = await c.post("/v1/flight-requests", base(it.id, separate))
-          expect(sub.status).toBe(201)
-          expect((await c.get(`/v1/flight-requests/${sub.body.ref}`)).body.snapshot.itinerary.price.total).toEqual(pc.body.currentTotal)
-          checked++
-        } else if (unseen === 0) {
-          const sub = await c.post("/v1/flight-requests", base(it.id, separate))
-          if (sub.status === 201) continue
-          expect(sub.body.code).toBe("PRICE_CHANGED")
-          unseen++
-        }
+        const pc = await admin.post(`/v1/admin/itineraries/${it.id}/price-check`)
+        if (pc.body.outcome !== "PRICE_CHANGED") continue
+        const sub = await c.post("/v1/flight-requests", { kind: "ITINERARY", searchId: id, itineraryId: it.id, contactIdentityId: me.identities[0].id, travellers: [{ travellerId: trav.id, passengerType: "ADT" }], acknowledgements: { notABooking: true, privacy: true, selfTransfer: it.ticketing === "SEPARATE_TICKETS" || undefined } })
+        expect(sub.status).toBe(201)
+        const customerView = (await c.get(`/v1/flight-requests/${sub.body.ref}`)).body
+        expect(JSON.stringify(customerView)).not.toMatch(/amountMinor/)
+        const staffView = (await admin.get(`/v1/admin/flight-requests/${sub.body.ref}`)).body
+        expect(staffView.snapshot.priceAtSubmit).toEqual(pc.body.previousTotal)
+        expect(staffView.snapshot.priceRevalidated).toEqual(pc.body.currentTotal)
+        return
       }
     }
-    expect(checked).toBe(1)
-    expect(unseen).toBe(1)
+    throw new Error("no re-priced FAKE offer found in 12 searches")
   })
 
   it("streams progress, results and done over server-sent events", async () => {
@@ -141,6 +137,7 @@ describe("Stage 3 — search and itinerary engine (ch. 31.5)", () => {
     await wait(1500)
     const sm = await c.get(`/v1/itineraries/${it.id}/seat-maps`)
     expect(sm.body.available).toBe(true)
+    expect(JSON.stringify(sm.body)).not.toMatch(/"price"|amountMinor/) // ADR-0004: no seat prices for customers
     const rows = sm.body.maps[0].cabins[0].rows
     const designators = rows.map((r: { sections: { elements: { designator?: string }[] }[] }) => r.sections[0].elements.find((e) => e.designator)?.designator)
     expect(designators.some((d: string) => d.startsWith("13"))).toBe(false)
@@ -152,6 +149,14 @@ describe("Stage 3 — search and itinerary engine (ch. 31.5)", () => {
     const admin = await staffSession(STAFF.admin, ADMIN_HOST)
     const { id, state } = await runSearch(admin, "THR", "LON", "2026-11-14", {}, "/v1/admin/flight-searches")
     expect(state.results[0].components[0].slices[0].segments[0].fareBasis).toBeTruthy()
+    expect(state.results[0].price.total.amountMinor).toBeGreaterThan(0) // admin holds pricing.read.internal
+    // Staff without pricing.read.internal (cargo admin) get the customer projection and no price-sorted tab.
+    const cargo = await staffSession(STAFF.cargo, ADMIN_HOST)
+    const plain = await cargo.get(`/v1/admin/flight-searches/${id}?limit=60`)
+    expect(plain.status).toBe(200)
+    expect(JSON.stringify(plain.body)).not.toMatch(/amountMinor/)
+    expect((await cargo.get(`/v1/admin/flight-searches/${id}?tab=CHEAPEST`)).status).toBe(400)
+    expect((await cargo.post(`/v1/admin/itineraries/${plain.body.results[0].id}/price-check`)).status).toBe(403)
     const dev = await staffSession(STAFF.developer)
     const rules = (await dev.get("/v1/dev/config/ENGINE_RULES/versions")).body.find((v: { status: string }) => v.status === "PUBLISHED").payload
     const sim = await dev.post("/v1/dev/config/ENGINE_RULES/simulate", { searchId: id, payload: { ...rules, global: { ...rules.global, selfTransferMinMin: 400 } } })

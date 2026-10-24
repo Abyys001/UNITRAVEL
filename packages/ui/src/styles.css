@@ -1,21 +1,13 @@
-/* UniTravel tokens (docs/design/DESIGN.md) for Tailwind v4 + the kit's shadcn/Base UI primitives. */
+/* UniTravel brand tokens (docs/design/DESIGN.md "Night flight") for Tailwind v4 + the kit's shadcn/Base UI primitives.
+   Palette, fonts and logo come from the live brand (unitravels.co.uk, Design Thief capture 2026-10-23). */
 @import "tailwindcss";
+@import "./tokens.css";
 @source "./";
 
 @custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *));
 
+/* Palette, radii, shadows and the light/dark semantic variables are generated (tokens/tokens.json -> tokens.css). */
 @theme {
-  --color-ink: #0f2238;
-  --color-deep: #13263f;
-  --color-copper: #c98d5b;
-  --color-copper-700: #9c6435;
-  --color-sand: #f5f1ea;
-  --color-paper: #fbf9f5;
-  --color-mist: #e6e1d8;
-  --color-moss: #3f6b4f;
-  --color-brick: #a4452c;
-  --color-slate: #5b6573;
-
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -34,38 +26,11 @@
   --color-border: var(--border);
   --color-input: var(--border);
   --color-ring: var(--ring);
-  --color-success-subtle: #e4efe7;
-  --color-success-subtle-fg: #2c5139;
-  --color-success-border: #b9d3c1;
-  --color-warning-subtle: #f6ead9;
-  --color-warning-subtle-fg: #7a4d22;
-  --color-warning-border: #e3c49c;
-  --color-info-subtle: #e6ecf3;
-  --color-info-subtle-fg: #1f3a5c;
-  --color-info-border: #bccbdd;
 
-  --font-sans: var(--font-inter), "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-montserrat), var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-montserrat), var(--font-vazirmatn), ui-sans-serif, sans-serif;
   --font-fa: var(--font-vazirmatn), ui-sans-serif, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
-  --radius-lg: 10px;
-  --radius-md: 8px;
-  --radius-sm: 6px;
-}
-
-:root {
-  --background: #fbf9f5;
-  --foreground: #0f2238;
-  --card: #ffffff;
-  --primary: #13263f;
-  --primary-foreground: #fbf9f5;
-  --secondary: #f1ece3;
-  --muted: #f1ece3;
-  --muted-foreground: #5b6573;
-  --accent: #f3e7da;
-  --destructive: #a4452c;
-  --border: #e6e1d8;
-  --ring: #c98d5b;
 }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -73,10 +38,91 @@ body { background: var(--background); color: var(--foreground); font-family: var
 html[lang="fa"] body { font-family: var(--font-fa); }
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; }
-.font-display { font-family: var(--font-display); font-optical-sizing: auto; }
-html[lang="fa"] .font-display { font-family: var(--font-fa); font-weight: 700; }
+.font-display { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+html[lang="fa"] .font-display { font-family: var(--font-fa); font-weight: 800; letter-spacing: 0; }
 
-/* The route arcs on the hero draw in once; reduced motion keeps them static. */
-@keyframes draw { from { stroke-dashoffset: 1200; } to { stroke-dashoffset: 0; } }
-.arc { stroke-dasharray: 1200; animation: draw 2.4s ease-out forwards; }
-@media (prefers-reduced-motion: reduce) { .arc { animation: none; stroke-dasharray: none; } }
+/* NativeSelect (components/native-select.tsx): chevron mirrored in RTL; unlayered so a surface's `background` shorthand cannot drop it. */
+select[data-slot="native-select"] {
+  appearance: none; padding-inline-end: 2rem; background-repeat: no-repeat; background-size: 1rem; background-position: right 0.6rem center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5d7a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+[dir="rtl"] select[data-slot="native-select"] { background-position: left 0.6rem center; }
+[data-theme="dark"] select[data-slot="native-select"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9bdd9' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+@media (pointer: coarse) { select[data-slot="native-select"] { min-height: 2.75rem; } }
+
+/* ---------- Brand surfaces. Glass and gradient live only on dark brand surfaces (hero, page band, footer,
+   sign-in panel); content stays on white cards (DESIGN.md, kit UI policy §7 vs §23). ---------- */
+@utility bg-brand { background: var(--brand-gradient); }
+@utility glass {
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  backdrop-filter: blur(14px) saturate(1.2);
+}
+@utility btn-glass {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  border-radius: 16px; padding: 0.7rem 1.1rem; font-weight: 700; color: #fff;
+  background: rgb(255 255 255 / 0.1); border: 1px solid rgb(255 255 255 / 0.16);
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), background-color 0.25s;
+  &:hover { transform: translateY(-2px); background: rgb(255 255 255 / 0.18); }
+}
+/* Primary action: brand orange with navy text (6.6:1); white on orange fails contrast. */
+@utility btn-orange {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  border-radius: 16px; padding: 0.75rem 1.25rem; font-weight: 700; color: var(--color-navy-950);
+  background: linear-gradient(180deg, #ff9a3c, #ff8617);
+  box-shadow: 0 10px 24px -12px rgb(255 134 23 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.35);
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.25s, filter 0.25s;
+  &:hover { transform: translateY(-2px); filter: brightness(1.04); box-shadow: 0 16px 30px -12px rgb(255 134 23 / 0.9); }
+  &:disabled { opacity: 0.6; transform: none; }
+}
+@utility card-brand {
+  background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-card);
+}
+@utility card-lift {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s;
+  &:hover, &:focus-within { transform: translateY(-4px); box-shadow: var(--shadow-lift); }
+}
+@utility arrow-nudge {
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+  :where(.group, a, button):hover > &, :where(.group):hover & { transform: translateX(4px); }
+  [dir="rtl"] :where(.group, a, button):hover > &, [dir="rtl"] :where(.group):hover & { transform: translateX(-4px) rotate(180deg); }
+}
+@utility bg-dots { background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1.2px); background-size: 22px 22px; }
+@utility bg-dots-light { background-image: radial-gradient(rgb(6 31 76 / 0.07) 1px, transparent 1.2px); background-size: 22px 22px; }
+@utility text-gradient-orange {
+  background: linear-gradient(90deg, #ffac50, #ff8617); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+@utility shimmer {
+  background: linear-gradient(90deg, #eef3fa 0%, #f8fbff 40%, #eef3fa 80%); background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* ---------- Motion. Every animation has a reduced-motion fallback that shows the end state. ---------- */
+/* IO-driven reveal (kit motion/reveal): hidden only while JS marks it pending, so no-JS shows content. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-io { transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms); }
+  .reveal-io[data-reveal="pending"] { opacity: 0; transform: translateY(28px); }
+  .reveal-io[data-reveal="pending"][data-variant="scale"] { transform: scale(0.96); }
+  .reveal-io[data-reveal="pending"][data-variant="fade"] { transform: none; }
+  .animate-dash { animation: dash-flow var(--dash-duration, 1.6s) linear infinite; }
+  .animate-orbit { animation: orbit var(--orbit-duration, 60s) linear infinite; }
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-pulse-ring { animation: pulse-ring 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) infinite; }
+  .animate-marquee { animation: marquee var(--marquee-duration, 40s) linear infinite; }
+  .fly-path { offset-rotate: auto; animation: fly var(--fly-duration, 9s) cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+  .draw-in { stroke-dasharray: var(--len, 1400); stroke-dashoffset: var(--len, 1400); animation: draw 2.4s ease-out forwards; }
+  [data-reveal="pending"] .draw-on-view { stroke-dashoffset: var(--len, 1400); }
+  .draw-on-view { stroke-dasharray: var(--len, 1400); stroke-dashoffset: 0; transition: stroke-dashoffset 2.2s ease-out 0.2s; }
+}
+@media (prefers-reduced-motion: reduce) { .shimmer { animation: none; } }
+
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes dash-flow { to { stroke-dashoffset: -20; } }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes pulse-ring { 0% { transform: scale(0.6); opacity: 0.7; } 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes fly { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@keyframes shimmer { to { background-position: -200% 0; } }

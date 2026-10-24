@@ -9,6 +9,7 @@ import { Field } from "@/components/ui"
 import { api, newIdempotencyKey } from "@/lib/api"
 import { toMinor } from "@/lib/format"
 import type { FlightDetail } from "@/lib/types"
+import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 type Bind = { open: boolean; onOpenChange: (o: boolean) => void }
 const localNow = (plusHours = 0) => { const d = new Date(Date.now() + plusHours * 3600_000); d.setSeconds(0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
@@ -36,15 +37,15 @@ export function ReservationDialog({ d, done, ...bind }: Bind & { d: FlightDetail
   return (
     <FormDialog {...bind} title="Record reservation…" description={acc?.option ? <>For accepted option “{acc.option.label}”. Mirror exactly what the reservation system shows.</> : "There is no accepted option yet."} submitLabel="Record reservation" onSubmit={submit} testId="dlg-reservation">
       <div className="grid grid-cols-2 gap-3">
-        <Field label="System"><select className="field-input" value={f.system} onChange={(e) => setF({ ...f, system: e.target.value })}>{["AMADEUS_TERMINAL", "DUFFEL_API", "PARTNER", "AIRLINE_DIRECT"].map((s) => <option key={s}>{s}</option>)}</select></Field>
+        <Field label="System"><NativeSelect className="field-input" value={f.system} onChange={(e) => setF({ ...f, system: e.target.value })}>{["AMADEUS_TERMINAL", "DUFFEL_API", "PARTNER", "AIRLINE_DIRECT"].map((s) => <option key={s}>{s}</option>)}</NativeSelect></Field>
         <Field label="Record locator (PNR)"><input className="field-input font-mono uppercase" value={f.recordLocator} onChange={(e) => setF({ ...f, recordLocator: e.target.value.toUpperCase() })} pattern="[A-Za-z0-9]{6}" maxLength={6} required dir="ltr" /></Field>
         <Field label="Airline locators" hint="Carrier:locator, comma separated — TK:ABC12D"><input className="field-input font-mono" value={f.airline} onChange={(e) => setF({ ...f, airline: e.target.value })} dir="ltr" /></Field>
         <Field label="Ticketing deadline"><input type="datetime-local" className="field-input" value={f.deadline} onChange={(e) => setF({ ...f, deadline: e.target.value })} required /></Field>
-        <Field label="Status"><select className="field-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option>HELD</option><option>CONFIRMED</option></select></Field>
+        <Field label="Status"><NativeSelect className="field-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option>HELD</option><option>CONFIRMED</option></NativeSelect></Field>
         <Field label="Mismatch reason" hint="Only if the booked itinerary differs from the option"><input className="field-input" value={f.mismatch} onChange={(e) => setF({ ...f, mismatch: e.target.value })} /></Field>
       </div>
       <fieldset><legend className="cap">Travellers in this PNR</legend>
-        {d.travellers.map((t) => <label key={t.travellerId} className="mt-1 flex items-center gap-2"><input type="checkbox" checked={f.travellers.includes(t.travellerId)} onChange={(e) => setF({ ...f, travellers: e.target.checked ? [...f.travellers, t.travellerId] : f.travellers.filter((x) => x !== t.travellerId) })} />{t.name.givenNames} {t.name.surname} <span className="text-slate">· {t.passengerType}</span></label>)}
+        {d.travellers.map((t) => <label key={t.travellerId} className="mt-1 flex items-center gap-2"><input type="checkbox" checked={f.travellers.includes(t.travellerId)} onChange={(e) => setF({ ...f, travellers: e.target.checked ? [...f.travellers, t.travellerId] : f.travellers.filter((x) => x !== t.travellerId) })} />{t.name.givenNames} {t.name.surname} <span className="text-steel">· {t.passengerType}</span></label>)}
       </fieldset>
     </FormDialog>
   )
@@ -87,7 +88,7 @@ export function TicketsDialog({ d, done, ...bind }: Bind & { d: FlightDetail; do
             return (
               <tr key={r.travellerId} className="align-top">
                 <td className="py-1 pe-2">{t.name.givenNames} {t.name.surname}</td>
-                <td className="py-1 pe-2"><input aria-label={`Ticket number for ${t.name.surname}`} className="field-input font-mono" inputMode="numeric" maxLength={13} value={r.ticketNumber} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, ticketNumber: e.target.value.replace(/\D/g, "") } : x)))} required dir="ltr" aria-invalid={!!fmt} />{fmt && <span className="text-[11px] text-brick">{fmt}</span>}{prefix?.ok && <span className="text-[11px] text-slate">Prefix {r.ticketNumber.slice(0, 3)} — checked against {r.carrier || "the carrier"}&apos;s accounting code on save</span>}</td>
+                <td className="py-1 pe-2"><input aria-label={`Ticket number for ${t.name.surname}`} className="field-input font-mono" inputMode="numeric" maxLength={13} value={r.ticketNumber} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, ticketNumber: e.target.value.replace(/\D/g, "") } : x)))} required dir="ltr" aria-invalid={!!fmt} />{fmt && <span className="text-[11px] text-danger">{fmt}</span>}{prefix?.ok && <span className="text-[11px] text-steel">Prefix {r.ticketNumber.slice(0, 3)} — checked against {r.carrier || "the carrier"}&apos;s accounting code on save</span>}</td>
                 <td className="w-24 py-1 pe-2"><input aria-label="Validating carrier" className="field-input font-mono uppercase" maxLength={3} value={r.carrier} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, carrier: e.target.value.toUpperCase() } : x)))} required dir="ltr" /></td>
               </tr>
             )
@@ -107,7 +108,7 @@ function PaymentFields({ p, set }: { p: Pay; set: (p: Pay) => void }) {
     <div className="grid grid-cols-3 gap-3">
       <Field label="Amount"><input className="field-input num" inputMode="decimal" value={p.amount} onChange={(e) => set({ ...p, amount: e.target.value })} required dir="ltr" /></Field>
       <Field label="Currency"><input className="field-input font-mono uppercase" maxLength={3} value={p.currency} onChange={(e) => set({ ...p, currency: e.target.value.toUpperCase() })} required /></Field>
-      <Field label="Method"><select className="field-input" value={p.method} onChange={(e) => set({ ...p, method: e.target.value })}>{["BANK_TRANSFER", "CASH", "CARD_TERMINAL", "OTHER"].map((m) => <option key={m}>{m}</option>)}</select></Field>
+      <Field label="Method"><NativeSelect className="field-input" value={p.method} onChange={(e) => set({ ...p, method: e.target.value })}>{["BANK_TRANSFER", "CASH", "CARD_TERMINAL", "OTHER"].map((m) => <option key={m}>{m}</option>)}</NativeSelect></Field>
       <Field label="External reference"><input className="field-input font-mono" value={p.ref} onChange={(e) => set({ ...p, ref: e.target.value })} required /></Field>
       <Field label="Payer name"><input className="field-input" value={p.payer} onChange={(e) => set({ ...p, payer: e.target.value })} required minLength={2} dir="auto" /></Field>
       <Field label="Received at"><input type="datetime-local" className="field-input" value={p.received} onChange={(e) => set({ ...p, received: e.target.value })} required /></Field>
@@ -143,7 +144,7 @@ export function AfterSalesDialog({ d, done, ...bind }: Bind & { d: FlightDetail;
   const submit = async () => { await api(`/v1/admin/flight-requests/${d.ref}/after-sales`, { body: f }); await done() }
   return (
     <FormDialog {...bind} title="Open after-sales case…" description="Change, refund or cancellation of issued tickets. Opens a UT-A case." submitLabel="Open case" onSubmit={submit}>
-      <Field label="Type"><select className="field-input" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}><option>CHANGE</option><option>REFUND</option><option>CANCEL</option></select></Field>
+      <Field label="Type"><NativeSelect className="field-input" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}><option>CHANGE</option><option>REFUND</option><option>CANCEL</option></NativeSelect></Field>
       <fieldset><legend className="cap">Tickets</legend>{issued.map((t) => <label key={t.id} className="mt-1 flex items-center gap-2"><input type="checkbox" checked={f.ticketIds.includes(t.id)} onChange={(e) => setF({ ...f, ticketIds: e.target.checked ? [...f.ticketIds, t.id] : f.ticketIds.filter((x) => x !== t.id) })} /><span className="num">{t.ticketNumber}</span> {t.travellerName}</label>)}</fieldset>
       <Field label="Note"><textarea className="field-input min-h-20" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} required /></Field>
     </FormDialog>

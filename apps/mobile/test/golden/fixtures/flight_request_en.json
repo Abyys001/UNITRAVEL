@@ -1,0 +1,205 @@
+{
+ "ref": "UT-F-MP97Y0",
+ "kind": "MANUAL",
+ "status": "QUOTED",
+ "statusLabel": "Options sent",
+ "paymentStatus": "NONE",
+ "tripType": "ONE_WAY",
+ "query": {
+  "tripType": "ONE_WAY",
+  "slices": [
+   {
+    "from": {
+     "city": "THR"
+    },
+    "to": {
+     "city": "LON"
+    },
+    "date": "2026-12-14",
+    "flexDays": 2
+   }
+  ],
+  "passengers": [
+   {
+    "type": "ADT"
+   }
+  ],
+  "cabin": "ECONOMY",
+  "preferences": {
+   "allowSelfTransfer": true,
+   "allowAirportChange": false,
+   "allowOvernight": true,
+   "maxStops": 2,
+   "nearestCabin": false,
+   "studentFare": false
+  }
+ },
+ "routeLabel": "Tehran → London",
+ "firstTravelDate": "2026-12-14",
+ "submittedAt": "2026-10-24T13:28:28.843Z",
+ "updatedAt": "2026-10-24T13:28:29.261Z",
+ "snapshot": null,
+ "travellers": [
+  {
+   "travellerId": "01a16e19-3779-7449-937b-6468a2f1925e",
+   "passengerType": "ADT",
+   "name": "LEILA SHIPPER",
+   "documentComplete": true
+  }
+ ],
+ "timeline": [
+  {
+   "at": "2026-10-24T13:28:28.843Z",
+   "kind": "STATUS",
+   "label": "Received",
+   "toStatus": "SUBMITTED"
+  },
+  {
+   "at": "2026-10-24T13:28:29.220Z",
+   "kind": "STATUS",
+   "label": "Being reviewed",
+   "fromStatus": "NEW",
+   "toStatus": "IN_REVIEW"
+  },
+  {
+   "at": "2026-10-24T13:28:29.256Z",
+   "kind": "STATUS",
+   "label": "Options sent",
+   "fromStatus": "IN_REVIEW",
+   "toStatus": "QUOTED"
+  }
+ ],
+ "messages": [],
+ "quotes": [
+  {
+   "id": "01a16e19-393f-7644-bd7e-7b7b8065ee25",
+   "version": 1,
+   "status": "SENT",
+   "currency": "GBP",
+   "validUntil": "2026-10-25T13:28:29.247Z",
+   "sentAt": "2026-10-24T13:28:29.264Z",
+   "acceptedOptionId": null,
+   "acceptedAt": null,
+   "acceptedVia": null,
+   "options": [
+    {
+     "label": "BA via Istanbul",
+     "source": "MANUAL",
+     "slices": [
+      {
+       "origin": "IST",
+       "destination": "LHR",
+       "segments": [
+        {
+         "marketing": {
+          "carrier": "BA",
+          "flightNumber": "675"
+         },
+         "operating": {
+          "carrier": "BA",
+          "flightNumber": "675"
+         },
+         "origin": {
+          "iata": "IST",
+          "terminal": "1"
+         },
+         "destination": {
+          "iata": "LHR",
+          "terminal": "2"
+         },
+         "departure": {
+          "local": "2026-12-14T13:50",
+          "utc": "2026-12-14T10:50:00Z",
+          "tz": "Europe/Istanbul"
+         },
+         "arrival": {
+          "local": "2026-12-14T15:35",
+          "utc": "2026-12-14T15:35:00Z",
+          "tz": "Europe/London"
+         },
+         "cabin": "ECONOMY",
+         "technicalStops": []
+        }
+       ],
+       "durationMin": 285
+      }
+     ],
+     "priceBreakdown": {
+      "fare": {
+       "amountMinor": 30000,
+       "currency": "GBP"
+      },
+      "taxes": {
+       "amountMinor": 9000,
+       "currency": "GBP"
+      },
+      "serviceFee": {
+       "amountMinor": 2500,
+       "currency": "GBP"
+      },
+      "total": {
+       "amountMinor": 41500,
+       "currency": "GBP"
+      }
+     },
+     "baggage": [
+      {
+       "segmentIndex": 0,
+       "passengerType": "ADT",
+       "checked": {
+        "status": "KNOWN",
+        "value": {
+         "pieces": 1,
+         "kgPerPiece": 23
+        }
+       },
+       "cabin": {
+        "status": "KNOWN",
+        "value": true
+       }
+      }
+     ],
+     "conditions": {
+      "change": {
+       "status": "KNOWN",
+       "value": {
+        "allowed": true,
+        "penalty": {
+         "amountMinor": 5000,
+         "currency": "GBP"
+        }
+       }
+      },
+      "refund": {
+       "status": "KNOWN",
+       "value": {
+        "allowed": false
+       }
+      }
+     },
+     "ticketingModel": "SINGLE_TICKET",
+     "id": "01a16e19-3940-7674-b48f-5c4c069e43dc",
+     "attestedBy": "Olivia Owner",
+     "unknownFields": []
+    }
+   ],
+   "rowVersion": 1
+  }
+ ],
+ "reservation": null,
+ "tickets": [],
+ "documents": [
+  {
+   "id": "01a16e19-3960-737d-85d6-27e5e25744a2",
+   "type": "QUOTE_PDF",
+   "filename": "quotation-QT-2026-000144.pdf",
+   "createdAt": "2026-10-24T13:28:29.268Z"
+  }
+ ],
+ "actions": [
+  "ACCEPT_QUOTE",
+  "CANCEL",
+  "MESSAGE"
+ ],
+ "truthBadge": "REQUEST"
+}

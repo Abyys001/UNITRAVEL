@@ -10,7 +10,7 @@ import {
 } from "@unitravel/db"
 import {
   allowedCommands, computePaymentStatus, evaluate, FLIGHT_TERMINAL, FLIGHT_TRANSITIONS, type FlightCommandName, type FlightFacts, generateReference,
-  type MachineActor, normaliseReference, unknownQuoteFields,
+  type MachineActor, normaliseReference, TRAVELLERS_NOT_VERIFIED, unknownQuoteFields,
 } from "@unitravel/domain"
 
 import { sha256 } from "../../core/crypto"
@@ -22,11 +22,13 @@ import { AuditService } from "../audit/audit.service"
 import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
 import { CustomersService } from "../customers/customers.service"
+import { DocumentNumbersService } from "../invoices/document-numbers.service"
 import { DocumentsService } from "../documents/documents.service"
 import { NotificationsService } from "../notifications/notifications.service"
 import { addBusinessMinutes } from "../platform/business-hours"
 import { OutboxService } from "../platform/outbox.service"
 import { ReferenceService } from "../reference/reference.service"
+import { customerItinerary } from "../search/customer-projection"
 
 type Req = typeof flightRequests.$inferSelect
 export type Locale = "en" | "fa"
@@ -63,6 +65,7 @@ export class RequestsService {
     private readonly compliance: ComplianceService,
     private readonly documents: DocumentsService,
     private readonly notifications: NotificationsService,
+    private readonly numbers: DocumentNumbersService,
   ) {}
 
   setSearchPort(p: SearchPort) {
@@ -132,7 +135,7 @@ export class RequestsService {
       if (this.config.settings().requestsRevalidateOnSubmit) {
         const rv = await this.search.revalidate(found.itinerary, ctx.requestId)
         if (rv.outcome === "OFFER_EXPIRED" || rv.outcome === "UNAVAILABLE") throw new AppError("OFFER_EXPIRED", "This price has expired — search again")
-        if (rv.outcome === "PRICE_CHANGED" && !body.acceptPriceChange) throw new AppError("PRICE_CHANGED", "The price changed; please confirm the new price", undefined, { previousTotal: found.itinerary.price.total, currentTotal: rv.total })
+        // ADR-0004: the customer never saw a price, so a change is recorded on the snapshot for staff and never blocks or prompts them.
         if (rv.itinerary) snapshotInput.itinerary = rv.itinerary
         if (rv.total) snapshotInput.revalidated = { total: rv.total.amountMinor, at: new Date() }
       }
@@ -192,6 +195,7 @@ export class RequestsService {
       status: r.status, paymentStatus: r.paymentStatus, now: new Date(),
       quote: q ? { id: q.id, status: q.status, validUntil: q.validUntil, options: opts.map((o) => ({ id: o.id, unknownFields: optionUnknowns(o) })) } : undefined,
       travellerDocumentsComplete: views.length > 0 && views.every((v) => v.documentComplete),
+      allTravellersVerified: views.length > 0 && views.every((v) => v.verification.status === "VERIFIED"),
       activeReservation: active ? { status: active.status, ticketingDeadline: active.ticketingDeadline } : null,
       ticketsIssuedForEveryTraveller: rt.length > 0 && rt.every((t) => tks.some((k) => k.travellerId === t.travellerId)),
       creditOverrideApproved: override.some((o) => !!o.approvedBy),
@@ -200,12 +204,22 @@ export class RequestsService {
     }
   }
 
+  /** Travellers on the request whose document is not VERIFIED (ADR-0005, owner decision 4: required at record_tickets). */
+  async unverifiedTravellers(tx: DbOrTx, r: Req) {
+    const rt = await tx.select().from(requestTravellers).where(eq(requestTravellers.requestId, r.id))
+    const views = await this.customers.byIds(rt.map((t) => t.travellerId), tx)
+    return views.filter((v) => v.verification.status !== "VERIFIED").map((v) => ({ travellerId: v.id, name: `${v.givenNames} ${v.surname}`, status: v.verification.status }))
+  }
+
   /** Runs one command (Table 13.1): guard → status update → history → audit → outbox, atomically. 409 on failure. */
   async transition(tx: Tx, r: Req, command: FlightCommandName, actor: MachineActor, opts: { facts?: Partial<FlightFacts> & { quoteId?: string }; expectedVersion?: number; reasonCode?: string; reasonText?: string; message?: string; patch?: Partial<typeof flightRequests.$inferInsert>; ip?: string; requestId?: string } = {}): Promise<Req> {
     if (opts.expectedVersion !== undefined && opts.expectedVersion !== r.version) throw new AppError("VERSION_CONFLICT", `Request changed (version ${r.version}); reload`)
     const facts = await this.facts(tx, r, opts.facts)
     const ev = evaluate(FLIGHT_TRANSITIONS, command, facts, actor)
-    if (!ev.ok) throw new AppError(ev.code === "FORBIDDEN" ? "FORBIDDEN" : "INVALID_TRANSITION", ev.reason)
+    if (!ev.ok) {
+      if (ev.reason === TRAVELLERS_NOT_VERIFIED) throw new AppError("IDENTITY_NOT_VERIFIED", ev.reason)
+      throw new AppError(ev.code === "FORBIDDEN" ? "FORBIDDEN" : "INVALID_TRANSITION", ev.reason)
+    }
     const terminal = FLIGHT_TERMINAL.includes(ev.to)
     const [updated] = await tx.update(flightRequests).set({ status: ev.to, version: r.version + 1, closedAt: terminal ? new Date() : r.closedAt, ...opts.patch }).where(and(eq(flightRequests.id, r.id), eq(flightRequests.version, r.version))).returning()
     if (!updated) throw new AppError("VERSION_CONFLICT", "Request changed; reload")
@@ -287,7 +301,8 @@ export class RequestsService {
     // Sending a new quote supersedes the previous one; a price change after acceptance needs a new acceptance (ch. 13.6).
     await tx.update(quotes).set({ status: "SUPERSEDED" }).where(and(eq(quotes.requestType, "FLIGHT"), eq(quotes.requestId, r.id), ne(quotes.id, q.id), inArray(quotes.status, ["SENT", "ACCEPTED", "DRAFT"])))
     await tx.update(quotes).set({ status: "SENT", sentAt: new Date() }).where(eq(quotes.id, q.id))
-    await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: r.id, eventType: "quote.sent", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, assigneeUserId: r.assigneeUserId, quoteId: q.id, validUntil: q.validUntil?.toISOString() } })
+    const documentNumber = await this.numbers.assignQuotation(tx, q.id)
+    await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: r.id, eventType: "quote.sent", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, assigneeUserId: r.assigneeUserId, quoteId: q.id, validUntil: q.validUntil?.toISOString(), documentNumber } })
     return updated
   }
 
@@ -390,7 +405,7 @@ export class RequestsService {
     return [...items, ...contacts.map((c) => ({ at: c.createdAt.toISOString(), kind: "CONTACT" as const, label: `${c.channel === "PHONE" ? "Call" : "SMS"}: ${c.outcome}`, detail: c.note ?? undefined }))].sort((a, b) => a.at.localeCompare(b.at))
   }
 
-  private async quoteViews(requestId: string, includeInternal: boolean) {
+  private async quoteViews(requestId: string, includeInternal: boolean, includeCost = includeInternal) {
     const qs = await this.db.select().from(quotes).where(and(eq(quotes.requestType, "FLIGHT"), eq(quotes.requestId, requestId))).orderBy(desc(quotes.version))
     const opts = qs.length ? await this.db.select().from(quoteOptions).where(inArray(quoteOptions.quoteId, qs.map((q) => q.id))).orderBy(asc(quoteOptions.position)) : []
     const attesters = new Map<string, string>()
@@ -399,10 +414,9 @@ export class RequestsService {
       id: q.id, version: q.version, status: q.status, currency: q.currency, validUntil: q.validUntil?.toISOString() ?? null, sentAt: q.sentAt?.toISOString() ?? null,
       acceptedOptionId: q.acceptedOptionId, acceptedAt: q.acceptedAt?.toISOString() ?? null, acceptedVia: q.acceptedVia, rowVersion: q.rowVersion,
       options: opts.filter((o) => o.quoteId === q.id).map((o) => ({
-        id: o.id, label: o.label, source: o.source, attestedBy: o.attestedBy ? attesters.get(o.attestedBy) ?? null : null, slices: (o.itinerary as { slices: unknown[] }).slices, components: o.components,
+        id: o.id, label: o.label, source: o.source, attestedBy: o.attestedBy ? attesters.get(o.attestedBy) ?? null : null, slices: (o.itinerary as { slices: unknown[] }).slices, ...(includeCost ? { components: o.components } : {}),
         priceBreakdown: o.priceBreakdown, baggage: o.baggage, conditions: o.conditions, ticketingModel: o.ticketingModel, unknownFields: optionUnknowns(o),
-        supplierPrice: o.supplierPrice ?? undefined, supplierFetchedAt: o.supplierFetchedAt?.toISOString(), supplierExpiresAt: o.supplierExpiresAt?.toISOString(),
-        ...(includeInternal ? { internalCostMinor: o.internalCostMinor } : {}),
+        ...(includeCost ? { internalCostMinor: o.internalCostMinor, supplierPrice: o.supplierPrice ?? undefined, supplierFetchedAt: o.supplierFetchedAt?.toISOString(), supplierExpiresAt: o.supplierExpiresAt?.toISOString() } : {}),
       })),
     }))
   }
@@ -417,11 +431,13 @@ export class RequestsService {
     return out
   }
 
-  private async snapshotView(id: string | null) {
+  /** `includeInternal`: holds `pricing.read.internal`, so the stored itinerary keeps its amounts (ADR-0004). */
+  private async snapshotView(id: string | null, includeInternal: boolean) {
     if (!id) return null
     const [s] = await this.db.select().from(offerSnapshots).where(eq(offerSnapshots.id, id))
     if (!s) return null
-    return { id: s.id, itinerary: s.itinerary, priceAtSubmit: { amountMinor: s.priceAtSubmitMinor, currency: s.currency }, priceRevalidated: s.priceRevalidatedMinor ? { amountMinor: s.priceRevalidatedMinor, currency: s.currency } : null, revalidatedAt: s.revalidatedAt?.toISOString() ?? null, ruleVersion: s.ruleVersion, engineVersion: s.engineVersion, contentHash: s.contentHash, createdAt: s.createdAt.toISOString() }
+    const prices = includeInternal ? { priceAtSubmit: { amountMinor: s.priceAtSubmitMinor, currency: s.currency }, priceRevalidated: s.priceRevalidatedMinor ? { amountMinor: s.priceRevalidatedMinor, currency: s.currency } : null, revalidatedAt: s.revalidatedAt?.toISOString() ?? null } : {}
+    return { id: s.id, itinerary: includeInternal ? s.itinerary : customerItinerary(s.itinerary), ...prices, ruleVersion: s.ruleVersion, engineVersion: s.engineVersion, contentHash: s.contentHash, createdAt: s.createdAt.toISOString() }
   }
 
   /** Customer-facing serialisation: never notes, internal costs, assignee details or screening results (ch. 25.6). */
@@ -441,11 +457,11 @@ export class RequestsService {
     return FlightRequestCustomerView.parse({
       ref: r.ref, kind: r.kind, status, statusLabel: this.statusLabel(status, r.paymentStatus, locale), paymentStatus: r.paymentStatus, tripType: r.tripType, query: r.query,
       routeLabel: this.routeLabel(r.query, locale), firstTravelDate: r.firstTravelDate, submittedAt: r.submittedAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
-      snapshot: await this.snapshotView(r.offerSnapshotId),
+      snapshot: await this.snapshotView(r.offerSnapshotId, false),
       travellers: rt.map((t) => { const v = views.find((x) => x.id === t.travellerId); return { travellerId: t.travellerId, passengerType: t.passengerType, name: `${t.nameSnapshot.givenNames} ${t.nameSnapshot.surname}`, documentComplete: !!v?.documentComplete } }),
       timeline: await this.timeline(r, true, locale),
       messages: msgs.map(({ m, author }) => ({ id: m.id, direction: m.direction, body: m.body, authorName: m.direction === "TO_CUSTOMER" ? "Uni Travel" : (author ?? "You"), createdAt: m.createdAt.toISOString(), readAt: m.readAt?.toISOString() ?? null, documentIds: m.documentIds })),
-      quotes: (await this.quoteViews(r.id, false)).map(({ ...q }) => q),
+      quotes: await this.quoteViews(r.id, false),
       reservation: res[0] && ["HELD", "CONFIRMED"].includes(res[0].status) ? { status: res[0].status, ticketingDeadline: res[0].ticketingDeadline.toISOString() } : null,
       tickets: tks.map((t) => ({ ticketNumber: t.ticketNumber, travellerName: rt.find((x) => x.travellerId === t.travellerId)?.nameSnapshot.surname ?? "", status: t.status, documentId: t.documentId, validatingCarrier: t.validatingCarrier })),
       documents: docs.filter((d) => d.visibility === "CUSTOMER").map((d) => ({ id: d.id, type: d.type, filename: d.filename, createdAt: d.createdAt.toISOString() })),
@@ -494,15 +510,15 @@ export class RequestsService {
         history: [...history.map((h) => ({ ...h, productType: "FLIGHT" })), ...cargoHistory.map((h) => ({ ...h, productType: "CARGO" }))].sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()),
       },
       travellers: rt.map((t) => { const v = views.find((x) => x.id === t.travellerId); return { travellerId: t.travellerId, passengerType: t.passengerType, name: t.nameSnapshot, document: v?.document ?? null, documentComplete: !!v?.documentComplete, nationality: v?.nationality } }),
-      snapshot: await this.snapshotView(r.offerSnapshotId),
+      snapshot: await this.snapshotView(r.offerSnapshotId, actor.permissions.has("pricing.read.internal")),
       timeline: await this.timeline(r, false, "en"),
       messages: msgs.map(({ m, author }) => ({ id: m.id, direction: m.direction, body: m.body, authorName: author ?? "Customer", createdAt: m.createdAt.toISOString(), readAt: m.readAt?.toISOString() ?? null, documentIds: m.documentIds })),
       notes: notes.map(({ n, author }) => ({ id: n.id, body: n.body, author, createdAt: n.createdAt.toISOString() })),
       contacts: contacts.map(({ c, staff }) => ({ id: c.id, channel: c.channel, outcome: c.outcome, note: c.note, callBackAt: c.callBackAt?.toISOString() ?? null, staff, createdAt: c.createdAt.toISOString() })),
-      quotes: await this.quoteViews(r.id, true),
+      quotes: await this.quoteViews(r.id, true, actor.permissions.has("pricing.read.internal")),
       reservations: res.map((x) => ({ id: x.id, system: x.system, recordLocator: x.recordLocator, airlineLocators: x.airlineLocators, status: x.status, ticketingDeadline: x.ticketingDeadline.toISOString(), quoteOptionId: x.quoteOptionId, mismatchReason: x.mismatchReason, recordedBy: names.get(x.recordedBy) ?? x.recordedBy, createdAt: x.createdAt.toISOString() })),
       tickets: tks.map((t) => ({ id: t.id, travellerId: t.travellerId, travellerName: (() => { const n = rt.find((x) => x.travellerId === t.travellerId)?.nameSnapshot; return n ? `${n.givenNames} ${n.surname}` : "" })(), ticketNumber: t.ticketNumber, validatingCarrier: t.validatingCarrier, issueDate: t.issueDate, status: t.status, documentId: t.documentId })),
-      payments: pays.map((x) => ({ id: x.id, amount: { amountMinor: x.amountMinor, currency: x.currency }, method: x.method, receivedAt: x.receivedAt.toISOString(), externalReference: x.externalReference, payerName: x.payerName, status: x.status, recordedBy: names.get(x.recordedBy) ?? x.recordedBy, verifiedBy: x.verifiedBy ? names.get(x.verifiedBy) ?? x.verifiedBy : null, needsSecondVerifier: x.status === "RECORDED" && x.amountMinor > threshold })),
+      payments: pays.map((x) => ({ id: x.id, amount: { amountMinor: x.amountMinor, currency: x.currency }, method: x.method, receivedAt: x.receivedAt.toISOString(), externalReference: x.externalReference, payerName: x.payerName, status: x.status, recordedBy: x.recordedBy ? names.get(x.recordedBy) ?? x.recordedBy : "System (card payment)", verifiedBy: x.verifiedBy ? names.get(x.verifiedBy) ?? x.verifiedBy : null, needsSecondVerifier: x.status === "RECORDED" && x.amountMinor > threshold })),
       documents: docs.map((d) => ({ id: d.id, type: d.type, filename: d.filename, visibility: d.visibility, createdAt: d.createdAt.toISOString() })),
       afterSales: after.map((c) => ({ ref: c.ref, type: c.type, status: c.status, note: c.note, resolutionNote: c.resolutionNote, ticketIds: c.ticketIds, createdAt: c.createdAt.toISOString() })),
       creditOverrides: overrides.map((o) => ({ id: o.id, reason: o.reason, requestedBy: names.get(o.requestedBy) ?? o.requestedBy, requestedByMe: o.requestedBy === actor.userId, approvedBy: o.approvedBy ? names.get(o.approvedBy) ?? o.approvedBy : null, approvedAt: o.approvedAt?.toISOString() ?? null, createdAt: o.createdAt.toISOString() })),

@@ -14,7 +14,8 @@ import { RateLimiter } from "../../core/http/rate-limit"
 import { zbody } from "../../core/http/zod"
 import { newRedis, REDIS } from "../../core/infra.module"
 import { ConfigService } from "../config/config.service"
-import { customerItinerary, type SearchOwner, SearchService } from "./search.service"
+import { customerItinerary } from "./customer-projection"
+import { type SearchOwner, SearchService } from "./search.service"
 
 
 function owner(actor: Actor | undefined, ctx: RequestContext): SearchOwner {
@@ -82,19 +83,15 @@ export class SearchController {
     return { searchId: r.searchId, itinerary: customerItinerary(r.itinerary), query: r.query }
   }
 
-  @Post("itineraries/:id/price-check")
-  @Authenticated()
-  @HttpCode(200)
-  priceCheck(@Param("id") id: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
-    return this.search.priceCheck(id, owner(actor, ctx), ctx.id)
-  }
-
   @Get("itineraries/:id/seat-maps")
   @Authenticated()
   seatMaps(@Param("id") id: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     return this.search.seatMaps(id, owner(actor, ctx), ctx.id)
   }
 }
+
+/** Supplier totals, scores and the CHEAPEST tab are for `pricing.read.internal` holders only (ADR-0004). */
+const staffOwner = (actor: Actor): SearchOwner => ({ userId: actor.userId, staff: true, internal: actor.permissions.has("pricing.read.internal") })
 
 /** Staff search with staff fields and "Add to quote" (ch. 15.2), and the rule simulator (ch. 16.2 §4). */
 @ApiTags("admin-search")
@@ -108,26 +105,27 @@ export class StaffSearchController {
   @HttpCode(202)
   start(@Body(zbody(SearchQuery)) q: z.infer<typeof SearchQuery>, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     if (!actor.isStaff) throw new AppError("FORBIDDEN")
-    return this.search.start(q, { userId: actor.userId, staff: true }, ctx.locale)
+    return this.search.start(q, staffOwner(actor), ctx.locale)
   }
 
   @Get("admin/flight-searches/:id")
   @RequirePermission("flight_search.run")
   get(@Param("id", zbody(z.uuid())) id: string, @Query(zbody(SearchStateQuery)) q: z.infer<typeof SearchStateQuery>, @CurrentActor() actor: Actor) {
-    return this.search.get(id, { userId: actor.userId, staff: true }, q)
+    return this.search.get(id, staffOwner(actor), q)
   }
 
   @Post("admin/itineraries/:id/price-check")
-  @RequirePermission("flight_search.run")
+  @RequirePermission("pricing.read.internal")
   @HttpCode(200)
   priceCheck(@Param("id") id: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
-    return this.search.priceCheck(id, { userId: actor.userId, staff: true }, ctx.id)
+    return this.search.priceCheck(id, staffOwner(actor), ctx.id)
   }
 
   @Get("admin/itineraries/:id")
   @RequirePermission("flight_search.run")
   async itinerary(@Param("id") id: string, @CurrentActor() actor: Actor) {
-    return this.search.itinerary(id, { userId: actor.userId, staff: true })
+    const r = await this.search.itinerary(id, staffOwner(actor))
+    return actor.permissions.has("pricing.read.internal") ? r : { ...r, itinerary: customerItinerary(r.itinerary) }
   }
 
   @Post("dev/config/:domain/simulate")

@@ -1,3 +1,4 @@
+import 'identity.dart';
 import 'json.dart';
 
 class RequestListItem {
@@ -183,8 +184,25 @@ class RequestDetail {
 }
 
 class Traveller {
-  const Traveller({required this.id, required this.givenNames, required this.surname, required this.nameFa, required this.documentComplete, required this.relationship});
+  const Traveller({
+    required this.id,
+    required this.givenNames,
+    required this.surname,
+    required this.nameFa,
+    required this.documentComplete,
+    required this.relationship,
+    this.dateOfBirth = '',
+    this.nationality = '',
+    this.document,
+    this.verification = Verification.none,
+  });
   final String id;
+  final String dateOfBirth;
+  final String nationality;
+
+  /// Last four characters only; the full number never reaches the customer app (ADR-0005).
+  final DocumentSummary? document;
+  final Verification verification;
   final String givenNames;
   final String surname;
   final String? nameFa;
@@ -200,6 +218,10 @@ class Traveller {
     nameFa: j.strOrNull('nameFa'),
     documentComplete: j.flag('documentComplete'),
     relationship: j.str('relationship', 'SELF'),
+    dateOfBirth: j.str('dateOfBirth'),
+    nationality: j.str('nationality'),
+    document: j.objOrNull('document') == null ? null : DocumentSummary.fromJson(j.obj('document')),
+    verification: Verification.fromJson(j.obj('verification')),
   );
 }
 

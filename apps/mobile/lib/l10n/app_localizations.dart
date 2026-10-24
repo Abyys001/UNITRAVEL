@@ -1189,6 +1189,462 @@ abstract class AppL10n {
   /// **'infant'**
   String get typeInfant;
 
+  /// No description provided for @detailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My details'**
+  String get detailsTitle;
+
+  /// No description provided for @detailsLink.
+  ///
+  /// In en, this message translates to:
+  /// **'My details and passport'**
+  String get detailsLink;
+
+  /// No description provided for @detailsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Names and passport details must match your passport exactly.'**
+  String get detailsIntro;
+
+  /// No description provided for @contactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone and email'**
+  String get contactTitle;
+
+  /// No description provided for @contactHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A verified phone lets you send requests; a verified email lets us send documents.'**
+  String get contactHelp;
+
+  /// No description provided for @addContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a phone or email'**
+  String get addContact;
+
+  /// No description provided for @detPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get detPhone;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @detCodeSent.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a code to {value}.'**
+  String detCodeSent(String value);
+
+  /// No description provided for @verifyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verifyCode;
+
+  /// No description provided for @verifiedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verifiedLabel;
+
+  /// No description provided for @notVerifiedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified'**
+  String get notVerifiedLabel;
+
+  /// No description provided for @verifyPhoneInline.
+  ///
+  /// In en, this message translates to:
+  /// **'Add and verify a phone number to send your request.'**
+  String get verifyPhoneInline;
+
+  /// No description provided for @detProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get detProfile;
+
+  /// No description provided for @nameFaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name in Persian (optional)'**
+  String get nameFaLabel;
+
+  /// No description provided for @contactTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Best time to call'**
+  String get contactTimeLabel;
+
+  /// No description provided for @addressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get addressTitle;
+
+  /// No description provided for @addressHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. We ask for it only when an invoice or a cargo shipment needs it.'**
+  String get addressHelp;
+
+  /// No description provided for @addressLine1.
+  ///
+  /// In en, this message translates to:
+  /// **'Address line 1'**
+  String get addressLine1;
+
+  /// No description provided for @addressLine2.
+  ///
+  /// In en, this message translates to:
+  /// **'Address line 2'**
+  String get addressLine2;
+
+  /// No description provided for @addressCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get addressCity;
+
+  /// No description provided for @addressPostcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Postcode'**
+  String get addressPostcode;
+
+  /// No description provided for @addressCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Country (2 letters, e.g. GB)'**
+  String get addressCountry;
+
+  /// No description provided for @removeAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove address'**
+  String get removeAddress;
+
+  /// No description provided for @savedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get savedLabel;
+
+  /// No description provided for @passportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport and verification'**
+  String get passportTitle;
+
+  /// No description provided for @passportHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Our team checks your passport details against a scan before tickets are issued.'**
+  String get passportHelp;
+
+  /// No description provided for @passportAddDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your passport details to start verification.'**
+  String get passportAddDetails;
+
+  /// No description provided for @passportEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit passport details'**
+  String get passportEdit;
+
+  /// No description provided for @verifUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified'**
+  String get verifUnverified;
+
+  /// No description provided for @verifSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for review'**
+  String get verifSubmitted;
+
+  /// No description provided for @verifVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verifVerified;
+
+  /// No description provided for @verifRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not accepted'**
+  String get verifRejected;
+
+  /// No description provided for @verifCorrection.
+  ///
+  /// In en, this message translates to:
+  /// **'Correction needed'**
+  String get verifCorrection;
+
+  /// No description provided for @verifHelpUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a scan, check your details and send them for review.'**
+  String get verifHelpUnverified;
+
+  /// No description provided for @verifHelpSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Our team is reviewing your passport. You do not need to do anything.'**
+  String get verifHelpSubmitted;
+
+  /// No description provided for @verifHelpVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Your passport is verified. Changing the passport number, names, date of birth, nationality, issuing country or expiry date, or replacing the scan, sends it back for review.'**
+  String get verifHelpVerified;
+
+  /// No description provided for @verifHelpRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not accept this passport as submitted. Upload a better scan or correct the details and send it again.'**
+  String get verifHelpRejected;
+
+  /// No description provided for @verifHelpCorrection.
+  ///
+  /// In en, this message translates to:
+  /// **'Please correct the details and send them again.'**
+  String get verifHelpCorrection;
+
+  /// No description provided for @reasonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Message from our team'**
+  String get reasonTitle;
+
+  /// No description provided for @reasonUnreadableScan.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan is not readable'**
+  String get reasonUnreadableScan;
+
+  /// No description provided for @reasonNameMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The name does not match'**
+  String get reasonNameMismatch;
+
+  /// No description provided for @reasonNumberMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The passport number does not match'**
+  String get reasonNumberMismatch;
+
+  /// No description provided for @reasonDobMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The date of birth does not match'**
+  String get reasonDobMismatch;
+
+  /// No description provided for @reasonNationalityMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The nationality does not match'**
+  String get reasonNationalityMismatch;
+
+  /// No description provided for @reasonExpiryMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The expiry date does not match'**
+  String get reasonExpiryMismatch;
+
+  /// No description provided for @reasonExpiredDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'The passport has expired'**
+  String get reasonExpiredDocument;
+
+  /// No description provided for @reasonNotAPassport.
+  ///
+  /// In en, this message translates to:
+  /// **'This is not a passport photo page'**
+  String get reasonNotAPassport;
+
+  /// No description provided for @reasonScanIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan is cut off or incomplete'**
+  String get reasonScanIncomplete;
+
+  /// No description provided for @reasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get reasonOther;
+
+  /// No description provided for @scanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport scan'**
+  String get scanTitle;
+
+  /// No description provided for @scanHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a clear JPG or PNG of the photo page, held upright. PDF files are not accepted. We remove location and camera data from the file.'**
+  String get scanHelp;
+
+  /// No description provided for @scanNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No scan yet'**
+  String get scanNone;
+
+  /// No description provided for @scanReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan received: {name}'**
+  String scanReceived(String name);
+
+  /// No description provided for @scanReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan received'**
+  String get scanReady;
+
+  /// No description provided for @scanUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload scan'**
+  String get scanUpload;
+
+  /// No description provided for @scanReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace scan'**
+  String get scanReplace;
+
+  /// No description provided for @scanChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the file…'**
+  String get scanChecking;
+
+  /// No description provided for @scanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The file did not pass our checks. Please upload another.'**
+  String get scanFailed;
+
+  /// No description provided for @scanReplaceWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Replacing the scan sends a verified passport back for review.'**
+  String get scanReplaceWarn;
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check before you send'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare each detail with your passport. When it all matches, confirm and send it for review.'**
+  String get reviewHelp;
+
+  /// No description provided for @confirmSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm and send for review'**
+  String get confirmSend;
+
+  /// No description provided for @confirmSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent for review'**
+  String get confirmSent;
+
+  /// No description provided for @confirmNeedScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a scan first.'**
+  String get confirmNeedScan;
+
+  /// No description provided for @confirmChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Your details changed. Check them again.'**
+  String get confirmChanged;
+
+  /// No description provided for @fieldName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get fieldName;
+
+  /// No description provided for @fieldDob.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get fieldDob;
+
+  /// No description provided for @fieldNationality.
+  ///
+  /// In en, this message translates to:
+  /// **'Nationality'**
+  String get fieldNationality;
+
+  /// No description provided for @fieldNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport number'**
+  String get fieldNumber;
+
+  /// No description provided for @fieldIssuing.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuing country'**
+  String get fieldIssuing;
+
+  /// No description provided for @fieldExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date'**
+  String get fieldExpiry;
+
+  /// No description provided for @passportNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport number'**
+  String get passportNumberLabel;
+
+  /// No description provided for @issuingCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuing country (2 letters)'**
+  String get issuingCountryLabel;
+
+  /// No description provided for @expiryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry date (YYYY-MM-DD)'**
+  String get expiryLabel;
+
+  /// No description provided for @priceInQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Price confirmed in your quote'**
+  String get priceInQuote;
+
   /// No description provided for @documentMissing.
   ///
   /// In en, this message translates to:
@@ -2130,6 +2586,978 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Not available: {reason}'**
   String commandNotAllowed(String reason);
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get navAlerts;
+
+  /// No description provided for @navMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get navMe;
+
+  /// No description provided for @homeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Control deck'**
+  String get homeTitle;
+
+  /// No description provided for @homeGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {name}'**
+  String homeGreeting(String name);
+
+  /// No description provided for @heroNeedsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs you now'**
+  String get heroNeedsYou;
+
+  /// No description provided for @heroAllClear.
+  ///
+  /// In en, this message translates to:
+  /// **'All clear'**
+  String get heroAllClear;
+
+  /// No description provided for @heroAllClearHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is past SLA, waiting to be claimed, or close to a ticketing deadline.'**
+  String get heroAllClearHelp;
+
+  /// No description provided for @heroSlaBreached.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 case is past its SLA} other{{count} cases are past their SLA}}'**
+  String heroSlaBreached(int count);
+
+  /// No description provided for @heroNewUnclaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 new case is unclaimed} other{{count} new cases are unclaimed}}'**
+  String heroNewUnclaimed(int count);
+
+  /// No description provided for @heroDeadlines.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 ticketing deadline within 24 h} other{{count} ticketing deadlines within 24 h}}'**
+  String heroDeadlines(int count);
+
+  /// No description provided for @heroNextUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Most urgent unclaimed'**
+  String get heroNextUp;
+
+  /// No description provided for @trendUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Rising'**
+  String get trendUp;
+
+  /// No description provided for @trendDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Falling'**
+  String get trendDown;
+
+  /// No description provided for @trendFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Unchanged'**
+  String get trendFlat;
+
+  /// No description provided for @trendSince.
+  ///
+  /// In en, this message translates to:
+  /// **'{word} since {when}'**
+  String trendSince(String word, String when);
+
+  /// No description provided for @trendNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend builds up as this device refreshes'**
+  String get trendNone;
+
+  /// No description provided for @queueMix.
+  ///
+  /// In en, this message translates to:
+  /// **'Queue mix'**
+  String get queueMix;
+
+  /// No description provided for @queueMixEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No open cases right now.'**
+  String get queueMixEmpty;
+
+  /// No description provided for @openCases.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 open} other{{count} open}}'**
+  String openCases(int count);
+
+  /// No description provided for @complianceHolds.
+  ///
+  /// In en, this message translates to:
+  /// **'Compliance holds'**
+  String get complianceHolds;
+
+  /// No description provided for @complianceOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open compliance cases'**
+  String get complianceOpen;
+
+  /// No description provided for @verificationsWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'ID checks waiting'**
+  String get verificationsWaiting;
+
+  /// No description provided for @ticketingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticketing within 24 h'**
+  String get ticketingSoon;
+
+  /// No description provided for @decideInPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Decided in the Admin Panel'**
+  String get decideInPanel;
+
+  /// No description provided for @deadlineIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Next {ref} in {time}'**
+  String deadlineIn(String ref, String time);
+
+  /// No description provided for @deadlinePast.
+  ///
+  /// In en, this message translates to:
+  /// **'{ref} is {time} late'**
+  String deadlinePast(String ref, String time);
+
+  /// No description provided for @tileFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load. Tap to retry.'**
+  String get tileFailed;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions'**
+  String get quickActions;
+
+  /// No description provided for @qaUnclaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclaimed cases'**
+  String get qaUnclaimed;
+
+  /// No description provided for @qaFind.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a case'**
+  String get qaFind;
+
+  /// No description provided for @dataNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts come from the live queue. Trends are what this device has seen, not a server history.'**
+  String get dataNote;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance and language'**
+  String get settingsHelp;
+
+  /// No description provided for @appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @tabMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get tabMine;
+
+  /// No description provided for @urgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get urgent;
+
+  /// No description provided for @filterAtRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'SLA at risk'**
+  String get filterAtRisk;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @queueFilterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by reference, route or customer'**
+  String get queueFilterHint;
+
+  /// No description provided for @queueNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No case matches these filters'**
+  String get queueNoMatch;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get clearFilters;
+
+  /// No description provided for @casesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 case} other{{count} cases}}'**
+  String casesCount(int count);
+
+  /// No description provided for @casesShownOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {shown} of {total}'**
+  String casesShownOf(int shown, int total);
+
+  /// No description provided for @slaLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{time} left'**
+  String slaLeft(Object time);
+
+  /// No description provided for @slaOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue by {time}'**
+  String slaOverdue(Object time);
+
+  /// No description provided for @durDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}d'**
+  String durDays(String n);
+
+  /// No description provided for @durHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}h'**
+  String durHours(String n);
+
+  /// No description provided for @durMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}m'**
+  String durMinutes(String n);
+
+  /// No description provided for @adminSearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a case'**
+  String get adminSearchTitle;
+
+  /// No description provided for @adminSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference or phone number'**
+  String get adminSearchHint;
+
+  /// No description provided for @adminSearchIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Type at least 3 characters of a reference or phone number.'**
+  String get adminSearchIntro;
+
+  /// No description provided for @adminSearchNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No case found'**
+  String get adminSearchNone;
+
+  /// No description provided for @caseActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Case actions'**
+  String get caseActions;
+
+  /// No description provided for @moreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActions;
+
+  /// No description provided for @customerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer note'**
+  String get customerNote;
+
+  /// No description provided for @caseTruthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What we know'**
+  String get caseTruthTitle;
+
+  /// No description provided for @activityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activityTitle;
+
+  /// No description provided for @activityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity of this kind yet.'**
+  String get activityEmpty;
+
+  /// No description provided for @msgFromCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Message from customer'**
+  String get msgFromCustomer;
+
+  /// No description provided for @msgToCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent to customer'**
+  String get msgToCustomer;
+
+  /// No description provided for @noteKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal note'**
+  String get noteKind;
+
+  /// No description provided for @truthRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Request'**
+  String get truthRequest;
+
+  /// No description provided for @truthSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer snapshot'**
+  String get truthSnapshot;
+
+  /// No description provided for @truthNoSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual request, no offer was frozen'**
+  String get truthNoSnapshot;
+
+  /// No description provided for @truthChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes'**
+  String get truthChange;
+
+  /// No description provided for @truthRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get truthRefund;
+
+  /// No description provided for @truthQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get truthQuote;
+
+  /// No description provided for @truthReservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservation'**
+  String get truthReservation;
+
+  /// No description provided for @truthTicket.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket'**
+  String get truthTicket;
+
+  /// No description provided for @truthPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get truthPayment;
+
+  /// No description provided for @truthOnFile.
+  ///
+  /// In en, this message translates to:
+  /// **'On file'**
+  String get truthOnFile;
+
+  /// No description provided for @truthNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None yet'**
+  String get truthNone;
+
+  /// No description provided for @truthDraftOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft only'**
+  String get truthDraftOnly;
+
+  /// No description provided for @truthVaries.
+  ///
+  /// In en, this message translates to:
+  /// **'varies by ticket or segment'**
+  String get truthVaries;
+
+  /// No description provided for @truthUnknownValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Not supplied, confirm before quoting'**
+  String get truthUnknownValue;
+
+  /// No description provided for @truthUnknownBlocks.
+  ///
+  /// In en, this message translates to:
+  /// **'UNKNOWN items must be confirmed before a quote can be sent.'**
+  String get truthUnknownBlocks;
+
+  /// No description provided for @truthPaymentNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment, reservation and ticket are separate facts. A payment never means a booking.'**
+  String get truthPaymentNote;
+
+  /// No description provided for @triKnown.
+  ///
+  /// In en, this message translates to:
+  /// **'Known'**
+  String get triKnown;
+
+  /// No description provided for @triNotIncluded.
+  ///
+  /// In en, this message translates to:
+  /// **'Not included'**
+  String get triNotIncluded;
+
+  /// No description provided for @triUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'UNKNOWN'**
+  String get triUnknown;
+
+  /// No description provided for @condAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed'**
+  String get condAllowed;
+
+  /// No description provided for @condNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed'**
+  String get condNotAllowed;
+
+  /// No description provided for @resHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'Held'**
+  String get resHeld;
+
+  /// No description provided for @resConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get resConfirmed;
+
+  /// No description provided for @deadlineAt.
+  ///
+  /// In en, this message translates to:
+  /// **'ticket by {when}'**
+  String deadlineAt(String when);
+
+  /// No description provided for @ticketCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 ticket issued} other{{count} tickets issued}}'**
+  String ticketCount(int count);
+
+  /// No description provided for @payNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment'**
+  String get payNone;
+
+  /// No description provided for @payPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly paid'**
+  String get payPartial;
+
+  /// No description provided for @payPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get payPaid;
+
+  /// No description provided for @payRefundPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund pending'**
+  String get payRefundPending;
+
+  /// No description provided for @payRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get payRefunded;
+
+  /// No description provided for @shipmentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipments'**
+  String get shipmentsTitle;
+
+  /// No description provided for @shipmentsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow your cargo from collection to delivery.'**
+  String get shipmentsIntro;
+
+  /// No description provided for @shipmentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No shipments yet. Once a quote is accepted, your shipment appears here.'**
+  String get shipmentsEmpty;
+
+  /// No description provided for @shipmentsTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipments'**
+  String get shipmentsTotal;
+
+  /// No description provided for @shipmentsInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get shipmentsInTransit;
+
+  /// No description provided for @shipmentsDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get shipmentsDelivered;
+
+  /// No description provided for @shipmentsNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next to arrive'**
+  String get shipmentsNext;
+
+  /// No description provided for @etaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated delivery'**
+  String get etaLabel;
+
+  /// No description provided for @etaNote.
+  ///
+  /// In en, this message translates to:
+  /// **'An estimate, not a promise. It can change.'**
+  String get etaNote;
+
+  /// No description provided for @etaNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No estimate yet'**
+  String get etaNone;
+
+  /// No description provided for @trackingNoEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing scanned yet. Updates appear here as our partner reports them.'**
+  String get trackingNoEvents;
+
+  /// No description provided for @trackingUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get trackingUpdated;
+
+  /// No description provided for @awbLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AWB {awb}'**
+  String awbLabel(String awb);
+
+  /// No description provided for @trackEventPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked up'**
+  String get trackEventPickedUp;
+
+  /// No description provided for @trackEventReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received at our partner'**
+  String get trackEventReceived;
+
+  /// No description provided for @trackEventDeparted.
+  ///
+  /// In en, this message translates to:
+  /// **'Departed'**
+  String get trackEventDeparted;
+
+  /// No description provided for @trackEventArrived.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived'**
+  String get trackEventArrived;
+
+  /// No description provided for @trackEventAtCustoms.
+  ///
+  /// In en, this message translates to:
+  /// **'At customs'**
+  String get trackEventAtCustoms;
+
+  /// No description provided for @trackEventCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared customs'**
+  String get trackEventCleared;
+
+  /// No description provided for @trackEventOutForDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Out for delivery'**
+  String get trackEventOutForDelivery;
+
+  /// No description provided for @trackEventDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get trackEventDelivered;
+
+  /// No description provided for @trackEventHeld.
+  ///
+  /// In en, this message translates to:
+  /// **'On hold'**
+  String get trackEventHeld;
+
+  /// No description provided for @trackEventDamaged.
+  ///
+  /// In en, this message translates to:
+  /// **'Damage reported'**
+  String get trackEventDamaged;
+
+  /// No description provided for @trackEventReturned.
+  ///
+  /// In en, this message translates to:
+  /// **'Returned'**
+  String get trackEventReturned;
+
+  /// No description provided for @trackEventNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get trackEventNote;
+
+  /// No description provided for @billingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents & billing'**
+  String get billingTitle;
+
+  /// No description provided for @billingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your quotations and invoices in one place. Documents are issued in English.'**
+  String get billingIntro;
+
+  /// No description provided for @billingInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get billingInvoices;
+
+  /// No description provided for @billingQuotations.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotations'**
+  String get billingQuotations;
+
+  /// No description provided for @billingEmptyInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'No invoices yet. When we issue one it appears here.'**
+  String get billingEmptyInvoices;
+
+  /// No description provided for @billingEmptyQuotations.
+  ///
+  /// In en, this message translates to:
+  /// **'No quotations yet. When we send you a quote it appears here.'**
+  String get billingEmptyQuotations;
+
+  /// No description provided for @billingIssuedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued {date}'**
+  String billingIssuedOn(String date);
+
+  /// No description provided for @billingSentOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent {date}'**
+  String billingSentOn(String date);
+
+  /// No description provided for @billingTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get billingTotal;
+
+  /// No description provided for @billingCharges.
+  ///
+  /// In en, this message translates to:
+  /// **'Charges'**
+  String get billingCharges;
+
+  /// No description provided for @billingDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download PDF'**
+  String get billingDownload;
+
+  /// No description provided for @billingViewQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'View the quote'**
+  String get billingViewQuote;
+
+  /// No description provided for @billingUnpaidExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'If it is still unpaid, this invoice expires on {date}.'**
+  String billingUnpaidExpires(String date);
+
+  /// No description provided for @billingPayNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Uni Travel contact tells you how to pay.'**
+  String get billingPayNote;
+
+  /// No description provided for @billingPayOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay by card on our website'**
+  String get billingPayOnline;
+
+  /// No description provided for @billingPayOnlineNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The payment page opens in your browser. Card details are entered there and never pass through this app.'**
+  String get billingPayOnlineNote;
+
+  /// No description provided for @billingPayProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment is being processed. You do not need to pay again.'**
+  String get billingPayProcessing;
+
+  /// No description provided for @progressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Request progress'**
+  String get progressLabel;
+
+  /// No description provided for @progressReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get progressReceived;
+
+  /// No description provided for @progressReview.
+  ///
+  /// In en, this message translates to:
+  /// **'In review'**
+  String get progressReview;
+
+  /// No description provided for @progressQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Options sent'**
+  String get progressQuote;
+
+  /// No description provided for @progressBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get progressBooked;
+
+  /// No description provided for @progressTicketed.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticketed'**
+  String get progressTicketed;
+
+  /// No description provided for @progressDone.
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get progressDone;
+
+  /// No description provided for @progressCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'current'**
+  String get progressCurrent;
+
+  /// No description provided for @progressTodo.
+  ///
+  /// In en, this message translates to:
+  /// **'to do'**
+  String get progressTodo;
+
+  /// No description provided for @billingPaidBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice is paid. Thank you.'**
+  String get billingPaidBanner;
+
+  /// No description provided for @billingNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not find this document in your account.'**
+  String get billingNotFound;
+
+  /// No description provided for @billingOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The document could not be opened. Try again.'**
+  String get billingOpenFailed;
+
+  /// No description provided for @invoiceIssued.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting payment'**
+  String get invoiceIssued;
+
+  /// No description provided for @invoicePaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get invoicePaid;
+
+  /// No description provided for @invoiceCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get invoiceCancelled;
+
+  /// No description provided for @invoiceRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get invoiceRefunded;
+
+  /// No description provided for @quoteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get quoteSent;
+
+  /// No description provided for @quoteDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get quoteDeclined;
+
+  /// No description provided for @quoteSuperseded.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaced'**
+  String get quoteSuperseded;
+
+  /// No description provided for @cancelReasonExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice expired and can no longer be paid.'**
+  String get cancelReasonExpired;
+
+  /// No description provided for @cancelReasonCorrection.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice was withdrawn, usually because a corrected one replaces it. Do not pay it.'**
+  String get cancelReasonCorrection;
+
+  /// No description provided for @cancelReasonCustomerRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled at your request. Do not pay it.'**
+  String get cancelReasonCustomerRequest;
+
+  /// No description provided for @cancelReasonDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled because it was a duplicate. Do not pay it.'**
+  String get cancelReasonDuplicate;
+
+  /// No description provided for @cancelReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'This invoice was cancelled. Do not pay it.'**
+  String get cancelReasonOther;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

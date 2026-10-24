@@ -76,7 +76,7 @@ class _MfaGateState extends ConsumerState<MfaGate> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.verified_user_outlined, size: 48, color: Brand.copperDark),
+            Icon(Icons.verified_user_outlined, size: 48, color: accentText(context)),
             const SizedBox(height: 12),
             Text(l.mfaTitle, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: 8),
@@ -124,7 +124,14 @@ class _MfaGateState extends ConsumerState<MfaGate> {
             ],
             if (_error != null) ...[
               const SizedBox(height: 12),
-              Semantics(liveRegion: true, child: Text(errorMessage(l, _error!), style: const TextStyle(color: Brand.brick), textAlign: TextAlign.center)),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  errorMessage(l, _error!),
+                  style: TextStyle(color: xc(context).danger),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
           ],
         ),
@@ -140,6 +147,5 @@ class AdminErrorView extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) =>
-      needsSecondFactor(error) ? MfaGate(onVerified: onRetry) : ErrorBox(error, onRetry: onRetry);
+  Widget build(BuildContext context) => needsSecondFactor(error) ? MfaGate(onVerified: onRetry) : ErrorBox(error, onRetry: onRetry);
 }

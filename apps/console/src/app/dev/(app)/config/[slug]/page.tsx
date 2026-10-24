@@ -12,7 +12,9 @@ import { cn } from "@unitravel/ui/lib/utils"
 import { CONFIG_DOMAINS } from "@/components/dev-frame"
 import { FormDialog } from "@/components/form-dialog"
 import { changedPaths, type Issue, SchemaForm } from "@/components/schema-form"
-import { Empty, ErrorLine, Field, Loading, PageHead, Panel, Tag } from "@/components/ui"
+import { BentoTile, EmptyState, TileError } from "@/components/bento"
+import { ActionBar, ListSkeleton } from "@/components/case"
+import { ErrorLine, Field, Loading, PageHead, Panel, Tag } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime, minutes, money } from "@/lib/format"
 import { useSession } from "@/lib/session"
@@ -80,31 +82,31 @@ export default function ConfigPage() {
     } catch (e) { setSimErr(e) } finally { setSimBusy(false) }
   }
 
-  if (versions.error) return <div className="p-5"><ErrorLine error={versions.error} /></div>
-  if (!versions.data) return <Loading />
+  if (versions.error) return <div className="p-5"><TileError message={errText(versions.error)} onRetry={() => void versions.refetch()} /></div>
+  if (!versions.data) return <><Loading /><ListSkeleton rows={6} /></>
   const step = issues.length ? 1 : !savedVersion ? 2 : simulable && !sim ? 3 : 4
   return (
     <div className="pb-10">
       <PageHead kicker={<>Configuration · {domain} · in force: v{published?.version ?? "—"}{published?.publishedAt && ` since ${fmtDateTime(published.publishedAt)}`}</>} title={def.label}>
         <ol className="flex items-center gap-1 font-mono text-[11px]" aria-label="Change steps">
-          {["Edit draft", "Validate", "Save", ...(simulable ? ["Simulate"] : []), "Publish"].map((s, i) => <li key={s} className={cn("rounded-sm border px-1.5 py-0.5", i + 1 < step ? "border-moss text-moss" : i + 1 === step ? "border-ink bg-ink text-paper" : "border-rule-strong text-slate")}>{i + 1} {s}</li>)}
+          {["Edit draft", "Validate", "Save", ...(simulable ? ["Simulate"] : []), "Publish"].map((s, i) => <li key={s} className={cn("rounded-sm border px-1.5 py-0.5", i + 1 < step ? "border-success text-success" : i + 1 === step ? "border-ink bg-ink text-surface" : "border-rule-strong text-steel")}>{i + 1} {s}</li>)}
         </ol>
       </PageHead>
       <div className="grid gap-x-6 px-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
-          <Panel title={`Draft from v${base?.version ?? "—"}`} aside={<span className={cn("font-mono text-[11px]", issues.length ? "text-brick" : "text-moss")} data-testid="validation">{issues.length ? `${issues.length} validation issue${issues.length === 1 ? "" : "s"}` : "valid against the API schema"}</span>}>
+          <Panel title={`Draft from v${base?.version ?? "—"}`} aside={<span className={cn("font-mono text-[11px]", issues.length ? "text-danger" : "text-success")} data-testid="validation">{issues.length ? `${issues.length} validation issue${issues.length === 1 ? "" : "s"}` : "valid against the API schema"}</span>}>
             {draft != null && <SchemaForm value={draft as never} onChange={(v) => { setDraft(v); setSavedVersion(null); setSim(null) }} issues={issues} />}
           </Panel>
-          {issues.length > 0 && <ul className="mb-2 rounded-sm border border-brick bg-[#fbeee9] p-2 text-[12px] text-brick">{issues.slice(0, 8).map((i) => <li key={i.path + i.message}><span className="font-mono">{i.path || "(root)"}</span>: {i.message}</li>)}</ul>}
+          {issues.length > 0 && <ul className="mb-2 rounded-sm border border-danger bg-danger-subtle p-2 text-[12px] text-danger">{issues.slice(0, 8).map((i) => <li key={i.path + i.message}><span className="font-mono">{i.path || "(root)"}</span>: {i.message}</li>)}</ul>}
           {canWrite && (
-            <div className="flex flex-wrap items-end gap-2">
+            <ActionBar edge="bottom" className="-mx-5 border-t px-5 py-2.5"><div className="flex flex-wrap items-end gap-2">
               <Field label="Change note" className="min-w-72 flex-1"><input className="field-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="What and why" /></Field>
               <Button size="sm" variant="outline" disabled={!!issues.length || !changes.length} loading={saving} onClick={() => void saveDraft()}>Save draft</Button>
               {savedVersion && <Button size="sm" onClick={() => { setPublishOf(versions.data!.find((v) => v.version === savedVersion) ?? null); setPublishNote(note) }} disabled={simulable && !sim}>Publish v{savedVersion}…</Button>}
-              {simulable && savedVersion && !sim && <span className="pb-1.5 text-[11px] text-slate">Simulate before publishing</span>}
-            </div>
+              {simulable && savedVersion && !sim && <span className="pb-1.5 text-[11px] text-steel">Simulate before publishing</span>}
+            </div></ActionBar>
           )}
-          {changes.length > 0 && <p className="mt-2 text-[12px] text-slate">Changed from v{published?.version}: <span className="font-mono">{changes.slice(0, 12).join(", ")}{changes.length > 12 ? ` +${changes.length - 12}` : ""}</span></p>}
+          {changes.length > 0 && <p className="mt-2 text-[12px] text-steel">Changed from v{published?.version}: <span className="font-mono">{changes.slice(0, 12).join(", ")}{changes.length > 12 ? ` +${changes.length - 12}` : ""}</span></p>}
           {simulable && (
             <Panel title="Simulate · published vs draft" className="mt-4">
               <div className="flex flex-wrap items-end gap-2">
@@ -117,13 +119,13 @@ export default function ConfigPage() {
               <ErrorLine error={simErr} />
               {sim && (
                 <div className="mt-3" data-testid="simulation">
-                  <p className="text-slate">Search <span className="font-mono">{sim.searchId.slice(0, 8)}</span> · {sim.cachedCalls} cached supplier responses · <b>{sim.supplierCallsMade}</b> new supplier calls</p>
+                  <p className="text-steel">Search <span className="font-mono">{sim.searchId.slice(0, 8)}</span> · {sim.cachedCalls} cached supplier responses · <b>{sim.supplierCallsMade}</b> new supplier calls</p>
                   <div className="mt-2 grid gap-4 lg:grid-cols-2">
                     {(["published", "draft"] as const).map((side) => (
-                      <div key={side} className={cn("rounded-md border bg-white p-2", side === "draft" ? "border-copper" : "border-rule")}>
+                      <div key={side} className={cn("rounded-md border bg-surface-raised p-2", side === "draft" ? "border-orange" : "border-rule")}>
                         <p className="flex justify-between"><span className="cap">{side === "draft" ? "Draft" : `Published v${published?.version}`}</span><span className="num">{sim[side].count} results</span></p>
-                        <p className="font-mono text-[10.5px] text-slate">{Object.entries(sim[side].stats).map(([k, v]) => `${k} ${v}`).join(" · ")}</p>
-                        <ol className="ledger-rows mt-1">{sim[side].top.slice(0, 8).map((t, i) => <li key={t.id} className="py-1 text-[12px]"><span className="num">{i + 1}. {money(t.price)} · {minutes(t.durationMin)} · score {t.score.toFixed(3)}</span><span className="block truncate font-mono text-[10.5px] text-slate" title={t.route}>{t.construction} · {t.route}</span></li>)}</ol>
+                        <p className="font-mono text-[10.5px] text-steel">{Object.entries(sim[side].stats).map(([k, v]) => `${k} ${v}`).join(" · ")}</p>
+                        <ol className="ledger-rows mt-1">{sim[side].top.slice(0, 8).map((t, i) => <li key={t.id} className="py-1 text-[12px]"><span className="num">{i + 1}. {money(t.price)} · {minutes(t.durationMin)} · score {t.score.toFixed(3)}</span><span className="block truncate font-mono text-[10.5px] text-steel" title={t.route}>{t.construction} · {t.route}</span></li>)}</ol>
                       </div>
                     ))}
                   </div>
@@ -132,14 +134,14 @@ export default function ConfigPage() {
             </Panel>
           )}
         </div>
-        <Panel title="Versions">
-          {!versions.data.length ? <Empty>No versions.</Empty> : (
+        <BentoTile title="Versions" className="mt-3 xl:mt-0">
+          {!versions.data.length ? <EmptyState title="No versions." /> : (
             <ol className="ledger-rows" data-testid="versions">
               {versions.data.map((v) => (
                 <li key={v.id} className="py-1.5">
                   <p className="flex items-center justify-between"><span className="num font-medium">v{v.version}</span><Tag value={v.status} /></p>
-                  <p className="text-[12px]">{v.changeNote ?? <span className="text-slate">no note</span>}</p>
-                  <p className="text-[11px] text-slate">{v.publishedAt ? `published ${fmtDateTime(v.publishedAt)}` : `drafted ${fmtDateTime(v.createdAt)}`}</p>
+                  <p className="text-[12px]">{v.changeNote ?? <span className="text-steel">no note</span>}</p>
+                  <p className="text-[11px] text-steel">{v.publishedAt ? `published ${fmtDateTime(v.publishedAt)}` : `drafted ${fmtDateTime(v.createdAt)}`}</p>
                   <div className="mt-1 flex gap-1">
                     <Button size="xs" variant="ghost" onClick={() => { setBase(v); setDraft(structuredClone(v.payload)); setSavedVersion(v.status === "DRAFT" ? v.version : null); setSim(null) }}>Load</Button>
                     {canWrite && v.status === "DRAFT" && <Button size="xs" variant="outline" onClick={() => { setPublishOf(v); setPublishNote(v.changeNote ?? "") }}>Publish…</Button>}
@@ -149,7 +151,7 @@ export default function ConfigPage() {
               ))}
             </ol>
           )}
-        </Panel>
+        </BentoTile>
       </div>
       <FormDialog open={!!publishOf} onOpenChange={(o) => !o && setPublishOf(null)} title={publishOf?.status === "SUPERSEDED" ? `Roll back to v${publishOf.version}…` : `Publish v${publishOf?.version}…`}
         description="Every API and worker process reloads within seconds. Publishing needs a second-factor check in the last 10 minutes and a change note." submitLabel={publishOf?.status === "SUPERSEDED" ? "Roll back" : "Publish"} testId="dlg-publish"

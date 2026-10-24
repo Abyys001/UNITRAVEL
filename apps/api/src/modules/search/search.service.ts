@@ -5,7 +5,7 @@ import { and, asc, desc, eq } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
 import {
-  ENGINE_VERSION, type EngineRules, type HubsConfig, type Itinerary, type NormalisedOffer, type PriceCheckResult, type ResultTab, type SearchQuery, type SeatMap,
+  ENGINE_VERSION, type EngineRules, type HubsConfig, type Itinerary, type CustomerSeatMap, type NormalisedOffer, type PriceCheckResult, type ResultTab, type SearchQuery, type SeatMap,
 } from "@unitravel/contracts"
 import { type Db, searchResults, searches } from "@unitravel/db"
 import { validatePassengerMix } from "@unitravel/domain"
@@ -21,6 +21,7 @@ import { ConfigService } from "../config/config.service"
 import { ReferenceService } from "../reference/reference.service"
 import { RequestsService, type SearchPort } from "../requests/requests.service"
 import { SuppliersService } from "../suppliers/suppliers.service"
+import { customerItinerary, customerSeatMaps } from "./customer-projection"
 
 const SEARCH_TTL_MS = 30 * 60_000
 
@@ -33,12 +34,8 @@ interface SearchStateRedis {
   expiresAt: string
 }
 
-export interface SearchOwner { userId?: string; anonKey?: string; staff?: boolean }
-
-/** Customers never see staff-only fields (booking class, fare basis) — ch. 15.2 "Staff search … plus staff fields". */
-export function customerItinerary(it: Itinerary): Itinerary {
-  return { ...it, components: it.components.map((c) => ({ ...c, slices: c.slices.map((s) => ({ ...s, segments: s.segments.map(({ bookingClass: _b, fareBasis: _f, ...seg }) => seg) })) })) }
-}
+/** `internal`: holds `pricing.read.internal`, so may see supplier totals, scores and the CHEAPEST tab (ADR-0004). */
+export interface SearchOwner { userId?: string; anonKey?: string; staff?: boolean; internal?: boolean }
 
 /**
  * Flight search as an asynchronous job with progressive results (ADR-05, ch. 22.4–22.9): the API accepts in < 300 ms,
@@ -203,12 +200,14 @@ export class SearchService implements OnModuleInit, SearchPort {
       const st = row.stats as { calls?: number; removedByPolicy?: number }
       state = { id, status: row.status, version: 1, progress: { sourcesTotal: st.calls ?? 0, sourcesDone: st.calls ?? 0, removedByPolicy: st.removedByPolicy ?? 0, slowSources: [], wave: 3 }, notices: [], expiresAt: row.expiresAt.toISOString() }
     }
+    // A price-sorted list leaks prices by order alone.
+    if (q.tab === "CHEAPEST" && !owner.internal) throw new AppError("VALIDATION_FAILED", "This tab is not available", [{ path: "tab", code: "FORBIDDEN" }])
     const ordered = q.tab ? orderForTab(results, q.tab) : results
     const start = q.cursor ? Number(q.cursor) : 0
     const page = ordered.slice(start, start + q.limit)
     return {
       id, status: state.status, version: state.version, query: row.query, progress: state.progress, expiresAt: row.expiresAt.toISOString(), historical, ruleVersion: row.ruleVersion, engineVersion: row.engineVersion,
-      notices: state.notices, results: owner.staff ? page : page.map(customerItinerary), nextCursor: start + q.limit < ordered.length ? String(start + q.limit) : null, total: ordered.length,
+      notices: state.notices, results: owner.internal ? page : page.map(customerItinerary), nextCursor: start + q.limit < ordered.length ? String(start + q.limit) : null, total: ordered.length,
     }
   }
 
@@ -230,12 +229,8 @@ export class SearchService implements OnModuleInit, SearchPort {
     }
     const row = await this.owned(searchId, owner)
     if (!it) {
-      const priced = await this.redis.get(`itn:${id}:priced`)
-      if (priced) it = JSON.parse(priced) as Itinerary
-      else {
-        const v = await this.redis.get(`search:${searchId}:results:latest`)
-        it = (JSON.parse((await this.redis.get(`search:${searchId}:results:v${v}`)) ?? "[]") as Itinerary[]).find((x) => x.id === id)
-      }
+      const v = await this.redis.get(`search:${searchId}:results:latest`)
+      it = (JSON.parse((await this.redis.get(`search:${searchId}:results:v${v}`)) ?? "[]") as Itinerary[]).find((x) => x.id === id)
       const [r] = await this.db.select({ id: searchResults.id }).from(searchResults).where(and(eq(searchResults.searchId, searchId), eq(searchResults.itineraryKey, id))).limit(1)
       resultId = r?.id ?? null
     }
@@ -243,12 +238,11 @@ export class SearchService implements OnModuleInit, SearchPort {
     return { itinerary: it, searchId, query: row.query, ruleVersion: row.ruleVersion, engineVersion: row.engineVersion, searchResultId: resultId }
   }
 
-  /** Revalidate now (ch. 22.9): every component offer priced again; changes are shown, expired offers ask for a new search. */
+  /** Revalidate now (ch. 22.9): every component offer priced again. Staff only (ADR-0004): customers are never shown a price check. */
   async priceCheck(itineraryId: string, owner: SearchOwner, requestId: string): Promise<PriceCheckResult> {
     const { itinerary } = await this.itinerary(itineraryId, owner)
     const r = await this.revalidate(itinerary, requestId)
-    if (r.itinerary) await this.redis.set(`itn:${itineraryId}:priced`, JSON.stringify(r.itinerary), "PX", SEARCH_TTL_MS)
-    return { outcome: r.outcome, previousTotal: itinerary.price.total, currentTotal: r.total, checkedAt: new Date().toISOString(), itinerary: r.itinerary ? (owner.staff ? r.itinerary : customerItinerary(r.itinerary)) : undefined }
+    return { outcome: r.outcome, previousTotal: itinerary.price.total, currentTotal: r.total, checkedAt: new Date().toISOString(), itinerary: r.itinerary }
   }
 
   async revalidate(itinerary: Itinerary, requestId: string) {
@@ -278,8 +272,8 @@ export class SearchService implements OnModuleInit, SearchPort {
     return { itinerary: found.itinerary, query: found.query, ruleVersion: found.ruleVersion, engineVersion: found.engineVersion, searchResultId: found.searchResultId }
   }
 
-  /** View-only seat maps only when every component's supplier returns one (D-07, ch. 7.2). */
-  async seatMaps(itineraryId: string, owner: SearchOwner, requestId: string): Promise<{ available: boolean; reason?: string; maps: SeatMap[] }> {
+  /** View-only seat maps only when every component's supplier returns one (D-07, ch. 7.2). Seat prices only for `internal` callers (ADR-0004). */
+  async seatMaps(itineraryId: string, owner: SearchOwner, requestId: string): Promise<{ available: boolean; reason?: string; maps: SeatMap[] | CustomerSeatMap[] }> {
     if (!this.config.flag("seatmaps.enabled")) return { available: false, reason: "SEATMAPS_DISABLED", maps: [] }
     const { itinerary } = await this.itinerary(itineraryId, owner)
     if (!itinerary.components.every((c) => c.seatMapAvailable)) return { available: false, reason: "NOT_FROM_SUPPLIER", maps: [] }
@@ -289,7 +283,7 @@ export class SearchService implements OnModuleInit, SearchPort {
       if (!r.ok || r.value.length === 0) return { available: false, reason: "NOT_FROM_SUPPLIER", maps: [] }
       maps.push(...r.value)
     }
-    return { available: true, maps }
+    return { available: true, maps: owner.internal ? maps : customerSeatMaps(maps) }
   }
 
   /** Developer Panel simulator: cached supplier responses only, draft vs published rules side by side (ch. 16.2 §4). */

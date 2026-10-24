@@ -12,6 +12,7 @@ import '../../models/json.dart';
 import '../../models/requests.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
+import '../account/details_screen.dart';
 import '../account/traveller_form.dart';
 import '../search/itinerary_screen.dart';
 
@@ -32,7 +33,7 @@ class RequestFormScreen extends ConsumerStatefulWidget {
 }
 
 class _RequestFormScreenState extends ConsumerState<RequestFormScreen> {
-  var _idempotencyKey = const Uuid().v4();
+  final _idempotencyKey = const Uuid().v4();
   final _note = TextEditingController();
   final _flex = TextEditingController();
   final _budget = TextEditingController();
@@ -40,7 +41,6 @@ class _RequestFormScreenState extends ConsumerState<RequestFormScreen> {
   bool _notABooking = false;
   bool _privacy = false;
   bool _selfTransfer = false;
-  bool _acceptPriceChange = false;
   bool _busy = false;
   Object? _error;
   String? _localError;
@@ -104,7 +104,6 @@ class _RequestFormScreenState extends ConsumerState<RequestFormScreen> {
         ],
         'contactIdentityId': me!.contactIdentityId,
         if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
-        if (_acceptPriceChange) 'acceptPriceChange': true,
         'acknowledgements': {
           'notABooking': true,
           'privacy': true,
@@ -123,14 +122,6 @@ class _RequestFormScreenState extends ConsumerState<RequestFormScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  /// The supplier price moved since the search: the customer decides whether to continue (ch. 11.3).
-  /// A changed body needs a fresh idempotency key.
-  Future<void> _acceptNewPrice(Json query, bool needsSelfTransfer) {
-    _acceptPriceChange = true;
-    _idempotencyKey = const Uuid().v4();
-    return _submit(query, needsSelfTransfer);
   }
 
   @override
@@ -225,20 +216,27 @@ class _RequestFormScreenState extends ConsumerState<RequestFormScreen> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Semantics(
                       liveRegion: true,
-                      child: Text(_localError ?? errorMessage(l, _error!), style: const TextStyle(color: Brand.brick)),
+                      child: Text(_localError ?? errorMessage(l, _error!), style: const TextStyle(color: Brand.danger)),
                     ),
                   ),
-                const SizedBox(height: 16),
-                if (_error is ApiException && (_error as ApiException).code == 'PRICE_CHANGED')
-                  FilledButton(
-                    onPressed: _busy ? null : () => _acceptNewPrice(query, needsSelfTransfer),
-                    child: Text(l.acceptNewPrice),
-                  )
-                else
-                  FilledButton(
-                    onPressed: _busy ? null : () => _submit(query, needsSelfTransfer),
-                    child: Text(_busy ? l.submitting : l.submitRequest),
+                if (ref.watch(sessionProvider).me?.phoneVerified == false) ...[
+                  const SizedBox(height: 16),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l.verifyPhoneInline, style: Theme.of(context).textTheme.labelLarge),
+                        const SizedBox(height: 8),
+                        const AddIdentityForm(phoneOnly: true),
+                      ],
+                    ),
                   ),
+                ],
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: _busy ? null : () => _submit(query, needsSelfTransfer),
+                  child: Text(_busy ? l.submitting : l.submitRequest),
+                ),
               ],
             );
           },
@@ -261,7 +259,7 @@ class ConfirmationScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Icon(Icons.check_circle_outline, size: 56, color: Brand.moss),
+            const Icon(Icons.check_circle_outline, size: 56, color: Brand.success),
             const SizedBox(height: 16),
             Text(l.confirmationTitle, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: 8),
@@ -274,7 +272,7 @@ class ConfirmationScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Semantics(
                     label: '${l.referenceLabel} $requestRef',
-                    child: LtrText(requestRef, style: Theme.of(context).textTheme.headlineSmall?.copyWith(letterSpacing: 1.5, color: Brand.copperDark)),
+                    child: LtrText(requestRef, style: Theme.of(context).textTheme.headlineSmall?.copyWith(letterSpacing: 1.5, color: Brand.orange700)),
                   ),
                 ],
               ),

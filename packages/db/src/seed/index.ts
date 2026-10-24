@@ -15,7 +15,7 @@ const FLAG_META: Record<string, { owner: string; removeBy: string | null; descri
   "cargo.enabled": { owner: "operations", removeBy: null, description: "Cargo requests on web and app" },
   "search.gateways.enabled": { owner: "operations", removeBy: null, description: "Gateway starts for restricted origins (D-08)" },
   "seatmaps.enabled": { owner: "product", removeBy: "2027-06-30", description: "View-only seat maps where the supplier returns one (D-07, Stage 3)" },
-  "payments.online.enabled": { owner: "owner", removeBy: null, description: "Online payments — off in v1 (D-03)" },
+  "payments.online.enabled": { owner: "owner", removeBy: null, description: "Online card payment, Stripe test mode only (ADR-0007, amends D-03); off by default, switched on by an owner" },
   "search.self_transfer.enabled": { owner: "operations", removeBy: null, description: "Self-transfer construction via hubs" },
   "sms.free_text.enabled": { owner: "operations", removeBy: null, description: "Free-text SMS from the console (off: templates only)" },
   "push.pushy_pilot.enabled": { owner: "developers", removeBy: "2027-03-31", description: "Pushy (non-FCM) pilot for Android users in Iran" },

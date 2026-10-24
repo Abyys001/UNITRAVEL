@@ -26,12 +26,12 @@ export function PlaceInput({ label, value, onChange, name }: { label: string; va
   }
   return (
     <div className="relative">
-      <label htmlFor={id} className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate">{label}</label>
-      <div className="flex items-center gap-2 rounded-md border border-border bg-white px-3 focus-within:ring-2 focus-within:ring-copper">
-        <MapPin className="size-4 text-copper-700" aria-hidden />
+      <label htmlFor={id} className="mb-1 block text-xs font-medium uppercase tracking-wide text-steel">{label}</label>
+      <div className="flex items-center gap-2 rounded-xl border border-line bg-cloud/60 px-3 transition-colors focus-within:border-orange focus-within:bg-white focus-within:ring-[3px] focus-within:ring-orange/35">
+        <MapPin className="size-4 text-orange-700" aria-hidden />
         <input
           id={id} name={name} role="combobox" aria-expanded={open} aria-controls={`${id}-list`} aria-autocomplete="list" autoComplete="off"
-          className="h-11 w-full bg-transparent text-base outline-none placeholder:text-slate/70" placeholder={value ? `${value.label} (${value.code})` : t("search.placeholder")}
+          className="h-11 w-full bg-transparent text-base outline-none placeholder:text-steel/70" placeholder={value ? `${value.label} (${value.code})` : t("search.placeholder")}
           value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(0) }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)}
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, data.length - 1)) }
@@ -39,14 +39,14 @@ export function PlaceInput({ label, value, onChange, name }: { label: string; va
             if (e.key === "Enter" && data[active]) { e.preventDefault(); pick(data[active]!) }
           }}
         />
-        {value && !q && <span className="font-mono text-xs text-slate" dir="ltr">{value.code}</span>}
+        {value && !q && <span className="font-mono text-xs text-steel" dir="ltr">{value.code}</span>}
       </div>
       {open && data.length > 0 && (
-        <ul id={`${id}-list`} role="listbox" className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-border bg-white py-1 shadow-lg">
+        <ul id={`${id}-list`} role="listbox" className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-line bg-white py-1 shadow-[var(--shadow-lift)]">
           {data.map((s, i) => (
             <li key={`${s.kind}${s.code}`} role="option" aria-selected={i === active} onMouseDown={() => pick(s)} className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm ${i === active ? "bg-accent" : ""}`}>
-              <span>{locale === "fa" ? s.nameFa : s.nameEn}{s.kind === "CITY" && <span className="text-slate">{sep}{s.airports?.join(", ")}</span>}</span>
-              <span className="font-mono text-xs text-slate" dir="ltr">{s.code}</span>
+              <span>{locale === "fa" ? s.nameFa : s.nameEn}{s.kind === "CITY" && <span className="text-steel">{sep}{s.airports?.join(", ")}</span>}</span>
+              <span className="font-mono text-xs text-steel" dir="ltr">{s.code}</span>
             </li>
           ))}
         </ul>

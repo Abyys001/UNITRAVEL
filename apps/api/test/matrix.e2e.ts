@@ -53,6 +53,46 @@ describe("permission matrix", () => {
     expect(wrong).toEqual([])
   })
 
+  it("pricing permissions are held by no customer, compliance or developer role (ADR-0004)", () => {
+    const pricing: Permission[] = ["pricing.read.internal", "pricing.write", "commercial_document.issue"]
+    for (const role of ["customer", "compliance_officer", "developer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => pricing.includes(p))).toEqual([])
+    expect(DEFAULT_ROLE_PERMISSIONS.admin).toEqual(expect.arrayContaining(pricing))
+    expect(DEFAULT_ROLE_PERMISSIONS.owner).toEqual(expect.arrayContaining(pricing))
+    expect(DEFAULT_ROLE_PERMISSIONS.cargo_admin).not.toContain("pricing.read.internal")
+  })
+
+  it("includes the Phase E cargo tracking routes, so the role sweeps below cover them", () => {
+    const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
+    expect(has("POST", "/v1/admin/cargo/requests/:ref/tracking-corrections")).toBe(true)
+    expect(has("PUT", "/v1/admin/cargo/requests/:ref/estimated-delivery")).toBe(true)
+    expect(has("GET", "/v1/shipments")).toBe(true)
+    expect(has("GET", "/v1/shipments/summary")).toBe(true)
+    expect(has("GET", "/v1/shipments/:ref")).toBe(true)
+    expect(DEFAULT_ROLE_PERMISSIONS.cargo_admin).toContain("cargo_request.transition")
+    expect(DEFAULT_ROLE_PERMISSIONS.compliance_officer).not.toContain("cargo_request.transition")
+    expect(DEFAULT_ROLE_PERMISSIONS.customer).not.toContain("cargo_request.transition")
+  })
+
+  it("includes the Phase C invoice routes, so the role sweeps below cover them (ADR-0006)", () => {
+    const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
+    for (const [m, p] of [["GET", "/v1/billing/documents"], ["GET", "/v1/billing/invoices/:number"], ["GET", "/v1/admin/invoices"], ["GET", "/v1/admin/invoices/:id"], ["GET", "/v1/admin/requests/:ref/invoices"], ["POST", "/v1/admin/requests/:ref/invoices"], ["POST", "/v1/admin/invoices/:id/issue"], ["POST", "/v1/admin/invoices/:id/cancel"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
+    // Only admin and owner issue documents; cargo staff and compliance can read invoices of their product line but not amounts.
+    expect(DEFAULT_ROLE_PERMISSIONS.cargo_admin).not.toContain("commercial_document.issue")
+    expect(DEFAULT_ROLE_PERMISSIONS.compliance_officer).not.toContain("commercial_document.issue")
+  })
+
+  // Parameter-less writes under /v1/dev/payments are not swept (the sweep would mutate); routes.spec.ts pins their permissions.
+  it("includes the Phase D payment routes, so the role sweeps cover them (ADR-0007)", () => {
+    const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
+    for (const [m, p] of [["GET", "/v1/billing/invoices/:number/payment"], ["POST", "/v1/billing/invoices/:number/checkout-session"], ["GET", "/v1/admin/invoices/:id/payments"], ["POST", "/v1/admin/invoices/:id/payment-link/resend"], ["POST", "/v1/admin/invoices/:id/refunds"], ["POST", "/v1/admin/refunds/:id/approve"], ["POST", "/v1/admin/refunds/:id/reject"], ["GET", "/v1/dev/payments"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
+    // Refund requests and approvals: admin and owner. Stripe configuration: developer and owner. Approving a mode change (and switching online payment on): owner only.
+    for (const role of ["admin", "owner"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).toEqual(expect.arrayContaining(["payment.refund.request", "payment.refund.approve"]))
+    for (const role of ["customer", "cargo_admin", "compliance_officer", "developer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => p.startsWith("payment.refund"))).toEqual([])
+    for (const role of ["developer", "owner"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).toContain("payments.configure")
+    for (const role of ["customer", "admin", "cargo_admin", "compliance_officer", "developer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("payments.mode.approve")
+    expect(DEFAULT_ROLE_PERMISSIONS.owner).toContain("payments.mode.approve")
+  })
+
   for (const [name, phone] of Object.entries(STAFF)) {
     describe(name, () => {
       let dev: Session, admin: Session, held: Set<Permission>

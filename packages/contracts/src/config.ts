@@ -2,6 +2,7 @@ import { z } from "zod"
 
 import { CarrierCode, CountryCode, Iata, LocalisedText } from "./common"
 import { AtolMode, Channel, FlightRequestStatus, CargoStatus } from "./enums"
+import { CommercialDocumentSettings } from "./invoices"
 
 // Chapter 22.3, Table 22.1 — one connection rule. Every field is optional except at the global level, where
 // defaults fill everything; more specific levels override only what they define.
@@ -198,5 +199,9 @@ export const AppSettings = z.object({
   maintenanceBanner: LocalisedText,
   requestsRevalidateOnSubmit: z.boolean(),
   freeTextSmsRoles: z.array(z.string()).default([]),
+  /** Days a passport scan is kept after upload; null = UNKNOWN, scans are kept until erased (ADR-0005 V9, DPIA). */
+  identityScanRetentionDays: z.number().int().min(1).max(3650).nullable().default(null),
+  /** ADR-0006: numbering and the company particulars printed on quotations and invoices (UNKNOWN = null). */
+  commercialDocuments: CommercialDocumentSettings.default(CommercialDocumentSettings.parse({})),
 })
 export type AppSettings = z.infer<typeof AppSettings>

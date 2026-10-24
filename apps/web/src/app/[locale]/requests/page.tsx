@@ -1,8 +1,10 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { Package, Plane } from "lucide-react"
+import { Package, Plane, Ticket } from "lucide-react"
 import Link from "next/link"
+
+import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Ltr } from "@/components/badges"
 import { api } from "@/lib/api"
@@ -18,20 +20,20 @@ export default function RequestsPage() {
   const cached = !q.data && q.isError ? cacheGet<Item[]>("requests") : null
   const items = q.data ?? cached?.data ?? []
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="font-display text-3xl">{t("requests.title")}</h1>
-      {cached && <p className="mt-3 rounded bg-warning-subtle px-3 py-2 text-sm text-warning-subtle-fg">{t("requests.offline")} {t("requests.lastUpdated", { time: date(cached.at, { withTime: true }) })}</p>}
-      {q.isLoading && <div className="mt-6 h-40 animate-pulse rounded-lg bg-muted" />}
-      {!q.isLoading && !items.length && <p className="mt-6 text-slate">{t("requests.empty")}</p>}
-      <ul className="mt-6 divide-y divide-border rounded-lg border border-border bg-white">
+    <div className="mx-auto max-w-4xl px-4 py-8 md:py-10">
+      <h1 className="font-display text-3xl md:text-4xl">{t("requests.title")}</h1>
+      {cached && <p className="mt-4 rounded-xl bg-warning-subtle px-4 py-2.5 text-sm text-warning-subtle-fg">{t("requests.offline")} {t("requests.lastUpdated", { time: date(cached.at, { withTime: true }) })}</p>}
+      {q.isLoading && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
+      {!q.isLoading && !items.length && <EmptyState className="mt-6" icon={<Ticket />} title={t("requests.empty")} />}
+      <ul className="card-brand mt-6 divide-y divide-line overflow-hidden">
         {items.map((r) => (
           <li key={r.ref}>
-            <Link href={href(r.productType === "FLIGHT" ? `/requests/${r.ref}` : `/cargo/${r.ref}`)} className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-paper">
-              <span className="flex items-center gap-3">
-                {r.productType === "FLIGHT" ? <Plane className="size-4 text-copper-700 rtl:-scale-x-100" /> : <Package className="size-4 text-copper-700" />}
-                <span><span className="block font-medium">{r.routeLabel}</span><span className="text-xs text-slate"><Ltr className="font-mono">{r.ref}</Ltr>{sep}{r.firstDate ? date(r.firstDate, { dateOnly: true }) : ""}</span></span>
+            <Link href={href(r.productType === "FLIGHT" ? `/requests/${r.ref}` : `/cargo/${r.ref}`)} className="flex items-center justify-between gap-4 px-4 py-4 transition-colors hover:bg-cloud focus-visible:outline-2 focus-visible:outline-orange sm:px-5">
+              <span className="flex items-center gap-4">
+                {r.productType === "FLIGHT" ? <Plane className="size-4 rotate-45 text-navy-900 rtl:-rotate-45 rtl:-scale-x-100" aria-hidden /> : <Package className="size-4 text-navy-900" aria-hidden />}
+                <span><span className="block font-display text-lg">{r.routeLabel}</span><span className="text-xs text-steel"><Ltr className="font-mono">{r.ref}</Ltr>{sep}{r.firstDate ? date(r.firstDate, { dateOnly: true }) : ""}</span></span>
               </span>
-              <span className="flex items-center gap-2">{r.unread > 0 && <span className="rounded-full bg-copper px-2 text-xs text-white">{r.unread}</span>}<span className="rounded-full border border-border px-2.5 py-0.5 text-xs">{r.statusLabel}</span></span>
+              <span className="flex items-center gap-2">{r.unread > 0 && <span className="rounded-full bg-orange px-2 py-0.5 text-xs font-bold text-navy-950">{r.unread}</span>}<span className="rounded-full border border-navy-900/30 bg-cloud px-3 py-1 text-xs font-semibold text-navy-900">{r.statusLabel}</span></span>
             </Link>
           </li>
         ))}

@@ -14,6 +14,7 @@ export const REDACT_PATHS = [
   "*.code", "*.otp", "*.token", "*.accessToken", "*.refreshToken", "*.secret", "*.password", "*.apiKey", "*.values",
   "*.phone", "*.value", "*.destination", "*.email", "*.givenNames", "*.surname", "*.givenNamesLatin", "*.surnameLatin", "*.nameFa",
   "*.number", "*.documentNumber", "*.passport", "*.body", "*.message", "*.payerName", "*.address",
+  "*.secretKey", "*.publishableKey", "*.webhookSecret", "*.clientSecret",
 ]
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/

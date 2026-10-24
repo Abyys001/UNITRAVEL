@@ -482,15 +482,23 @@
                           "flight_request.transition",
                           "flight_request.note.internal",
                           "quote.create",
+                          "pricing.read.internal",
+                          "pricing.write",
+                          "commercial_document.issue",
                           "reservation.record",
                           "ticket.record",
                           "payment.record",
+                          "payment.refund.request",
+                          "payment.refund.approve",
+                          "payments.configure",
+                          "payments.mode.approve",
                           "cargo_request.create.own",
                           "cargo_request.read.own",
                           "cargo_request.read.any",
                           "cargo_request.transition",
                           "customer.read.pii",
                           "customer.read.documents",
+                          "identity.verify",
                           "compliance.case.read",
                           "compliance.case.decide",
                           "user.read",
@@ -1662,6 +1670,78 @@
         ]
       }
     },
+    "/v1/me/details": {
+      "get": {
+        "operationId": "MyDetailsController_details",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      },
+      "patch": {
+        "operationId": "MyDetailsController_update",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      }
+    },
+    "/v1/me/travellers/{id}/identity/scan": {
+      "post": {
+        "operationId": "MyDetailsController_attachScan",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      }
+    },
+    "/v1/me/travellers/{id}/identity/confirm": {
+      "post": {
+        "operationId": "MyDetailsController_confirm",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "travellers"
+        ]
+      }
+    },
     "/v1/admin/customers/{id}": {
       "get": {
         "operationId": "AdminCustomersController_context",
@@ -1691,6 +1771,89 @@
         "parameters": [
           {
             "name": "travellerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/verifications": {
+      "get": {
+        "operationId": "AdminVerificationsController_queue",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/verifications/{id}": {
+      "get": {
+        "operationId": "AdminVerificationsController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/verifications/{id}/scan": {
+      "get": {
+        "operationId": "AdminVerificationsController_scan",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/verifications/{id}/decide": {
+      "post": {
+        "operationId": "AdminVerificationsController_decide",
+        "parameters": [
+          {
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
@@ -2622,29 +2785,6 @@
         ]
       }
     },
-    "/v1/itineraries/{id}/price-check": {
-      "post": {
-        "operationId": "SearchController_priceCheck",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "search"
-        ]
-      }
-    },
     "/v1/itineraries/{id}/seat-maps": {
       "get": {
         "operationId": "SearchController_seatMaps",
@@ -2851,6 +2991,57 @@
         ]
       }
     },
+    "/v1/shipments": {
+      "get": {
+        "operationId": "CustomerCargoController_shipments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/shipments/summary": {
+      "get": {
+        "operationId": "CustomerCargoController_shipmentSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
+    "/v1/shipments/{ref}": {
+      "get": {
+        "operationId": "CustomerCargoController_shipment",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo"
+        ]
+      }
+    },
     "/v1/cargo-requests/{ref}/messages": {
       "post": {
         "operationId": "CustomerCargoController_message",
@@ -3034,6 +3225,52 @@
         ],
         "responses": {
           "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/tracking-corrections": {
+      "post": {
+        "operationId": "AdminCargoController_correctTracking",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/estimated-delivery": {
+      "put": {
+        "operationId": "AdminCargoController_eta",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": ""
           }
         },
@@ -3303,6 +3540,475 @@
         },
         "tags": [
           "dev"
+        ]
+      }
+    },
+    "/v1/billing/documents": {
+      "get": {
+        "operationId": "CustomerBillingController_documents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/v1/billing/invoices/{number}": {
+      "get": {
+        "operationId": "CustomerBillingController_invoice",
+        "parameters": [
+          {
+            "name": "number",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/v1/admin/invoices": {
+      "get": {
+        "operationId": "AdminInvoicesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
+      }
+    },
+    "/v1/admin/invoices/{id}": {
+      "get": {
+        "operationId": "AdminInvoicesController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
+      }
+    },
+    "/v1/admin/requests/{ref}/invoices": {
+      "get": {
+        "operationId": "AdminInvoicesController_forRequest",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
+      },
+      "post": {
+        "operationId": "AdminInvoicesController_create",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
+      }
+    },
+    "/v1/admin/invoices/{id}/issue": {
+      "post": {
+        "operationId": "AdminInvoicesController_issue",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
+      }
+    },
+    "/v1/admin/invoices/{id}/cancel": {
+      "post": {
+        "operationId": "AdminInvoicesController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
+      }
+    },
+    "/v1/billing/invoices/{number}/payment": {
+      "get": {
+        "operationId": "CustomerPaymentsController_state",
+        "parameters": [
+          {
+            "name": "number",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/v1/billing/invoices/{number}/checkout-session": {
+      "post": {
+        "operationId": "CustomerPaymentsController_checkout",
+        "parameters": [
+          {
+            "name": "number",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/v1/admin/invoices/{id}/payments": {
+      "get": {
+        "operationId": "AdminPaymentsController_view",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-payments"
+        ]
+      }
+    },
+    "/v1/admin/invoices/{id}/payment-link/resend": {
+      "post": {
+        "operationId": "AdminPaymentsController_resend",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-payments"
+        ]
+      }
+    },
+    "/v1/admin/invoices/{id}/refunds": {
+      "post": {
+        "operationId": "AdminPaymentsController_requestRefund",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-payments"
+        ]
+      }
+    },
+    "/v1/admin/refunds/{id}/approve": {
+      "post": {
+        "operationId": "AdminPaymentsController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-payments"
+        ]
+      }
+    },
+    "/v1/admin/refunds/{id}/reject": {
+      "post": {
+        "operationId": "AdminPaymentsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-payments"
+        ]
+      }
+    },
+    "/v1/dev/payments": {
+      "get": {
+        "operationId": "DevPaymentsController_view",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/payments/credentials": {
+      "put": {
+        "operationId": "DevPaymentsController_credentials",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/payments/config": {
+      "patch": {
+        "operationId": "DevPaymentsController_provider",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/payments/mode-requests": {
+      "post": {
+        "operationId": "DevPaymentsController_requestMode",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/payments/mode-requests/approve": {
+      "post": {
+        "operationId": "DevPaymentsController_approveMode",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/payments/health-check": {
+      "post": {
+        "operationId": "DevPaymentsController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/webhooks/stripe": {
+      "post": {
+        "operationId": "StripeWebhookController_stripe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/dev-sink/payments/{sessionId}/deliver": {
+      "post": {
+        "operationId": "DevPaymentSinkController_deliver",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev-sink"
+        ]
+      }
+    },
+    "/v1/dev-sink/payments/{sessionId}/sign": {
+      "post": {
+        "operationId": "DevPaymentSinkController_sign",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev-sink"
         ]
       }
     },

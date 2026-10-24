@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kit_ui/kit_ui.dart' hide TimelineEntry;
-import 'package:kit_ui/kit_ui.dart' as kit show TimelineEntry;
+import 'package:kit_ui/kit_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/api_error.dart';
@@ -12,6 +11,10 @@ import '../../core/repos.dart';
 import '../../core/session.dart';
 import '../../models/json.dart';
 import '../../models/requests.dart';
+import '../../models/shipments.dart';
+import '../cargo/shipments_screen.dart';
+import '../cargo/tracking_timeline.dart';
+import '../../ui/patterns.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 
@@ -24,6 +27,17 @@ class RequestDetailScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<RequestDetailScreen> createState() => _RequestDetailScreenState();
 }
+
+/// Position on the customer-facing path; closed requests (declined, cancelled, expired) show no progress.
+int? _stepFor(String status) => switch (status) {
+  'SUBMITTED' || 'COMPLIANCE_HOLD' || 'NEW' => 0,
+  'IN_REVIEW' || 'AWAITING_CUSTOMER' => 1,
+  'QUOTED' => 2,
+  'ACCEPTED' || 'RESERVED' => 3,
+  'TICKETED' => 4,
+  'COMPLETED' => 5,
+  _ => null,
+};
 
 class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
   final _message = TextEditingController();
@@ -157,7 +171,7 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
                 label: '${l.referenceLabel} ${widget.requestRef}',
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: LtrText(widget.requestRef, style: theme.textTheme.titleMedium?.copyWith(color: Brand.copperDark, letterSpacing: 1)),
+                  child: LtrText(widget.requestRef, style: theme.textTheme.titleMedium?.copyWith(color: Brand.orange700, letterSpacing: 1)),
                 ),
               ),
             ),
@@ -175,6 +189,17 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
           const SizedBox(height: 4),
           Text('${l.travellersLabel}: ${d.travellers.join(', ')}', style: theme.textTheme.bodySmall),
         ],
+        if (!cargo && _stepFor(status) != null) ...[
+          const SizedBox(height: 16),
+          RequestStepper(
+            steps: [l.progressReceived, l.progressReview, l.progressQuote, l.progressBooked, l.progressTicketed],
+            current: _stepFor(status)!,
+            label: l.progressLabel,
+            doneLabel: l.progressDone,
+            currentLabel: l.progressCurrent,
+            todoLabel: l.progressTodo,
+          ),
+        ],
         if (quotes.any((q) => q.open)) ...[
           SectionTitle(l.quotes),
           for (final q in quotes.where((q) => q.open || q.acceptedOptionId != null)) _QuoteCard(q: q, onAccept: offline || _busy ? null : _accept),
@@ -182,33 +207,14 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
         if (d != null && d.tickets.isNotEmpty) ...[
           SectionTitle(l.tickets),
           for (final t in d.tickets)
-            AppCard(
-              child: Row(
-                children: [
-                  const Icon(Icons.confirmation_number_outlined),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [Text(t.traveller), LtrText(t.number, mono: true)],
-                    ),
-                  ),
-                  ToneChip(t.status, tone: XfamTone.success),
-                ],
-              ),
-            ),
+            DocumentCard(icon: Icons.confirmation_number_outlined, title: Text(t.traveller), meta: LtrText(t.number, mono: true), status: ToneChip(t.status, tone: XfamTone.success)),
         ],
         SectionTitle(l.statusTimeline),
-        TimelineList(
+        AppTimeline(
+          currentIndex: 0,
           entries: [
-            for (var i = 0; i < timeline.length; i++)
-              kit.TimelineEntry(
-                title: timeline[i].label,
-                subtitle: timeline[i].detail,
-                timestampLabel: formatDateTime(timeline[i].at, lang: lang, jalali: jalali),
-                tone: i == 0 ? XfamTone.success : XfamTone.neutral,
-                iconName: i == 0 ? 'circle-check' : 'circle',
-              ),
+            for (final item in timeline)
+              AppTimelineEntry(title: item.label, subtitle: [formatDateTime(item.at, lang: lang, jalali: jalali), if (item.detail != null) item.detail!].join(sep(lang))),
           ],
         ),
         if (cargo) _cargoExtras(context, raw),
@@ -230,7 +236,7 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
         if (canCancel && !offline) ...[
           const SizedBox(height: 24),
           OutlinedButton(
-            style: OutlinedButton.styleFrom(foregroundColor: Brand.brick),
+            style: OutlinedButton.styleFrom(foregroundColor: Brand.danger),
             onPressed: _busy ? null : _cancelRequest,
             child: Text(l.cancelRequest),
           ),
@@ -242,8 +248,8 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
   Widget _cargoExtras(BuildContext context, Json raw) {
     final l = context.l;
     final lang = context.lang;
-    final jalali = ref.watch(calendarJalaliProvider);
-    final tracking = raw.objs('tracking');
+    final tracking = raw.objs('tracking').map(TrackEvent.fromJson).toList();
+    final eta = parseDate(raw['estimatedDeliveryAt']);
     final w = raw.obj('weights');
     final chargeable = w['chargeableKg'] as num?;
     return Column(
@@ -255,13 +261,8 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
             child: Text(l.chargeableWeight(digits(chargeable.toStringAsFixed(1), lang))),
           ),
         SectionTitle(l.tracking),
-        if (tracking.isEmpty) Text(l.noTracking, style: Theme.of(context).textTheme.bodySmall),
-        for (final t in tracking)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text('${t.str('eventCode')}${sep(lang)}${t.str('location')}'),
-            subtitle: Text(formatDateTime(parseDate(t['occurredAt']), lang: lang, jalali: jalali)),
-          ),
+        if (eta != null) ...[EtaBlock(at: eta), const SizedBox(height: 12)],
+        TrackingTimeline(events: tracking),
       ],
     );
   }
@@ -333,14 +334,14 @@ class _MessageBubble extends ConsumerWidget {
         padding: const EdgeInsets.all(12),
         constraints: const BoxConstraints(maxWidth: 520),
         decoration: BoxDecoration(
-          color: mine ? Brand.navy : c.surface,
-          border: mine ? null : Border.all(color: Brand.mist),
+          color: mine ? Brand.navy950 : c.surface,
+          border: mine ? null : Border.all(color: Brand.line),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(mine ? l.youLabel : m.author, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: mine ? Brand.copper : c.fgMuted)),
+            Text(mine ? l.youLabel : m.author, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: mine ? Brand.orange300 : c.fgMuted)),
             const SizedBox(height: 2),
             Text(m.body, style: TextStyle(color: mine ? Colors.white : null)),
             const SizedBox(height: 4),

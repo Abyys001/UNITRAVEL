@@ -42,6 +42,20 @@ class CargoScreen extends ConsumerWidget {
             children: [
               Text(l.cargoIntro),
               const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: AppCard(
+                  key: const Key('open-shipments'),
+                  semanticLabel: l.shipmentsTitle,
+                  onTap: () => context.push('/cargo/shipments'),
+                  child: Row(children: [
+                    const Icon(Icons.local_shipping_outlined),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(l.shipmentsTitle, style: Theme.of(context).textTheme.titleMedium)),
+                    const Icon(Icons.chevron_right),
+                  ]),
+                ),
+              ),
               for (final lane in lanes)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -301,7 +315,7 @@ class _CargoRequestScreenState extends ConsumerState<CargoRequestScreen> {
                   if (_localError != null || _error != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: Semantics(liveRegion: true, child: Text(_localError ?? errorMessage(l, _error!), style: const TextStyle(color: Brand.brick))),
+                      child: Semantics(liveRegion: true, child: Text(_localError ?? errorMessage(l, _error!), style: const TextStyle(color: Brand.danger))),
                     ),
                   const SizedBox(height: 16),
                   FilledButton(onPressed: _busy ? null : () => _submit(lane), child: Text(_busy ? l.submitting : l.submitCargo)),

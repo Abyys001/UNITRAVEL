@@ -131,13 +131,69 @@ export const CargoQuoteView = z.object({
 })
 
 export const PartnerBookingBody = z.object({ partnerId: Uuid, partnerReference: z.string().min(2).max(60), awbNumber: z.string().regex(/^\d{3}-?\d{8}$/).optional() })
+export const TRACKING_EVENT_CODES = ["PICKED_UP", "RECEIVED", "DEPARTED", "ARRIVED", "AT_CUSTOMS", "CLEARED", "OUT_FOR_DELIVERY", "DELIVERED", "HELD", "DAMAGED", "RETURNED", "NOTE"] as const
+export const TrackingEventCode = z.enum(TRACKING_EVENT_CODES)
+export type TrackingEventCode = z.infer<typeof TrackingEventCode>
+/** Phase E: customers never see raw codes. The en/fa i18n catalogues and the Flutter ARB repeat these; a test pins them. */
+export const TRACKING_EVENT_LABELS: Record<TrackingEventCode, { en: string; fa: string }> = {
+  PICKED_UP: { en: "Picked up", fa: "از فرستنده تحویل گرفته شد" },
+  RECEIVED: { en: "Received at our partner", fa: "نزد شریک ما دریافت شد" },
+  DEPARTED: { en: "Departed", fa: "حرکت کرد" },
+  ARRIVED: { en: "Arrived", fa: "رسید" },
+  AT_CUSTOMS: { en: "At customs", fa: "در گمرک" },
+  CLEARED: { en: "Cleared customs", fa: "ترخیص گمرکی انجام شد" },
+  OUT_FOR_DELIVERY: { en: "Out for delivery", fa: "برای تحویل در راه است" },
+  DELIVERED: { en: "Delivered", fa: "تحویل داده شد" },
+  HELD: { en: "On hold", fa: "متوقف شده است" },
+  DAMAGED: { en: "Damage reported", fa: "آسیب‌دیدگی گزارش شد" },
+  RETURNED: { en: "Returned", fa: "بازگردانده شد" },
+  NOTE: { en: "Update", fa: "به‌روزرسانی" },
+}
 export const TrackingEventBody = z.object({
-  eventCode: z.enum(["PICKED_UP", "RECEIVED", "DEPARTED", "ARRIVED", "AT_CUSTOMS", "CLEARED", "OUT_FOR_DELIVERY", "DELIVERED", "HELD", "DAMAGED", "RETURNED", "NOTE"]),
+  eventCode: TrackingEventCode,
   location: z.string().min(2).max(120),
   occurredAt: IsoDateTime,
   description: z.string().max(500).optional(),
 })
-export const TrackingEventView = TrackingEventBody.extend({ id: Uuid, source: z.enum(["STAFF", "PARTNER_API"]) })
+export const TrackingSource = z.enum(["STAFF", "PARTNER_API"])
+/** A staff correction is appended and points at the event it replaces; RETRACTED withdraws the event without a replacement. */
+export const TrackingCorrectionBody = z.object({
+  correctsEventId: Uuid,
+  eventCode: z.union([TrackingEventCode, z.literal("RETRACTED")]),
+  location: z.string().min(2).max(120),
+  occurredAt: IsoDateTime,
+  description: z.string().max(500).optional(),
+  reason: z.string().trim().min(3).max(500),
+})
+export const EstimatedDeliveryBody = z.object({ estimatedDeliveryAt: IsoDateTime.nullable() })
+/** What the customer sees: the effective (corrected) state only. No source, author, reason or partner payload. */
+export const TrackingEventView = z.object({
+  id: Uuid, eventCode: TrackingEventCode, label: z.string(), location: z.string(), occurredAt: IsoDateTime, description: z.string().optional(), corrected: z.boolean(),
+})
+export const StaffTrackingEventView = z.object({
+  id: Uuid, eventCode: z.string(), location: z.string(), occurredAt: IsoDateTime, description: z.string().nullable(), source: TrackingSource,
+  externalEventId: z.string().nullable(), correctsEventId: z.string().nullable(), correctionReason: z.string().nullable(), createdBy: z.string().nullable(), createdAt: IsoDateTime,
+  effective: z.boolean(),
+})
+
+/** One shipment as the customer sees it in "Shipments". `estimatedDeliveryAt` is an estimate, never a promise. */
+export const ShipmentView = z.object({
+  ref: Reference,
+  service: CargoService,
+  status: CargoStatus,
+  statusLabel: z.string(),
+  laneLabel: z.string(),
+  awbNumber: z.string().nullable(),
+  estimatedDeliveryAt: IsoDateTime.nullable(),
+  lastEvent: TrackingEventView.nullable(),
+  timeline: z.array(TrackingEventView),
+})
+export type ShipmentView = z.infer<typeof ShipmentView>
+export const ShipmentSummary = z.object({
+  total: z.number().int(), inTransit: z.number().int(), delivered: z.number().int(),
+  next: z.object({ ref: Reference, estimatedDeliveryAt: IsoDateTime.nullable(), lastEvent: TrackingEventView.nullable(), laneLabel: z.string() }).nullable(),
+})
+export type ShipmentSummary = z.infer<typeof ShipmentSummary>
 
 export const CARGO_COMMANDS = [
   "claim", "assign", "request_info", "send_quote", "record_acceptance", "record_booking", "schedule_handover", "receive", "depart",
@@ -185,6 +241,7 @@ export const CargoCustomerView = z.object({
   submittedAt: IsoDateTime,
   timeline: z.array(z.object({ at: IsoDateTime, label: z.string(), detail: z.string().optional() })),
   tracking: z.array(TrackingEventView),
+  estimatedDeliveryAt: IsoDateTime.nullable(),
   quotes: z.array(CargoQuoteView),
   messages: z.array(z.object({ id: Uuid, direction: z.string(), body: z.string(), authorName: z.string(), createdAt: IsoDateTime })),
   documents: z.array(z.object({ id: Uuid, type: z.string(), filename: z.string(), createdAt: IsoDateTime })),

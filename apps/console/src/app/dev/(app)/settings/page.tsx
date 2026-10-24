@@ -30,7 +30,7 @@ export default function SettingsPage() {
     <div>
       <PageHead kicker="Platform" title="Settings & feature flags" />
       <div className="grid gap-x-8 px-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <Panel title="Application settings" aside={issues.length ? <span className="text-brick">{issues.length} issue(s)</span> : null}>
+        <Panel title="Application settings" aside={issues.length ? <span className="text-danger">{issues.length} issue(s)</span> : null}>
           <ErrorLine error={settings.error} />
           {draft == null ? <Loading /> : <SchemaForm value={draft as never} onChange={setDraft} issues={issues} />}
           {can("settings.write") && <Button size="sm" className="mt-3" onClick={() => void save()} loading={busy} disabled={!!issues.length || JSON.stringify(draft) === JSON.stringify(settings.data)}>Save settings</Button>}
@@ -40,12 +40,12 @@ export default function SettingsPage() {
           <ul className="ledger-rows" data-testid="flags">
             {(flags.data ?? []).map((f) => (
               <li key={f.key} className="flex items-start justify-between gap-3 py-1.5">
-                <span className="min-w-0"><span className="font-mono text-[12px]">{f.key}</span>{(f.description || f.owner) && <span className="block text-[11px] text-slate">{f.description}{f.owner && ` · owner ${f.owner}`}{f.removeBy && ` · remove by ${f.removeBy}`}</span>}{f.updatedAt && <span className="block text-[10.5px] text-slate">changed {fmtDateTime(f.updatedAt)}</span>}</span>
-                <label className="flex shrink-0 items-center gap-1.5"><input type="checkbox" role="switch" aria-label={f.key} checked={f.enabled} disabled={!can("flags.write")} onChange={() => void toggle(f)} /><span className={f.enabled ? "text-moss" : "text-slate"}>{f.enabled ? "on" : "off"}</span></label>
+                <span className="min-w-0"><span className="font-mono text-[12px]">{f.key}</span>{(f.description || f.owner) && <span className="block text-[11px] text-steel">{f.description}{f.owner && ` · owner ${f.owner}`}{f.removeBy && ` · remove by ${f.removeBy}`}</span>}{f.updatedAt && <span className="block text-[10.5px] text-steel">changed {fmtDateTime(f.updatedAt)}</span>}</span>
+                <label className="flex shrink-0 items-center gap-1.5"><input type="checkbox" role="switch" aria-label={f.key} checked={f.enabled} disabled={!can("flags.write")} onChange={() => void toggle(f)} /><span className={f.enabled ? "text-success" : "text-steel"}>{f.enabled ? "on" : "off"}</span></label>
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-[11px] text-slate">payments.online.enabled stays off in v1 — the API refuses it (decision D-03).</p>
+          <p className="mt-1 text-[11px] text-steel">payments.online.enabled stays off in v1 — the API refuses it (decision D-03).</p>
         </Panel>
       </div>
     </div>

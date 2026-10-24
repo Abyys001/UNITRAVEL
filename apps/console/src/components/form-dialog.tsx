@@ -28,11 +28,11 @@ export function FormDialog({ open, onOpenChange, title, description, submitLabel
       <DialogContent className={cn("max-h-[92dvh] gap-3 overflow-y-auto p-5", wide ? "sm:max-w-3xl" : "sm:max-w-md")} data-testid={testId}>
         <DialogHeader>
           <DialogTitle className="font-display text-lg font-normal">{title}</DialogTitle>
-          {description && <DialogDescription className="text-slate">{description}</DialogDescription>}
+          {description && <DialogDescription className="text-steel">{description}</DialogDescription>}
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           {children}
-          {err && <p role="alert" className="rounded-sm bg-[#fbeee9] px-2 py-1.5 text-brick">{err}</p>}
+          {err && <p role="alert" className="rounded-sm bg-danger-subtle px-2 py-1.5 text-danger">{err}</p>}
           <DialogFooter>
             <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
             <Button type="submit" size="sm" variant={destructive ? "destructive" : "default"} loading={busy}>{submitLabel}</Button>

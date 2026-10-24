@@ -1,75 +1,75 @@
 {
-  "phone": "+989125380832",
+  "phone": "+989126298689",
   "results": [
     {
       "name": "app boots and shows the sign-in screen (English, LTR)",
       "ok": true,
-      "ms": 1070
+      "ms": 1283
     },
     {
       "name": "switch to Persian: strings and layout become RTL",
       "ok": true,
-      "ms": 467
+      "ms": 648
     },
     {
-      "name": "sign in with +989125380832 (Persian UI, OTP from dev sink)",
+      "name": "sign in with +989126298689 (Persian UI, OTP from dev sink)",
       "ok": true,
-      "ms": 2758
+      "ms": 3193
     },
     {
       "name": "new account completes its profile (Latin names)",
       "ok": true,
-      "ms": 3776
+      "ms": 3744
     },
     {
       "name": "search THR -> LON shows results with truth badges",
       "ok": true,
-      "ms": 6172
+      "ms": 6428
     },
     {
       "name": "submit a manual request (add traveller, acknowledge, submit)",
       "ok": true,
-      "ms": 9607
+      "ms": 11365
     },
     {
-      "name": "open an itinerary, recheck price, and request it",
+      "name": "open an itinerary and request it",
       "ok": true,
-      "ms": 7901
+      "ms": 5799
     },
     {
       "name": "requests list and detail show both requests with customer status labels",
       "ok": true,
-      "ms": 2120
+      "ms": 2080
     },
     {
       "name": "offline: cached requests are shown with a \"last updated\" banner",
       "ok": true,
-      "ms": 1729
+      "ms": 1653
     },
     {
       "name": "promote the customer to admin (owner, Developer Panel host); admin mode appears on the next call",
       "ok": true,
-      "ms": 1744
+      "ms": 1634
     },
     {
       "name": "staff second factor: enrol TOTP in the app, then the triage queue loads",
       "ok": true,
-      "ms": 4928
+      "ms": 6554
     },
     {
       "name": "open a case: customer, SLA and triage actions (no quote/record/compliance on mobile)",
       "ok": true,
-      "ms": 1391
+      "ms": 1333
     },
     {
       "name": "on-duty toggle in Account (admin mode)",
       "ok": true,
-      "ms": 1627
+      "ms": 1681
     },
     {
       "name": "English / LTR pass: new customer signs in, searches, opens an itinerary, opens Account",
       "ok": true,
-      "ms": 41715
+      "ms": 17552
     }
   ],
   "consoleErrors": []

@@ -22,5 +22,12 @@ export async function signIn(page: Page, phone: string, locale = "en") {
   const code = await latestOtp(page, phone, started)
   await page.locator("input[autocomplete=one-time-code]").fill(code)
   await page.locator("form button[type=submit]").click()
+  // A first sign-in asks for the passport name before leaving the sign-in page.
+  const given = page.getByRole("textbox", { name: /Given names/ })
+  if (await given.waitFor({ timeout: 3_000 }).then(() => true, () => false)) {
+    await given.fill("Test")
+    await page.getByRole("textbox", { name: /^Surname/ }).fill("Customer")
+    await page.getByRole("button", { name: "Save" }).click()
+  }
   await expect(page).not.toHaveURL(/sign-in/, { timeout: 15_000 })
 }

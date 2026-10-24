@@ -23,18 +23,18 @@ export default function LanesPage() {
     <div>
       <PageHead kicker="Platform" title="Cargo lanes" />
       <div className="px-5 py-3">
-        <table className="w-full bg-white" data-testid="lanes">
-          <thead className="bg-paper"><tr className="border-b border-rule">{["Lane", "Services", "Divisor", "Compliance", "Approvals", "Status", ""].map((h) => <th key={h} className="cap px-2 py-1.5 text-start font-normal">{h}</th>)}</tr></thead>
+        <table className="w-full bg-surface-raised" data-testid="lanes">
+          <thead className="bg-surface-raised"><tr className="border-b border-rule">{["Lane", "Services", "Divisor", "Compliance", "Approvals", "Status", ""].map((h) => <th key={h} className="cap px-2 py-1.5 text-start font-normal">{h}</th>)}</tr></thead>
           <tbody>{q.data.map((l) => {
             const iran = l.originCountry === "IR" || l.destinationCountry === "IR"
             return (
               <tr key={l.id} className="border-b border-rule/70 align-top">
-                <td className="num px-2 py-1.5 font-medium">{l.originCountry} → {l.destinationCountry}{iran && <span className="ms-1 font-mono text-[10px] text-brick">IRAN</span>}</td>
+                <td className="num px-2 py-1.5 font-medium">{l.originCountry} → {l.destinationCountry}{iran && <span className="ms-1 font-mono text-[10px] text-danger">IRAN</span>}</td>
                 <td className="px-2 py-1.5 font-mono text-[11px]">{l.services.join(" · ")}</td>
                 <td className="num px-2 py-1.5">{l.volumetricDivisor}</td>
-                <td className="px-2 py-1.5">{l.requiresComplianceApproval ? "case per request" : "—"}{l.counselReference && <span className="block text-[11px] text-slate">counsel {l.counselReference}</span>}</td>
+                <td className="px-2 py-1.5">{l.requiresComplianceApproval ? "case per request" : "—"}{l.counselReference && <span className="block text-[11px] text-steel">counsel {l.counselReference}</span>}</td>
                 <td className="px-2 py-1.5 text-[12px]">{iran ? <>owner {l.enabledByOwner ? "✓" : "—"} · compliance {l.enabledByCompliance ? "✓" : "—"}</> : "single"}</td>
-                <td className="px-2 py-1.5"><Tag value={l.enabled ? "ENABLED" : "DISABLED"} className={l.enabled ? "border-moss text-moss" : ""} /></td>
+                <td className="px-2 py-1.5"><Tag value={l.enabled ? "ENABLED" : "DISABLED"} className={l.enabled ? "border-success text-success" : ""} /></td>
                 <td className="px-2 py-1.5"><Button size="xs" variant="ghost" onClick={() => setEdit(l)}>Edit</Button></td>
               </tr>
             )

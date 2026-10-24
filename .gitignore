@@ -15,3 +15,7 @@ media/raw/
 .dev-jwt.json
 .run/
 media/teaser/.state/
+
+# local tooling output
+graphify-out/
+.playwright-mcp/

@@ -113,7 +113,7 @@ export const UpdateMeBody = z
   .partial()
   .strict()
 
-export const AddIdentityBody = z.object({ type: IdentityType, value: z.string().min(3).max(254), defaultCountry: z.string().length(2).optional(), deviceId: z.string().min(8) })
+export const AddIdentityBody = z.object({ type: IdentityType, value: z.string().min(3).max(254), defaultCountry: z.string().length(2).optional(), deviceId: z.string().min(8), challenge: z.string().max(4096).optional() })
 
 export const DeviceBody = z.object({
   platform: DevicePlatform,

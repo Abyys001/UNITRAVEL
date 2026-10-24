@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { Iata, IsoDate, IsoDateTime, Money, Uuid } from "./common"
 import { Cabin, Construction, PassengerType, ProviderId, ResultTab, RiskFlag, Rung, TicketingModel, TripType } from "./enums"
-import { NormalisedOffer, SegmentBaggage } from "./offer"
+import { CustomerOffer, NormalisedOffer, SegmentBaggage } from "./offer"
 
 // Chapter 11.3 / 24.7 — search request.
 export const Place = z.union([z.object({ city: Iata }), z.object({ airport: Iata })])
@@ -111,6 +111,16 @@ export const Itinerary = z.object({
 })
 export type Itinerary = z.infer<typeof Itinerary>
 
+/**
+ * ADR-0004: what a customer (or a staff member without `pricing.read.internal`) receives. No amounts, no price-derived
+ * score, no CHEAPEST tab; ordering is neutral. Fields are removed, never zeroed.
+ */
+export const CustomerItinerary = Itinerary.omit({ price: true, components: true, score: true, explain: true, tabs: true }).extend({
+  components: z.array(CustomerOffer).min(1),
+  tabs: z.array(ResultTab.exclude(["CHEAPEST"])),
+})
+export type CustomerItinerary = z.infer<typeof CustomerItinerary>
+
 export const SearchStatus = z.enum(["RUNNING", "COMPLETE", "PARTIAL", "FAILED"])
 export type SearchStatus = z.infer<typeof SearchStatus>
 
@@ -141,6 +151,9 @@ export const SearchState = z.object({
   total: z.number().int().nonnegative(),
 })
 export type SearchState = z.infer<typeof SearchState>
+
+export const CustomerSearchState = SearchState.extend({ results: z.array(CustomerItinerary) })
+export type CustomerSearchState = z.infer<typeof CustomerSearchState>
 
 export const SearchStateQuery = z.object({
   tab: ResultTab.optional(),

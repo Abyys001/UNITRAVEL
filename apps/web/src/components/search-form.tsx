@@ -1,11 +1,11 @@
 "use client"
 
-import { ArrowLeftRight, Minus, Plus, Settings2 } from "lucide-react"
+import { ArrowLeftRight, Minus, Plus, Search, Settings2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { Button } from "@unitravel/ui/components/button"
 import { Switch } from "@unitravel/ui/components/switch"
+import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { useI18n } from "@/lib/i18n"
 
@@ -44,49 +44,49 @@ export function SearchForm({ initial }: { initial?: Partial<SearchParamsShape> }
     <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
       <span>{label}</span>
       <span className="flex items-center gap-2">
-        <button type="button" className="rounded-md border border-border p-1 disabled:opacity-40" aria-label={`− ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)}><Minus className="size-3.5" /></button>
+        <button type="button" className="rounded-lg border border-line p-1.5 disabled:opacity-40" aria-label={`− ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)}><Minus className="size-3.5" /></button>
         <span className="w-5 text-center tabular-nums">{value}</span>
-        <button type="button" className="rounded-md border border-border p-1" aria-label={`+ ${label}`} onClick={() => onChange(value + 1)}><Plus className="size-3.5" /></button>
+        <button type="button" className="rounded-lg border border-line p-1.5" aria-label={`+ ${label}`} onClick={() => onChange(value + 1)}><Plus className="size-3.5" /></button>
       </span>
     </div>
   )
   return (
-    <form onSubmit={submit} className="rounded-lg border border-border bg-white/95 p-4 shadow-[0_1px_0_rgba(15,34,56,0.04),0_20px_40px_-24px_rgba(15,34,56,0.35)] md:p-5" aria-label={t("search.submit")}>
-      <div className="mb-4 flex gap-1 rounded-md bg-muted p-1 text-sm" role="radiogroup">
+    <form onSubmit={submit} className="rounded-[24px] border border-white/60 bg-white p-4 text-navy-950 shadow-[var(--shadow-lift)] md:p-6" aria-label={t("search.submit")}>
+      <div className="mb-4 inline-flex gap-1 rounded-full bg-cloud p-1 text-sm font-semibold" role="radiogroup">
         {(["ONE_WAY", "RETURN"] as const).map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={p.trip === k} onClick={() => set("trip", k)} className={`flex-1 rounded px-3 py-1.5 ${p.trip === k ? "bg-white font-medium shadow-sm" : "text-slate"}`}>{t(k === "ONE_WAY" ? "search.oneWay" : "search.return")}</button>
+          <button key={k} type="button" role="radio" aria-checked={p.trip === k} onClick={() => set("trip", k)} className={`rounded-full px-4 py-1.5 transition-colors ${p.trip === k ? "bg-navy-900 text-white shadow-sm" : "text-steel hover:text-navy-950"}`}>{t(k === "ONE_WAY" ? "search.oneWay" : "search.return")}</button>
         ))}
       </div>
       <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr]">
         <PlaceInput name="from" label={t("search.from")} value={p.from} onChange={(v) => set("from", v)} />
-        <button type="button" className="mt-5 hidden self-center rounded-full border border-border p-2 md:block" aria-label="Swap" onClick={() => setP((x) => ({ ...x, from: x.to, to: x.from }))}><ArrowLeftRight className="size-4" /></button>
+        <button type="button" className="mt-5 hidden self-center rounded-full border-2 border-orange bg-white p-2 text-navy-900 transition-transform hover:rotate-180 md:block" aria-label="Swap" onClick={() => setP((x) => ({ ...x, from: x.to, to: x.from }))}><ArrowLeftRight className="size-4" /></button>
         <PlaceInput name="to" label={t("search.to")} value={p.to} onChange={(v) => set("to", v)} />
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <label className="text-xs font-medium uppercase tracking-wide text-slate">{t("search.date")}
-          <input type="date" required value={p.date} min={iso(new Date())} onChange={(e) => set("date", e.target.value)} className="mt-1 h-11 w-full rounded-md border border-border bg-white px-3 text-base text-ink normal-case tracking-normal" />
+        <label className="text-xs font-medium uppercase tracking-wide text-steel">{t("search.date")}
+          <input type="date" required value={p.date} min={iso(new Date())} onChange={(e) => set("date", e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-line bg-cloud/60 px-3 text-base text-navy-950 focus:bg-white normal-case tracking-normal" />
         </label>
         {p.trip === "RETURN" ? (
-          <label className="text-xs font-medium uppercase tracking-wide text-slate">{t("search.returnDate")}
-            <input type="date" required value={p.ret ?? ""} min={p.date} onChange={(e) => set("ret", e.target.value)} className="mt-1 h-11 w-full rounded-md border border-border bg-white px-3 text-base text-ink normal-case tracking-normal" />
+          <label className="text-xs font-medium uppercase tracking-wide text-steel">{t("search.returnDate")}
+            <input type="date" required value={p.ret ?? ""} min={p.date} onChange={(e) => set("ret", e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-line bg-cloud/60 px-3 text-base text-navy-950 focus:bg-white normal-case tracking-normal" />
           </label>
         ) : null}
-        <label className="text-xs font-medium uppercase tracking-wide text-slate">{t("search.cabin")}
-          <select value={p.cabin} onChange={(e) => set("cabin", e.target.value)} className="mt-1 h-11 w-full rounded-md border border-border bg-white px-3 text-base text-ink normal-case tracking-normal">
+        <label className="text-xs font-medium uppercase tracking-wide text-steel">{t("search.cabin")}
+          <NativeSelect value={p.cabin} onChange={(e) => set("cabin", e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-line bg-cloud/60 px-3 text-base text-navy-950 focus:bg-white normal-case tracking-normal">
             <option value="ECONOMY">{t("search.economy")}</option><option value="PREMIUM_ECONOMY">{t("search.premium")}</option><option value="BUSINESS">{t("search.business")}</option><option value="FIRST">{t("search.first")}</option>
-          </select>
+          </NativeSelect>
         </label>
-        <label className="flex items-end gap-2 pb-2 text-sm"><input type="checkbox" checked={p.flex} onChange={(e) => set("flex", e.target.checked)} className="size-4 accent-copper" />{t("search.flex")}</label>
+        <label className="flex items-end gap-2 pb-2 text-sm"><input type="checkbox" checked={p.flex} onChange={(e) => set("flex", e.target.checked)} className="size-4 accent-orange" />{t("search.flex")}</label>
       </div>
-      <details className="mt-3 rounded-md border border-border px-3 py-2" open={more} onToggle={(e) => setMore((e.target as HTMLDetailsElement).open)}>
-        <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium"><Settings2 className="size-4 text-copper-700" />{t("search.travellers")}{sep}{t("search.preferences")}</summary>
+      <details className="mt-3 rounded-xl border border-line px-3 py-2" open={more} onToggle={(e) => setMore((e.target as HTMLDetailsElement).open)}>
+        <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium"><Settings2 className="size-4 text-orange-700" />{t("search.travellers")}{sep}{t("search.preferences")}</summary>
         <div className="mt-3 grid gap-6 md:grid-cols-2">
           <div>
             <Counter label={t("search.adults")} value={p.adt} min={1} onChange={(n) => set("adt", n)} />
             <Counter label={t("search.children")} value={p.chd.length} onChange={(n) => set("chd", n > p.chd.length ? [...p.chd, 8] : p.chd.slice(0, n))} />
             {p.chd.map((age, i) => (
-              <label key={i} className="ms-4 flex items-center justify-between py-1 text-sm text-slate">{t("search.childAge", { n: i + 1 })}
-                <select value={age} onChange={(e) => set("chd", p.chd.map((a, j) => (j === i ? Number(e.target.value) : a)))} className="rounded border border-border bg-white px-2 py-1">{Array.from({ length: 10 }, (_, k) => k + 2).map((a) => <option key={a}>{a}</option>)}</select>
+              <label key={i} className="ms-4 flex items-center justify-between py-1 text-sm text-steel">{t("search.childAge", { n: i + 1 })}
+                <NativeSelect value={age} onChange={(e) => set("chd", p.chd.map((a, j) => (j === i ? Number(e.target.value) : a)))} className="field py-1">{Array.from({ length: 10 }, (_, k) => k + 2).map((a) => <option key={a}>{a}</option>)}</NativeSelect>
               </label>
             ))}
             <Counter label={t("search.infants")} value={p.inf} onChange={(n) => set("inf", Math.min(n, p.adt))} />
@@ -96,16 +96,16 @@ export function SearchForm({ initial }: { initial?: Partial<SearchParamsShape> }
             <label className="flex items-center justify-between gap-3">{t("search.airportChange")}<Switch checked={p.ac} onCheckedChange={(v) => set("ac", v)} /></label>
             <label className="flex items-center justify-between gap-3">{t("search.overnight")}<Switch checked={p.on} onCheckedChange={(v) => set("on", v)} /></label>
             <label className="flex items-center justify-between gap-3">{t("search.maxStops")}
-              <select value={p.stops} onChange={(e) => set("stops", Number(e.target.value))} className="rounded border border-border bg-white px-2 py-1">{[0, 1, 2].map((n) => <option key={n}>{n}</option>)}</select>
+              <NativeSelect value={p.stops} onChange={(e) => set("stops", Number(e.target.value))} className="field py-1">{[0, 1, 2].map((n) => <option key={n}>{n}</option>)}</NativeSelect>
             </label>
             <label className="flex items-center justify-between gap-3">{t("search.layoverWindow")}
-              <span className="flex items-center gap-1" dir="ltr"><input type="number" min={1} max={12} value={p.lay[0] / 60} onChange={(e) => set("lay", [Number(e.target.value) * 60, p.lay[1]])} className="w-14 rounded border border-border px-2 py-1" />–<input type="number" min={1} max={20} value={p.lay[1] / 60} onChange={(e) => set("lay", [p.lay[0], Number(e.target.value) * 60])} className="w-14 rounded border border-border px-2 py-1" /> h</span>
+              <span className="flex items-center gap-1" dir="ltr"><input type="number" min={1} max={12} value={p.lay[0] / 60} onChange={(e) => set("lay", [Number(e.target.value) * 60, p.lay[1]])} className="field w-16 py-1" />–<input type="number" min={1} max={20} value={p.lay[1] / 60} onChange={(e) => set("lay", [p.lay[0], Number(e.target.value) * 60])} className="field w-16 py-1" /> h</span>
             </label>
             <label className="flex items-start justify-between gap-3">{t("search.gateways")}<Switch checked={p.gw} onCheckedChange={(v) => set("gw", v)} /></label>
           </div>
         </div>
       </details>
-      <Button type="submit" size="lg" className="mt-4 h-12 w-full text-base">{t("search.submit")}</Button>
+      <button type="submit" className="btn-orange mt-5 h-13 w-full text-base"><Search className="size-5" />{t("search.submit")}</button>
     </form>
   )
 }

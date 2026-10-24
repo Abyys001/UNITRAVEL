@@ -8,7 +8,7 @@ import { joinAtHub } from "./build"
 import { localToUtc, makeOffer } from "./factory"
 import { plan } from "./plan"
 import { RuleResolver } from "./rules"
-import { scoreAll } from "./score"
+import { byCost, scoreAll } from "./score"
 import type { AirportRef, CollectedCall, EngineContext, PlannedCall, ReferenceLookup } from "./types"
 
 const AIRPORTS: AirportRef[] = [
@@ -145,19 +145,21 @@ describe("engine invariants (property)", () => {
     }), { numRuns: 500 })
   })
 
-  it("score is monotonic: raising only the price never improves the score", () => {
-    fc.assert(fc.property(fc.array(arbOffer, { minLength: 2, maxLength: 10 }), fc.integer({ min: 1, max: 50000 }), (offers, bump) => {
+  it("price is not a ranking input: changing any price never changes a score or the BEST order (ADR-0004)", () => {
+    fc.assert(fc.property(fc.array(arbOffer, { minLength: 2, maxLength: 10 }), fc.integer({ min: 1, max: 500000 }), (offers, bump) => {
       const c = ctx({ slices: [{ from: { airport: "IST" }, to: { city: "LON" }, date: "2026-11-14", flexDays: 0 }] }, [])
       const r = assemble(c, [{ call: call({ kind: "THROUGH" }), offers }], new Map())
       if (r.results.length < 2) return
       const items = r.results.map(({ tabs: _t, score: _s, explain: _e, ...rest }) => rest)
       const before = scoreAll(items, DEFAULT_ENGINE_RULES.weights, [240, 360], 2, new Map())
-      const bumped = items.map((x, i) => (i === 0 ? { ...x, price: { ...x.price, total: { ...x.price.total, amountMinor: x.price.total.amountMinor + bump } } } : x))
+      const bumped = items.map((x, i) => ({ ...x, price: { ...x.price, total: { ...x.price.total, amountMinor: x.price.total.amountMinor + bump * (i + 1) } } }))
       const after = scoreAll(bumped, DEFAULT_ENGINE_RULES.weights, [240, 360], 2, new Map())
-      const rankBefore = [...before].sort((a, b) => a.score - b.score).findIndex((x) => x.id === items[0]!.id)
-      const rankAfter = [...after].sort((a, b) => a.score - b.score).findIndex((x) => x.id === items[0]!.id)
-      expect(after[0]!.score).toBeGreaterThanOrEqual(before[0]!.score - 1e-9)
-      expect(rankAfter).toBeGreaterThanOrEqual(rankBefore - (after.filter((x) => x.score === after[0]!.score).length - 1))
+      expect(after.map((x) => x.score)).toEqual(before.map((x) => x.score))
+      expect([...after].sort(byCost).map((x) => x.id)).toEqual([...before].sort(byCost).map((x) => x.id))
+      const offersRepriced = offers.map((o) => ({ ...o, price: { ...o.price, total: { ...o.price.total, amountMinor: o.price.total.amountMinor + bump } } }))
+      const r2 = assemble(c, [{ call: call({ kind: "THROUGH" }), offers: offersRepriced }], new Map())
+      const best = (x: typeof r) => x.results.filter((i) => i.tabs.includes("BEST")).map((i) => i.id)
+      expect(best(r2)).toEqual(best(r))
     }), { numRuns: 300 })
   })
 

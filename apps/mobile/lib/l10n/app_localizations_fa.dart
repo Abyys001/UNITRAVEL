@@ -707,6 +707,253 @@ class AppL10nFa extends AppL10n {
   String get typeInfant => 'نوزاد';
 
   @override
+  String get detailsTitle => 'مشخصات من';
+
+  @override
+  String get detailsLink => 'مشخصات و گذرنامهٔ من';
+
+  @override
+  String get detailsIntro =>
+      'نام و مشخصات گذرنامه باید دقیقاً مطابق گذرنامه باشد.';
+
+  @override
+  String get contactTitle => 'تلفن و ایمیل';
+
+  @override
+  String get contactHelp =>
+      'با تلفن تأییدشده می‌توانید درخواست ثبت کنید و با ایمیل تأییدشده مدارک را برایتان می‌فرستیم.';
+
+  @override
+  String get addContact => 'افزودن تلفن یا ایمیل';
+
+  @override
+  String get detPhone => 'تلفن';
+
+  @override
+  String get emailLabel => 'ایمیل';
+
+  @override
+  String detCodeSent(String value) {
+    return 'کدی به $value فرستادیم.';
+  }
+
+  @override
+  String get verifyCode => 'تأیید';
+
+  @override
+  String get verifiedLabel => 'تأیید شد';
+
+  @override
+  String get notVerifiedLabel => 'تأیید نشده';
+
+  @override
+  String get verifyPhoneInline =>
+      'برای ارسال درخواست، یک شمارهٔ تلفن اضافه و تأیید کنید.';
+
+  @override
+  String get detProfile => 'پروفایل';
+
+  @override
+  String get nameFaLabel => 'نام به فارسی (اختیاری)';
+
+  @override
+  String get contactTimeLabel => 'بهترین زمان تماس';
+
+  @override
+  String get addressTitle => 'نشانی';
+
+  @override
+  String get addressHelp =>
+      'اختیاری. فقط وقتی برای فاکتور یا مرسولهٔ باری لازم باشد آن را می‌پرسیم.';
+
+  @override
+  String get addressLine1 => 'نشانی، خط اول';
+
+  @override
+  String get addressLine2 => 'نشانی، خط دوم';
+
+  @override
+  String get addressCity => 'شهر';
+
+  @override
+  String get addressPostcode => 'کد پستی';
+
+  @override
+  String get addressCountry => 'کشور (دو حرف، مثل GB)';
+
+  @override
+  String get removeAddress => 'حذف نشانی';
+
+  @override
+  String get savedLabel => 'ذخیره شد';
+
+  @override
+  String get passportTitle => 'گذرنامه و تأیید هویت';
+
+  @override
+  String get passportHelp =>
+      'پیش از صدور بلیت، تیم ما مشخصات گذرنامهٔ شما را با تصویر آن مطابقت می‌دهد.';
+
+  @override
+  String get passportAddDetails =>
+      'برای شروع تأیید، مشخصات گذرنامه را اضافه کنید.';
+
+  @override
+  String get passportEdit => 'ویرایش مشخصات گذرنامه';
+
+  @override
+  String get verifUnverified => 'تأیید نشده';
+
+  @override
+  String get verifSubmitted => 'در انتظار بررسی';
+
+  @override
+  String get verifVerified => 'تأیید شده';
+
+  @override
+  String get verifRejected => 'پذیرفته نشد';
+
+  @override
+  String get verifCorrection => 'نیاز به اصلاح';
+
+  @override
+  String get verifHelpUnverified =>
+      'تصویر گذرنامه را بارگذاری کنید، مشخصات را بررسی کنید و برای بررسی بفرستید.';
+
+  @override
+  String get verifHelpSubmitted =>
+      'تیم ما در حال بررسی گذرنامهٔ شماست. نیازی به اقدام شما نیست.';
+
+  @override
+  String get verifHelpVerified =>
+      'گذرنامهٔ شما تأیید شده است. تغییر شمارهٔ گذرنامه، نام‌ها، تاریخ تولد، تابعیت، کشور صادرکننده یا تاریخ انقضا و همچنین تعویض تصویر، آن را دوباره به بررسی می‌فرستد.';
+
+  @override
+  String get verifHelpRejected =>
+      'نتوانستیم این گذرنامه را به همین صورت بپذیریم. تصویر بهتری بارگذاری کنید یا مشخصات را اصلاح و دوباره ارسال کنید.';
+
+  @override
+  String get verifHelpCorrection =>
+      'لطفاً مشخصات را اصلاح و دوباره ارسال کنید.';
+
+  @override
+  String get reasonTitle => 'پیام تیم ما';
+
+  @override
+  String get reasonUnreadableScan => 'تصویر خوانا نیست';
+
+  @override
+  String get reasonNameMismatch => 'نام مطابقت ندارد';
+
+  @override
+  String get reasonNumberMismatch => 'شمارهٔ گذرنامه مطابقت ندارد';
+
+  @override
+  String get reasonDobMismatch => 'تاریخ تولد مطابقت ندارد';
+
+  @override
+  String get reasonNationalityMismatch => 'تابعیت مطابقت ندارد';
+
+  @override
+  String get reasonExpiryMismatch => 'تاریخ انقضا مطابقت ندارد';
+
+  @override
+  String get reasonExpiredDocument => 'گذرنامه منقضی شده است';
+
+  @override
+  String get reasonNotAPassport => 'این تصویر صفحهٔ عکس‌دار گذرنامه نیست';
+
+  @override
+  String get reasonScanIncomplete => 'تصویر ناقص یا بریده است';
+
+  @override
+  String get reasonOther => 'سایر';
+
+  @override
+  String get scanTitle => 'تصویر گذرنامه';
+
+  @override
+  String get scanHelp =>
+      'تصویر واضح صفحهٔ عکس‌دار گذرنامه را به‌صورت JPG یا PNG و صاف بارگذاری کنید. فایل PDF پذیرفته نمی‌شود. اطلاعات مکان و دوربین را از فایل حذف می‌کنیم.';
+
+  @override
+  String get scanNone => 'هنوز تصویری بارگذاری نشده';
+
+  @override
+  String scanReceived(String name) {
+    return 'تصویر دریافت شد: $name';
+  }
+
+  @override
+  String get scanReady => 'تصویر دریافت شد';
+
+  @override
+  String get scanUpload => 'بارگذاری تصویر';
+
+  @override
+  String get scanReplace => 'تعویض تصویر';
+
+  @override
+  String get scanChecking => 'در حال بررسی فایل…';
+
+  @override
+  String get scanFailed =>
+      'فایل از بررسی‌های ما نگذشت. لطفاً فایل دیگری بارگذاری کنید.';
+
+  @override
+  String get scanReplaceWarn =>
+      'تعویض تصویر، گذرنامهٔ تأییدشده را دوباره به بررسی می‌فرستد.';
+
+  @override
+  String get reviewTitle => 'پیش از ارسال بررسی کنید';
+
+  @override
+  String get reviewHelp =>
+      'هر مورد را با گذرنامه مقایسه کنید. اگر همه یکی بود، تأیید کنید و برای بررسی بفرستید.';
+
+  @override
+  String get confirmSend => 'تأیید و ارسال برای بررسی';
+
+  @override
+  String get confirmSent => 'برای بررسی ارسال شد';
+
+  @override
+  String get confirmNeedScan => 'ابتدا تصویر را بارگذاری کنید.';
+
+  @override
+  String get confirmChanged => 'مشخصات تغییر کرد. دوباره بررسی کنید.';
+
+  @override
+  String get fieldName => 'نام';
+
+  @override
+  String get fieldDob => 'تاریخ تولد';
+
+  @override
+  String get fieldNationality => 'تابعیت';
+
+  @override
+  String get fieldNumber => 'شمارهٔ گذرنامه';
+
+  @override
+  String get fieldIssuing => 'کشور صادرکننده';
+
+  @override
+  String get fieldExpiry => 'تاریخ انقضا';
+
+  @override
+  String get passportNumberLabel => 'شمارهٔ گذرنامه';
+
+  @override
+  String get issuingCountryLabel => 'کشور صادرکننده (دو حرف)';
+
+  @override
+  String get expiryLabel => 'تاریخ انقضا (YYYY-MM-DD)';
+
+  @override
+  String get priceInQuote => 'قیمت در پیشنهاد شما تأیید می‌شود';
+
+  @override
   String get documentMissing => 'مشخصات گذرنامه هنوز لازم است';
 
   @override
@@ -875,10 +1122,10 @@ class AppL10nFa extends AppL10n {
   }
 
   @override
-  String get quoteAccepted => 'پذیرفته شد';
+  String get quoteAccepted => 'پذیرفته‌شده';
 
   @override
-  String get quoteExpired => 'منقضی شد';
+  String get quoteExpired => 'منقضی';
 
   @override
   String get acceptOption => 'پذیرش این گزینه';
@@ -1209,4 +1456,581 @@ class AppL10nFa extends AppL10n {
   String commandNotAllowed(String reason) {
     return 'در دسترس نیست: $reason';
   }
+
+  @override
+  String get navHome => 'خانه';
+
+  @override
+  String get navAlerts => 'هشدارها';
+
+  @override
+  String get navMe => 'حساب من';
+
+  @override
+  String get homeTitle => 'پیشخوان';
+
+  @override
+  String homeGreeting(String name) {
+    return 'واردشده با نام $name';
+  }
+
+  @override
+  String get heroNeedsYou => 'نیاز به اقدام شما';
+
+  @override
+  String get heroAllClear => 'همه‌چیز مرتب است';
+
+  @override
+  String get heroAllClearHelp =>
+      'موردی با مهلت گذشته، بدون مسئول یا نزدیک به مهلت صدور بلیت نیست.';
+
+  @override
+  String heroSlaBreached(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString پرونده مهلت SLA را گذرانده است';
+  }
+
+  @override
+  String heroNewUnclaimed(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString پروندهٔ جدید مسئول ندارد';
+  }
+
+  @override
+  String heroDeadlines(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString مهلت صدور بلیت تا ۲۴ ساعت آینده';
+  }
+
+  @override
+  String get heroNextUp => 'فوری‌ترین پرونده‌های بدون مسئول';
+
+  @override
+  String get trendUp => 'افزایش';
+
+  @override
+  String get trendDown => 'کاهش';
+
+  @override
+  String get trendFlat => 'بدون تغییر';
+
+  @override
+  String trendSince(String word, String when) {
+    return '$word از $when';
+  }
+
+  @override
+  String get trendNone => 'روند با تازه‌سازی‌های این دستگاه ساخته می‌شود';
+
+  @override
+  String get queueMix => 'ترکیب صف';
+
+  @override
+  String get queueMixEmpty => 'اکنون پروندهٔ بازی نیست.';
+
+  @override
+  String openCases(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString پروندهٔ باز';
+  }
+
+  @override
+  String get complianceHolds => 'توقف‌های انطباق';
+
+  @override
+  String get complianceOpen => 'پرونده‌های انطباق باز';
+
+  @override
+  String get verificationsWaiting => 'بررسی هویت در انتظار';
+
+  @override
+  String get ticketingSoon => 'صدور بلیت تا ۲۴ ساعت';
+
+  @override
+  String get decideInPanel => 'تصمیم در پنل مدیریت';
+
+  @override
+  String deadlineIn(String ref, String time) {
+    return 'بعدی: $ref تا $time دیگر';
+  }
+
+  @override
+  String deadlinePast(String ref, String time) {
+    return '$ref به اندازهٔ $time دیر شده است';
+  }
+
+  @override
+  String get tileFailed => 'بارگذاری نشد. برای تلاش دوباره بزنید.';
+
+  @override
+  String get quickActions => 'دسترسی سریع';
+
+  @override
+  String get qaUnclaimed => 'پرونده‌های بدون مسئول';
+
+  @override
+  String get qaFind => 'یافتن پرونده';
+
+  @override
+  String get dataNote =>
+      'شمارش‌ها از صف زنده است. روندها فقط مشاهدات همین دستگاه است، نه سابقهٔ سرور.';
+
+  @override
+  String get settingsTitle => 'تنظیمات';
+
+  @override
+  String get settingsHelp => 'نمای برنامه و زبان';
+
+  @override
+  String get appearance => 'نمای برنامه';
+
+  @override
+  String get themeSystem => 'سیستم';
+
+  @override
+  String get themeLight => 'روشن';
+
+  @override
+  String get themeDark => 'تیره';
+
+  @override
+  String get tabMine => 'من';
+
+  @override
+  String get urgent => 'فوری';
+
+  @override
+  String get filterAtRisk => 'SLA در خطر';
+
+  @override
+  String get filterAll => 'همه';
+
+  @override
+  String get clear => 'پاک کردن';
+
+  @override
+  String get queueFilterHint => 'فیلتر بر اساس شناسه، مسیر یا مشتری';
+
+  @override
+  String get queueNoMatch => 'پرونده‌ای با این فیلترها نیست';
+
+  @override
+  String get clearFilters => 'پاک کردن فیلترها';
+
+  @override
+  String casesCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString پرونده';
+  }
+
+  @override
+  String casesShownOf(int shown, int total) {
+    final intl.NumberFormat shownNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String shownString = shownNumberFormat.format(shown);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'نمایش $shownString از $totalString';
+  }
+
+  @override
+  String slaLeft(Object time) {
+    return '$time مانده';
+  }
+
+  @override
+  String slaOverdue(Object time) {
+    return '$time تأخیر';
+  }
+
+  @override
+  String durDays(String n) {
+    return '$n روز';
+  }
+
+  @override
+  String durHours(String n) {
+    return '$n ساعت';
+  }
+
+  @override
+  String durMinutes(String n) {
+    return '$n دقیقه';
+  }
+
+  @override
+  String get adminSearchTitle => 'یافتن پرونده';
+
+  @override
+  String get adminSearchHint => 'شناسه یا شمارهٔ تلفن';
+
+  @override
+  String get adminSearchIntro =>
+      'دست‌کم ۳ نویسه از شناسه یا شمارهٔ تلفن را بنویسید.';
+
+  @override
+  String get adminSearchNone => 'پرونده‌ای پیدا نشد';
+
+  @override
+  String get caseActions => 'اقدام‌های پرونده';
+
+  @override
+  String get moreActions => 'اقدام‌های بیشتر';
+
+  @override
+  String get customerNote => 'یادداشت مشتری';
+
+  @override
+  String get caseTruthTitle => 'آنچه می‌دانیم';
+
+  @override
+  String get activityTitle => 'فعالیت‌ها';
+
+  @override
+  String get activityEmpty => 'هنوز فعالیتی از این نوع نیست.';
+
+  @override
+  String get msgFromCustomer => 'پیام مشتری';
+
+  @override
+  String get msgToCustomer => 'ارسال‌شده به مشتری';
+
+  @override
+  String get noteKind => 'یادداشت داخلی';
+
+  @override
+  String get truthRequest => 'درخواست';
+
+  @override
+  String get truthSnapshot => 'نسخهٔ ثبت‌شدهٔ پیشنهاد';
+
+  @override
+  String get truthNoSnapshot => 'درخواست دستی، پیشنهادی ثبت نشده';
+
+  @override
+  String get truthChange => 'تغییر';
+
+  @override
+  String get truthRefund => 'استرداد';
+
+  @override
+  String get truthQuote => 'قیمت‌گذاری';
+
+  @override
+  String get truthReservation => 'رزرو';
+
+  @override
+  String get truthTicket => 'بلیت';
+
+  @override
+  String get truthPayment => 'پرداخت';
+
+  @override
+  String get truthOnFile => 'ثبت شده';
+
+  @override
+  String get truthNone => 'هنوز ندارد';
+
+  @override
+  String get truthDraftOnly => 'فقط پیش‌نویس';
+
+  @override
+  String get truthVaries => 'بسته به بلیت یا قطعه متفاوت است';
+
+  @override
+  String get truthUnknownValue =>
+      'ارائه نشده است، پیش از قیمت‌گذاری تأیید کنید';
+
+  @override
+  String get truthUnknownBlocks =>
+      'موارد نامشخص باید پیش از ارسال قیمت تأیید شوند.';
+
+  @override
+  String get truthPaymentNote =>
+      'پرداخت، رزرو و بلیت واقعیت‌های جدا هستند. پرداخت هرگز به معنای رزرو نیست.';
+
+  @override
+  String get triKnown => 'مشخص';
+
+  @override
+  String get triNotIncluded => 'شامل نمی‌شود';
+
+  @override
+  String get triUnknown => 'نامشخص';
+
+  @override
+  String get condAllowed => 'مجاز';
+
+  @override
+  String get condNotAllowed => 'مجاز نیست';
+
+  @override
+  String get resHeld => 'در انتظار صدور';
+
+  @override
+  String get resConfirmed => 'تأییدشده';
+
+  @override
+  String deadlineAt(String when) {
+    return 'صدور تا $when';
+  }
+
+  @override
+  String ticketCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString بلیت صادر شده';
+  }
+
+  @override
+  String get payNone => 'بدون پرداخت';
+
+  @override
+  String get payPartial => 'پرداخت جزئی';
+
+  @override
+  String get payPaid => 'پرداخت‌شده';
+
+  @override
+  String get payRefundPending => 'بازپرداخت در انتظار';
+
+  @override
+  String get payRefunded => 'بازپرداخت‌شده';
+
+  @override
+  String get shipmentsTitle => 'مرسوله‌ها';
+
+  @override
+  String get shipmentsIntro => 'بار خود را از دریافت تا تحویل دنبال کنید.';
+
+  @override
+  String get shipmentsEmpty =>
+      'هنوز مرسوله‌ای ندارید. پس از پذیرش قیمت، مرسولهٔ شما اینجا نمایش داده می‌شود.';
+
+  @override
+  String get shipmentsTotal => 'مرسوله‌ها';
+
+  @override
+  String get shipmentsInTransit => 'در مسیر';
+
+  @override
+  String get shipmentsDelivered => 'تحویل‌شده';
+
+  @override
+  String get shipmentsNext => 'نزدیک‌ترین تحویل';
+
+  @override
+  String get etaLabel => 'زمان تخمینی تحویل';
+
+  @override
+  String get etaNote => 'این فقط یک تخمین است، نه تعهد، و ممکن است تغییر کند.';
+
+  @override
+  String get etaNone => 'هنوز تخمینی ثبت نشده';
+
+  @override
+  String get trackingNoEvents =>
+      'هنوز اسکنی ثبت نشده است. به‌روزرسانی‌ها با گزارش شریک ما اینجا می‌آیند.';
+
+  @override
+  String get trackingUpdated => 'اصلاح‌شده';
+
+  @override
+  String awbLabel(String awb) {
+    return 'بارنامه $awb';
+  }
+
+  @override
+  String get trackEventPickedUp => 'از فرستنده تحویل گرفته شد';
+
+  @override
+  String get trackEventReceived => 'نزد شریک ما دریافت شد';
+
+  @override
+  String get trackEventDeparted => 'حرکت کرد';
+
+  @override
+  String get trackEventArrived => 'رسید';
+
+  @override
+  String get trackEventAtCustoms => 'در گمرک';
+
+  @override
+  String get trackEventCleared => 'ترخیص گمرکی انجام شد';
+
+  @override
+  String get trackEventOutForDelivery => 'برای تحویل در راه است';
+
+  @override
+  String get trackEventDelivered => 'تحویل داده شد';
+
+  @override
+  String get trackEventHeld => 'متوقف شده است';
+
+  @override
+  String get trackEventDamaged => 'آسیب‌دیدگی گزارش شد';
+
+  @override
+  String get trackEventReturned => 'بازگردانده شد';
+
+  @override
+  String get trackEventNote => 'به‌روزرسانی';
+
+  @override
+  String get billingTitle => 'اسناد و صورتحساب';
+
+  @override
+  String get billingIntro =>
+      'پیش‌فاکتورها و فاکتورهای شما در یک جا. اسناد به زبان انگلیسی صادر می‌شوند.';
+
+  @override
+  String get billingInvoices => 'فاکتورها';
+
+  @override
+  String get billingQuotations => 'پیش‌فاکتورها';
+
+  @override
+  String get billingEmptyInvoices =>
+      'هنوز فاکتوری ندارید. وقتی فاکتور صادر کنیم اینجا نمایش داده می‌شود.';
+
+  @override
+  String get billingEmptyQuotations =>
+      'هنوز پیش‌فاکتوری ندارید. وقتی قیمت را برایتان بفرستیم اینجا نمایش داده می‌شود.';
+
+  @override
+  String billingIssuedOn(String date) {
+    return 'صدور $date';
+  }
+
+  @override
+  String billingSentOn(String date) {
+    return 'ارسال $date';
+  }
+
+  @override
+  String get billingTotal => 'جمع کل';
+
+  @override
+  String get billingCharges => 'اقلام';
+
+  @override
+  String get billingDownload => 'دریافت PDF';
+
+  @override
+  String get billingViewQuote => 'مشاهدهٔ قیمت';
+
+  @override
+  String billingUnpaidExpires(String date) {
+    return 'اگر پرداخت نشود، این فاکتور در $date منقضی می‌شود.';
+  }
+
+  @override
+  String get billingPayNote =>
+      'روش پرداخت را همکار یونی‌تراول شما اعلام می‌کند.';
+
+  @override
+  String get billingPayOnline => 'پرداخت با کارت در وب‌سایت ما';
+
+  @override
+  String get billingPayOnlineNote =>
+      'صفحهٔ پرداخت در مرورگر شما باز می‌شود. اطلاعات کارت همان‌جا وارد می‌شود و هرگز از این برنامه عبور نمی‌کند.';
+
+  @override
+  String get billingPayProcessing =>
+      'پرداخت شما در حال پردازش است. نیازی به پرداخت دوباره نیست.';
+
+  @override
+  String get progressLabel => 'پیشرفت درخواست';
+
+  @override
+  String get progressReceived => 'دریافت شد';
+
+  @override
+  String get progressReview => 'در حال بررسی';
+
+  @override
+  String get progressQuote => 'گزینه‌ها ارسال شد';
+
+  @override
+  String get progressBooked => 'تأیید شد';
+
+  @override
+  String get progressTicketed => 'بلیت صادر شد';
+
+  @override
+  String get progressDone => 'انجام شد';
+
+  @override
+  String get progressCurrent => 'مرحلهٔ فعلی';
+
+  @override
+  String get progressTodo => 'در انتظار';
+
+  @override
+  String get billingPaidBanner => 'این فاکتور پرداخت شده است. سپاسگزاریم.';
+
+  @override
+  String get billingNotFound => 'این سند در حساب شما پیدا نشد.';
+
+  @override
+  String get billingOpenFailed => 'باز کردن سند ممکن نشد. دوباره تلاش کنید.';
+
+  @override
+  String get invoiceIssued => 'در انتظار پرداخت';
+
+  @override
+  String get invoicePaid => 'پرداخت‌شده';
+
+  @override
+  String get invoiceCancelled => 'لغو شده';
+
+  @override
+  String get invoiceRefunded => 'بازپرداخت‌شده';
+
+  @override
+  String get quoteSent => 'باز';
+
+  @override
+  String get quoteDeclined => 'ردشده';
+
+  @override
+  String get quoteSuperseded => 'جایگزین‌شده';
+
+  @override
+  String get cancelReasonExpired =>
+      'این فاکتور منقضی شده و دیگر قابل پرداخت نیست.';
+
+  @override
+  String get cancelReasonCorrection =>
+      'این فاکتور پس گرفته شد، معمولاً چون فاکتور اصلاح‌شده جای آن را می‌گیرد. آن را پرداخت نکنید.';
+
+  @override
+  String get cancelReasonCustomerRequest =>
+      'به درخواست شما لغو شد. آن را پرداخت نکنید.';
+
+  @override
+  String get cancelReasonDuplicate =>
+      'چون تکراری بود لغو شد. آن را پرداخت نکنید.';
+
+  @override
+  String get cancelReasonOther => 'این فاکتور لغو شد. آن را پرداخت نکنید.';
 }

@@ -1,6 +1,6 @@
 import { gzipSync } from "node:zlib"
 
-import { CreateBucketCommand, DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import { CreateBucketCommand, DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, HeadObjectCommand, PutBucketCorsCommand, PutBucketEncryptionCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 
@@ -14,6 +14,8 @@ export class ObjectStorage implements OnModuleInit {
   private readonly publicClient: S3Client
   readonly bucket = env().OBJECT_STORAGE_BUCKET
   readonly callsBucket = `${env().OBJECT_STORAGE_BUCKET}-calls`
+  /** Identity scans: separate bucket, SSE-S3 requested on every write (ADR-0005 V6). */
+  readonly identityBucket = `${env().OBJECT_STORAGE_BUCKET}-identity`
 
   constructor() {
     const base = { region: env().OBJECT_STORAGE_REGION, forcePathStyle: true, credentials: { accessKeyId: env().OBJECT_STORAGE_ACCESS_KEY, secretAccessKey: env().OBJECT_STORAGE_SECRET_KEY } }
@@ -30,15 +32,38 @@ export class ObjectStorage implements OnModuleInit {
         await this.client.send(new CreateBucketCommand({ Bucket: b })).catch((err) => this.log.warn({ err: String(err), bucket: b }, "bucket create failed"))
       }
     }
+    try {
+      await this.client.send(new HeadBucketCommand({ Bucket: this.identityBucket }))
+    } catch {
+      await this.client.send(new CreateBucketCommand({ Bucket: this.identityBucket })).catch((err) => this.log.warn({ err: String(err), bucket: this.identityBucket }, "bucket create failed"))
+    }
+    // Browsers PUT straight to the store with pre-signed URLs, so the store must allow our origins and the SSE header cross-origin.
+    const origins = [env().PUBLIC_WEB_URL, env().PUBLIC_MOBILE_WEB_URL, env().PUBLIC_CONSOLE_ADMIN_URL].map((u) => new URL(u).origin)
+    for (const b of [this.bucket, this.identityBucket]) {
+      await this.client.send(new PutBucketCorsCommand({ Bucket: b, CORSConfiguration: { CORSRules: [{ AllowedOrigins: origins, AllowedMethods: ["PUT"], AllowedHeaders: ["content-type", "x-amz-server-side-encryption"], MaxAgeSeconds: 600 }] } }))
+        .catch((err) => this.log.warn({ err: String(err), bucket: b }, "bucket CORS not set; browser uploads will fail"))
+    }
+    // Default encryption as a second line behind the per-request header; a store that cannot do it fails writes loudly, never silently.
+    await this.client.send(new PutBucketEncryptionCommand({ Bucket: this.identityBucket, ServerSideEncryptionConfiguration: { Rules: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: "AES256" } }] } }))
+      .catch((err) => this.log.warn({ err: String(err), bucket: this.identityBucket }, "bucket default encryption not set"))
   }
 
-  presignPut(key: string, contentType: string, maxBytes: number, expiresIn = 300) {
-    return getSignedUrl(this.publicClient, new PutObjectCommand({ Bucket: this.bucket, Key: key, ContentType: contentType, ContentLength: undefined }), { expiresIn, signableHeaders: new Set(["content-type"]) }).then((url) => ({ url, maxBytes }))
+  private sse(bucket: string) {
+    return bucket === this.identityBucket ? { ServerSideEncryption: "AES256" as const } : {}
+  }
+
+  /** The store's own statement of how the object is encrypted at rest (undefined when it is not). */
+  async encryptionOf(key: string, bucket: string): Promise<string | undefined> {
+    return (await this.client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }))).ServerSideEncryption
+  }
+
+  presignPut(key: string, contentType: string, maxBytes: number, expiresIn = 300, bucket = this.bucket) {
+    return getSignedUrl(this.publicClient, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: undefined, ...this.sse(bucket) }), { expiresIn, signableHeaders: new Set(["content-type"]) }).then((url) => ({ url, maxBytes }))
   }
 
   /** 5-minute download URLs with Content-Disposition: attachment (ch. 28.3, 28.1 malicious uploads). */
-  presignGet(key: string, filename: string, expiresIn = 300) {
-    return getSignedUrl(this.publicClient, new GetObjectCommand({ Bucket: this.bucket, Key: key, ResponseContentDisposition: `attachment; filename="${filename.replace(/[^A-Za-z0-9._-]/g, "_")}"` }), { expiresIn })
+  presignGet(key: string, filename: string, expiresIn = 300, bucket = this.bucket) {
+    return getSignedUrl(this.publicClient, new GetObjectCommand({ Bucket: bucket, Key: key, ResponseContentDisposition: `attachment; filename="${filename.replace(/[^A-Za-z0-9._-]/g, "_")}"` }), { expiresIn })
   }
 
   async get(key: string, bucket = this.bucket): Promise<Buffer> {
@@ -47,7 +72,7 @@ export class ObjectStorage implements OnModuleInit {
   }
 
   async put(key: string, body: Buffer, contentType: string, bucket = this.bucket) {
-    await this.client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }))
+    await this.client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType, ...this.sse(bucket) }))
   }
 
   async delete(key: string, bucket = this.bucket) {

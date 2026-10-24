@@ -6,7 +6,7 @@ import {
   afterSalesCases, creditOverrides, type Db, documents, flightRequests, paymentRecords, quoteOptions, quotes, requestStatusHistory, requestTravellers,
   reservationSegments, reservations, tickets, type Tx,
 } from "@unitravel/db"
-import { AFTER_SALES_TRANSITIONS, atolAllowsPayment, evaluate, generateReference, needsSecondVerifier, normaliseReference, validateTicketNumber } from "@unitravel/domain"
+import { AFTER_SALES_TRANSITIONS, atolAllowsPayment, evaluate, generateReference, needsSecondVerifier, normaliseReference, TRAVELLERS_NOT_VERIFIED, validateTicketNumber } from "@unitravel/domain"
 import { flightKey } from "@unitravel/engine"
 
 import { AppError, notFound } from "../../core/errors"
@@ -17,6 +17,8 @@ import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
 import { DocumentsService } from "../documents/documents.service"
 import { renderPdf } from "../documents/pdf"
+import { renderQuotationPdf } from "../invoices/commercial-pdf"
+import { InvoicesService } from "../invoices/invoices.service"
 import { OutboxService } from "../platform/outbox.service"
 import { ReferenceService } from "../reference/reference.service"
 import { RequestsService, staffActor, SYSTEM } from "../requests/requests.service"
@@ -39,6 +41,7 @@ export class BookingsService {
     private readonly compliance: ComplianceService,
     private readonly reference: ReferenceService,
     private readonly docs: DocumentsService,
+    private readonly invoices: InvoicesService,
   ) {}
 
   private async acceptedOption(tx: Tx, r: Req) {
@@ -110,7 +113,7 @@ export class BookingsService {
   }
 
   /** ATOL certificate at first payment when selling as agent for an ATOL holder or under Uni Travel's own ATOL (ch. 27.6). */
-  private async maybeAtolCertificate(tx: Tx, r: Req, actor: Actor) {
+  private async maybeAtolCertificate(tx: Tx, r: Req, actor: Pick<Actor, "userId">) {
     const wf = this.config.get("WORKFLOW")
     if (wf.atolMode === "PAY_ON_TICKETING") return
     const prior = await tx.select().from(paymentRecords).where(and(eq(paymentRecords.requestType, "FLIGHT"), eq(paymentRecords.requestId, r.id)))
@@ -118,6 +121,14 @@ export class BookingsService {
     const holder = wf.atolHolder ?? { name: "Uni Travel Ltd", number: "ATOL pending" }
     const pdf = await renderPdf("ATOL Certificate", `${r.ref} · issued ${new Date().toISOString().slice(0, 10)}`, [{ rows: [["ATOL holder", holder.name], ["ATOL number", holder.number], ["Mode", wf.atolMode], ["Reference", r.ref]] }, { paragraphs: ["This certificate confirms ATOL protection for the flight-inclusive arrangements listed in your booking, as issued by the ATOL holder named above. Template supplied by the ATOL holder; wording to be confirmed by counsel."] }], ["Uni Travel Ltd · ATOL wording pending counsel review (ch. 4.8 question 6)"])
     await this.docs.storeGenerated(tx, { ownerUserId: r.customerUserId, requestType: "FLIGHT", requestId: r.id, type: "RECEIPT", filename: `ATOL-certificate-${r.ref}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
+  }
+
+  /** A verified online card payment (ADR-0007 P7) updates the request's payment status and issues the ATOL certificate at the first payment. */
+  async afterOnlinePayment(tx: Tx, requestId: string) {
+    const [r] = await tx.select().from(flightRequests).where(eq(flightRequests.id, requestId)).for("update")
+    if (!r) return
+    await this.requests.recomputePaymentStatus(tx, r)
+    await this.maybeAtolCertificate(tx, r, { userId: r.customerUserId })
   }
 
   async recordPayment(ref: string, body: PaymentBody, actor: Actor) {
@@ -131,6 +142,7 @@ export class BookingsService {
       if (res.blocked) throw new AppError("FORBIDDEN", "The payer needs a compliance decision before this payment can be recorded", undefined, { screeningId: res.screeningId })
       await this.requests.recomputePaymentStatus(tx, r)
       await this.maybeAtolCertificate(tx, r, actor)
+      await this.invoices.settleFromPayments(tx, "FLIGHT", r.id)
       return { paymentId: res.payment.id, status: res.payment.status, needsSecondVerifier: res.fourEyes }
     })
   }
@@ -148,6 +160,7 @@ export class BookingsService {
       await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: p.requestId, eventType: "payment.verified", payload: { requestId: p.requestId, paymentId: p.id } })
       if (!r) return { ok: true }
       const ps = await this.requests.recomputePaymentStatus(tx, r)
+      await this.invoices.settleFromPayments(tx, "FLIGHT", r.id)
       const fresh = { ...r, paymentStatus: ps }
       if (r.status === "RESERVED") {
         const f = await this.requests.facts(tx, fresh)
@@ -177,6 +190,8 @@ export class BookingsService {
       if (r.status !== "RESERVED") throw new AppError("INVALID_TRANSITION", `record_tickets is not allowed from ${r.status}`)
       const [res] = await tx.select().from(reservations).where(and(eq(reservations.id, body.reservationId), eq(reservations.requestId, r.id)))
       if (!res || !["HELD", "CONFIRMED"].includes(res.status)) throw new AppError("VALIDATION_FAILED", "Choose the active reservation", [{ path: "reservationId", code: "INVALID" }])
+      const unverified = await this.requests.unverifiedTravellers(tx, r)
+      if (unverified.length) throw new AppError("IDENTITY_NOT_VERIFIED", `${TRAVELLERS_NOT_VERIFIED}: ${unverified.map((u) => u.name).join(", ")}`, undefined, { travellers: unverified })
       const rt = await tx.select().from(requestTravellers).where(eq(requestTravellers.requestId, r.id))
       const errors: { path: string; code: string; message: string }[] = []
       body.tickets.forEach((t, i) => {
@@ -209,6 +224,7 @@ export class BookingsService {
       await tx.update(reservations).set({ status: "CONFIRMED" }).where(eq(reservations.id, res.id))
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "tickets.recorded", entityType: "flight_request", entityId: r.id, contextRef: r.ref, after: { tickets: body.tickets.map((t) => t.ticketNumber), fourEyesPending } })
       const ps = await this.requests.recomputePaymentStatus(tx, r)
+      await this.invoices.settleFromPayments(tx, "FLIGHT", r.id)
       if (fourEyesPending) return { status: "RESERVED", awaitingPaymentVerification: true, message: "Tickets recorded; a second staff member must verify the payment to complete ticketing" }
       const updated = await this.completeTicketing(tx, { ...r, paymentStatus: ps }, actor, requestId)
       return { status: updated.status, awaitingPaymentVerification: false }
@@ -273,17 +289,25 @@ export class BookingsService {
     return this.db.select().from(afterSalesCases).where(eq(afterSalesCases.originalRequestId, requestId)).orderBy(desc(afterSalesCases.createdAt))
   }
 
-  /** Quote PDF published to the customer when a quote is sent (ch. 14.9 / 15.5). */
+  /** Quotation PDF published to the customer when a quote is sent: the quote plus its document number (ch. 14.9 / 15.5, ADR-0006 C1). */
   async quotePdf(tx: Tx, r: Req, quoteId: string, actor: Actor) {
     const opts = await tx.select().from(quoteOptions).where(eq(quoteOptions.quoteId, quoteId))
     const [q] = await tx.select().from(quotes).where(eq(quotes.id, quoteId))
+    if (!q?.documentNumber) return
     const money = (m: { amountMinor: number; currency: string }) => `${m.currency} ${(m.amountMinor / 100).toFixed(2)}`
-    const pdf = await renderPdf(`Your travel options · ${r.ref}`, `Valid until ${q?.validUntil?.toISOString().slice(0, 16).replace("T", " ")} UTC`, opts.map((o, i) => {
-      const segs = ((o.itinerary as { slices: { segments: { marketing: { carrier: string; flightNumber: string }; origin: { iata: string }; destination: { iata: string }; departure: { local: string } }[] }[] }).slices).flatMap((s) => s.segments)
-      const pb = o.priceBreakdown as { fare: { amountMinor: number; currency: string }; taxes: { amountMinor: number; currency: string }; serviceFee: { amountMinor: number; currency: string }; total: { amountMinor: number; currency: string } }
-      return { heading: `Option ${i + 1} · ${o.label}`, rows: [...segs.map((g) => [`${g.marketing.carrier}${g.marketing.flightNumber}`, `${g.origin.iata} → ${g.destination.iata} · ${g.departure.local.replace("T", " ")} local`] as [string, string]), ["Ticketing", o.ticketingModel === "SINGLE_TICKET" ? "Single ticket (protected connections)" : "Separate tickets (self-transfer)"], ["Fare + taxes", `${money(pb.fare)} + ${money(pb.taxes)}`], ["Service fee", money(pb.serviceFee)], ["Total", money(pb.total)]] }
-    }), ["This is a quote, not a booking: seats are reserved only after you accept and our team confirms the reservation.", this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" ? "Flights are sold as an airline ticket agent: payment is taken only when tickets are issued; this flight is not ATOL protected (wording pending counsel review)." : "ATOL protection details are provided with your ATOL Certificate."])
-    await this.docs.storeGenerated(tx, { ownerUserId: r.customerUserId, requestType: "FLIGHT", requestId: r.id, type: "QUOTE_PDF", filename: `quote-${r.ref}-v${q?.version}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
+    const cfg = this.config.settings()
+    const pdf = await renderQuotationPdf({
+      number: q.documentNumber, title: `Your travel options - ${r.ref}`, subtitle: `Valid until ${q.validUntil?.toISOString().slice(0, 16).replace("T", " ")} UTC`,
+      sections: opts.map((o, i) => {
+        const segs = ((o.itinerary as { slices: { segments: { marketing: { carrier: string; flightNumber: string }; origin: { iata: string }; destination: { iata: string }; departure: { local: string } }[] }[] }).slices).flatMap((s) => s.segments)
+        const pb = o.priceBreakdown as { fare: { amountMinor: number; currency: string }; taxes: { amountMinor: number; currency: string }; serviceFee: { amountMinor: number; currency: string }; total: { amountMinor: number; currency: string } }
+        return { heading: `Option ${i + 1} · ${o.label}`, rows: [...segs.map((g) => [`${g.marketing.carrier}${g.marketing.flightNumber}`, `${g.origin.iata} → ${g.destination.iata} · ${g.departure.local.replace("T", " ")} local`] as [string, string]), ["Ticketing", o.ticketingModel === "SINGLE_TICKET" ? "Single ticket (protected connections)" : "Separate tickets (self-transfer)"], ["Fare + taxes", `${money(pb.fare)} + ${money(pb.taxes)}`], ["Service fee", money(pb.serviceFee)], ["Total", money(pb.total)]] as [string, string][] }
+      }),
+      company: cfg.company, cfg: cfg.commercialDocuments,
+      footer: ["This is a quotation, not a booking: seats are reserved only after you accept and our team confirms the reservation.", this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" ? "Flights are sold as an airline ticket agent: payment is taken only when tickets are issued; this flight is not ATOL protected (wording pending counsel review)." : "ATOL protection details are provided with your ATOL Certificate."],
+    })
+    const doc = await this.docs.storeGenerated(tx, { ownerUserId: r.customerUserId, requestType: "FLIGHT", requestId: r.id, type: "QUOTE_PDF", filename: `quotation-${q.documentNumber}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
+    await tx.update(quotes).set({ pdfDocumentId: doc.id }).where(eq(quotes.id, quoteId))
   }
 
   systemActor() {

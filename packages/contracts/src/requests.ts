@@ -7,7 +7,7 @@ import {
   AfterSalesStatus, AfterSalesType,
 } from "./enums"
 import { Condition, SegmentBaggage, Slice } from "./offer"
-import { Itinerary, SearchQuery } from "./search"
+import { CustomerItinerary, SearchQuery } from "./search"
 
 export const SeatPreference = z.enum(["NONE", "WINDOW", "AISLE", "TOGETHER", "EXTRA_LEGROOM"])
 export const SsrCode = z.enum(["WCHR", "WCHS", "WCHC", "VGML", "MOML", "CHML", "DBML", "PETC", "EXST", "UMNR", "MEDA", "OTHER"])
@@ -41,7 +41,6 @@ export const CreateFlightRequestBody = z
       privacy: z.literal(true),
       selfTransfer: z.boolean().optional(),
     }),
-    acceptPriceChange: z.boolean().default(false),
   })
   .superRefine((b, ctx) => {
     if (b.kind === "ITINERARY" && (!b.searchId || !b.itineraryId)) ctx.addIssue({ code: "custom", path: ["itineraryId"], message: "Itinerary requests need searchId and itineraryId" })
@@ -92,7 +91,8 @@ export const QuoteDraftBody = z.object({
   options: z.array(QuoteOptionInput).max(5),
 })
 
-export const QuoteOptionView = QuoteOptionInput.omit({ internalCostMinor: true }).extend({
+// Customer-facing: supplier cost, offer timestamps and supplier offer ids are staff-only (ch. 25.6).
+export const QuoteOptionView = QuoteOptionInput.omit({ internalCostMinor: true, supplierPrice: true, supplierFetchedAt: true, supplierExpiresAt: true, components: true }).extend({
   id: Uuid,
   attestedBy: z.string().nullable(),
   unknownFields: z.array(z.string()),
@@ -134,9 +134,10 @@ export const TicketInput = z.object({
   receiptDocumentId: Uuid.optional(),
 })
 
+/** Staff record offline payments only; CARD_ONLINE is created by the verified Stripe webhook (ADR-0007 P7). */
 export const PaymentBody = z.object({
   amount: Money,
-  method: PaymentMethod,
+  method: PaymentMethod.exclude(["CARD_ONLINE"]),
   receivedAt: IsoDateTime,
   externalReference: z.string().min(1).max(80),
   payerName: z.string().min(2).max(120),
@@ -171,10 +172,7 @@ export const RequestTravellerView = z.object({
 
 export const OfferSnapshotView = z.object({
   id: Uuid,
-  itinerary: Itinerary,
-  priceAtSubmit: Money,
-  priceRevalidated: Money.nullable(),
-  revalidatedAt: IsoDateTime.nullable(),
+  itinerary: CustomerItinerary,
   ruleVersion: z.number().int(),
   engineVersion: z.string(),
   contentHash: z.string(),

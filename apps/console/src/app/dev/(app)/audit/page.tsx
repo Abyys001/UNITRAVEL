@@ -7,7 +7,9 @@ import { toast } from "sonner"
 import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 
-import { Empty, ErrorLine, Field, PageHead } from "@/components/ui"
+import { EmptyState, TileError } from "@/components/bento"
+import { ListSkeleton, TableScroll } from "@/components/case"
+import { Field, PageHead } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime } from "@/lib/format"
 import type { Page } from "@/lib/types"
@@ -23,7 +25,13 @@ export default function AuditPage() {
   const rows = q.data?.pages.flatMap((p) => p.items) ?? []
   const [open, setOpen] = useState<string | null>(null)
   const [chain, setChain] = useState<{ ok: boolean; checked: number; brokenAt: number | null } | null>(null)
-  const verify = async () => { try { setChain(await api("/v1/dev/audit-log/verify")) } catch (e) { toast.error(errText(e)) } }
+  const verify = async () => {
+    try {
+      const r = await api<{ ok: boolean; checked: number; brokenAt: number | null }>("/v1/dev/audit-log/verify")
+      setChain(r.ok ? null : r)
+      if (r.ok) toast.success(`Hash chain intact — ${r.checked.toLocaleString("en-GB")} entries checked.`)
+    } catch (e) { toast.error(errText(e)) }
+  }
   const exportCsv = async () => {
     try {
       const body = Object.fromEntries(Object.entries(f).filter(([, v]) => v).map(([k, v]) => [k, k === "from" || k === "to" ? new Date(v).toISOString() : v]))
@@ -38,7 +46,7 @@ export default function AuditPage() {
         <Button size="sm" variant="outline" onClick={() => void verify()}>Verify hash chain</Button>
         <Button size="sm" variant="outline" onClick={() => void exportCsv()}>Export CSV</Button>
       </PageHead>
-      {chain && <p role="status" className={cn("px-5 py-2", chain.ok ? "bg-[#e4efe7] text-moss" : "bg-[#fbeee9] text-brick")} data-testid="chain">{chain.ok ? `Hash chain intact — ${chain.checked.toLocaleString("en-GB")} entries checked.` : `Chain broken at entry #${chain.brokenAt} (${chain.checked} checked).`}</p>}
+      {chain && <p role="status" className={cn("px-5 py-2", chain.ok ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")} data-testid="chain">{chain.ok ? `Hash chain intact — ${chain.checked.toLocaleString("en-GB")} entries checked.` : `Chain broken at entry #${chain.brokenAt} (${chain.checked} checked).`}</p>}
       <form className="flex flex-wrap items-end gap-2 border-b border-rule bg-ledger px-5 py-2" onSubmit={(e) => { e.preventDefault(); setF(draft) }}>
         {(["actor", "action", "entityType", "ref"] as const).map((k) => <Field key={k} label={k} className="w-40"><input className="field-input font-mono" value={draft[k]} onChange={(e) => setDraft({ ...draft, [k]: e.target.value })} placeholder={k === "action" ? "config.draft_saved" : k === "ref" ? "UT-F-…" : k === "actor" ? "user id" : "flight_request"} /></Field>)}
         <Field label="From" className="w-48"><input type="datetime-local" className="field-input" value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} /></Field>
@@ -46,17 +54,16 @@ export default function AuditPage() {
         <Button size="sm" type="submit">Filter</Button>
       </form>
       <div className="px-5 py-3">
-        <ErrorLine error={q.error} />
-        {q.isLoading ? <p className="text-slate">Loading…</p> : !rows.length ? <Empty>No entries.</Empty> : (
-          <table className="w-full bg-white font-mono text-[11.5px]" data-testid="audit">
-            <thead className="bg-paper"><tr className="border-b border-rule">{["#", "When", "Actor", "Action", "Entity", "Ref", "IP", "Hash"].map((h) => <th key={h} className="cap px-2 py-1 text-start font-normal">{h}</th>)}</tr></thead>
+        {q.error ? <TileError message={errText(q.error)} onRetry={() => void q.refetch()} /> : q.isLoading ? <ListSkeleton rows={8} className="p-0" /> : !rows.length ? <EmptyState title="No entries." /> : (
+          <TableScroll><table className="w-full bg-surface-raised font-mono text-[11.5px]" data-testid="audit">
+            <thead className="bg-surface-raised"><tr className="border-b border-rule">{["#", "When", "Actor", "Action", "Entity", "Ref", "IP", "Hash"].map((h) => <th key={h} className="cap px-2 py-1 text-start font-normal">{h}</th>)}</tr></thead>
             <tbody>{rows.map((r) => [
-              <tr key={r.id} onClick={() => setOpen(open === r.id ? null : r.id)} className={cn("cursor-pointer border-b border-rule/70 hover:bg-mist/30", open === r.id && "row-focus")}>
-                <td className="px-2 py-1 text-slate">{r.id}</td><td className="px-2 py-1 whitespace-nowrap">{fmtDateTime(r.occurredAt)}</td><td className="max-w-40 truncate px-2 py-1">{(r.actor ?? r.actorUserId)?.slice(0, 8) ?? "—"} <span className="text-slate">{r.actorKind.toLowerCase()}</span></td><td className="px-2 py-1">{r.action}</td><td className="max-w-48 truncate px-2 py-1">{r.entityType}{r.entityId && <span className="text-slate"> {r.entityId.slice(0, 8)}</span>}</td><td className="px-2 py-1">{r.contextRef ?? ""}</td><td className="px-2 py-1 text-slate">{r.ip ?? ""}</td><td className="px-2 py-1 text-slate">{r.hash.slice(0, 8)}</td>
+              <tr key={r.id} onClick={() => setOpen(open === r.id ? null : r.id)} className={cn("cursor-pointer border-b border-rule/70 hover:bg-line/30", open === r.id && "row-focus")}>
+                <td className="px-2 py-1 text-steel">{r.id}</td><td className="px-2 py-1 whitespace-nowrap">{fmtDateTime(r.occurredAt)}</td><td className="max-w-40 truncate px-2 py-1">{(r.actor ?? r.actorUserId)?.slice(0, 8) ?? "—"} <span className="text-steel">{r.actorKind.toLowerCase()}</span></td><td className="px-2 py-1">{r.action}</td><td className="max-w-48 truncate px-2 py-1">{r.entityType}{r.entityId && <span className="text-steel"> {r.entityId.slice(0, 8)}</span>}</td><td className="px-2 py-1">{r.contextRef ?? ""}</td><td className="px-2 py-1 text-steel">{r.ip ?? ""}</td><td className="px-2 py-1 text-steel">{r.hash.slice(0, 8)}</td>
               </tr>,
-              open === r.id && <tr key={`${r.id}-d`}><td colSpan={8} className="bg-ledger px-2 py-2"><div className="grid gap-3 md:grid-cols-2"><div><p className="cap">Before</p><pre className="max-h-60 overflow-auto whitespace-pre-wrap">{JSON.stringify(r.before, null, 2) ?? "—"}</pre></div><div><p className="cap">After</p><pre className="max-h-60 overflow-auto whitespace-pre-wrap">{JSON.stringify(r.after, null, 2) ?? "—"}</pre></div></div><p className="mt-1 text-slate">request {r.requestId ?? "—"} · hash {r.hash}</p></td></tr>,
+              open === r.id && <tr key={`${r.id}-d`}><td colSpan={8} className="bg-ledger px-2 py-2"><div className="grid gap-3 md:grid-cols-2"><div><p className="cap">Before</p><pre className="max-h-60 overflow-auto whitespace-pre-wrap">{JSON.stringify(r.before, null, 2) ?? "—"}</pre></div><div><p className="cap">After</p><pre className="max-h-60 overflow-auto whitespace-pre-wrap">{JSON.stringify(r.after, null, 2) ?? "—"}</pre></div></div><p className="mt-1 text-steel">request {r.requestId ?? "—"} · hash {r.hash}</p></td></tr>,
             ])}</tbody>
-          </table>
+          </table></TableScroll>
         )}
         {q.hasNextPage && <Button size="sm" variant="outline" className="mt-2" onClick={() => void q.fetchNextPage()}>Load older</Button>}
       </div>

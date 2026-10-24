@@ -47,7 +47,7 @@ export const QuoteOptionSource = z.enum(["SNAPSHOT", "STAFF_SEARCH", "MANUAL"])
 export const ReservationSystem = z.enum(["AMADEUS_TERMINAL", "DUFFEL_API", "PARTNER", "AIRLINE_DIRECT"])
 export const ReservationStatus = z.enum(["HELD", "CONFIRMED", "CANCELLED", "LAPSED"])
 export const TicketStatus = z.enum(["ISSUED", "VOIDED", "EXCHANGED", "REFUNDED"])
-export const PaymentMethod = z.enum(["BANK_TRANSFER", "CASH", "CARD_TERMINAL", "OTHER"])
+export const PaymentMethod = z.enum(["BANK_TRANSFER", "CASH", "CARD_TERMINAL", "OTHER", "CARD_ONLINE"])
 export const PaymentRecordStatus = z.enum(["RECORDED", "VERIFIED", "REJECTED", "REFUNDED"])
 export const AfterSalesType = z.enum(["CHANGE", "REFUND", "CANCEL"])
 export const AfterSalesStatus = z.enum(["OPEN", "IN_PROGRESS", "AWAITING_CUSTOMER", "RESOLVED", "REJECTED"])
@@ -69,6 +69,10 @@ export const MfaType = z.enum(["TOTP", "WEBAUTHN"])
 export const ActorKind = z.enum(["CUSTOMER", "STAFF", "SYSTEM", "ANONYMOUS"])
 export const TravellerRelationship = z.enum(["SELF", "FAMILY", "OTHER"])
 export const DocumentKind = z.enum(["PASSPORT", "NATIONAL_ID"])
+/** ADR-0005 V1. */
+export const VerificationStatus = z.enum(["UNVERIFIED", "SUBMITTED", "VERIFIED", "REJECTED", "CORRECTION_REQUIRED"])
+export const VerificationDecision = z.enum(["VERIFIED", "REJECTED", "CORRECTION_REQUIRED"])
+export const VerificationReasonCode = z.enum(["UNREADABLE_SCAN", "NAME_MISMATCH", "NUMBER_MISMATCH", "DOB_MISMATCH", "NATIONALITY_MISMATCH", "EXPIRY_MISMATCH", "EXPIRED_DOCUMENT", "NOT_A_PASSPORT", "SCAN_INCOMPLETE", "OTHER"])
 export const Gender = z.enum(["M", "F", "X"])
 export const Title = z.enum(["MR", "MRS", "MS", "MISS", "MSTR", "DR"])
 
@@ -77,7 +81,7 @@ export const SanctionListId = z.enum(["UK", "OFAC_SDN", "OFAC_NON_SDN", "EU"])
 export const SanctionEntryType = z.enum(["PERSON", "ENTITY", "VESSEL", "AIRCRAFT"])
 export const ScreeningSubject = z.enum(["CUSTOMER", "TRAVELLER", "PAYER", "SHIPPER", "CONSIGNEE", "PARTNER", "CARRIER", "GOODS"])
 export const ScreeningResult = z.enum(["CLEAR", "POSSIBLE_MATCH", "MATCH"])
-export const PolicyType = z.enum(["CARRIER", "AIRPORT", "COUNTRY_ROUTE", "GOODS_CATEGORY", "KEYWORD", "LANE"])
+export const PolicyType = z.enum(["CARRIER", "AIRPORT", "COUNTRY_ROUTE", "GOODS_CATEGORY", "KEYWORD", "LANE", "ONLINE_PAYMENT"])
 export const PolicyAction = z.enum(["BLOCK", "REVIEW", "ALLOW"])
 export const CaseTrigger = z.enum(["SCREENING", "POLICY", "LANE", "GOODS"])
 export const CaseStatus = z.enum(["OPEN", "RELEASED", "DECLINED", "ESCALATED"])
@@ -89,9 +93,11 @@ export const DeliveryStatus = z.enum(["QUEUED", "SENT", "DELIVERED", "FAILED", "
 export const ScanStatus = z.enum(["PENDING", "CLEAN", "INFECTED"])
 export const DocumentVisibility = z.enum(["INTERNAL", "CUSTOMER"])
 export const DocumentType = z.enum([
-  "E_TICKET_RECEIPT", "ITINERARY", "INVOICE", "RECEIPT", "QUOTE_PDF", "COMMERCIAL_INVOICE", "PACKING_LIST", "ID",
+  "E_TICKET_RECEIPT", "ITINERARY", "INVOICE", "RECEIPT", "QUOTE_PDF", "COMMERCIAL_INVOICE", "PACKING_LIST", "ID", "PASSPORT_SCAN",
   "CONTENT_PHOTO", "PAYMENT_EVIDENCE", "SHIPMENT_SUMMARY", "EXPORT_LICENCE", "OTHER",
 ])
+/** Document types that identify a person: staff need `customer.read.documents` to open them and the scan is metadata-stripped (ADR-0005). */
+export const IDENTITY_DOCUMENT_TYPES: readonly z.infer<typeof DocumentType>[] = ["PASSPORT_SCAN", "ID"]
 export const ConfigDomain = z.enum(["ENGINE_RULES", "HUBS", "WORKFLOW", "NOTIFICATION_MATRIX", "AUTH"])
 export const ConfigVersionStatus = z.enum(["DRAFT", "PUBLISHED", "SUPERSEDED"])
 export const ProviderEnv = z.enum(["test", "production"])
@@ -121,3 +127,6 @@ export type Channel = z.infer<typeof Channel>
 export type PolicyAction = z.infer<typeof PolicyAction>
 export type ScreeningResult = z.infer<typeof ScreeningResult>
 export type RequestType = z.infer<typeof RequestType>
+export type VerificationStatus = z.infer<typeof VerificationStatus>
+export type VerificationDecision = z.infer<typeof VerificationDecision>
+export type VerificationReasonCode = z.infer<typeof VerificationReasonCode>

@@ -1,55 +1,105 @@
+import 'dart:ui' show PathMetric;
+
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
 
-/// Decorative night-chart backdrop: copper route arcs over navy (booklet cover).
+/// Night-flight header: brand gradient, cyan/orange route arcs, a dashed flight
+/// path ending in a pin, and an orange ribbon curve on the bottom edge.
 class RouteArcsHeader extends StatelessWidget {
   const RouteArcsHeader({super.key, required this.child, this.height = 200});
   final Widget child;
   final double height;
 
+  /// Depth of the curved bottom edge; content is kept clear of it.
+  static const ribbonDepth = 34.0;
+
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => SizedBox(
     height: height,
     width: double.infinity,
-    color: Brand.navy,
     child: Stack(
       children: [
-        Positioned.fill(child: ExcludeSemantics(child: CustomPaint(painter: _ArcsPainter()))),
-        Positioned.fill(child: Padding(padding: const EdgeInsets.all(20), child: child)),
+        Positioned.fill(child: ExcludeSemantics(child: CustomPaint(painter: _HeaderPainter()))),
+        Positioned.fill(child: Padding(padding: const EdgeInsets.fromLTRB(20, 20, 20, 20 + ribbonDepth * 0.6), child: child)),
       ],
     ),
   );
 }
 
-class _ArcsPainter extends CustomPainter {
+class _HeaderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final dot = Paint()..color = Brand.copper;
-    final line = Paint()
-      ..color = Brand.copper.withValues(alpha: 0.55)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+    final w = size.width, h = size.height;
+    const depth = RouteArcsHeader.ribbonDepth;
+    final body = Path()
+      ..moveTo(0, 0)
+      ..lineTo(w, 0)
+      ..lineTo(w, h - depth)
+      ..quadraticBezierTo(w * 0.5, h + 8, 0, h - depth * 0.45)
+      ..close();
+    final rect = Offset.zero & size;
+    canvas.save();
+    canvas.clipPath(body);
+    canvas.drawRect(rect, Paint()..shader = Brand.gradient.createShader(rect));
     final faint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.07)
+      ..color = Brand.cyan.withValues(alpha: 0.16)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     for (var i = 1; i < 6; i++) {
-      canvas.drawCircle(Offset(size.width * 0.85, size.height * 1.1), i * 46.0, faint);
+      canvas.drawCircle(Offset(w * 0.88, h * 0.3), i * 46.0, faint);
     }
-    final pts = [
-      Offset(size.width * 0.1, size.height * 0.46),
-      Offset(size.width * 0.52, size.height * 0.2),
-      Offset(size.width * 0.9, size.height * 0.4),
-    ];
-    for (var i = 0; i < pts.length - 1; i++) {
-      final a = pts[i], b = pts[i + 1];
-      final mid = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2 - 30);
-      canvas.drawPath(Path()..moveTo(a.dx, a.dy)..quadraticBezierTo(mid.dx, mid.dy, b.dx, b.dy), line);
+    // Decoration stays in the upper-right band, clear of the logo and headline copy.
+    final arc = Paint()
+      ..color = Brand.cyan.withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.68, h * 0.5)
+        ..quadraticBezierTo(w * 0.84, h * 0.2, w * 0.99, h * 0.34),
+      arc,
+    );
+    canvas.restore();
+
+    // Orange ribbon hugging the edge.
+    final ribbon = Path()
+      ..moveTo(w, h - depth)
+      ..quadraticBezierTo(w * 0.5, h + 8, 0, h - depth * 0.45)
+      ..lineTo(0, h - depth * 0.45 + 6)
+      ..quadraticBezierTo(w * 0.5, h + 14, w, h - depth + 6)
+      ..close();
+    canvas.drawPath(ribbon, Paint()..color = Brand.orange);
+
+    // Dashed flight path with an orange pin at its end.
+    final start = Offset(w * 0.68, h * 0.5);
+    final tip = Offset(w * 0.88, h * 0.42);
+    final path = Path()
+      ..moveTo(start.dx, start.dy)
+      ..quadraticBezierTo(w * 0.78, h * 0.55, tip.dx, tip.dy);
+    final dash = Paint()
+      ..color = Brand.orange.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round;
+    for (final PathMetric m in path.computeMetrics()) {
+      for (var d = 0.0; d < m.length; d += 12) {
+        canvas.drawPath(m.extractPath(d, (d + 6).clamp(0, m.length)), dash);
+      }
     }
-    for (final p in pts) {
-      canvas.drawCircle(p, 3.5, dot);
-    }
+    final pin = Paint()..color = Brand.orange;
+    canvas.drawPath(
+      Path()
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo(tip.dx - 6, tip.dy - 11)
+        ..lineTo(tip.dx + 6, tip.dy - 11)
+        ..close(),
+      pin,
+    );
+    canvas.drawCircle(Offset(tip.dx, tip.dy - 14), 8, pin);
+    canvas.drawCircle(Offset(tip.dx, tip.dy - 14), 3, Paint()..color = Brand.navy950);
+    canvas.drawCircle(start, 3.5, Paint()..color = Colors.white);
   }
 
   @override

@@ -22,6 +22,9 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "flight_request.message": ["notify.route"],
   "quote.sent": ["notify.route", "timers.sla"],
   "quote.accepted": ["notify.route"],
+  "invoice.issued": ["notify.route"],
+  "invoice.cancelled": ["notify.route"],
+  "invoice.expired": ["notify.route"],
   "reservation.recorded": ["notify.route", "timers.sla"],
   "ticket.recorded": ["notify.route", "timers.sla"],
   "payment.recorded": ["compliance.screen"],
@@ -34,6 +37,7 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "partner.updated": ["compliance.screen"],
   "provider.health_changed": ["notify.route"],
   "notification.route_degraded": ["notify.route"],
+  "identity.verification_decided": ["notify.route"],
   "document.uploaded": ["documents.scan"],
   "document.published": ["notify.route"],
 }

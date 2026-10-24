@@ -155,7 +155,7 @@ export class AdminFlightRequestsController {
   }
 
   @Post("flight-requests/:ref/commands/:command")
-  @RequirePermission("flight_request.transition", "flight_request.assign", "quote.create", "compliance.case.decide")
+  @RequirePermission("flight_request.transition", "flight_request.assign", "quote.create", "commercial_document.issue", "compliance.case.decide")
   @HttpCode(200)
   async command(@Param("ref") ref: string, @Param("command") command: string, @Body() raw: unknown, @Headers("if-match") im: string | undefined, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     if (!(FLIGHT_COMMANDS as readonly string[]).includes(command)) throw new AppError("NOT_FOUND", "Unknown command")
@@ -187,27 +187,27 @@ export class AdminFlightRequestsController {
   }
 
   @Get("flight-requests/:ref/quotes/from-snapshot")
-  @RequirePermission("quote.create")
+  @RequirePermission("pricing.read.internal")
   fromSnapshot(@Param("ref") ref: string) {
     return this.quotes.fromSnapshot(ref)
   }
 
   @Post("flight-requests/:ref/quotes")
-  @RequirePermission("quote.create")
+  @RequirePermission("pricing.write")
   draft(@Param("ref") ref: string, @Body(zbody(QuoteDraftBody)) body: z.infer<typeof QuoteDraftBody>, @CurrentActor() actor: Actor) {
     return this.quotes.createDraft(ref, body, actor)
   }
 
   @Patch("flight-requests/:ref/quotes/:id")
-  @RequirePermission("quote.create")
+  @RequirePermission("pricing.write")
   editDraft(@Param("ref") ref: string, @Param("id", zbody(z.uuid())) id: string, @Body(zbody(QuoteDraftBody)) body: z.infer<typeof QuoteDraftBody>, @Headers("if-match") im: string | undefined, @CurrentActor() actor: Actor) {
     return this.quotes.updateDraft(ref, id, body, actor, ifMatch(im))
   }
 
   @Get("flight-requests/:ref/quotes/:id")
   @RequirePermission("quote.create", "flight_request.read.any")
-  quote(@Param("id", zbody(z.uuid())) id: string) {
-    return this.quotes.view(id)
+  quote(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor) {
+    return this.quotes.view(id, actor)
   }
 
   @Post("flight-requests/:ref/reservations")
