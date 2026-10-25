@@ -10,6 +10,7 @@ import { Logo } from "@unitravel/ui/brand/logo"
 import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { DevCode, otpFromSink } from "@unitravel/ui/product/dev-code"
+import { TestSignIn } from "@unitravel/ui/product/test-sign-in"
 
 import { api, ApiError, errText } from "@/lib/api"
 import { deviceId } from "@/lib/device"
@@ -141,6 +142,13 @@ function SignInInner({ surface }: { surface: Surface }) {
                 </label>
                 <Button type="submit" size="lg" className="w-full" loading={busy} disabled={!email}>{pow !== null ? t("signin.pow", { n: Math.round(pow * 100) }) : t("signin.send")}</Button>
               </form>
+            )}
+            {step === "phone" && (
+              <TestSignIn<unknown> client="CONSOLE" deviceId={deviceId()} api={api}
+                suggestions={["owner", "sara", "cargo", "compliance", "dev"].map((n) => `${n}@unitravel.example`)}
+                labels={{ title: t("signin.test.title"), hint: t("signin.test.hint"), email: t("signin.test.email"), submit: t("signin.test.submit"), busy: t("signin.test.busy"), error: t("signin.test.error") }}
+                onSignedIn={finish}
+                onError={(e) => setErr(e instanceof ApiError && (e.code === "OTP_INVALID" || e.problem.status === 403) ? t("signin.noStaff") : errText(e))} />
             )}
             {step === "code" && challenge && (
               <form className="space-y-4" onSubmit={verify}>

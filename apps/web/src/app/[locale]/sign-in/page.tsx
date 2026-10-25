@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState } from "react"
 import { Logo } from "@unitravel/ui/brand/logo"
 import { Input } from "@unitravel/ui/components/input"
 import { DevCode, otpFromSink } from "@unitravel/ui/product/dev-code"
+import { TestSignIn } from "@unitravel/ui/product/test-sign-in"
 
 import { HeroVideo } from "@/components/hero-video"
 import { api, ApiError } from "@/lib/api"
@@ -94,6 +95,11 @@ function SignIn() {
             </label>
             <button type="submit" className="btn-orange h-12 w-full" disabled={busy || !value}>{pow !== null ? `${t("auth.checking")} ${Math.round(pow * 100)}%` : t("auth.sendCode")}</button>
           </form>
+        )}
+        {step === "identity" && (
+          <TestSignIn<{ needsProfile: boolean }> client="WEB" deviceId={deviceId()} suggestions={["neda@student.example"]} api={api}
+            labels={{ title: t("auth.test.title"), hint: t("auth.test.hint"), email: t("auth.test.email"), submit: t("auth.test.submit"), busy: t("auth.test.busy"), error: t("auth.test.error") }}
+            onSignedIn={async (r) => { await qc.invalidateQueries({ queryKey: ["me"] }); if (r.needsProfile) setStep("profile"); else router.replace(next) }} />
         )}
         {step === "code" && challenge && (
           <form className="mt-6 space-y-4" onSubmit={verify}>

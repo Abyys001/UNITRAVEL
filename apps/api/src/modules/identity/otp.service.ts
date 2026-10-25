@@ -4,7 +4,7 @@ import type { Redis } from "ioredis"
 import { parsePhoneNumberFromString } from "libphonenumber-js/max"
 import { v7 as uuidv7 } from "uuid"
 
-import type { OtpRequestBody, OtpVerifyBody } from "@unitravel/contracts"
+import type { OtpRequestBody, OtpVerifyBody, TestSignInBody } from "@unitravel/contracts"
 import { customerProfiles, type Db, mfaFactors, otpChallenges, roles, type Tx, userIdentities, userRoles, users } from "@unitravel/db"
 import { normaliseDigits } from "@unitravel/domain"
 
@@ -121,7 +121,7 @@ export class OtpService {
 
     return this.db.transaction(async (tx) => {
       await tx.update(otpChallenges).set({ consumedAt: new Date(), deliveryStatus: "DELIVERED" }).where(eq(otpChallenges.id, row.id))
-      if (row.purpose === "SIGN_IN") return this.signIn(tx, row, body, ctx)
+      if (row.purpose === "SIGN_IN") return this.signIn(tx, { type: row.identityType, value: row.identityValue }, body, ctx)
       if (!row.userId) throw new AppError("UNAUTHENTICATED")
       if (row.purpose === "STEP_UP") return { userId: row.userId, isNewUser: false, needsProfile: false, mfaRequired: false, mfaEnrolmentRequired: false, purpose: row.purpose }
       await this.attachIdentity(tx, row.userId, row.identityType, row.identityValue, ctx)
@@ -129,8 +129,14 @@ export class OtpService {
     })
   }
 
-  private async signIn(tx: Tx, row: typeof otpChallenges.$inferSelect, body: OtpVerifyBody, ctx: RequestCtx) {
-    const [existing] = await tx.select().from(userIdentities).where(and(eq(userIdentities.type, row.identityType), eq(userIdentities.valueNormalised, row.identityValue), isNull(userIdentities.revokedAt)))
+  /** ADR-0012: sign-in without a code for the testing phase; the controller only calls it when TEST_SIGN_IN=on. */
+  async testSignIn(body: TestSignInBody, ctx: RequestCtx) {
+    const id = normaliseIdentity("EMAIL", body.email)
+    return this.db.transaction((tx) => this.signIn(tx, id, body, ctx, true))
+  }
+
+  private async signIn(tx: Tx, id: { type: "PHONE" | "EMAIL"; value: string }, body: Pick<OtpVerifyBody, "client" | "deviceId" | "profile">, ctx: RequestCtx, test = false) {
+    const [existing] = await tx.select().from(userIdentities).where(and(eq(userIdentities.type, id.type), eq(userIdentities.valueNormalised, id.value), isNull(userIdentities.revokedAt)))
     let userId: string
     let isNewUser = false
     if (existing) {
@@ -145,11 +151,11 @@ export class OtpService {
       isNewUser = true
       const p = body.profile
       const [u] = await tx.insert(users).values({
-        displayName: p ? `${p.givenNamesLatin} ${p.surnameLatin}` : row.identityType === "PHONE" ? "Customer" : row.identityValue.split("@")[0]!,
-        preferredLocale: ctx.locale, calendar: ctx.locale === "fa" ? "JALALI" : "GREGORIAN", timezone: row.identityValue.startsWith("+98") ? "Asia/Tehran" : "Europe/London",
+        displayName: p ? `${p.givenNamesLatin} ${p.surnameLatin}` : id.type === "PHONE" ? "Customer" : id.value.split("@")[0]!,
+        preferredLocale: ctx.locale, calendar: ctx.locale === "fa" ? "JALALI" : "GREGORIAN", timezone: id.value.startsWith("+98") ? "Asia/Tehran" : "Europe/London",
       }).returning()
       userId = u!.id
-      await tx.insert(userIdentities).values({ userId, type: row.identityType, valueNormalised: row.identityValue, verifiedAt: new Date(), isPrimary: true })
+      await tx.insert(userIdentities).values({ userId, type: id.type, valueNormalised: id.value, verifiedAt: new Date(), isPrimary: true })
       await tx.insert(customerProfiles).values({ userId, givenNamesLatin: p?.givenNamesLatin ?? null, surnameLatin: p?.surnameLatin ?? null, nameFa: p?.nameFa ?? null, termsVersion: this.config.settings().legal.termsVersion, privacyVersion: this.config.settings().legal.privacyVersion })
       const [customerRole] = await tx.select().from(roles).where(eq(roles.key, "customer"))
       await tx.insert(userRoles).values({ userId, roleId: customerRole!.id })
@@ -162,10 +168,10 @@ export class OtpService {
     if (body.client === "CONSOLE" && !staff) throw new AppError("OTP_INVALID")
     const factors = staff ? await tx.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId))) : []
     const confirmed = factors.filter((f) => f.confirmedAt)
-    const needsMfa = staff && this.config.get("AUTH").staffSecondFactor && body.client !== "WEB"
-    const tokens = await this.sessions.create(tx, { userId, client: body.client, deviceId: body.deviceId, ip: ctx.ip, userAgent: ctx.userAgent })
-    await this.audit.record(tx, { actorUserId: userId, actorKind: staff ? "STAFF" : "CUSTOMER", action: isNewUser ? "user.signed_up" : "user.signed_in", entityType: "session", entityId: tokens.sessionId, after: { client: body.client, identityType: row.identityType }, ip: ctx.ip, userAgent: ctx.userAgent, requestId: ctx.requestId })
-    await this.outbox.add(tx, { aggregateType: "user", aggregateId: userId, eventType: "identity.verified", payload: { userId, identityType: row.identityType } })
+    const needsMfa = !test && staff && this.config.get("AUTH").staffSecondFactor && body.client !== "WEB"
+    const tokens = await this.sessions.create(tx, { userId, client: body.client, deviceId: body.deviceId, ip: ctx.ip, userAgent: ctx.userAgent, mfaSatisfied: test })
+    await this.audit.record(tx, { actorUserId: userId, actorKind: staff ? "STAFF" : "CUSTOMER", action: test ? "user.test_signed_in" : isNewUser ? "user.signed_up" : "user.signed_in", entityType: "session", entityId: tokens.sessionId, after: { client: body.client, identityType: id.type, isNewUser }, ip: ctx.ip, userAgent: ctx.userAgent, requestId: ctx.requestId })
+    await this.outbox.add(tx, { aggregateType: "user", aggregateId: userId, eventType: "identity.verified", payload: { userId, identityType: id.type } })
     if (!isNewUser) await this.outbox.add(tx, { aggregateType: "user", aggregateId: userId, eventType: "security.new_sign_in", payload: { userId, client: body.client, sessionId: tokens.sessionId } })
     return {
       userId, isNewUser, tokens, purpose: "SIGN_IN",

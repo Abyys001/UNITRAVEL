@@ -3564,6 +3564,36 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'This invoice was cancelled. Do not pay it.'**
   String get cancelReasonOther;
+
+  /// No description provided for @testSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test sign-in (testing phase)'**
+  String get testSignInTitle;
+
+  /// No description provided for @testSignInHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Signs in with the email only — no code. Disabled in production.'**
+  String get testSignInHint;
+
+  /// No description provided for @testSignInEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email to sign in as'**
+  String get testSignInEmail;
+
+  /// No description provided for @testSignInSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in without a code'**
+  String get testSignInSubmit;
+
+  /// No description provided for @testSignInError.
+  ///
+  /// In en, this message translates to:
+  /// **'Test sign-in failed. Check the email and try again.'**
+  String get testSignInError;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

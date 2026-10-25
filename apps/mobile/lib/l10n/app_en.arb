@@ -1049,5 +1049,10 @@
   "cancelReasonCorrection": "This invoice was withdrawn, usually because a corrected one replaces it. Do not pay it.",
   "cancelReasonCustomerRequest": "Cancelled at your request. Do not pay it.",
   "cancelReasonDuplicate": "Cancelled because it was a duplicate. Do not pay it.",
-  "cancelReasonOther": "This invoice was cancelled. Do not pay it."
+  "cancelReasonOther": "This invoice was cancelled. Do not pay it.",
+  "testSignInTitle": "Test sign-in (testing phase)",
+  "testSignInHint": "Signs in with the email only — no code. Disabled in production.",
+  "testSignInEmail": "Email to sign in as",
+  "testSignInSubmit": "Sign in without a code",
+  "testSignInError": "Test sign-in failed. Check the email and try again."
 }

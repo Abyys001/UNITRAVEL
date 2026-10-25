@@ -147,6 +147,7 @@ export const DEMO_USERS: DemoUser[] = [
 ]
 
 export async function seedDemoUsers(db: Db) {
+  const local = (process.env.APP_ENV ?? "local") === "local"
   const roleRows = await db.select().from(s.roles)
   const ids: Record<string, string> = {}
   for (const u of DEMO_USERS) {
@@ -156,7 +157,8 @@ export async function seedDemoUsers(db: Db) {
     if (u.email) await db.insert(s.userIdentities).values({ userId: user!.id, type: "EMAIL", valueNormalised: u.email, verifiedAt: new Date(), isPrimary: false })
     await db.insert(s.customerProfiles).values({ userId: user!.id, givenNamesLatin: u.given, surnameLatin: u.surname, nameFa: u.nameFa ?? null, termsVersion: "2026-10-22", privacyVersion: "2026-10-22" })
     for (const r of u.roles) await db.insert(s.userRoles).values({ userId: user!.id, roleId: roleRows.find((x) => x.key === r)!.id })
-    if (u.roles.some((r) => r !== "customer")) await db.insert(s.mfaFactors).values({ userId: user!.id, type: "TOTP", secretCiphertext: devEncrypt(DEMO_TOTP_SECRET_HEX), confirmedAt: new Date() })
+    // The known demo TOTP secret is local only (rule 6); staging staff use the ADR-0012 test sign-in or enrol their own factor.
+    if (local && u.roles.some((r) => r !== "customer")) await db.insert(s.mfaFactors).values({ userId: user!.id, type: "TOTP", secretCiphertext: devEncrypt(DEMO_TOTP_SECRET_HEX), confirmedAt: new Date() })
   }
   return ids
 }

@@ -18,7 +18,7 @@ export async function signIn(page: Page, email: string, locale = "en") {
   await page.goto(`/${locale}/sign-in`)
   const started = Date.now() - 1000
   await page.locator("input[type=email]").fill(email)
-  await page.locator("form button[type=submit]").click()
+  await page.locator("form button[type=submit]").first().click()
   const code = await latestOtp(page, email, started)
   await page.locator("input[autocomplete=one-time-code]").fill(code)
   await page.locator("form button[type=submit]").click()

@@ -24,3 +24,13 @@ test("pre-signed uploads PUT to storage from the browser, identity scans encrypt
     expect(result, type).toMatchObject({ step: "put", status: 200, sse })
   }
 })
+
+// ADR-0012: with TEST_SIGN_IN=on the box signs in by email alone; a new address lands on the profile step.
+test("test sign-in box signs a new email in without a code", async ({ page }) => {
+  await page.goto("/en/sign-in")
+  const box = page.getByTestId("test-sign-in")
+  await expect(box).toBeVisible()
+  await box.getByLabel("Email").fill(`test-box-${Date.now()}@student.example`)
+  await box.getByRole("button", { name: "Sign in without a code" }).click()
+  await expect(page.getByRole("textbox", { name: /Given names/ })).toBeVisible({ timeout: 15_000 })
+})

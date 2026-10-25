@@ -153,6 +153,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         decoration: InputDecoration(labelText: l.emailLabel, hintText: l.emailHint),
                         onSubmitted: (_) => _sendCode(),
                       ),
+                      const _TestSignInBox(),
                     ] else ...[
                       Text(l.codeSentTo(ltr(_challenge!.normalised))),
                       const SizedBox(height: 12),
@@ -311,6 +312,136 @@ class _DevCodeBoxState extends ConsumerState<_DevCodeBox> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// ADR-0012 testing-phase helper: signs in with an email alone. Shown only while the API reports it enabled.
+class _TestSignInBox extends ConsumerStatefulWidget {
+  const _TestSignInBox();
+
+  @override
+  ConsumerState<_TestSignInBox> createState() => _TestSignInBoxState();
+}
+
+class _TestSignInBoxState extends ConsumerState<_TestSignInBox> {
+  static const _storeKey = 'ut.test_sign_in_email';
+  static const _suggestions = [
+    'neda@student.example',
+    'owner@unitravel.example',
+    'sara@unitravel.example',
+    'cargo@unitravel.example',
+    'compliance@unitravel.example',
+    'dev@unitravel.example',
+  ];
+
+  final _email = TextEditingController(text: _suggestions.first);
+  bool _on = false;
+  bool _busy = false;
+  bool _failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _probe();
+  }
+
+  @override
+  void dispose() {
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _probe() async {
+    try {
+      final enabled = await ref.read(sessionProvider.notifier).testSignInEnabled();
+      if (!mounted || !enabled) return;
+      setState(() => _on = true);
+      final last = await ref.read(secureStorageProvider).read(key: _storeKey);
+      if (mounted && last != null && last.isNotEmpty) _email.text = last;
+    } catch (_) {
+      // Disabled (404), offline or storage unavailable: the box stays hidden or keeps the default email.
+    }
+  }
+
+  Future<void> _submit() async {
+    final value = _email.text.trim();
+    if (value.isEmpty || _busy) return;
+    setState(() {
+      _busy = true;
+      _failed = false;
+    });
+    try {
+      await ref.read(sessionProvider.notifier).testSignIn(value);
+      try {
+        await ref.read(secureStorageProvider).write(key: _storeKey, value: value);
+      } catch (_) {}
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_on) return const SizedBox.shrink();
+    final l = context.l;
+    return Container(
+      key: const ValueKey('test-sign-in'),
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Brand.orange.withValues(alpha: 0.06),
+        border: Border.all(color: Brand.orange.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.testSignInTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(l.testSignInHint, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 10),
+            TextField(
+              key: const ValueKey('test-sign-in-email'),
+              controller: _email,
+              enabled: !_busy,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              autocorrect: false,
+              textDirection: TextDirection.ltr,
+              textAlign: context.lang == 'fa' ? TextAlign.right : TextAlign.left,
+              decoration: InputDecoration(labelText: l.testSignInEmail),
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 0,
+              children: [
+                for (final s in _suggestions)
+                  ActionChip(
+                    label: Text(s, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 12)),
+                    onPressed: _busy ? null : () => setState(() => _email.text = s),
+                  ),
+              ],
+            ),
+            if (_failed) ...[
+              const SizedBox(height: 8),
+              Semantics(liveRegion: true, child: Text(l.testSignInError, style: const TextStyle(color: Brand.danger))),
+            ],
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: _busy ? null : _submit,
+              child: _busy
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(l.testSignInSubmit),
+            ),
+          ],
+        ),
       ),
     );
   }

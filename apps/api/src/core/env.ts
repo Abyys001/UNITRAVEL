@@ -33,6 +33,8 @@ const Env = z.object({
   TRUST_PROXY: z.string().default("loopback"),
   LOG_LEVEL: z.string().default("info"),
   OUTBOX_POLL_MS: z.coerce.number().default(500),
+  /** ADR-0012: email-only sign-in for the testing phase. Never allowed with APP_ENV=production. */
+  TEST_SIGN_IN: z.enum(["off", "on"]).default("off"),
 })
 
 export type Env = z.infer<typeof Env>
@@ -42,6 +44,7 @@ export function env(): Env {
   if (!cached) {
     cached = Env.parse(process.env)
     if (cached.APP_ENV === "production") {
+      if (cached.TEST_SIGN_IN === "on") throw new Error("TEST_SIGN_IN=on is refused in production (ADR-0012)")
       for (const k of ["JWT_PRIVATE_KEY", "JWT_PUBLIC_KEYS", "MASTER_ENCRYPTION_KEY", "OTP_PEPPER"] as const) {
         if (!cached[k]) throw new Error(`${k} is required in production`)
       }
@@ -51,3 +54,4 @@ export function env(): Env {
 }
 
 export const isLocal = () => env().APP_ENV === "local"
+export const testSignInEnabled = () => env().TEST_SIGN_IN === "on"

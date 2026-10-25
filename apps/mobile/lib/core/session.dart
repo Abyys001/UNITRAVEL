@@ -157,6 +157,24 @@ class SessionNotifier extends Notifier<SessionState> implements AuthDelegate {
     return res;
   }
 
+  /// ADR-0012: staging-only sign-in with an email and no code. The API answers 404 when the switch is off.
+  Future<bool> testSignInEnabled() async {
+    final res = await _api.get('/v1/auth/test-sign-in', auth: false) as Json;
+    return res['enabled'] == true;
+  }
+
+  Future<void> testSignIn(String email) async {
+    final res = VerifyResult.fromJson(
+      (await _api.post(
+        '/v1/auth/test-sign-in',
+        body: {'email': email, 'deviceId': ref.read(deviceIdProvider), 'client': 'MOBILE'},
+        auth: false,
+      )) as Json,
+    );
+    final tokens = res.tokens;
+    if (tokens != null) await _adopt(tokens);
+  }
+
   Future<void> _adopt(TokenPair tokens) async {
     _access = tokens.accessToken;
     await ref.read(tokenStoreProvider).writeRefreshToken(tokens.refreshToken);

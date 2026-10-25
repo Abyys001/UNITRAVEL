@@ -43,10 +43,10 @@ export class SessionsService {
     private readonly audit: AuditService,
   ) {}
 
-  async create(tx: Tx, input: { userId: string; client: "WEB" | "CONSOLE" | "MOBILE"; deviceId?: string; ip?: string; userAgent?: string }): Promise<IssuedTokens> {
+  async create(tx: Tx, input: { userId: string; client: "WEB" | "CONSOLE" | "MOBILE"; deviceId?: string; ip?: string; userAgent?: string; mfaSatisfied?: boolean }): Promise<IssuedTokens> {
     const auth = this.config.get("AUTH")
     const absolute = input.client === "CONSOLE" ? auth.staffSessionHours * 3600_000 : auth.refreshTtlDays * 86400_000
-    const [s] = await tx.insert(sessions).values({ userId: input.userId, client: input.client, deviceId: input.deviceId, ip: input.ip, userAgent: input.userAgent?.slice(0, 400), absoluteExpiresAt: new Date(Date.now() + absolute) }).returning()
+    const [s] = await tx.insert(sessions).values({ userId: input.userId, client: input.client, deviceId: input.deviceId, ip: input.ip, userAgent: input.userAgent?.slice(0, 400), absoluteExpiresAt: new Date(Date.now() + absolute), ...(input.mfaSatisfied ? { mfaLevel: 1, mfaVerifiedAt: new Date() } : {}) }).returning()
     return this.issue(tx, s!, uuidv7())
   }
 

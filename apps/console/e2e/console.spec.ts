@@ -348,3 +348,14 @@ test.describe("Mobile admin mode @mobile", () => {
     await ctx.close()
   })
 })
+
+// ADR-0012: with TEST_SIGN_IN=on a seeded staff email signs in without a code or second factor.
+test("test sign-in box signs the owner in and lands on the dashboard", async ({ page }) => {
+  await page.goto(`${ADMIN}/sign-in`)
+  const box = page.getByTestId("test-sign-in")
+  await expect(box).toBeVisible()
+  await box.getByLabel("Email").fill("owner@unitravel.example")
+  await box.getByRole("button", { name: "Sign in without a code" }).click()
+  await expect(page).not.toHaveURL(/sign-in/, { timeout: 20_000 })
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+})

@@ -40,6 +40,8 @@ export async function replay(page: Page, cassette: Cassette, opts: ReplayOptions
     if (u.pathname.endsWith("/events")) return route.fulfill({ status: 200, contentType: "text/event-stream", body: "event: done\ndata: {}\n\n" })
     const rel = `${u.pathname.replace(/^\/api/, "")}${u.search}`
     if (rel === "/v1/me" && opts.signedIn === false) return json(401, { status: 401, code: "UNAUTHENTICATED", title: "Sign in required" })
+    // Snapshots show the production sign-in page: the testing-phase box (ADR-0012) stays off.
+    if (rel === "/v1/auth/test-sign-in") return json(200, { enabled: false })
     const hit = cassette.entries[`${opts.lang} ${req.method()} ${rel}`] ?? cassette.entries[`${opts.lang} ${req.method()} ${u.pathname.replace(/^\/api/, "")}`]
     if (hit) {
       const ov = opts.override?.[rel]

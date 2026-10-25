@@ -114,6 +114,7 @@ export const en = {
   tracking: { events: { PICKED_UP: "Picked up", RECEIVED: "Received at our partner", DEPARTED: "Departed", ARRIVED: "Arrived", AT_CUSTOMS: "At customs", CLEARED: "Cleared customs", OUT_FOR_DELIVERY: "Out for delivery", DELIVERED: "Delivered", HELD: "On hold", DAMAGED: "Damage reported", RETURNED: "Returned", NOTE: "Update" } },
   auth: {
     title: "Sign in", phone: "Mobile number", email: "Email", useEmail: "Use email instead", usePhone: "Use phone instead", sendCode: "Send code", code: "Enter the 6-digit code sent to {to}",
+    test: { title: "Test sign-in (testing phase)", hint: "Signs in with the email only — no code. Disabled in production.", email: "Email", submit: "Sign in without a code", busy: "Signing in…", error: "Test sign-in failed. Check the email and try again." },
     dev: { title: "Test sign-in (local only): code from the email sink", waiting: "Waiting for the code…", refill: "Fill again" },
     verify: "Continue", resendIn: "Resend in {s}s", resend: "Resend code", voice: "Call me with the code", invalid: "Code invalid or expired", checking: "Checking it's you…",
     nameTitle: "Your name, as in your passport", given: "Given names (Latin letters)", surname: "Surname (Latin letters)", nameFa: "Name in Persian (optional, for display)", save: "Save",

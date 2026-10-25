@@ -2099,4 +2099,21 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get cancelReasonOther => 'This invoice was cancelled. Do not pay it.';
+
+  @override
+  String get testSignInTitle => 'Test sign-in (testing phase)';
+
+  @override
+  String get testSignInHint =>
+      'Signs in with the email only — no code. Disabled in production.';
+
+  @override
+  String get testSignInEmail => 'Email to sign in as';
+
+  @override
+  String get testSignInSubmit => 'Sign in without a code';
+
+  @override
+  String get testSignInError =>
+      'Test sign-in failed. Check the email and try again.';
 }

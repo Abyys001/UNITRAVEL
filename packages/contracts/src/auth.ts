@@ -59,6 +59,11 @@ export const VerifyResult = z.object({
 })
 export type VerifyResult = z.infer<typeof VerifyResult>
 
+/** ADR-0012: staging-only sign-in without a code; the API refuses it in production. */
+export const TestSignInBody = z.object({ email: z.string().email().max(254), deviceId: z.string().min(8).max(128), client: ClientKind })
+export type TestSignInBody = z.infer<typeof TestSignInBody>
+export const TestSignInStatus = z.object({ enabled: z.boolean() })
+
 export const RefreshBody = z.object({ refreshToken: z.string().optional() })
 
 export const MfaVerifyBody = z.object({ type: z.enum(["TOTP"]), code: z.string().regex(/^\d{6}$/) })

@@ -2035,4 +2035,21 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get cancelReasonOther => 'این فاکتور لغو شد. آن را پرداخت نکنید.';
+
+  @override
+  String get testSignInTitle => 'ورود آزمایشی (مرحله آزمون)';
+
+  @override
+  String get testSignInHint =>
+      'فقط با ایمیل وارد می‌شود، بدون کد. در محیط عملیاتی غیرفعال است.';
+
+  @override
+  String get testSignInEmail => 'ایمیلی که با آن وارد می‌شوید';
+
+  @override
+  String get testSignInSubmit => 'ورود بدون کد';
+
+  @override
+  String get testSignInError =>
+      'ورود آزمایشی انجام نشد. ایمیل را بررسی کنید و دوباره تلاش کنید.';
 }

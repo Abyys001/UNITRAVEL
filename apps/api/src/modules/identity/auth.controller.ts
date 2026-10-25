@@ -2,9 +2,9 @@ import { Body, Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common"
 import { ApiTags } from "@nestjs/swagger"
 import type { Request, Response } from "express"
 
-import { MfaVerifyBody, OtpRequestBody, OtpRequestResult, OtpVerifyBody, RefreshBody, VerifyResult, WebAuthnVerifyBody } from "@unitravel/contracts"
+import { MfaVerifyBody, OtpRequestBody, OtpRequestResult, OtpVerifyBody, RefreshBody, TestSignInBody, TestSignInStatus, VerifyResult, WebAuthnVerifyBody } from "@unitravel/contracts"
 
-import { isLocal } from "../../core/env"
+import { isLocal, testSignInEnabled } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { COOKIE_REFRESH } from "../../core/http/auth.guard"
 import { type Actor, Authenticated, Ctx, CurrentActor, OptionalActor, Public, RateLimit, type RequestContext } from "../../core/http/decorators"
@@ -14,6 +14,8 @@ import { MfaService } from "./mfa.service"
 import { OtpService } from "./otp.service"
 import { PowService } from "./pow.service"
 import { SessionsService } from "./sessions.service"
+
+type VerifyBodyClient = OtpVerifyBody["client"]
 
 @ApiTags("auth")
 @Controller("v1/auth")
@@ -43,10 +45,34 @@ export class AuthController {
   @ApiZodResponse(200, VerifyResult)
   async verify(@Body(zbody(OtpVerifyBody)) body: OtpVerifyBody, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
     const r = await this.otp.verify(body, { ip: req.ip ?? "", userAgent: req.header("user-agent"), requestId: ctx.id, locale: ctx.locale })
-    if (r.tokens && body.client !== "MOBILE") setSessionCookies(res, r.tokens, body.client)
+    return this.signedIn(r, body.client, res)
+  }
+
+  @Get("test-sign-in")
+  @Public()
+  @ApiZodResponse(200, TestSignInStatus)
+  testSignInStatus() {
+    return { enabled: testSignInEnabled() }
+  }
+
+  /** ADR-0012: email-only sign-in for the testing phase; 404 unless TEST_SIGN_IN=on, which production refuses at boot. */
+  @Post("test-sign-in")
+  @Public()
+  @HttpCode(200)
+  @RateLimit({ name: "test-sign-in", limit: 60, windowSeconds: 600, key: "ip" })
+  @ApiZodBody(TestSignInBody)
+  @ApiZodResponse(200, VerifyResult)
+  async testSignIn(@Body(zbody(TestSignInBody)) body: TestSignInBody, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
+    if (!testSignInEnabled()) throw new AppError("NOT_FOUND")
+    const r = await this.otp.testSignIn(body, { ip: req.ip ?? "", userAgent: req.header("user-agent"), requestId: ctx.id, locale: ctx.locale })
+    return this.signedIn(r, body.client, res)
+  }
+
+  private signedIn(r: Awaited<ReturnType<OtpService["verify"]>>, client: VerifyBodyClient, res: Response) {
+    if (r.tokens && client !== "MOBILE") setSessionCookies(res, r.tokens, client)
     return {
       isNewUser: r.isNewUser, needsProfile: r.needsProfile, mfaRequired: r.mfaRequired, mfaEnrolmentRequired: r.mfaEnrolmentRequired,
-      tokens: r.tokens && body.client === "MOBILE" ? { accessToken: r.tokens.accessToken, accessExpiresAt: r.tokens.accessExpiresAt.toISOString(), refreshToken: r.tokens.refreshToken, refreshExpiresAt: r.tokens.refreshExpiresAt.toISOString() } : undefined,
+      tokens: r.tokens && client === "MOBILE" ? { accessToken: r.tokens.accessToken, accessExpiresAt: r.tokens.accessExpiresAt.toISOString(), refreshToken: r.tokens.refreshToken, refreshExpiresAt: r.tokens.refreshExpiresAt.toISOString() } : undefined,
     }
   }
 
@@ -85,7 +111,7 @@ export class AuthController {
   @Get("dev-sink/totp")
   @Authenticated()
   async devTotp(@CurrentActor() actor: Actor) {
-    if (!isLocal()) throw new AppError("NOT_FOUND")
+    if (!isLocal() && !testSignInEnabled()) throw new AppError("NOT_FOUND")
     return (await this.mfa.currentTotp(actor.userId)) ?? { code: null }
   }
 
