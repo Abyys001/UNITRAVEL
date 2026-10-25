@@ -147,3 +147,24 @@ Contrast is on page / raised card.
 | danger on danger-subtle | `#ff8a7e` | error banners | 4.6 |
 
 Light-mode ratios are unchanged (table above). Status is always text plus colour, never colour alone.
+
+## Console rebuild: "Clear deck" (2026-10-25)
+Owner feedback: the sidebar and the admin panel were cluttered and hard to read; rebuild the console without reducing any
+access. Patterns compared (kit `sources/`): shadcn sidebar (grouped, collapsible icon rail), Kiranism starter (flat nav + kbar),
+tablecn / Data Table Filters (toolbar + chip filters + pager), Linear-style hub tabs. Adapted: a flat rail with hub tabs, one
+list toolbar, chip filters. Not taken: nested accordion groups (they were the clutter), per-column filter popovers.
+
+- **Navigation = destinations, not pages.** The rail is one flat list with no headings (Admin 6, Developer 6). Related pages are
+  tabs under the header (`NavItem.tabs`, rendered by `Shell`), and `NavItem.match` claims child routes (a request page belongs
+  to Requests). Queue tabs live only on the Requests page, saved views only in its filter bar, "Sessions & second factor" only
+  in the user menu and palette. Every item and tab keeps its previous `can(...)` check; a hub's link is its first permitted tab,
+  so no permission loses a page. The backend still decides access (CLAUDE.md rule 4).
+- **Shell.** Full-height navy rail (brand + panel chip, items 40 px, orange/cyan active bar, collapse at the foot); light
+  sticky top bar (breadcrumbs, palette trigger, shortcuts, bell, user menu). Phones: compact top bar, bottom bar of the
+  `mobile` items + More sheet (items with their tabs).
+- **Type.** `.cap` is now sentence-case 11.5 px semibold sans; uppercase mono is gone from labels and headers. Mono stays for
+  references, codes, money and counts (`.num`). Status `Tag`s are rounded pills, sans semibold.
+- **Lists.** `components/data-list.tsx`: `Toolbar` (search, `Chips`, controls, live count), `usePaged` + `Pager` (25 rows),
+  `ListCard`, `.data-table` (sunk header band, 10 px rows, hover). Long lists (policies, audit, invoices, users) page and group.
+- **One number, one place.** A count appears once per screen; dashboards do not repeat the same queue numbers in a summary
+  line, a hero, KPI tiles and a bar.

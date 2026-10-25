@@ -59,3 +59,6 @@ export function errText(e: unknown): string {
   }
   return e instanceof Error ? e.message : String(e)
 }
+
+/** The API refused this staff member (missing permission); retrying cannot help, so the UI says so instead of echoing "Requires <perm>". */
+export const isDenied = (e: unknown) => e instanceof ApiError && e.problem.status === 403 && e.code === "FORBIDDEN"

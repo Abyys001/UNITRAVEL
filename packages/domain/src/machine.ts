@@ -19,6 +19,11 @@ export interface TransitionDef<S extends string, F> {
   permissions?: readonly Permission[]
   /** Returns a human-readable reason when the guard fails, or null when it passes. */
   guard?: (facts: F) => string | null
+  /**
+   * Checks on what the actor supplies when running the command (dialog fields). Evaluated only on execution,
+   * never when listing actions: the dialog has not opened yet, so these would always read as disabled.
+   */
+  inputGuard?: (facts: F) => string | null
   /** Hidden from the console's action list (system and customer-only commands). */
   label?: string
 }
@@ -34,6 +39,7 @@ export function evaluate<S extends string, F extends { status: S }, C extends st
   command: C,
   facts: F,
   actor: MachineActor,
+  opts: { stateOnly?: boolean } = {},
 ): Evaluation<S> {
   const def = table[command]
   if (!def) return { ok: false, code: "INVALID_TRANSITION", reason: `Unknown command ${command}` }
@@ -48,7 +54,7 @@ export function evaluate<S extends string, F extends { status: S }, C extends st
   if (!def.from.includes(facts.status)) {
     return { ok: false, code: "INVALID_TRANSITION", reason: `${command} is not allowed from ${facts.status}` }
   }
-  const reason = def.guard?.(facts)
+  const reason = def.guard?.(facts) ?? (opts.stateOnly ? null : def.inputGuard?.(facts) ?? null)
   if (reason) return { ok: false, code: "INVALID_TRANSITION", reason }
   const to = typeof def.to === "function" ? def.to(facts) : def.to
   return { ok: true, from: facts.status, to }
@@ -66,7 +72,7 @@ export function allowedCommands<S extends string, F extends { status: S }, C ext
     const def = table[command]
     if (def.actor !== actor.kind) continue
     if (!def.from.includes(facts.status)) continue
-    const r = evaluate(table, command, facts, actor)
+    const r = evaluate(table, command, facts, actor, { stateOnly: true })
     out.push(r.ok ? { command, allowed: true } : { command, allowed: false, reason: r.reason })
   }
   return out

@@ -1,4 +1,4 @@
-import type { TrackingEventCode } from "@unitravel/contracts"
+import type { CargoStatus, TrackingEventCode } from "@unitravel/contracts"
 
 /** Code a correction uses to withdraw an event without replacing it. */
 export const RETRACTED = "RETRACTED"
@@ -125,3 +125,21 @@ export function effectiveRecordIds(records: readonly TrackingRecord[]): Set<stri
 }
 
 export const lastEvent = (timeline: readonly EffectiveTrackingEvent[]) => timeline.at(-1) ?? null
+
+/** Fulfilment stages in order; a staff-entered event needs the request to have reached its stage (ADR-0008 W4, ch. 14.5). */
+const STAGE: readonly CargoStatus[] = ["BOOKED", "AWAITING_HANDOVER", "RECEIVED", "IN_TRANSIT", "AT_CUSTOMS", "OUT_FOR_DELIVERY", "DELIVERED", "COMPLETED"]
+const EARLIEST: Record<TrackingEventCode, CargoStatus | null> = {
+  NOTE: null, PICKED_UP: "BOOKED", HELD: "BOOKED", DAMAGED: "BOOKED", RECEIVED: "AWAITING_HANDOVER", DEPARTED: "RECEIVED",
+  ARRIVED: "IN_TRANSIT", AT_CUSTOMS: "IN_TRANSIT", CLEARED: "IN_TRANSIT", RETURNED: "IN_TRANSIT", OUT_FOR_DELIVERY: "IN_TRANSIT", DELIVERED: "OUT_FOR_DELIVERY",
+}
+
+/** Null when the event fits the request's progress, otherwise the reason. In EXCEPTION pass the state it resumes to. */
+export function trackingEventAllowed(code: TrackingEventCode, stage: CargoStatus): string | null {
+  const earliest = EARLIEST[code]
+  if (!earliest) return null
+  const reached = STAGE.indexOf(stage)
+  if (reached >= STAGE.indexOf(earliest)) return null
+  return reached < 0
+    ? `${code} cannot be recorded before the shipment is booked (status ${stage})`
+    : `${code} cannot be recorded yet: the shipment must reach ${earliest} first (status ${stage})`
+}

@@ -4,6 +4,7 @@ import type { Request, Response } from "express"
 
 import { MfaVerifyBody, OtpRequestBody, OtpRequestResult, OtpVerifyBody, RefreshBody, VerifyResult, WebAuthnVerifyBody } from "@unitravel/contracts"
 
+import { isLocal } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { COOKIE_REFRESH } from "../../core/http/auth.guard"
 import { type Actor, Authenticated, Ctx, CurrentActor, OptionalActor, Public, RateLimit, type RequestContext } from "../../core/http/decorators"
@@ -57,7 +58,7 @@ export class AuthController {
     const fromCookie = req.cookies?.[COOKIE_REFRESH] as string | undefined
     const presented = body.refreshToken ?? fromCookie
     if (!presented) throw new AppError("UNAUTHENTICATED")
-    const t = await this.sessions.refresh(presented, { ip: req.ip, requestId: ctx.id })
+    const t = await this.sessions.refresh(presented, { ip: req.ip, userAgent: req.headers["user-agent"], requestId: ctx.id })
     if (!body.refreshToken) {
       const s = await this.sessions.get(t.sessionId)
       setSessionCookies(res, t, s?.client === "CONSOLE" ? "CONSOLE" : "WEB")
@@ -78,6 +79,14 @@ export class AuthController {
   @Authenticated()
   enrolTotp(@CurrentActor() actor: Actor) {
     return this.mfa.enrolTotp(actor.userId)
+  }
+
+  /** Local only: the current authenticator code for the signed-in user, so test sessions skip the authenticator app. */
+  @Get("dev-sink/totp")
+  @Authenticated()
+  async devTotp(@CurrentActor() actor: Actor) {
+    if (!isLocal()) throw new AppError("NOT_FOUND")
+    return (await this.mfa.currentTotp(actor.userId)) ?? { code: null }
   }
 
   /** Also the step-up path: a successful verification refreshes the step-up window (ch. 16.1). */

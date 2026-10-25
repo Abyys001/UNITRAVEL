@@ -204,7 +204,7 @@ export const EU_EEA = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR
 export const DEFAULT_AUTH: AuthConfig = {
   otpLength: 6, otpTtlSeconds: 300, otpMaxAttempts: 5, resendCooldownSeconds: 60, maxPerHour: 5, maxPerDay: 10,
   allowedCountries: ["IR", "GB", ...EU_EEA, "TR", "AM", "GE", "AE"],
-  challengeAfterRequestsPerIp10Min: 3, emailSignIn: true, requireVerifiedPhoneForRequests: true,
+  challengeAfterRequestsPerIp10Min: 3, emailSignIn: true, requireVerifiedPhoneForRequests: false,
   accessTtlSeconds: 600, refreshTtlDays: 30, staffSessionHours: 12, staffIdleMinutes: 30, staffSecondFactor: true,
   stepUpWindowMinutes: 10, ipAllowlistDev: [], verifyIpLimitPer10Min: 10,
 }

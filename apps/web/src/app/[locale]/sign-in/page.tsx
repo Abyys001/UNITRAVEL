@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from "react"
 
 import { Logo } from "@unitravel/ui/brand/logo"
 import { Input } from "@unitravel/ui/components/input"
+import { DevCode, otpFromSink } from "@unitravel/ui/product/dev-code"
 
 import { HeroVideo } from "@/components/hero-video"
 import { api, ApiError } from "@/lib/api"
@@ -20,10 +21,10 @@ function SignIn() {
   const router = useRouter()
   const next = useSearchParams().get("next") || href("/requests")
   const qc = useQueryClient()
-  const [channel, setChannel] = useState<"PHONE" | "EMAIL">("PHONE")
   const [value, setValue] = useState("")
   const [step, setStep] = useState<Step>("identity")
   const [challenge, setChallenge] = useState<{ challengeId: string; normalised: string; resendAfterSeconds: number; voiceAvailable: boolean } | null>(null)
+  const [sentAt, setSentAt] = useState(0)
   const [code, setCode] = useState("")
   const [wait, setWait] = useState(0)
   const [err, setErr] = useState<string | null>(null)
@@ -35,9 +36,9 @@ function SignIn() {
   const [profile, setProfile] = useState({ givenNamesLatin: "", surnameLatin: "", nameFa: "" })
   useEffect(() => { if (wait <= 0) return; const id = setTimeout(() => setWait((w) => w - 1), 1000); return () => clearTimeout(id) }, [wait])
 
-  const send = async (voice = false) => {
+  const send = async () => {
     setErr(null); setBusy(true)
-    const body = { channel, value, deviceId: deviceId(), client: "WEB", voice, defaultCountry: locale === "fa" ? "IR" : undefined }
+    const body = { channel: "EMAIL", value, deviceId: deviceId(), client: "WEB" }
     try {
       let r
       try { r = await api<typeof challenge & object>("/v1/auth/otp/request", { body }) } catch (e) {
@@ -49,7 +50,7 @@ function SignIn() {
           r = await api<typeof challenge & object>("/v1/auth/otp/request", { body: { ...body, challenge: solved } })
         } else throw e
       }
-      setChallenge(r); setWait(r!.resendAfterSeconds); setStep("code")
+      setChallenge(r); setSentAt(Date.now()); setWait(r!.resendAfterSeconds); setStep("code")
     } catch (e) { setErr(e instanceof ApiError ? e.problem.detail ?? e.problem.title : String(e)) } finally { setBusy(false) }
   }
   const verify = async (e: React.FormEvent) => {
@@ -88,11 +89,10 @@ function SignIn() {
         <p className="mt-3 text-steel">{t("auth.noPassword")}</p>
         {step === "identity" && (
           <form className="mt-6 space-y-4" onSubmit={(e) => { e.preventDefault(); void send() }}>
-            <label className="block text-sm font-medium">{t(channel === "PHONE" ? "auth.phone" : "auth.email")}
-              <Input className="mt-1.5 h-12 rounded-xl bg-cloud text-base" dir="ltr" inputMode={channel === "PHONE" ? "tel" : "email"} autoComplete={channel === "PHONE" ? "tel" : "email"} placeholder={channel === "PHONE" ? "0912 345 6789 · +44 7700 900123" : "you@example.com"} value={value} onChange={(e) => setValue(e.target.value)} required />
+            <label className="block text-sm font-medium">{t("auth.email")}
+              <Input className="mt-1.5 h-12 rounded-xl bg-cloud text-base placeholder:text-sm" dir="ltr" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={value} onChange={(e) => setValue(e.target.value)} required />
             </label>
             <button type="submit" className="btn-orange h-12 w-full" disabled={busy || !value}>{pow !== null ? `${t("auth.checking")} ${Math.round(pow * 100)}%` : t("auth.sendCode")}</button>
-            <button type="button" className="text-sm font-semibold text-orange-700 underline underline-offset-4" onClick={() => { setChannel((c) => (c === "PHONE" ? "EMAIL" : "PHONE")); setValue("") }}>{t(channel === "PHONE" ? "auth.useEmail" : "auth.usePhone")}</button>
           </form>
         )}
         {step === "code" && challenge && (
@@ -103,8 +103,8 @@ function SignIn() {
             <button type="submit" className="btn-orange h-12 w-full" disabled={busy || code.length < 6}>{t("auth.verify")}</button>
             <div className="flex items-center justify-between text-sm">
               {wait > 0 ? <span className="text-steel">{t("auth.resendIn", { s: wait })}</span> : <button type="button" className="font-semibold text-orange-700 underline underline-offset-4" onClick={() => void send()}>{t("auth.resend")}</button>}
-              {challenge.voiceAvailable && wait <= 0 && <button type="button" className="font-semibold text-orange-700 underline underline-offset-4" onClick={() => void send(true)}>{t("auth.voice")}</button>}
             </div>
+            <DevCode key={sentAt} load={async () => otpFromSink(await api("/v1/dev-sink/email"), challenge.normalised, sentAt)} onCode={setCode} title={t("auth.dev.title")} waiting={t("auth.dev.waiting")} refill={t("auth.dev.refill")} />
           </form>
         )}
         {step === "profile" && (

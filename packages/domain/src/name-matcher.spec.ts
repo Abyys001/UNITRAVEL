@@ -1,3 +1,4 @@
+import fc from "fast-check"
 import { describe, expect, it } from "vitest"
 
 import { decide, nameScore, scoreCandidate, tokens } from "./name-matcher"
@@ -46,5 +47,38 @@ describe("Persian name matcher", () => {
   it("compares in Persian script when both sides have it", () => {
     const e = entry("Kamranpour Alireza", { nonLatin: ["علیرضا کامرانپور"] })
     expect(scoreCandidate({ name: "Alireza Kamranpur", nameFa: "عليرضا كامرانپور" }, e).reasons.join()).toContain("native-script")
+  })
+})
+
+// Ch. 27.3 / 32.5: tuning must never lose a true match, and a different surname behind a shared given name must not reach review.
+const GIVEN = ["Reza", "Ali", "Mohammad", "Hassan", "Mehdi", "Javad", "Sara", "Maryam", "Ahmad", "Hossein"]
+const SURNAMES = ["Ahmadi", "Mahdavi", "Rezaei", "Tehrani", "Shirazi", "Mousavi", "Bagheri", "Naderi", "Soltani", "Zandi", "Farahani", "Jalili", "Kazemi", "Sharifi", "Hashemi"]
+
+describe("Matcher regression properties (ch. 27.3)", () => {
+  it("every labelled true pair still hits review, in both directions and with the surname first", () => {
+    for (const [a, b] of TRUE_PAIRS) {
+      expect(decide(nameScore(a, b), T), `${a} / ${b}`).not.toBe("CLEAR")
+      expect(decide(nameScore(b, a), T), `${b} / ${a}`).not.toBe("CLEAR")
+      const w = a.split(" ")
+      const swapped = [w[w.length - 1], ...w.slice(0, -1)].join(" ") // surname first
+      expect(decide(nameScore(swapped, b), T), `${swapped} / ${b}`).not.toBe("CLEAR")
+    }
+  })
+
+  it("an identical name always scores as a match", () => {
+    fc.assert(fc.property(fc.constantFrom(...GIVEN), fc.constantFrom(...SURNAMES), (g, s) => decide(nameScore(`${g} ${s}`, `${g} ${s}`), T) === "MATCH"))
+  })
+
+  it("the same given name with a different surname stays below the review threshold (Reza Ahmadi vs Reza Mahdavi)", () => {
+    expect(nameScore("Reza Ahmadi", "Reza MAHDAVI")).toBeLessThan(T.review)
+    fc.assert(fc.property(fc.constantFrom(...GIVEN), fc.constantFrom(...SURNAMES), fc.constantFrom(...SURNAMES), (g, s1, s2) => {
+      fc.pre(s1 !== s2)
+      return nameScore(`${g} ${s1}`, `${g} ${s2}`) < T.review
+    }))
+  })
+
+  it("splitting and joining a given name (Ali Reza / Alireza) is still a match", () => {
+    expect(decide(nameScore("Ali Reza Kamranpour", "Alireza Kamranpour"), T)).not.toBe("CLEAR")
+    expect(decide(nameScore("Alireza Kamranpour", "Ali Reza Kamranpour"), T)).not.toBe("CLEAR")
   })
 })

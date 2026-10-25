@@ -12,7 +12,7 @@ test("home renders the honest route promise @mobile", async ({ page }, info) => 
 })
 
 test("search → itinerary → request → tracking", async ({ page }) => {
-  await signIn(page, "+447700900010")
+  await signIn(page, "neda@student.example")
   await page.goto("/en")
   await page.getByRole("button", { name: "Search flights" }).click()
   await expect(page).toHaveURL(/\/en\/search/)

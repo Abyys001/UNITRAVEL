@@ -140,6 +140,8 @@ export class OtpService {
       // Verified means verified: a successful OTP for this exact E.164 number (ch. 11.2).
       if (!existing.verifiedAt) await tx.update(userIdentities).set({ verifiedAt: new Date() }).where(eq(userIdentities.id, existing.id))
     } else {
+      // The console is staff-only: a console sign-in never creates a customer account (and says nothing about who exists).
+      if (body.client === "CONSOLE") throw new AppError("OTP_INVALID")
       isNewUser = true
       const p = body.profile
       const [u] = await tx.insert(users).values({
@@ -156,6 +158,8 @@ export class OtpService {
     const [profile] = await tx.select().from(customerProfiles).where(eq(customerProfiles.userId, userId))
     const acc = await this.access.load(userId, tx)
     const staff = this.access.isStaff(acc.permissions)
+    // Refused before a session exists, so a customer phone can never reach TOTP enrolment on the console (ch. 25.2).
+    if (body.client === "CONSOLE" && !staff) throw new AppError("OTP_INVALID")
     const factors = staff ? await tx.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId))) : []
     const confirmed = factors.filter((f) => f.confirmedAt)
     const needsMfa = staff && this.config.get("AUTH").staffSecondFactor && body.client !== "WEB"

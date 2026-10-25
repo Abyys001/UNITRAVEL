@@ -67,9 +67,12 @@ const quoteAcceptable = (f: FlightFacts): string | null => {
   if (!q) return "No quote selected"
   if (q.status !== "SENT") return `Quote is ${q.status}`
   if (!q.validUntil || q.validUntil <= f.now) return "Quote has expired"
-  if (f.optionId && !q.options.some((o) => o.id === f.optionId)) return "Option does not belong to this quote"
-  if (!f.optionId) return "Choose an option"
   return null
+}
+
+const optionChosen = (f: FlightFacts): string | null => {
+  if (f.optionId && !f.quote?.options.some((o) => o.id === f.optionId)) return "Option does not belong to this quote"
+  return f.optionId ? null : "Choose an option"
 }
 
 /** Table 13.1 — every command, its states, who may run it and its guards. */
@@ -78,11 +81,11 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
   screen_flag: { from: ["SUBMITTED"], to: "COMPLIANCE_HOLD", actor: "SYSTEM" },
   release_hold: {
     from: ["COMPLIANCE_HOLD"], to: "NEW", actor: "STAFF", permissions: ["compliance.case.decide"],
-    guard: (f) => (f.decisionReason && f.decisionReason.trim().length >= 5 ? null : "A decision reason is required"),
+    inputGuard: (f) => (f.decisionReason && f.decisionReason.trim().length >= 5 ? null : "A decision reason is required"),
   },
   decline: {
     from: NON_TERMINAL.filter((s) => s !== "TICKETED"), to: "DECLINED", actor: "STAFF", permissions: ["flight_request.transition", "compliance.case.decide"],
-    guard: (f) => (!f.reasonCode ? "Reason code required" : !f.message ? "A customer message is required" : null),
+    inputGuard: (f) => (!f.reasonCode ? "Reason code required" : !f.message ? "A customer message is required" : null),
   },
   claim: {
     from: ["NEW"], to: "IN_REVIEW", actor: "STAFF", permissions: ["flight_request.assign"],
@@ -90,30 +93,32 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
   },
   assign: {
     from: ["NEW", "IN_REVIEW"], to: "IN_REVIEW", actor: "STAFF", permissions: ["flight_request.assign"],
-    guard: (f) => (f.assigneeCanTransition ? null : "Assignee lacks flight_request.transition"),
+    inputGuard: (f) => (f.assigneeCanTransition ? null : "Assignee lacks flight_request.transition"),
   },
   request_info: {
     from: ["IN_REVIEW"], to: "AWAITING_CUSTOMER", actor: "STAFF", permissions: ["flight_request.transition"],
-    guard: (f) => (f.message && f.message.trim() ? null : "A customer-visible message is required"),
+    inputGuard: (f) => (f.message && f.message.trim() ? null : "A customer-visible message is required"),
   },
   respond: {
     from: ["AWAITING_CUSTOMER"], to: "IN_REVIEW", actor: "CUSTOMER",
-    guard: (f) => (f.responseProvided ? null : "A message or the requested data is required"),
+    inputGuard: (f) => (f.responseProvided ? null : "A message or the requested data is required"),
   },
   // Re-quoting from QUOTED or ACCEPTED supersedes the earlier quote and needs a new acceptance (ch. 13.6, ADR-0003).
   send_quote: { from: ["IN_REVIEW", "QUOTED", "ACCEPTED"], to: "QUOTED", actor: "STAFF", permissions: ["commercial_document.issue"], guard: quoteSendable },
   accept_quote: {
     from: ["QUOTED"], to: "ACCEPTED", actor: "CUSTOMER",
     guard: (f) => quoteAcceptable(f) ?? (f.travellerDocumentsComplete ? null : "Passport details are needed for every traveller"),
+    inputGuard: optionChosen,
   },
   decline_quote: { from: ["QUOTED"], to: "IN_REVIEW", actor: "CUSTOMER", guard: (f) => (f.quote?.status === "SENT" ? null : "No open quote") },
   record_acceptance: {
     from: ["QUOTED"], to: "ACCEPTED", actor: "STAFF", permissions: ["quote.create"],
-    guard: (f) => quoteAcceptable(f) ?? (f.acceptanceNote && f.acceptanceNote.note.trim().length >= 3 ? null : "Record the call date/time and a note"),
+    guard: quoteAcceptable,
+    inputGuard: (f) => optionChosen(f) ?? (f.acceptanceNote && f.acceptanceNote.note.trim().length >= 3 ? null : "Record the call date/time and a note"),
   },
   record_reservation: {
     from: ["ACCEPTED"], to: "RESERVED", actor: "STAFF", permissions: ["reservation.record"],
-    guard: (f) => {
+    inputGuard: (f) => {
       const r = f.reservation
       if (!r) return "Reservation details required"
       if (!isRecordLocator(r.recordLocator)) return "Record locator must be 6 letters or digits"
@@ -126,10 +131,10 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
     from: ["RESERVED"], to: "TICKETED", actor: "STAFF", permissions: ["ticket.record"],
     guard: (f) => {
       if (!f.allTravellersVerified) return TRAVELLERS_NOT_VERIFIED
-      if (!f.ticketsIssuedForEveryTraveller) return "Every traveller needs one ISSUED ticket"
       if (f.paymentStatus !== "PAID" && !f.creditOverrideApproved) return "Payment status must be PAID, or an owner-approved credit override"
       return null
     },
+    inputGuard: (f) => (f.ticketsIssuedForEveryTraveller ? null : "Every traveller needs one ISSUED ticket"),
   },
   close: { from: ["TICKETED"], to: "COMPLETED", actor: "STAFF", permissions: ["flight_request.transition"] },
   expire_quote: {
@@ -151,8 +156,9 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
     from: BEFORE_TICKETED, to: "CANCELLED", actor: "STAFF", permissions: ["flight_request.transition"],
     guard: (f) => {
       if (f.activeReservation && (f.activeReservation.status === "HELD" || f.activeReservation.status === "CONFIRMED")) return "Cancel the active reservation first and record it"
-      return !f.reasonCode ? "Reason code required" : null
+      return null
     },
+    inputGuard: (f) => (!f.reasonCode ? "Reason code required" : null),
   },
   complete: {
     from: ["TICKETED"], to: "COMPLETED", actor: "SYSTEM",

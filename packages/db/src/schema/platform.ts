@@ -1,4 +1,4 @@
-import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
+import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
 
 import { createdAt, id, timestamps, tstz } from "./columns"
 import { users } from "./identity"
@@ -136,6 +136,8 @@ export const auditLog = pgTable("audit_log", {
   requestId: varchar({ length: 128 }),
   prevHash: varchar({ length: 64 }).notNull(),
   hash: varchar({ length: 64 }).notNull(),
+  /** 1 = legacy JSON.stringify hash (unverifiable after jsonb key reordering), 2 = canonical key-sorted JSON. */
+  hashVersion: smallint().notNull().default(1),
 }, (t) => [primaryKey({ columns: [t.id, t.occurredAt] }), index("audit_entity_idx").on(t.entityType, t.entityId), index("audit_actor_idx").on(t.actorUserId, t.occurredAt), index("audit_ref_idx").on(t.contextRef)])
 
 export const outboxEvents = pgTable("outbox_events", {

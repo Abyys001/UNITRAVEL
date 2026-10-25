@@ -12,6 +12,7 @@ import { Field, Tag, useAct } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDateTime, human, money } from "@/lib/format"
 import { useT } from "@/lib/i18n"
+import type { PaymentRecordingState } from "@/lib/types"
 import { useSession } from "@/lib/session"
 
 /**
@@ -77,4 +78,14 @@ export function PaymentPanel({ invoice }: { invoice: StaffInvoice }) {
       </FormDialog>
     </div>
   )
+}
+
+/**
+ * "Record payment" for the request page (flight and cargo). The server says whether it will succeed; when it will not,
+ * the reason is shown instead of a button that ends in a 409 (ADR-0008 W8).
+ */
+export function RecordPaymentTrigger({ state, onOpen }: { state?: PaymentRecordingState; onOpen: () => void }) {
+  if (!state) return null
+  if (state.allowed) return <button type="button" className="text-orange-700 underline underline-offset-2" onClick={onOpen} data-command="record_payment">Record payment</button>
+  return <span className="max-w-56 text-end text-[11px] text-steel" title={state.reason} data-command="record_payment" aria-disabled="true">Record payment unavailable{state.reason ? `: ${state.reason}` : ""}</span>
 }

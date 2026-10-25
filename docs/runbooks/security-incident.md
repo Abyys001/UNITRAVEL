@@ -12,14 +12,14 @@ Personal data at risk includes names, contact details, passport numbers (AES-256
 2. Preserve evidence before changing anything: take volume snapshots or logs copy; do not delete logs (application logs are kept 30 days, ch. 28.6).
 3. Contain proportionately:
    - Compromised account: `POST /v1/dev/users/{id}/suspend`, `/sessions/revoke`, `/force-reverify`; remove roles `PUT /v1/dev/users/{id}/roles`.
-   - Refresh-token reuse or token theft: rotate the JWT signing key (public keys of old tokens stay valid only until expiry; revoke sessions to force sign-in).
+   - Refresh-token reuse or token theft (a rotated token presented again more than 10 s after rotation, or from a different IP or user agent, revokes the whole session family; reuse inside 10 s from the same client is treated as two tabs refreshing at once and is not an alert, ADR-0009): rotate the JWT signing key (public keys of old tokens stay valid only until expiry; revoke sessions to force sign-in).
    - Provider credentials exposed: rotate via `PUT /v1/dev/providers/{id}/credentials` and `PUT /v1/dev/vendors/{vendor}/credentials` (step-up), then disable the provider if needed.
    - Master encryption key or database credentials exposed: treat as severe; rotate secrets in the host secrets store, redeploy (`infra/compose.prod.yml` reads them from the environment) and re-encrypt under a new key id (field encryption carries `key_id` for rotation, ch. 28.3).
    - Active attack on the edge: block at Caddy/host firewall; consider taking `web`, `console` or `api` offline.
 4. Do not wipe or rebuild a host before evidence is captured.
 
 ## Phase 2: diagnosis
-- Audit log: `GET /v1/dev/audit-log`; verify integrity with `GET /v1/dev/audit-log/verify` (hash chain); export with `POST /v1/dev/audit-log/export`. Look at Reveal actions on passport numbers, role changes, policy overrides, credential changes, failed OTP bursts, refresh-token reuse (ch. 28.5 security events).
+- Audit log: `GET /v1/dev/audit-log`; verify integrity with `GET /v1/dev/audit-log/verify` (hash chain; `legacyUnverifiable` counts rows written before canonical hashing: their links are checked, their content is not, ADR-0009); export with `POST /v1/dev/audit-log/export`. Look at Reveal actions on passport numbers, role changes, policy overrides, credential changes, failed OTP bursts, refresh-token reuse (ch. 28.5 security events).
 - Access logs from Caddy (JSON) and API logs (redacted by design: no phone numbers beyond country code and last two digits, no document numbers, no OTP codes, no tokens).
 - Scope: which data subjects, which categories, which period, whether data was encrypted and whether keys were affected, whether the access was read-only or modified data.
 - Decide: is this a "personal data breach" under UK GDPR (Art. 4(12))? If yes, continue with the notification steps.

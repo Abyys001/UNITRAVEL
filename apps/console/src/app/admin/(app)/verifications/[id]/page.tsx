@@ -11,10 +11,11 @@ import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
-import { BentoGrid, BentoTile, StatusChip, TileError } from "@/components/bento"
-import { ActionBar, CaseTabs, ListSkeleton, paneClass, StateChip } from "@/components/case"
+import { StatusChip, TileError } from "@/components/bento"
+import { ActionBar, CaseTabs, ListSkeleton, paneClass, paneProps, StateChip } from "@/components/case"
 import { Empty, ErrorLine, Field, Loading, PageHead, Panel, Tag } from "@/components/ui"
-import { api, errText } from "@/lib/api"
+import { api } from "@/lib/api"
+import { useCrumbLabel } from "@/lib/crumb"
 import { fmtDateTime, rel } from "@/lib/format"
 import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
@@ -43,7 +44,8 @@ export default function VerificationPage() {
   const [err, setErr] = useState<unknown>(null)
   useEffect(() => () => { if (scanUrl) URL.revokeObjectURL(scanUrl) }, [scanUrl])
   const d = q.data
-  if (q.error) return <div className="p-5"><TileError message={errText(q.error)} onRetry={() => void q.refetch()} /></div>
+  useCrumbLabel(d ? `${d.traveller.givenNames} ${d.traveller.surname}` : null)
+  if (q.error) return <div className="p-5"><TileError error={q.error} onRetry={() => void q.refetch()} /></div>
   if (!d) return <><Loading /><ListSkeleton rows={5} /></>
 
   // Opening the scan is a deliberate, audited action, not something that happens on page load.
@@ -69,29 +71,27 @@ export default function VerificationPage() {
   const row = (label: string, value: React.ReactNode) => <div className="grid grid-cols-[9rem_1fr] gap-2 py-1.5"><dt className="cap">{label}</dt><dd className="font-medium" dir="auto">{value}</dd></div>
   return (
     <div>
-      <PageHead kicker={<Link className="hover:underline" href="/verifications">Passport verification</Link>} title={<span dir="ltr">{t.givenNames} {t.surname}</span>}>
-        {d.confirmedAt && <span className="text-[11px] text-steel">Customer confirmed {fmtDateTime(d.confirmedAt)}</span>}
-      </PageHead>
-      <BentoGrid className="px-5 pt-4 pb-2 max-sm:grid-cols-2 max-sm:gap-2" data-testid="case-summary">
-        <BentoTile size="s" title={t0("ver.state")}><StateChip value={d.status} className="text-[12px]" /></BentoTile>
-        <BentoTile size="s" title={t0("ver.waiting")}><p className="num text-[15px] font-medium">{d.confirmedAt ? rel(d.confirmedAt) : "—"}</p><p className="mt-1 text-[12px] text-steel">{d.confirmedAt ? fmtDateTime(d.confirmedAt) : ""}</p></BentoTile>
-        <BentoTile size="s" title={t0("ver.document")} tone={expired ? "alert" : "default"}>
-          <p className="font-medium">{d.document.type === "PASSPORT" ? "Passport" : "National ID"} <span className="num" dir="ltr">••••{d.document.last4}</span></p>
-          <p className={cn("mt-1 text-[12px]", expired ? "font-medium text-danger" : "text-steel")}>{expired ? `EXPIRED ${d.document.expiryDate}` : `Expires ${d.document.expiryDate}`} · {d.document.issuingCountry}</p>
-        </BentoTile>
-        <BentoTile size="s" title={t0("ver.scan")}><StatusChip tone={d.scan ? "ok" : "danger"}>{d.scan ? t0("ver.scan.onfile") : t0("ver.scan.none")}</StatusChip>{d.scan && <p className="mt-1.5 truncate text-[12px] text-steel">{d.scan.filename}</p>}</BentoTile>
-      </BentoGrid>
+      <PageHead kicker={<Link className="hover:underline" href="/verifications">{t0("nav.passport")}</Link>} title={<span dir="ltr">{t.givenNames} {t.surname}</span>} />
+      <dl className="mx-4 mt-4 grid grid-cols-2 divide-x divide-rule overflow-hidden rounded-xl border border-rule bg-surface-raised shadow-[var(--tile-shadow)] max-sm:divide-x-0 max-sm:gap-y-3 max-sm:p-3 md:mx-6 lg:grid-cols-4 rtl:divide-x-reverse" data-testid="case-summary">
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.waiting")}</dt><dd className="num mt-1 font-medium">{d.confirmedAt ? rel(d.confirmedAt) : "—"}</dd><dd className="num text-[12px] text-steel">{d.confirmedAt ? fmtDateTime(d.confirmedAt) : ""}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.document")}</dt><dd className="mt-1 font-medium">{d.document.type === "PASSPORT" ? t0("pg.ver.passport") : t0("pg.ver.nid")} <span className="num" dir="ltr">••••{d.document.last4}</span></dd><dd className={cn("text-[12px]", expired ? "font-medium text-danger" : "text-steel")}>{expired ? `EXPIRED ${d.document.expiryDate}` : `Expires ${d.document.expiryDate}`} · {d.document.issuingCountry}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.scan")}</dt><dd className="mt-1"><StatusChip tone={d.scan ? "ok" : "danger"}>{d.scan ? t0("ver.scan.onfile") : t0("ver.scan.none")}</StatusChip></dd>{d.scan && <dd className="truncate text-[12px] text-steel">{d.scan.filename}</dd>}</div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.state")}</dt><dd className="mt-1"><StateChip value={d.status} /></dd></div>
+      </dl>
       <CaseTabs label={t0("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "scan", label: t0("ver.tab.scan") }, { key: "fields", label: t0("ver.tab.fields") }, ...(d.status === "SUBMITTED" ? [{ key: "decide" as const, label: t0("ver.tab.decide") }] : [])]} />
-      <div className="grid gap-x-8 px-5 lg:grid-cols-2">
-        <Panel title="Scan" className={paneClass(tab, "scan")} aside={!scanUrl && d.scan && can("customer.read.documents") ? <Button size="sm" variant="outline" onClick={() => void showScan()}>Show scan (audited)</Button> : null}>
+      <div className="grid items-start gap-x-6 px-4 pt-2 md:px-6 lg:grid-cols-2">
+        <div {...paneProps("scan")} className={paneClass(tab, "scan")}>
+        <Panel title="Scan" aside={!scanUrl && d.scan && can("customer.read.documents") ? <Button size="sm" variant="outline" onClick={() => void showScan()}>Show scan (audited)</Button> : null}>
           {!d.scan ? <Empty>No scan on file. Ask the customer to upload one.</Empty> : !can("customer.read.documents") ? <Empty>Your role cannot open identity documents.</Empty> : scanUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- a blob: URL of the sanitised scan; next/image cannot optimise it
             <img src={scanUrl} alt={`Passport scan for ${t.givenNames} ${t.surname}`} className="max-h-[70vh] w-full rounded-sm border border-rule bg-surface-raised object-contain" data-testid="scan-image" />
           ) : <p className="text-steel">{d.scan.filename} · {d.scan.mime}. Every time the scan is opened it is written to the audit log.</p>}
           <ErrorLine error={scanErr} />
         </Panel>
+        </div>
         <div>
-          <Panel title="Details the customer confirmed" className={paneClass(tab, "fields")}>
+          <div {...paneProps("fields")} className={paneClass(tab, "fields")}>
+          <Panel title="Details the customer confirmed">
             <dl data-testid="verification-fields">
               {row("Surname", <span dir="ltr">{t.surname}</span>)}
               {row("Given names", <span dir="ltr">{t.givenNames}</span>)}
@@ -107,15 +107,17 @@ export default function VerificationPage() {
             <ErrorLine error={revealErr} />
           </Panel>
           {d.history.length > 0 && (
-            <Panel title="Earlier decisions" className={paneClass(tab, "fields")}>
+            <Panel title="Earlier decisions">
               <ul className="ledger-rows">{d.history.map((h, i) => <li key={i} className="py-1.5"><Tag value={h.decision} /> <span className="text-steel">{h.reviewerName} · {fmtDateTime(h.at)}</span>{h.reasonCode && <span className="block">{REASON_LABEL[h.reasonCode]}{h.reasonText ? ` — ${h.reasonText}` : ""}</span>}</li>)}</ul>
             </Panel>
           )}
+          </div>
           {d.status === "SUBMITTED" && (
-            <Panel title={t0("ver.decide")} className={paneClass(tab, "decide")}>
+            <div {...paneProps("decide")} className={cn(paneClass(tab, "decide"), "lg:sticky lg:top-16")}>
+            <Panel title={t0("ver.decide")}>
               <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); void decide() }}>
-                <fieldset className="grid grid-cols-3 gap-1" aria-label="Decision">
-                  {([["VERIFIED", "Verify"], ["CORRECTION_REQUIRED", "Needs correction"], ["REJECTED", "Reject"]] as const).map(([v, l]) => <label key={v} className={cn("flex cursor-pointer items-center gap-1.5 rounded-sm border px-2 py-1.5", f.decision === v ? "border-ink bg-surface-raised" : "border-rule")}><input type="radio" name="decision" value={v} checked={f.decision === v} onChange={() => setF({ ...f, decision: v })} />{l}</label>)}
+                <fieldset className="grid gap-1.5" aria-label="Decision">
+                  {([["VERIFIED", "Verify"], ["CORRECTION_REQUIRED", "Needs correction"], ["REJECTED", "Reject"]] as const).map(([v, l]) => <label key={v} className={cn("flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2", f.decision === v ? "border-navy-900 bg-hover font-medium dark:border-white/80" : "border-rule hover:bg-hover")}><input type="radio" name="decision" value={v} checked={f.decision === v} onChange={() => setF({ ...f, decision: v })} />{l}</label>)}
                 </fieldset>
                 {f.decision !== "VERIFIED" && <>
                   <Field label="Reason"><NativeSelect className="field-input" value={f.reasonCode} onChange={(e) => setF({ ...f, reasonCode: e.target.value })}>{VerificationReasonCode.options.map((c) => <option key={c} value={c}>{REASON_LABEL[c]}</option>)}</NativeSelect></Field>
@@ -125,6 +127,7 @@ export default function VerificationPage() {
                 <ActionBar edge="bottom" className="-mx-1 px-1"><Button type="submit" size="sm" loading={busy} variant={f.decision === "REJECTED" ? "destructive" : "default"}>Record decision</Button></ActionBar>
               </form>
             </Panel>
+            </div>
           )}
         </div>
       </div>

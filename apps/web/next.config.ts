@@ -5,6 +5,7 @@ const config: NextConfig = {
   poweredByHeader: false,
   transpilePackages: ["@unitravel/ui", "@unitravel/i18n", "@unitravel/contracts"],
   output: "standalone",
+  experimental: { globalNotFound: true },
   async headers() {
     return [{ source: "/(.*)", headers: [
       { key: "X-Content-Type-Options", value: "nosniff" },

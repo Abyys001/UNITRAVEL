@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Param, Post, Query } from "@nestjs/com
 import { ApiTags } from "@nestjs/swagger"
 import { z } from "zod"
 
-import { CaseStatus, DecideBody, PolicyBody, ScreenAdHocBody } from "@unitravel/contracts"
+import { CaseStatus, DecideBody, PolicyBody, PolicyRejectBody, ScreenAdHocBody } from "@unitravel/contracts"
 
 import { AppError } from "../../core/errors"
 import { type Actor, Ctx, CurrentActor, type RequestContext, RequirePermission, StaffOnly, StepUp } from "../../core/http/decorators"
@@ -59,6 +59,23 @@ export class ComplianceController {
     const acc = await this.access.load(actor.userId)
     if (!acc.roles.includes("owner")) throw new AppError("FORBIDDEN", "Policies are approved by an owner")
     return this.compliance.approvePolicy(id, actor.userId)
+  }
+
+  /** An owner declines a pending proposal; the reason is mandatory and the active policy is untouched (ADR-0008 W5). */
+  @Post("policies/:id/reject")
+  @RequirePermission("compliance.case.decide")
+  @HttpCode(200)
+  async rejectPolicy(@Param("id", zbody(z.uuid())) id: string, @Body(zbody(PolicyRejectBody)) body: z.infer<typeof PolicyRejectBody>, @CurrentActor() actor: Actor) {
+    const acc = await this.access.load(actor.userId)
+    return this.compliance.closeProposal(id, "reject", { userId: actor.userId, permissions: actor.permissions, isOwner: acc.roles.includes("owner") }, body.reason)
+  }
+
+  /** The proposer takes their own pending proposal back. */
+  @Post("policies/:id/withdraw")
+  @RequirePermission("compliance.case.decide")
+  @HttpCode(200)
+  withdrawPolicy(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor) {
+    return this.compliance.closeProposal(id, "withdraw", { userId: actor.userId, permissions: actor.permissions, isOwner: false })
   }
 
   @Post("screen")

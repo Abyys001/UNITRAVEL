@@ -30,7 +30,7 @@ export function Timeline({ items, empty, className, "data-testid": testId, live 
             </span>
             <p className={cn("pt-1 leading-snug", current ? "font-bold text-navy-950" : "font-medium text-navy-900")}>
               {x.title}
-              {x.note && <span className="ms-2 rounded-full bg-cloud px-2 py-0.5 text-[11px] font-semibold text-steel">{x.note}</span>}
+              {x.note && <span className="ms-2 rounded-full bg-cloud px-2 py-0.5 text-xs font-semibold text-steel">{x.note}</span>}
             </p>
             {x.meta && <p className="text-xs text-steel">{x.meta}</p>}
           </li>

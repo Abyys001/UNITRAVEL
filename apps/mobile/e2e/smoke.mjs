@@ -7,7 +7,7 @@ import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { call, latestCode, ownerSession, totp } from './lib.mjs'
+import { call, latestEmailCode, ownerSession, totp } from './lib.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const SHOTS = path.join(HERE, '..', 'test-artifacts')
@@ -33,7 +33,7 @@ async function step(name, fn, { soft = false } = {}) {
   }
 }
 
-const phone = `+98912${String(Math.floor(1000000 + Math.random() * 8999999))}`
+const email = `smoke${Math.floor(1000000 + Math.random() * 8999999)}@student.example`
 const browser = await chromium.launch({
   headless: true,
   executablePath: process.env.CHROMIUM ?? '/usr/bin/chromium',
@@ -84,12 +84,12 @@ try {
     await shot('02-signin-fa-rtl')
   })
 
-  await step(`sign in with ${phone} (Persian UI, OTP from dev sink)`, async () => {
+  await step(`sign in with ${email} (Persian UI, OTP from email dev sink)`, async () => {
     const since = Date.now() - 1500
-    await type(field(/شماره موبایل/), phone)
+    await type(field(/ایمیل/), email)
     await byRole('button', 'ارسال کد').click()
     await field(/کد تأیید/).waitFor()
-    const code = await latestCode(phone, since)
+    const code = await latestEmailCode(email, since)
     await type(field(/کد تأیید/), code)
     await shot('03-otp-fa')
     await byRole('button', 'تأیید').click()
@@ -201,8 +201,8 @@ try {
 
   await step('promote the customer to admin (owner, Developer Panel host); admin mode appears on the next call', async () => {
     const cookies = await ownerSession({ totpSecret: STAFF_TOTP, log: (m) => console.log('      ' + m) })
-    const found = await call('GET', `/v1/dev/users?q=${encodeURIComponent(phone)}`, { cookies, host: 'dev.localhost:4200' })
-    const user = found.json?.items?.find((u) => u.primaryPhone === phone)
+    const found = await call('GET', `/v1/dev/users?q=${encodeURIComponent(email)}`, { cookies, host: 'dev.localhost:4200' })
+    const user = found.json?.items?.find((u) => u.email === email)
     if (!user) throw new Error('user not found via dev API: ' + JSON.stringify(found.json))
     const put = await call('PUT', `/v1/dev/users/${user.id}/roles`, { cookies, host: 'dev.localhost:4200', body: { roles: ['customer', 'admin'] } })
     if (put.status !== 200) throw new Error('role change failed: ' + JSON.stringify(put.json))
@@ -266,13 +266,13 @@ try {
     en.setDefaultTimeout(20000)
     const enShot = (n) => en.screenshot({ path: path.join(SHOTS, `${n}.png`) })
     const enType = async (loc, text) => { await loc.click(); await en.waitForTimeout(350); await en.keyboard.type(text, { delay: 25 }); await en.waitForTimeout(150) }
-    const enPhone = `+98912${String(Math.floor(1000000 + Math.random() * 8999999))}`
+    const enEmail = `smoke-en${Math.floor(1000000 + Math.random() * 8999999)}@student.example`
     await en.goto(`${APP}/?semantics`)
     const since = Date.now() - 1500
-    await enType(en.getByRole('textbox', { name: /Mobile number/ }), enPhone)
+    await enType(en.getByRole('textbox', { name: /Email/ }), enEmail)
     await en.getByRole('button', { name: 'Send code' }).click()
     await en.getByRole('textbox', { name: /Verification code/ }).waitFor()
-    await enType(en.getByRole('textbox', { name: /Verification code/ }), await latestCode(enPhone, since))
+    await enType(en.getByRole('textbox', { name: /Verification code/ }), await latestEmailCode(enEmail, since))
     await en.getByRole('button', { name: 'Verify' }).click()
     await enType(en.getByRole('textbox', { name: /Given names/ }), 'Daniel')
     await enType(en.getByRole('textbox', { name: /Surname/ }), 'Shaw')
@@ -302,14 +302,14 @@ try {
     await en.waitForTimeout(800)
     await enShot('33-account-en')
     const dir = await en.evaluate(() => getComputedStyle(document.documentElement).direction)
-    console.log(`      English pass ran with ${enPhone}; document direction ${dir}`)
+    console.log(`      English pass ran with ${enEmail}; document direction ${dir}`)
   })
 } catch {
   failed = true
 }
 
 await shot(failed ? '99-failure' : '98-end')
-fs.writeFileSync(path.join(SHOTS, 'smoke-results.json'), JSON.stringify({ phone, results, consoleErrors }, null, 2))
+fs.writeFileSync(path.join(SHOTS, 'smoke-results.json'), JSON.stringify({ email, results, consoleErrors }, null, 2))
 await browser.close()
 console.log(`\n${results.filter((r) => r.ok).length}/${results.length} steps passed`)
 process.exit(failed ? 1 : 0)

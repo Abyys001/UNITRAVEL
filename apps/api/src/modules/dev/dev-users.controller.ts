@@ -1,9 +1,9 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Post, Put, Query } from "@nestjs/common"
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post, Put, Query } from "@nestjs/common"
 import { ApiTags } from "@nestjs/swagger"
 import { and, desc, eq, ilike, inArray, isNull, lt, or, sql } from "drizzle-orm"
 import { z } from "zod"
 
-import { DevUsersQuery, PERMISSIONS, PRIVILEGED_ROLES, ReplaceRolesBody, RoleBody } from "@unitravel/contracts"
+import { DevUsersQuery, hasPrivilegedPermission, PERMISSIONS, PRIVILEGED_PERMISSIONS, PRIVILEGED_ROLES, ReplaceRolesBody, RoleBody } from "@unitravel/contracts"
 import {
   auditLog, cargoRequests, type Db, devices, flightRequests, rolePermissions, roles, sessions, userIdentities, userRoles, users,
 } from "@unitravel/db"
@@ -191,7 +191,7 @@ export class DevUsersController {
     const rs = await this.db.select().from(roles).orderBy(roles.createdAt)
     const rp = await this.db.select().from(rolePermissions)
     const members = await this.db.select({ roleId: userRoles.roleId, n: sql<number>`count(*)::int` }).from(userRoles).groupBy(userRoles.roleId)
-    return { catalogue: PERMISSIONS, roles: rs.map((r) => ({ id: r.id, key: r.key, name: r.name, builtIn: r.builtIn, privileged: r.privileged, permissions: rp.filter((p) => p.roleId === r.id).map((p) => p.permission), members: members.find((m) => m.roleId === r.id)?.n ?? 0 })) }
+    return { catalogue: PERMISSIONS, privilegedPermissions: PRIVILEGED_PERMISSIONS, roles: rs.map((r) => ({ id: r.id, key: r.key, name: r.name, builtIn: r.builtIn, privileged: r.privileged, permissions: rp.filter((p) => p.roleId === r.id).map((p) => p.permission), members: members.find((m) => m.roleId === r.id)?.n ?? 0 })) }
   }
 
   /** Custom roles combine catalogue permissions; built-in roles can be cloned but not deleted or edited. */
@@ -200,7 +200,7 @@ export class DevUsersController {
   @StepUp()
   async createRole(@Body(zbody(RoleBody)) body: z.infer<typeof RoleBody>, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     return this.uow.run(async (tx) => {
-      const privileged = body.permissions.some((p) => p.startsWith("user.role.assign") || p === "compliance.case.decide" || p === "provider.config.write")
+      const privileged = hasPrivilegedPermission(body.permissions)
       const [r] = await tx.insert(roles).values({ key: body.key, name: body.name, builtIn: false, privileged }).returning()
       await tx.insert(rolePermissions).values(body.permissions.map((permission) => ({ roleId: r!.id, permission })))
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "role.created", entityType: "role", entityId: r!.id, after: body, ip: actor.ip, requestId: ctx.id })
@@ -219,12 +219,33 @@ export class DevUsersController {
       const before = await tx.select().from(rolePermissions).where(eq(rolePermissions.roleId, r.id))
       await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, r.id))
       await tx.insert(rolePermissions).values(body.permissions.map((permission) => ({ roleId: r.id, permission })))
-      await tx.update(roles).set({ name: body.name }).where(eq(roles.id, r.id))
+      // Editing can add a privileged permission to a role that was not privileged; the flag follows the permissions.
+      await tx.update(roles).set({ name: body.name, privileged: hasPrivilegedPermission(body.permissions) }).where(eq(roles.id, r.id))
       // Everyone holding the role gets a new perm_version so their next call refreshes permissions.
       const holders = await tx.select({ userId: userRoles.userId }).from(userRoles).where(eq(userRoles.roleId, r.id))
       for (const h of holders) await this.access.bumpPermVersion(tx, h.userId)
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "role.updated", entityType: "role", entityId: r.id, before: before.map((b) => b.permission), after: body, ip: actor.ip, requestId: ctx.id })
       return { ok: true, affectedUsers: holders.length }
+    })
+  }
+
+  /** Only an empty custom role can go; roles with members must be unassigned first so nobody loses access by surprise. */
+  @Delete("roles/:key")
+  @RequirePermission("user.role.assign.privileged")
+  @StepUp()
+  @HttpCode(200)
+  async deleteRole(@Param("key") key: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.uow.run(async (tx) => {
+      const [r] = await tx.select().from(roles).where(eq(roles.key, key)).for("update")
+      if (!r) throw new AppError("NOT_FOUND")
+      if (r.builtIn) throw new AppError("FORBIDDEN", "Built-in roles cannot be deleted")
+      const [m] = await tx.select({ n: sql<number>`count(*)::int` }).from(userRoles).where(eq(userRoles.roleId, r.id))
+      if ((m?.n ?? 0) > 0) throw new AppError("INVALID_TRANSITION", `Role still has ${m!.n} member(s); remove them first`)
+      const perms = await tx.select().from(rolePermissions).where(eq(rolePermissions.roleId, r.id))
+      await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, r.id))
+      await tx.delete(roles).where(eq(roles.id, r.id))
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "role.deleted", entityType: "role", entityId: r.id, before: { key: r.key, name: r.name, privileged: r.privileged, permissions: perms.map((p) => p.permission) }, ip: actor.ip, requestId: ctx.id })
+      return { ok: true }
     })
   }
 }

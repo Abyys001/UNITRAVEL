@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Headers, HttpCode, Param, Patch, Post, Query, Req, Res } from "@nestjs/common"
-import { ApiTags } from "@nestjs/swagger"
+import { ApiOperation, ApiTags } from "@nestjs/swagger"
 import type { Request, Response } from "express"
 import { z } from "zod"
 
@@ -107,10 +107,11 @@ export class AdminFlightRequestsController {
 
   /**
    * Server-sent events for the console (ch. 29.2): `queue-counts` whenever the summary changes and
-   * `request-changed {requestType, ref, version}` for every request event. Streams end after 5 minutes so the browser
+   * `request-changed {requestType, ref, version, status, statusLabel}` for every request event. Streams end after 5 minutes so the browser
    * reconnects through the auth guard again (permissions, idle timeout).
    */
   @Get("events")
+  @ApiOperation({ summary: "Staff live events (SSE)", description: "text/event-stream. `queue-counts` carries the queue summary; `request-changed` carries StaffRequestChangedEvent {requestType, ref, version, status, statusLabel}." })
   @RequirePermission("flight_request.read.any", "cargo_request.read.any")
   async events(@CurrentActor() actor: Actor, @Req() req: Request, @Res() res: Response) {
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache, no-transform", connection: "keep-alive", "x-accel-buffering": "no" })

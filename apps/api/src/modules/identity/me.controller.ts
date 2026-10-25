@@ -69,6 +69,12 @@ export class MeController {
       if (body.displayName) userPatch.displayName = body.displayName
       if (body.preferredLocale) userPatch.preferredLocale = body.preferredLocale
       if (body.calendar) userPatch.calendar = body.calendar
+      else if (body.preferredLocale) {
+        // Switching language also switches the calendar when it is still the previous language's default (fa starts as Jalali, en as Gregorian).
+        const [cur] = await tx.select({ locale: users.preferredLocale, calendar: users.calendar }).from(users).where(eq(users.id, actor.userId))
+        const dflt = (l: string) => (l === "fa" ? "JALALI" : "GREGORIAN")
+        if (cur && cur.locale !== body.preferredLocale && cur.calendar === dflt(cur.locale)) userPatch.calendar = dflt(body.preferredLocale)
+      }
       if (body.timezone) userPatch.timezone = body.timezone
       if (body.onDuty !== undefined) userPatch.onDuty = body.onDuty
       if (body.notificationPrefs) userPatch.notificationPrefs = body.notificationPrefs

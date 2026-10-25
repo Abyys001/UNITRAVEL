@@ -47,7 +47,18 @@ export const TemplateBody = z.object({
 })
 export const TemplateView = TemplateBody.extend({ id: Uuid, version: z.number().int(), segments: z.object({ encoding: z.enum(["GSM7", "UCS2"]), count: z.number().int(), chars: z.number().int() }).optional() })
 
-export const SmsRouteBody = z.object({ prefix: z.string().regex(/^\+?\d{0,4}$|^default$/), providers: z.array(z.string()).min(1), enabled: z.boolean() })
+/** Providers the SMS sender implements; a route can only name these (ch. 8.1). `console` is the local sink and is refused in production. */
+export const SMS_PROVIDERS = ["kavenegar", "smsir", "sinch", "infobip", "console"] as const
+/** Providers outside Iran: +98 numbers are never routed through them. */
+export const INTERNATIONAL_SMS_PROVIDERS: readonly string[] = ["sinch", "infobip", "twilio", "vonage"]
+/** Whether a route prefix can match Iranian numbers: "+98…" itself, or a shorter prefix such as "+9" that contains it. */
+export const prefixCoversIran = (prefix: string): boolean => prefix !== "default" && ("+98".startsWith(prefix) || prefix.startsWith("+98"))
+
+export const SmsRouteBody = z.object({
+  prefix: z.string().regex(/^\+\d{1,4}$|^default$/, "Use an international prefix such as +44, or default"),
+  providers: z.array(z.enum(SMS_PROVIDERS)).min(1).refine((a) => new Set(a).size === a.length, "Each provider once"),
+  enabled: z.boolean(),
+})
 export const SmsRouteView = SmsRouteBody.extend({ id: Uuid, successRate: z.number().nullable(), sent24h: z.number().int() })
 
 export const DeliveryView = z.object({

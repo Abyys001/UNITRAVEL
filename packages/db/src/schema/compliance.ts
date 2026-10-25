@@ -61,7 +61,7 @@ export const compliancePolicies = pgTable("compliance_policies", {
   reason: text().notNull(),
   counselReference: varchar({ length: 120 }),
   version: integer().notNull().default(1),
-  status: text({ enum: ["PENDING_APPROVAL", "ACTIVE", "RETIRED"] }).notNull().default("PENDING_APPROVAL"),
+  status: text({ enum: ["PENDING_APPROVAL", "ACTIVE", "RETIRED", "REJECTED", "WITHDRAWN"] }).notNull().default("PENDING_APPROVAL"),
   createdBy: uuid().notNull(),
   approvedBy: uuid(),
   approvedAt: tstz(),

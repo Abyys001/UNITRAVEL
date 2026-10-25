@@ -69,6 +69,9 @@ export const MessageView = z.object({
   documentIds: z.array(Uuid),
 })
 
+/** A quoted condition that is allowed with a fee must state the fee: a blank amount would otherwise be sent as 0 (ADR-0008 W7). */
+export const QuotedCondition = Condition.refine((c) => !c.penalty || c.penalty.amountMinor > 0, { message: "A fee must be greater than zero; use 'Allowed, no fee' if there is none", path: ["penalty", "amountMinor"] })
+
 export const QuoteOptionInput = z.object({
   label: z.string().min(1).max(80),
   source: QuoteOptionSource,
@@ -76,7 +79,7 @@ export const QuoteOptionInput = z.object({
   components: z.array(z.object({ provider: z.string(), offerId: z.string().optional(), rung: z.string(), fetchedAt: IsoDateTime.optional() })).default([]),
   priceBreakdown: z.object({ fare: Money, taxes: Money, serviceFee: Money, total: Money }),
   baggage: z.array(SegmentBaggage),
-  conditions: z.object({ change: tri(Condition), refund: tri(Condition) }),
+  conditions: z.object({ change: tri(QuotedCondition), refund: tri(QuotedCondition) }),
   ticketingModel: TicketingModel,
   internalCostMinor: z.number().int().nonnegative().optional(),
   supplierPrice: Money.optional(),
@@ -261,8 +264,13 @@ export const StaffAfterSalesItem = z.object({
   ref: Reference, type: AfterSalesType, status: AfterSalesStatus, note: z.string().nullable(), resolutionNote: z.string().nullable(), ticketIds: z.array(Uuid), createdAt: IsoDateTime,
 })
 export type StaffAfterSalesItem = z.infer<typeof StaffAfterSalesItem>
+/** Staff SSE `request-changed` push (/v1/admin/events): the new version plus the current status for Live activity. */
+export const StaffRequestChangedEvent = z.object({
+  requestType: z.enum(["FLIGHT", "CARGO"]), ref: Reference, version: z.number().int(), status: z.string(), statusLabel: z.string(),
+})
+export type StaffRequestChangedEvent = z.infer<typeof StaffRequestChangedEvent>
 export const CreditOverrideView = z.object({
-  id: Uuid, reason: z.string(), requestedBy: z.string(), requestedByMe: z.boolean(), approvedBy: z.string().nullable(), approvedAt: IsoDateTime.nullable(), createdAt: IsoDateTime,
+  id: Uuid, reason: z.string(), requestedBy: z.string(), requestedById: Uuid, requestedByMe: z.boolean(), approvedBy: z.string().nullable(), approvedById: Uuid.nullable(), approvedAt: IsoDateTime.nullable(), createdAt: IsoDateTime,
 })
 export type CreditOverrideView = z.infer<typeof CreditOverrideView>
 

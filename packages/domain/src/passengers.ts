@@ -29,3 +29,14 @@ export function validatePassengerMix(types: PassengerType[]): string[] {
   if (lap > adults) issues.push("At most one lap infant per adult")
   return issues
 }
+
+/** The submitted travellers must be the mix that was searched and priced (ADR-0008 W6, ch. 12.4). Null when they match. */
+export function passengerMixMismatch(searched: readonly PassengerType[], submitted: readonly PassengerType[]): string | null {
+  const count = (types: readonly PassengerType[]) => types.reduce<Record<string, number>>((m, t) => ({ ...m, [t]: (m[t] ?? 0) + 1 }), {})
+  const a = count(searched)
+  const b = count(submitted)
+  const same = Object.keys({ ...a, ...b }).every((k) => (a[k] ?? 0) === (b[k] ?? 0))
+  if (same) return null
+  const describe = (m: Record<string, number>) => Object.entries(m).map(([t, n]) => `${n} ${t}`).join(", ")
+  return `The search was for ${describe(a)}; ${describe(b)} were added. Search again for the travellers you want to book`
+}

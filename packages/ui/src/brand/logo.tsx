@@ -48,7 +48,7 @@ export function Logo({ variant = "horizontal", tone = "onLight", size = 40, clas
       <span className="font-[family-name:var(--font-montserrat)] font-extrabold tracking-[0.02em]" style={{ fontSize: size * 0.5 }}>
         <span className={dark ? "text-white" : "text-navy-950"}>UNI</span> <span className={dark ? "text-[#8fd4ff]" : "text-royal"}>TRAVEL</span>
       </span>
-      <span lang="fa" dir="rtl" className={cn("mt-1 flex items-center gap-1.5 font-[family-name:var(--font-vazirmatn)] font-bold", dark ? "text-orange-300" : "text-orange-700")} style={{ fontSize: size * 0.3 }}>
+      <span lang="fa" dir="rtl" className={cn("mt-1 flex items-center gap-1.5 font-[family-name:var(--font-vazirmatn)] font-bold", dark ? "text-orange-300" : "text-orange-700")} style={{ fontSize: Math.max(12, size * 0.3) }}>
         <span aria-hidden className={cn("h-px flex-1", dark ? "bg-white/30" : "bg-navy-950/20")} />یونی تراول<span aria-hidden className={cn("h-px flex-1", dark ? "bg-white/30" : "bg-navy-950/20")} />
       </span>
     </span>

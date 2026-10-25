@@ -98,6 +98,8 @@ export function nameScore(query: string, candidate: string): number {
   if (!q.length || !c.length) return 0
   let best = 0
   for (const qv of variants(q)) for (const cv of variants(c)) {
+    // A joined form is only compared with an unjoined one: joining both sides lets "Reza Ahmadi" ≈ "Reza Mahdavi" through the long shared prefix.
+    if (qv.length < q.length && cv.length < c.length) continue
     const [short, long] = qv.length <= cv.length ? [qv, cv] : [cv, qv]
     const used = new Set<number>()
     let sum = 0

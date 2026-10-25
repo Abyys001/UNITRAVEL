@@ -21,11 +21,15 @@ export interface IssuedTokens {
   sessionId: string
 }
 
+export const REFRESH_REUSE_GRACE_SECONDS = 10
+const clientBinding = (ctx: { ip?: string; userAgent?: string }) => sha256(`${ctx.ip ?? ""}|${ctx.userAgent ?? ""}`)
+
 const CLIENT_AUDIENCE: Record<"WEB" | "CONSOLE" | "MOBILE", Audience> = { WEB: "web", CONSOLE: "console", MOBILE: "mobile" }
 
 /**
  * Sessions and rotating refresh tokens (ch. 25.2). Refresh tokens are opaque and stored hashed; each refresh returns
- * a new one; presenting an already-rotated token revokes the whole family and the session (theft detection).
+ * a new one; presenting an already-rotated token revokes the whole family and the session (theft detection), except
+ * for a short same-client grace window that absorbs concurrent refreshes.
  * Console sessions have a 12-hour absolute lifetime and a 30-minute idle timeout.
  */
 @Injectable()
@@ -57,33 +61,47 @@ export class SessionsService {
     return { accessToken: token, accessExpiresAt: expiresAt, refreshToken: `${s.id}.${refresh}`, refreshExpiresAt, sessionId: s.id }
   }
 
-  async refresh(presented: string, ctx: { ip?: string; requestId?: string }): Promise<IssuedTokens> {
+  /**
+   * Rotates a refresh token. A just-rotated token presented again inside REFRESH_REUSE_GRACE_SECONDS from the same ip and
+   * user agent (two tabs or contexts racing on one cookie) gets a sibling token in the same family instead of ending the
+   * session (OWASP session management, ch. 25.2). Anything later, or from elsewhere, is treated as theft and revokes the family.
+   */
+  async refresh(presented: string, ctx: { ip?: string; userAgent?: string; requestId?: string }): Promise<IssuedTokens> {
     const [sessionId, raw] = presented.split(".")
     if (!sessionId || !raw) throw new AppError("UNAUTHENTICATED", "Invalid refresh token")
-    const [rt0] = await this.db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, sha256(raw)))
-    if (rt0 && rt0.sessionId === sessionId && (rt0.rotatedAt || rt0.revokedAt)) {
-      // Reuse of a rotated token: assume theft, revoke the family and the session (committed before failing).
-      const [s0] = await this.db.select().from(sessions).where(eq(sessions.id, rt0.sessionId))
-      await this.db.transaction(async (tx) => {
-        await tx.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.familyId, rt0.familyId))
-        await tx.update(sessions).set({ revokedAt: new Date(), revokedReason: "REFRESH_REUSE" }).where(eq(sessions.id, rt0.sessionId))
-        await this.audit.record(tx, { actorUserId: s0?.userId, actorKind: "CUSTOMER", action: "security.refresh_reuse", entityType: "session", entityId: rt0.sessionId, ip: ctx.ip, requestId: ctx.requestId })
-      })
-      await this.redis.set(`sess:${rt0.sessionId}:revoked`, "1", "EX", 13 * 3600)
-      throw new AppError("UNAUTHENTICATED", "Session ended")
-    }
-    return this.db.transaction(async (tx) => {
+    const out = await this.db.transaction(async (tx) => {
       const [rt] = await tx.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, sha256(raw))).for("update")
-      if (!rt || rt.sessionId !== sessionId || rt.rotatedAt || rt.revokedAt) throw new AppError("UNAUTHENTICATED", "Invalid refresh token")
+      if (!rt || rt.sessionId !== sessionId) throw new AppError("UNAUTHENTICATED", "Invalid refresh token")
+      let grace = false
+      if (rt.rotatedAt || rt.revokedAt) {
+        const inWindow = !rt.revokedAt && !!rt.rotatedAt && Date.now() - rt.rotatedAt.getTime() <= REFRESH_REUSE_GRACE_SECONDS * 1000
+        const bound = inWindow && (await this.redis.get(`rt:rot:${rt.id}`)) === clientBinding(ctx)
+        if (!bound) return { reuse: rt }
+        grace = true
+      }
       const [s] = await tx.select().from(sessions).where(eq(sessions.id, rt.sessionId))
       if (!s || s.revokedAt) throw new AppError("UNAUTHENTICATED", "Session ended")
       if (rt.expiresAt <= new Date() || s.absoluteExpiresAt <= new Date()) throw new AppError("UNAUTHENTICATED", "Session expired")
       const acc = await this.access.load(s.userId, tx)
       if (acc.status !== "ACTIVE") throw new AppError("UNAUTHENTICATED", "Account suspended")
-      await tx.update(refreshTokens).set({ rotatedAt: new Date() }).where(eq(refreshTokens.id, rt.id))
+      if (!grace) {
+        await tx.update(refreshTokens).set({ rotatedAt: new Date() }).where(eq(refreshTokens.id, rt.id))
+        await this.redis.set(`rt:rot:${rt.id}`, clientBinding(ctx), "EX", REFRESH_REUSE_GRACE_SECONDS)
+      }
       await tx.update(sessions).set({ lastSeenAt: new Date() }).where(eq(sessions.id, s.id))
-      return this.issue(tx, s, rt.familyId)
+      return { tokens: await this.issue(tx, s, rt.familyId) }
     })
+    if (out.tokens) return out.tokens
+    // Reuse outside the grace window: assume theft, revoke the family and the session (committed before failing).
+    const rt0 = out.reuse!
+    const [s0] = await this.db.select().from(sessions).where(eq(sessions.id, rt0.sessionId))
+    await this.db.transaction(async (tx) => {
+      await tx.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.familyId, rt0.familyId))
+      await tx.update(sessions).set({ revokedAt: new Date(), revokedReason: "REFRESH_REUSE" }).where(eq(sessions.id, rt0.sessionId))
+      await this.audit.record(tx, { actorUserId: s0?.userId, actorKind: "CUSTOMER", action: "security.refresh_reuse", entityType: "session", entityId: rt0.sessionId, ip: ctx.ip, requestId: ctx.requestId })
+    })
+    await this.redis.set(`sess:${rt0.sessionId}:revoked`, "1", "EX", 13 * 3600)
+    throw new AppError("UNAUTHENTICATED", "Session ended")
   }
 
   async revoke(sessionId: string, reason: string) {

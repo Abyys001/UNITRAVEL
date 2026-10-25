@@ -7,7 +7,7 @@ import Link from "next/link"
 import type { ShipmentSummary, ShipmentView } from "@unitravel/contracts"
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
-import { Ltr } from "@/components/badges"
+import { Auto, Ltr } from "@/components/badges"
 import { TrackingTimeline } from "@/components/tracking-timeline"
 import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
@@ -62,7 +62,7 @@ export default function ShipmentsPage() {
           <li key={s.ref} className="card-brand p-5" data-testid="shipment-card">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="font-display text-xl">{s.laneLabel}</h2>
+                <h2 className="font-display text-xl"><Auto>{s.laneLabel}</Auto></h2>
                 <p className="text-xs text-steel"><Ltr className="font-mono">{s.ref}</Ltr>{s.awbNumber && <>{sep}{t("shipments.awb")} <Ltr className="font-mono">{s.awbNumber}</Ltr></>}</p>
               </div>
               <span className="rounded-full border border-navy-900/30 bg-cloud px-3 py-1 text-xs font-semibold text-navy-900">{s.statusLabel}</span>

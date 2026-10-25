@@ -12,7 +12,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { Textarea } from "@unitravel/ui/components/textarea"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
-import { Ltr } from "@/components/badges"
+import { Auto, Ltr } from "@/components/badges"
 import { ItineraryView } from "@/components/itinerary-view"
 import { type SearchParamsShape, toQuery } from "@/components/search-form"
 import { AddIdentity } from "@/components/add-identity"
@@ -21,7 +21,12 @@ import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 
-const SSR = ["WCHR", "WCHS", "WCHC", "VGML", "MOML", "CHML", "DBML", "PETC", "EXST", "UMNR"] as const
+const SSR_CODES = ["WCHR", "WCHS", "WCHC", "VGML", "MOML", "CHML", "DBML", "PETC", "EXST", "UMNR"] as const
+
+type Mix = { a: number; c: number; i: number }
+const ADULT_LIKE = ["ADT", "YTH", "STU"]
+const mixOf = (types: string[]): Mix => ({ a: types.filter((x) => ADULT_LIKE.includes(x)).length, c: types.filter((x) => x === "CHD").length, i: types.filter((x) => x === "INF" || x === "INS").length })
+const sameMix = (x: Mix, y: Mix) => x.a === y.a && x.c === y.c && x.i === y.i
 
 function RequestForm() {
   const { t, href, money, locale, sep } = useI18n()
@@ -48,9 +53,24 @@ function RequestForm() {
   useEffect(() => { if (!loading && !me) router.replace(href(`/sign-in?next=${encodeURIComponent(location.pathname + location.search)}`)) }, [loading, me, router, href])
   const phones = me?.identities.filter((i) => i.type === "PHONE") ?? []
   useEffect(() => { if (!contact && phones[0]) setContact((phones.find((p) => p.isPrimary) ?? phones[0])!.id) }, [phones, contact])
+  const [preselected, setPreselected] = useState(false)
+  useEffect(() => {
+    if (preselected || !travellers.data || (!itn.data && itineraryId)) return
+    setPreselected(true)
+    const self = travellers.data.find((x) => x.relationship === "SELF")
+    if (self) setChosen((c) => (Object.keys(c).length ? c : { [self.id]: "ADT" }))
+  }, [preselected, travellers.data, itn.data, itineraryId])
   const it = itn.data?.itinerary
   const separate = it?.ticketing === "SEPARATE_TICKETS"
   const selected = Object.entries(chosen)
+  // Priced and available for the searched group only: the selection must match its mix.
+  const searched: Mix | null = itn.data ? mixOf(itn.data.query.passengers.map((p) => p.type)) : manual ? { a: manual.adt, c: manual.chd.length, i: manual.inf } : null
+  const picked = mixOf(selected.map(([, type]) => type))
+  const mixOk = !searched || sameMix(searched, picked)
+  const full = !!searched && selected.length >= searched.a + searched.c + searched.i
+  const mixText = (m: Mix) => t("flow.mixSearched", { a: m.a, c: m.c, i: m.i })
+  // First type the searched group still needs, so a new pick defaults to a type that fits.
+  const nextType = () => (!searched ? "ADT" : picked.a < searched.a ? "ADT" : picked.c < searched.c ? "CHD" : picked.i < searched.i ? "INF" : "ADT")
   const contactVerified = phones.find((p) => p.id === contact)?.verifiedAt
 
   const submit = async () => {
@@ -68,8 +88,11 @@ function RequestForm() {
     }
     try {
       const r = await api<{ ref: string }>("/v1/flight-requests", { body, headers: { "idempotency-key": key } })
-      setDone(r.ref)
       await qc.invalidateQueries({ queryKey: ["requests"] })
+      // Replace, not push: a reload or Back on the form must not be able to send the request twice.
+      try { sessionStorage.setItem(`sent:${r.ref}`, "1") } catch { /* private mode: the request page still shows the request */ }
+      setDone(r.ref)
+      router.replace(href(`/requests/${r.ref}`))
     } catch (e) {
       setErr(e as ApiError)
     } finally { setBusy(false) }
@@ -96,19 +119,22 @@ function RequestForm() {
         <ul className="mt-3 space-y-2">
           {travellers.data?.map((tr) => (
             <li key={tr.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-cloud px-3 py-2.5">
-              <label className="flex items-center gap-3"><input type="checkbox" className="size-4 accent-orange" checked={!!chosen[tr.id]} onChange={(e) => setChosen((c) => { const n = { ...c }; if (e.target.checked) n[tr.id] = "ADT"; else delete n[tr.id]; return n })} />
-                <span dir="ltr">{tr.title} {tr.givenNames} {tr.surname}</span>{tr.nameFa && <span className="text-steel">{sep}{tr.nameFa}</span>}</label>
+              <label className="flex items-center gap-3"><input type="checkbox" className="size-4 accent-orange pointer-coarse:size-5" checked={!!chosen[tr.id]} disabled={!chosen[tr.id] && full} onChange={(e) => setChosen((c) => { const n = { ...c }; if (e.target.checked) n[tr.id] = nextType(); else delete n[tr.id]; return n })} />
+                <span dir="ltr">{t(`honorifics.${tr.title}` as never)} {tr.givenNames} {tr.surname}</span>{tr.nameFa && <span className="text-steel">{sep}<Auto>{tr.nameFa}</Auto></span>}</label>
               {chosen[tr.id] && (
                 <span className="flex gap-2">
-                  <NativeSelect aria-label="Passenger type" value={chosen[tr.id]} onChange={(e) => setChosen((c) => ({ ...c, [tr.id]: e.target.value }))} className="field py-1 text-sm"><option value="ADT">{t("search.adults")}</option><option value="CHD">{t("search.children")}</option><option value="INF">{t("search.infants")}</option><option value="STU">STU</option></NativeSelect>
-                  <NativeSelect aria-label={t("request.ssr")} value={ssr[tr.id] ?? ""} onChange={(e) => setSsr((s) => ({ ...s, [tr.id]: e.target.value }))} className="field py-1 text-sm"><option value="">{t("request.ssr")}</option>{SSR.map((c) => <option key={c}>{c}</option>)}</NativeSelect>
+                  <NativeSelect aria-label={t("flow.ticketType")} value={chosen[tr.id]} onChange={(e) => setChosen((c) => ({ ...c, [tr.id]: e.target.value }))} className="field py-1 text-sm">{(["ADT", "CHD", "INF"] as const).map((k) => <option key={k} value={k}>{t(`paxType.${k}`)}</option>)}</NativeSelect>
+                  <NativeSelect aria-label={t("request.ssr")} value={ssr[tr.id] ?? ""} onChange={(e) => setSsr((s) => ({ ...s, [tr.id]: e.target.value }))} className="field py-1 text-sm"><option value="">{t("request.ssr")}</option>{SSR_CODES.map((c) => <option key={c} value={c}>{t(`ssrCodes.${c}` as never)}</option>)}</NativeSelect>
                 </span>
               )}
             </li>
           ))}
         </ul>
         <p className="mt-1 text-xs text-steel">{t("request.ssrHint")}</p>
-        {adding ? <div className="mt-3"><TravellerForm onSaved={(tr) => { setAdding(false); setChosen((c) => ({ ...c, [tr.id]: "ADT" })); void travellers.refetch() }} /></div> : <Button variant="outline" className="rounded-xl border-navy-900 text-navy-900 mt-3" onClick={() => setAdding(true)}>{t("request.addTraveller")}</Button>}
+        {searched && !mixOk && selected.length > 0 && (
+          <p role="alert" data-testid="mix-mismatch" className="mt-3 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{t("flow.mixMismatch", { searched: mixText(searched), selected: mixText(picked) })} <Link className="font-semibold underline" href={href("/")}>{t("flow.newSearch")}</Link></p>
+        )}
+        {adding ? <div className="mt-3"><TravellerForm onSaved={(tr) => { setAdding(false); if (!full) setChosen((c) => ({ ...c, [tr.id]: nextType() })); void travellers.refetch() }} /></div> : <Button variant="outline" className="rounded-xl border-navy-900 text-navy-900 mt-3" onClick={() => setAdding(true)}>{t("request.addTraveller")}</Button>}
       </section>
       <section className="card-brand mt-6 grid gap-4 p-5 sm:grid-cols-2">
         <label className="text-sm font-medium">{t("request.contact")}
@@ -140,7 +166,7 @@ function RequestForm() {
         {separate && <label className="flex items-start gap-3 font-medium text-danger"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={ack.self} onChange={(e) => setAck({ ...ack, self: e.target.checked })} />{t("request.ackSelfTransfer")}</label>}
       </section>
       {err && <p role="alert" className="mt-4 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err.problem.detail ?? err.problem.title}{err.problem.errors?.map((x) => <span key={x.path} className="block">{x.path}: {x.message}</span>)}</p>}
-      <button type="button" className="btn-orange mt-6 h-13 w-full text-base" disabled={busy || !selected.length || !ack.booking || !ack.privacy || (separate && !ack.self) || !contactVerified} onClick={() => void submit()}>{t("request.submit")}</button>
+      <button type="button" className="btn-orange mt-6 h-13 w-full text-base" disabled={busy || !selected.length || !mixOk || !ack.booking || !ack.privacy || (separate && !ack.self) || !contactVerified} onClick={() => void submit()}>{t("request.submit")}</button>
       <p className="mt-2 text-center text-xs text-steel" lang={locale}>{t("itinerary.requestNote")}</p>
     </div>
   )

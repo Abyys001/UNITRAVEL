@@ -128,7 +128,7 @@ export class PushProviders {
 export class EmailSender {
   private transport?: Transporter
 
-  constructor(private readonly creds: VendorCredentialsService) {}
+  constructor(private readonly creds: VendorCredentialsService, @Inject(REDIS) private readonly redis: Redis) {}
 
   private async transporter(): Promise<{ t: Transporter; provider: string }> {
     const c = await this.creds.get("email:brevo")
@@ -142,6 +142,11 @@ export class EmailSender {
     const dir = locale === "fa" ? "rtl" : "ltr"
     const html = `<!doctype html><html dir="${dir}" lang="${locale}"><body style="font-family:Vazirmatn,Inter,Arial,sans-serif;background:#f5f1ea;padding:24px"><div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:24px;color:#13263f"><p style="font-size:12px;letter-spacing:.2em;color:#b07a45">UNI TRAVEL</p><h1 style="font-size:20px">${escapeHtml(subject)}</h1><p style="font-size:15px;line-height:1.6">${escapeHtml(text).replace(/\n/g, "<br>")}</p></div></body></html>`
     const info = await t.sendMail({ from: env().MAIL_FROM, to, subject, text, html })
+    // Mailpit also holds it, but the sign-in screens read this sink to fill email codes in test sessions.
+    if (isLocal()) {
+      await this.redis.lpush("dev:email", JSON.stringify({ id: info.messageId, to, subject, body: text, at: new Date().toISOString() }))
+      await this.redis.ltrim("dev:email", 0, 199)
+    }
     return { provider, messageId: info.messageId }
   }
 }

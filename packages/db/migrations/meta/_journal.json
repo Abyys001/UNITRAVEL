@@ -57,6 +57,13 @@
       "when": 1792778000000,
       "tag": "0007_stripe_checkout",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792781000000,
+      "tag": "0008_audit_hash_version",
+      "breakpoints": true
     }
   ]
 }

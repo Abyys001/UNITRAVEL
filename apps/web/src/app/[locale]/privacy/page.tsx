@@ -20,7 +20,7 @@ export default function Page() {
         <h1 className="font-display text-3xl md:text-4xl">{t("footer.privacy")}</h1>
         <span aria-hidden className="mt-4 block h-1 w-16 rounded-full bg-orange" />
         {paras.map((p, i) => <p key={i} className="mt-5 leading-7 text-steel">{p}</p>)}
-        <p className="mt-8 border-t border-line pt-4 text-xs text-steel">Draft wording — counsel review pending (booklet ch. 4.8 question 10).</p>
+        <p className="mt-8 border-t border-line pt-4 text-xs text-steel">{t("footer.draftNotice")}</p>
       </div>
     </article>
   )

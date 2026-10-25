@@ -31,7 +31,7 @@ export function FlightPath({ className, d = "M20 150C160 40 330 20 470 70S700 15
       </g>
       {plane && (
         <g className="fly-path" style={{ offsetPath: `path("${d}")` }}>
-          <path transform="translate(-12 -12)" fill="#fff" d="M2 13.2 9.5 12 14 3h2.6l-2.2 9 7.1-.6 2.2-3h1.8l-1 4.8 1 4.8h-1.8l-2.2-3-7.1-.6 2.2 9H14l-4.5-9L2 15.2z" />
+          <path transform="scale(-1 1) translate(-12 -12)" fill="#fff" d="M2 13.2 9.5 12 14 3h2.6l-2.2 9 7.1-.6 2.2-3h1.8l-1 4.8 1 4.8h-1.8l-2.2-3-7.1-.6 2.2 9H14l-4.5-9L2 15.2z" />
         </g>
       )}
     </svg>

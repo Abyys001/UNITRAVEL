@@ -110,11 +110,11 @@ class SessionNotifier extends Notifier<SessionState> implements AuthDelegate {
 
   // --- Sign-in -----------------------------------------------------------
 
-  Future<OtpChallenge> requestOtp(String phone) async {
+  Future<OtpChallenge> requestOtp(String email) async {
     final deviceId = ref.read(deviceIdProvider);
     final body = <String, dynamic>{
-      'channel': 'PHONE',
-      'value': phone,
+      'channel': 'EMAIL',
+      'value': email,
       'deviceId': deviceId,
       'client': 'MOBILE',
     };

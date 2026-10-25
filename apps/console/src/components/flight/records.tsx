@@ -7,8 +7,8 @@ import { validateTicketNumber } from "@unitravel/domain"
 import { FormDialog } from "@/components/form-dialog"
 import { Field } from "@/components/ui"
 import { api, newIdempotencyKey } from "@/lib/api"
-import { toMinor } from "@/lib/format"
-import type { FlightDetail } from "@/lib/types"
+import { toMajor, toMinor } from "@/lib/format"
+import type { FlightDetail, PaymentRecordingState } from "@/lib/types"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 type Bind = { open: boolean; onOpenChange: (o: boolean) => void }
@@ -117,11 +117,16 @@ function PaymentFields({ p, set }: { p: Pay; set: (p: Pay) => void }) {
 }
 
 /** Payment record (ch. 27.6); above the four-eyes threshold a different person verifies it. */
-export function PaymentDialog({ d, done, ...bind }: Bind & { d: FlightDetail; done: () => Promise<void> }) {
-  const acc = accepted(d)
-  const [p, setP] = useState<Pay>({ amount: "", currency: acc?.option?.priceBreakdown.total.currency ?? "GBP", method: "BANK_TRANSFER", ref: "", payer: "", received: localNow() })
+export function PaymentDialog({ d, done, product = "flight", ...bind }: Bind & { d: { ref: string; paymentRecording?: PaymentRecordingState }; product?: "flight" | "cargo"; done: () => Promise<void> }) {
+  const fresh = (): Pay => {
+    const s = d.paymentRecording?.suggestedAmount
+    return { amount: s && s.amountMinor > 0 ? toMajor(s.amountMinor, s.currency) : "", currency: s?.currency ?? "GBP", method: "BANK_TRANSFER", ref: "", payer: "", received: localNow() }
+  }
+  const [p, setP] = useState<Pay>(fresh)
+  // Pre-fill the outstanding amount each time the dialog opens (ADR-0008 W8).
+  useEffect(() => { if (bind.open) setP(fresh()) }, [bind.open]) // eslint-disable-line react-hooks/exhaustive-deps
   const submit = async () => {
-    await api(`/v1/admin/flight-requests/${d.ref}/payments`, { body: { amount: { amountMinor: toMinor(p.amount, p.currency), currency: p.currency }, method: p.method, receivedAt: iso(p.received), externalReference: p.ref, payerName: p.payer }, headers: { "idempotency-key": newIdempotencyKey() } })
+    await api(`/v1/admin/${product === "cargo" ? "cargo/requests" : "flight-requests"}/${d.ref}/payments`, { body: { amount: { amountMinor: toMinor(p.amount, p.currency), currency: p.currency }, method: p.method, receivedAt: iso(p.received), externalReference: p.ref, payerName: p.payer }, headers: { "idempotency-key": newIdempotencyKey() } })
     await done()
   }
   return <FormDialog {...bind} wide title="Record payment…" description="Mirror a payment received outside the platform. The payer is screened before it is recorded." submitLabel="Record payment" onSubmit={submit} testId="dlg-payment"><PaymentFields p={p} set={setP} /></FormDialog>

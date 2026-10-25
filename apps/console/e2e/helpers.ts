@@ -11,6 +11,11 @@ export const API = process.env.API_URL ?? "http://localhost:4100"
 export const ADMIN = process.env.CONSOLE_ADMIN_URL ?? "http://admin.localhost:4200"
 export const DEV = process.env.CONSOLE_DEV_URL ?? "http://dev.localhost:4200"
 export const STAFF = { owner: "+447700900001", admin: "+447700900002", cargo: "+447700900003", compliance: "+447700900004", developer: "+447700900005" }
+/** Seeded staff sign in by email (DEMO_USERS in packages/db/src/seed); callers keep passing the STAFF phone. */
+const STAFF_EMAIL: Record<string, string> = {
+  [STAFF.owner]: "owner@unitravel.example", [STAFF.admin]: "sara@unitravel.example", [STAFF.cargo]: "cargo@unitravel.example",
+  [STAFF.compliance]: "compliance@unitravel.example", [STAFF.developer]: "dev@unitravel.example",
+}
 /** Local demo staff share this TOTP secret (docs/LOCAL-DEV.md); seeded only when APP_ENV=local. */
 export const DEMO_TOTP = "KVXGSVDSMF3GK3CEMVWW6VCPKRIDEMBSGY"
 
@@ -48,6 +53,17 @@ export async function latestOtp(page: Page, phone: string, after: number): Promi
   throw new Error(`no OTP for ${phone}`)
 }
 
+/** Reads the newest code sent to `email` (lower-case) from the local email sink (dev only). */
+export async function latestEmailOtp(page: Page, email: string, after: number): Promise<string> {
+  for (let i = 0; i < 40; i++) {
+    const msgs = (await (await page.request.get(`${API}/v1/dev-sink/email`)).json()) as { to: string; body: string; at: string }[]
+    const code = msgs.find((x) => x.to === email.toLowerCase() && /\d{6}/.test(x.body) && Date.parse(x.at) >= after)?.body.match(/(\d{6})/)?.[1]
+    if (code) return code
+    await page.waitForTimeout(400)
+  }
+  throw new Error(`no email OTP for ${email}`)
+}
+
 // The API refuses a TOTP code that was already used in the same 30 s step; wait for a fresh step when needed.
 let lastCode = ""
 async function freshTotp(page: Page) {
@@ -58,14 +74,16 @@ async function freshTotp(page: Page) {
 }
 export const nextTotp = freshTotp
 
-/** Signs a demo staff member in through the console UI: phone OTP from the sink, then TOTP. */
+/** Signs a demo staff member in through the console UI: email OTP from the sink, then TOTP. */
 export async function staffSignIn(page: Page, base: string, phone: string) {
+  const email = STAFF_EMAIL[phone]
+  if (!email) throw new Error(`no seeded email for ${phone}`)
   await page.goto(`${base}/sign-in`)
   const started = Date.now() - 1500
-  await page.locator("input[name=phone]").fill(phone)
+  await page.locator("input[name=email]").fill(email)
   await page.getByRole("button", { name: /send code/i }).click()
   await expect(page.locator("input[name=otp]")).toBeVisible({ timeout: 60_000 })
-  const code = await latestOtp(page, phone, started)
+  const code = await latestEmailOtp(page, email, started)
   await page.locator("input[name=otp]").fill(code)
   await page.getByRole("button", { name: /^verify$/i }).click()
   await expect(page.locator("input[name=totp]")).toBeVisible()

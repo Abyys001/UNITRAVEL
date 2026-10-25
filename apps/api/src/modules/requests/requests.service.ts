@@ -3,6 +3,7 @@ import { and, asc, desc, eq, ilike, inArray, isNull, lt, ne, or, sql } from "dri
 
 import {
   type CreateFlightRequestBody, FlightRequestCustomerView, FlightRequestListItem, type FlightRequestStatus, type Itinerary, type PaymentStatus, RESERVED_AWAITING_PAYMENT, RESERVED_ISSUING, type SearchQuery,
+  type StaffRequestChangedEvent,
 } from "@unitravel/contracts"
 import {
   afterSalesCases, contactAttempts, creditOverrides, type Db, type DbOrTx, documents, flightRequests, offerSnapshots, paymentRecords, quoteOptions, quotes, requestMessages,
@@ -10,7 +11,7 @@ import {
 } from "@unitravel/db"
 import {
   allowedCommands, computePaymentStatus, evaluate, FLIGHT_TERMINAL, FLIGHT_TRANSITIONS, type FlightCommandName, type FlightFacts, generateReference,
-  type MachineActor, normaliseReference, TRAVELLERS_NOT_VERIFIED, unknownQuoteFields,
+  type MachineActor, normaliseReference, passengerMixMismatch, paymentRecordingState, TRAVELLERS_NOT_VERIFIED, unknownQuoteFields,
 } from "@unitravel/domain"
 
 import { sha256 } from "../../core/crypto"
@@ -140,6 +141,9 @@ export class RequestsService {
         if (rv.total) snapshotInput.revalidated = { total: rv.total.amountMinor, at: new Date() }
       }
     } else query = body.query!
+    // The snapshot is priced for the searched mix; a different set of travellers would be quoted and invoiced at the wrong price (ADR-0008 W6, ch. 12.4).
+    const mixIssue = passengerMixMismatch(query.passengers.map((p) => p.type), body.travellers.map((t) => t.passengerType))
+    if (mixIssue) throw new AppError("VALIDATION_FAILED", mixIssue, [{ path: "travellers", code: "PASSENGER_MIX_MISMATCH" }])
     // Unaccompanied minors are always routed to a manual request (ch. 12.4).
     if (umnr) kind = "MANUAL"
     const firstDate = query.slices[0]!.date
@@ -494,6 +498,8 @@ export class RequestsService {
     const names = new Map<string, string>()
     for (const id of new Set([...pays.flatMap((x) => [x.recordedBy, x.verifiedBy]), ...res.map((x) => x.recordedBy), ...overrides.flatMap((o) => [o.requestedBy, o.approvedBy])].filter(Boolean) as string[])) names.set(id, (await this.db.select({ n: users.displayName }).from(users).where(eq(users.id, id)))[0]?.n ?? id)
     const threshold = this.config.get("WORKFLOW").paymentFourEyesThresholdMinor
+    const [acceptedOpt] = await this.db.select({ total: quoteOptions.totalMinor, breakdown: quoteOptions.priceBreakdown }).from(quotes).innerJoin(quoteOptions, eq(quoteOptions.id, quotes.acceptedOptionId)).where(and(eq(quotes.requestType, "FLIGHT"), eq(quotes.requestId, r.id), eq(quotes.status, "ACCEPTED"))).limit(1)
+    const paymentRecording = paymentRecordingState({ product: "FLIGHT", status: r.status, atolMode: this.config.get("WORKFLOW").atolMode, acceptedTotal: acceptedOpt ? { amountMinor: acceptedOpt.total, currency: (acceptedOpt.breakdown as { total: { currency: string } }).total.currency } : null, recordedMinor: pays.filter((x) => x.status === "RECORDED" || x.status === "VERIFIED").reduce((n, x) => n + x.amountMinor, 0) })
     // The assignee is picked in the assign dialog, so its guard cannot be judged here; the command re-checks it.
     const actions = allowedCommands(FLIGHT_TRANSITIONS, { ...f, assigneeCanTransition: true }, staffActor(actor), ["claim", "assign", "request_info", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "close", "reopen", "cancel", "decline"])
     return {
@@ -509,7 +515,7 @@ export class RequestsService {
         phoneVerified: r.contactPhoneVerified, phoneVerifiedAt: contact?.verifiedAt?.toISOString() ?? null, alternativeContact: r.alternativeContact,
         history: [...history.map((h) => ({ ...h, productType: "FLIGHT" })), ...cargoHistory.map((h) => ({ ...h, productType: "CARGO" }))].sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()),
       },
-      travellers: rt.map((t) => { const v = views.find((x) => x.id === t.travellerId); return { travellerId: t.travellerId, passengerType: t.passengerType, name: t.nameSnapshot, document: v?.document ?? null, documentComplete: !!v?.documentComplete, nationality: v?.nationality } }),
+      travellers: rt.map((t) => { const v = views.find((x) => x.id === t.travellerId); return { travellerId: t.travellerId, passengerType: t.passengerType, name: t.nameSnapshot, document: v?.document ?? null, documentComplete: !!v?.documentComplete, nationality: v?.nationality, verificationStatus: v?.verification.status ?? "UNVERIFIED" } }),
       snapshot: await this.snapshotView(r.offerSnapshotId, actor.permissions.has("pricing.read.internal")),
       timeline: await this.timeline(r, false, "en"),
       messages: msgs.map(({ m, author }) => ({ id: m.id, direction: m.direction, body: m.body, authorName: author ?? "Customer", createdAt: m.createdAt.toISOString(), readAt: m.readAt?.toISOString() ?? null, documentIds: m.documentIds })),
@@ -521,9 +527,10 @@ export class RequestsService {
       payments: pays.map((x) => ({ id: x.id, amount: { amountMinor: x.amountMinor, currency: x.currency }, method: x.method, receivedAt: x.receivedAt.toISOString(), externalReference: x.externalReference, payerName: x.payerName, status: x.status, recordedBy: x.recordedBy ? names.get(x.recordedBy) ?? x.recordedBy : "System (card payment)", verifiedBy: x.verifiedBy ? names.get(x.verifiedBy) ?? x.verifiedBy : null, needsSecondVerifier: x.status === "RECORDED" && x.amountMinor > threshold })),
       documents: docs.map((d) => ({ id: d.id, type: d.type, filename: d.filename, visibility: d.visibility, createdAt: d.createdAt.toISOString() })),
       afterSales: after.map((c) => ({ ref: c.ref, type: c.type, status: c.status, note: c.note, resolutionNote: c.resolutionNote, ticketIds: c.ticketIds, createdAt: c.createdAt.toISOString() })),
-      creditOverrides: overrides.map((o) => ({ id: o.id, reason: o.reason, requestedBy: names.get(o.requestedBy) ?? o.requestedBy, requestedByMe: o.requestedBy === actor.userId, approvedBy: o.approvedBy ? names.get(o.approvedBy) ?? o.approvedBy : null, approvedAt: o.approvedAt?.toISOString() ?? null, createdAt: o.createdAt.toISOString() })),
+      creditOverrides: overrides.map((o) => ({ id: o.id, reason: o.reason, requestedBy: names.get(o.requestedBy) ?? o.requestedBy, requestedById: o.requestedBy, requestedByMe: o.requestedBy === actor.userId, approvedBy: o.approvedBy ? names.get(o.approvedBy) ?? o.approvedBy : null, approvedById: o.approvedBy ?? null, approvedAt: o.approvedAt?.toISOString() ?? null, createdAt: o.createdAt.toISOString() })),
       compliance: await this.compliance.casesForRequest("FLIGHT", r.id),
       actions,
+      paymentRecording,
       atolMode: this.config.get("WORKFLOW").atolMode,
     }
   }
@@ -565,14 +572,14 @@ export class RequestsService {
   }
 
   /** Current ref and row version of a flight or cargo request, for the console's "someone else changed this" signal. */
-  async refVersion(aggregateType: string, id: string): Promise<{ requestType: "FLIGHT" | "CARGO"; ref: string; version: number } | null> {
+  async refVersion(aggregateType: string, id: string): Promise<StaffRequestChangedEvent | null> {
     if (aggregateType === "flight_request") {
-      const [r] = await this.db.select({ ref: flightRequests.ref, version: flightRequests.version }).from(flightRequests).where(eq(flightRequests.id, id))
-      return r ? { requestType: "FLIGHT", ...r } : null
+      const [r] = await this.db.select({ ref: flightRequests.ref, version: flightRequests.version, status: flightRequests.status, paymentStatus: flightRequests.paymentStatus }).from(flightRequests).where(eq(flightRequests.id, id))
+      return r ? { requestType: "FLIGHT", ref: r.ref, version: r.version, status: r.status, statusLabel: this.statusLabel(r.status, r.paymentStatus, "en") } : null
     }
     if (aggregateType === "cargo_request") {
-      const [r] = await this.db.select({ ref: cargoRequests.ref, version: cargoRequests.version }).from(cargoRequests).where(eq(cargoRequests.id, id))
-      return r ? { requestType: "CARGO", ...r } : null
+      const [r] = await this.db.select({ ref: cargoRequests.ref, version: cargoRequests.version, status: cargoRequests.status }).from(cargoRequests).where(eq(cargoRequests.id, id))
+      return r ? { requestType: "CARGO", ref: r.ref, version: r.version, status: r.status, statusLabel: this.config.get("WORKFLOW").statusLabels.cargo[r.status].en } : null
     }
     return null
   }

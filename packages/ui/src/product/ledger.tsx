@@ -16,14 +16,14 @@ const TONE: Record<string, string> = {
   ISSUED: "border-info-border text-info-subtle-fg bg-info-subtle", PAID: "border-success bg-success text-white dark:text-navy-950", REFUNDED: "border-steel/40 text-steel", PUBLISHED: "border-success bg-success text-white dark:text-navy-950", FAILED: "border-danger text-danger", MANUAL: "border-orange bg-orange/15 text-orange-700",
 }
 export function Tag({ value, className, title }: { value: string; className?: string; title?: string }) {
-  return <span title={title} className={cn("inline-flex items-center rounded-[4px] border px-1.5 py-px font-mono text-[10.5px] leading-4 tracking-wide whitespace-nowrap uppercase", TONE[value] ?? "border-rule-strong text-steel", className)}>{value.replace(/_/g, " ")}</span>
+  return <span title={title} className={cn("inline-flex items-center rounded-full border px-2 py-px text-[10.5px] font-semibold leading-4 tracking-[0.03em] whitespace-nowrap uppercase", TONE[value] ?? "border-rule-strong text-steel", className)}>{value.replace(/_/g, " ")}</span>
 }
 
 /** A ruled section of a case page. */
 export function Panel({ title, aside, children, className, id }: { title: React.ReactNode; aside?: React.ReactNode; children: React.ReactNode; className?: string; id?: string }) {
   return (
     <section id={id} className={cn("border-t border-rule pt-2.5 pb-4", className)}>
-      <header className="mb-2 flex items-center justify-between gap-2"><h2 className="cap">{title}</h2>{aside}</header>
+      <header className="mb-2.5 flex items-center justify-between gap-2"><h2 className="text-[13px] font-semibold text-ink">{title}</h2>{aside}</header>
       {children}
     </section>
   )
@@ -31,10 +31,10 @@ export function Panel({ title, aside, children, className, id }: { title: React.
 
 export function PageHead({ title, kicker, children }: { title: React.ReactNode; kicker?: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-rule bg-surface-raised px-5 pt-4 pb-3">
+    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-rule bg-surface-raised px-4 pt-5 pb-4 md:px-6">
       <div className="min-w-0">
-        {kicker && <p className="cap">{kicker}</p>}
-        <h1 className="font-display text-[22px] leading-tight">{title}</h1>
+        {kicker && <p className="mb-1 text-[12px] text-steel">{kicker}</p>}
+        <h1 className="font-display text-[22px] leading-tight md:text-[24px]">{title}</h1>
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>

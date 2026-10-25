@@ -37,8 +37,10 @@ export function fromInput(o: QuoteOptionInput, key = crypto.randomUUID()): Draft
 export function fromItinerary(it: Itinerary): QuoteOptionInput {
   const first = it.components[0]!
   const single = it.components.length === 1
+  const firstSegs = it.components[0]!.slices[0]?.segments ?? []
   return {
-    label: `${it.construction === "SELF_TRANSFER" ? "Self-transfer" : it.construction === "GATEWAY" ? "From gateway" : "Through"} · ${it.carriers.join("/")} · staff search`,
+    // Customers see this label on their quote: route and carrier only, no internal wording.
+    label: `${firstSegs[0]?.origin.iata ?? ""} → ${firstSegs.at(-1)?.destination.iata ?? ""} · ${it.carriers.join("/")}`,
     source: "STAFF_SEARCH",
     slices: it.components.flatMap((c) => c.slices),
     components: it.components.map((c) => ({ provider: c.source.provider, offerId: c.source.providerOfferId, rung: c.source.rung, fetchedAt: c.source.fetchedAt })),
@@ -59,7 +61,7 @@ export function toInput(o: DraftOption, currency: string): QuoteOptionInput {
   return {
     label: o.label, source: o.source, slices: o.slices, components: o.components, ticketingModel: o.ticketingModel,
     priceBreakdown: { fare: m(fare), taxes: m(taxes), serviceFee: m(fee), total: m(fare + taxes + fee) },
-    baggage: normaliseBaggage(o.slices, o.baggage), conditions: o.conditions,
+    baggage: normaliseBaggage(o.slices, o.baggage), conditions: { change: sendableCondition(o.conditions.change), refund: sendableCondition(o.conditions.refund) },
     internalCostMinor: o.internalCost ? minor(o.internalCost) : undefined,
     supplierPrice: o.supplierPrice, supplierFetchedAt: o.supplierFetchedAt, supplierExpiresAt: o.supplierExpiresAt,
   }
@@ -68,6 +70,9 @@ export function toInput(o: DraftOption, currency: string): QuoteOptionInput {
 /** Price inputs that are not a plain amount (e.g. "0.0025.00"); they block sending instead of becoming NaN. */
 const AMOUNT = /^\s*\d+(\.\d{1,2})?\s*$/
 export const badAmounts = (o: DraftOption) => (["fare", "taxes", "serviceFee", "internalCost"] as const).filter((k) => (o[k] ?? "").trim() !== "" && !AMOUNT.test(o[k] ?? ""))
+
+/** A fee-type condition with no amount is saved as UNKNOWN, never as a zero fee (ADR-0008 W7); the send guard then blocks it. */
+const sendableCondition = (c: DraftOption["conditions"]["change"]): DraftOption["conditions"]["change"] => (c.status === "KNOWN" && c.value.allowed && c.value.penalty && !(c.value.penalty.amountMinor > 0) ? { status: "UNKNOWN" } : c)
 
 export const unknowns = (o: DraftOption) => unknownQuoteFields({ segmentCount: segCount(o.slices), baggage: normaliseBaggage(o.slices, o.baggage), conditions: o.conditions })
 

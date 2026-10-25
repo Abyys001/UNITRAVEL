@@ -44,9 +44,9 @@ export function SearchForm({ initial }: { initial?: Partial<SearchParamsShape> }
     <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
       <span>{label}</span>
       <span className="flex items-center gap-2">
-        <button type="button" className="rounded-lg border border-line p-1.5 disabled:opacity-40" aria-label={`− ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)}><Minus className="size-3.5" /></button>
+        <button type="button" className="inline-grid place-items-center rounded-lg border border-line p-1.5 disabled:opacity-40 pointer-coarse:size-11" aria-label={`− ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)}><Minus className="size-3.5" /></button>
         <span className="w-5 text-center tabular-nums">{value}</span>
-        <button type="button" className="rounded-lg border border-line p-1.5" aria-label={`+ ${label}`} onClick={() => onChange(value + 1)}><Plus className="size-3.5" /></button>
+        <button type="button" className="inline-grid place-items-center rounded-lg border border-line p-1.5 pointer-coarse:size-11" aria-label={`+ ${label}`} onClick={() => onChange(value + 1)}><Plus className="size-3.5" /></button>
       </span>
     </div>
   )
@@ -54,7 +54,7 @@ export function SearchForm({ initial }: { initial?: Partial<SearchParamsShape> }
     <form onSubmit={submit} className="rounded-[24px] border border-white/60 bg-white p-4 text-navy-950 shadow-[var(--shadow-lift)] md:p-6" aria-label={t("search.submit")}>
       <div className="mb-4 inline-flex gap-1 rounded-full bg-cloud p-1 text-sm font-semibold" role="radiogroup">
         {(["ONE_WAY", "RETURN"] as const).map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={p.trip === k} onClick={() => set("trip", k)} className={`rounded-full px-4 py-1.5 transition-colors ${p.trip === k ? "bg-navy-900 text-white shadow-sm" : "text-steel hover:text-navy-950"}`}>{t(k === "ONE_WAY" ? "search.oneWay" : "search.return")}</button>
+          <button key={k} type="button" role="radio" aria-checked={p.trip === k} onClick={() => set("trip", k)} className={`rounded-full px-4 py-1.5 transition-colors pointer-coarse:min-h-11 ${p.trip === k ? "bg-navy-900 text-white shadow-sm" : "text-steel hover:text-navy-950"}`}>{t(k === "ONE_WAY" ? "search.oneWay" : "search.return")}</button>
         ))}
       </div>
       <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr]">
@@ -76,10 +76,10 @@ export function SearchForm({ initial }: { initial?: Partial<SearchParamsShape> }
             <option value="ECONOMY">{t("search.economy")}</option><option value="PREMIUM_ECONOMY">{t("search.premium")}</option><option value="BUSINESS">{t("search.business")}</option><option value="FIRST">{t("search.first")}</option>
           </NativeSelect>
         </label>
-        <label className="flex items-end gap-2 pb-2 text-sm"><input type="checkbox" checked={p.flex} onChange={(e) => set("flex", e.target.checked)} className="size-4 accent-orange" />{t("search.flex")}</label>
+        <label className="flex items-end gap-2 pb-2 text-sm pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:pb-0"><input type="checkbox" checked={p.flex} onChange={(e) => set("flex", e.target.checked)} className="size-4 accent-orange" />{t("search.flex")}</label>
       </div>
       <details className="mt-3 rounded-xl border border-line px-3 py-2" open={more} onToggle={(e) => setMore((e.target as HTMLDetailsElement).open)}>
-        <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium"><Settings2 className="size-4 text-orange-700" />{t("search.travellers")}{sep}{t("search.preferences")}</summary>
+        <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium pointer-coarse:min-h-11"><Settings2 className="size-4 text-orange-700" />{t("search.travellers")}{sep}{t("search.preferences")}</summary>
         <div className="mt-3 grid gap-6 md:grid-cols-2">
           <div>
             <Counter label={t("search.adults")} value={p.adt} min={1} onChange={(n) => set("adt", n)} />
@@ -99,7 +99,7 @@ export function SearchForm({ initial }: { initial?: Partial<SearchParamsShape> }
               <NativeSelect value={p.stops} onChange={(e) => set("stops", Number(e.target.value))} className="field py-1">{[0, 1, 2].map((n) => <option key={n}>{n}</option>)}</NativeSelect>
             </label>
             <label className="flex items-center justify-between gap-3">{t("search.layoverWindow")}
-              <span className="flex items-center gap-1" dir="ltr"><input type="number" min={1} max={12} value={p.lay[0] / 60} onChange={(e) => set("lay", [Number(e.target.value) * 60, p.lay[1]])} className="field w-16 py-1" />–<input type="number" min={1} max={20} value={p.lay[1] / 60} onChange={(e) => set("lay", [p.lay[0], Number(e.target.value) * 60])} className="field w-16 py-1" /> h</span>
+              <span className="flex items-center gap-1" dir="ltr"><input type="number" min={1} max={12} value={p.lay[0] / 60} onChange={(e) => set("lay", [Number(e.target.value) * 60, p.lay[1]])} className="field w-16 py-1 pointer-coarse:min-h-11" />–<input type="number" min={1} max={20} value={p.lay[1] / 60} onChange={(e) => set("lay", [p.lay[0], Number(e.target.value) * 60])} className="field w-16 py-1 pointer-coarse:min-h-11" /> h</span>
             </label>
             <label className="flex items-start justify-between gap-3">{t("search.gateways")}<Switch checked={p.gw} onCheckedChange={(v) => set("gw", v)} /></label>
           </div>

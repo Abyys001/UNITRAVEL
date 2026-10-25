@@ -1,9 +1,9 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Download, Send } from "lucide-react"
+import { CheckCircle2, Download, Send } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import type { FlightRequestCustomerView, QuoteView, TravellerView } from "@unitravel/contracts"
@@ -13,8 +13,10 @@ import { DocumentCard } from "@unitravel/ui/product/document-card"
 import { ErrorState, LoadingState } from "@unitravel/ui/product/states"
 import { Stepper } from "@unitravel/ui/product/stepper"
 
-import { Ltr } from "@/components/badges"
-import { ItineraryView } from "@/components/itinerary-view"
+import { Auto, Ltr, RouteLabel } from "@/components/badges"
+import { ConfirmAccept } from "@/components/confirm-accept"
+import { InvoiceDue } from "@/components/invoice-due"
+import { BagText, ItineraryView } from "@/components/itinerary-view"
 import { StatusTimeline } from "@/components/status-timeline"
 import { TravellerForm } from "@/components/traveller-form"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
@@ -32,25 +34,26 @@ function QuoteCard({ q, ref, canAccept, onDone }: { q: QuoteView; ref: string; c
   const decline = useMutation({ mutationFn: () => api(`/v1/flight-requests/${ref}/quotes/${q.id}/decline`, { body: {} }), onSuccess: onDone })
   return (
     <div className="space-y-3">
-      <p className="text-sm text-steel">{q.status === "SENT" ? t("requests.validUntil", { time: date(q.validUntil!, { withTime: true }) }) : q.status}</p>
+      <p className="text-sm text-steel">{q.status === "SENT" ? t("requests.validUntil", { time: date(q.validUntil!, { withTime: true }) }) : t(`billing.quoteStatus.${q.status}` as never)}</p>
       {q.options.map((o) => {
         const segs = o.slices.flatMap((s) => s.segments)
         return (
-          <article key={o.id} className={`card-brand p-5 ${q.acceptedOptionId === o.id ? "!border-success !border-2" : ""}`}>
+          <article key={o.id} aria-current={q.acceptedOptionId === o.id ? "true" : undefined} className={`card-brand p-5 ${q.acceptedOptionId === o.id ? "!border-success !border-2" : ""}`}>
+            {q.acceptedOptionId === o.id && <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-success-subtle px-3 py-1 text-xs font-bold text-success" data-testid="accepted-option"><CheckCircle2 className="size-3.5" />{t("flow.yourChoice")}</p>}
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-display text-lg">{o.label}</h3>
+                <h3 className="font-display text-lg"><Auto>{o.label}</Auto></h3>
                 <ul className="mt-1 text-sm text-steel">{segs.map((s, i) => <li key={i}><Ltr>{s.marketing.carrier}{s.marketing.flightNumber}{sep}{s.origin.iata} {clock(s.departure.local)} → {s.destination.iata} {clock(s.arrival.local)}</Ltr>{sep}{date(s.departure.utc, { dateOnly: true, timeZone: s.departure.tz })}</li>)}</ul>
               </div>
               <p className="font-display text-3xl tabular-nums text-navy-900">{money(o.priceBreakdown.total)}</p>
             </div>
             <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-              <div><dt className="inline text-steel">{t("itinerary.baggage")}: </dt><dd className="inline">{o.baggage.map((b) => (b.checked.status === "KNOWN" ? (b.checked.value.pieces ? `${b.checked.value.pieces}×${b.checked.value.kgPerPiece ?? ""}kg` : "—") : "?")).join(" / ")}</dd></div>
-              <div><dt className="inline text-steel">{t("truth.sources")}: </dt><dd className="inline">{o.source === "MANUAL" ? t("truth.MANUAL") : o.ticketingModel === "SEPARATE_TICKETS" ? t("truth.SEPARATE_TICKETS") : t("truth.SINGLE_TICKET")}</dd></div>
+              <div className="sm:col-span-2"><dt className="text-steel">{t("itinerary.baggage")}</dt><dd><ul>{segs.map((s, i) => <li key={i}><Ltr>{s.marketing.carrier}{s.marketing.flightNumber}</Ltr>{sep}<BagText b={o.baggage[i]} /></li>)}</ul></dd></div>
+              <div><dt className="inline text-steel">{t("flow.ticketType")}: </dt><dd className="inline">{o.source === "MANUAL" ? t("truth.MANUAL") : o.ticketingModel === "SEPARATE_TICKETS" ? t("truth.SEPARATE_TICKETS") : t("truth.SINGLE_TICKET")}</dd></div>
               {(["change", "refund"] as const).map((k) => <div key={k}><dt className="inline text-steel">{t(k === "change" ? "itinerary.change" : "itinerary.refund")}: </dt><dd className="inline">{o.conditions[k].status === "KNOWN" ? (o.conditions[k].value.allowed ? (o.conditions[k].value.penalty ? t("itinerary.allowedFee", { fee: money(o.conditions[k].value.penalty!) }) : t("itinerary.allowed")) : t("itinerary.notAllowed")) : "—"}</dd></div>)}
             </dl>
             <p className="mt-2 text-xs text-steel"><Ltr>{money(o.priceBreakdown.fare)} + {money(o.priceBreakdown.taxes)} + {money(o.priceBreakdown.serviceFee)}</Ltr></p>
-            {q.status === "SENT" && canAccept && <button type="button" className="btn-orange mt-4" onClick={() => accept.mutate(o.id)} disabled={accept.isPending}>{t("requests.accept")}</button>}
+            {q.status === "SENT" && canAccept && <ConfirmAccept label={o.label} total={money(o.priceBreakdown.total)} pending={accept.isPending} onConfirm={() => accept.mutate(o.id)} />}
           </article>
         )
       })}
@@ -67,6 +70,10 @@ export default function RequestDetail() {
   const [msg, setMsg] = useState("")
   const [passport, setPassport] = useState<string | null>(null)
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const [justSent, setJustSent] = useState(false)
+  useEffect(() => {
+    try { if (sessionStorage.getItem(`sent:${ref}`)) { setJustSent(true); sessionStorage.removeItem(`sent:${ref}`) } } catch { /* storage unavailable */ }
+  }, [ref])
   const q = useQuery({ queryKey: ["request", ref], queryFn: async () => { const r = await api<FlightRequestCustomerView>(`/v1/flight-requests/${ref}`); cacheSet(`request:${ref}`, r); return r }, enabled: !!me, refetchInterval: 20_000 })
   const travellers = useQuery({ queryKey: ["travellers"], queryFn: () => api<TravellerView[]>("/v1/me/travellers"), enabled: !!me })
   const send = useMutation({ mutationFn: () => api(`/v1/flight-requests/${ref}/messages`, { body: { body: msg } }), onSuccess: () => { setMsg(""); void q.refetch() } })
@@ -78,9 +85,10 @@ export default function RequestDetail() {
   const openQuote = r.quotes.find((x) => x.status === "SENT") ?? r.quotes[0]
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 md:py-10">
+      {justSent && <div role="status" data-testid="request-sent" className="mb-4 rounded-xl border-s-4 border-success bg-success-subtle px-4 py-3 text-sm"><p className="font-semibold">{t("request.sentTitle")}</p><p>{t("request.sentBody", { ref: r.ref })}</p></div>}
       {cached && <p className="mb-4 rounded-xl bg-warning-subtle px-4 py-2.5 text-sm text-warning-subtle-fg">{t("requests.offline")} {t("requests.lastUpdated", { time: date(cached.at, { withTime: true }) })}</p>}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><p className="font-mono text-sm font-medium text-steel" dir="ltr">{r.ref}</p><h1 className="font-display text-3xl md:text-4xl">{r.routeLabel}</h1></div>
+        <div><p className="font-mono text-sm font-medium text-steel" dir="ltr">{r.ref}</p><h1 className="font-display text-3xl md:text-4xl"><RouteLabel label={r.routeLabel} /></h1></div>
         <span className="rounded-full bg-navy-950 px-4 py-1.5 text-sm font-semibold text-white">{r.statusLabel}</span>
       </div>
       {STEP[r.status] !== undefined && (
@@ -97,6 +105,7 @@ export default function RequestDetail() {
               {passport && <div className="mt-3"><TravellerForm withDocument initial={travellers.data?.find((x) => x.id === passport)} onSaved={() => { setPassport(null); void q.refetch() }} /></div>}
             </section>
           )}
+          {r.status === "ACCEPTED" && <InvoiceDue requestRef={r.ref} />}
           {openQuote && <section><h2 className="font-display mb-3 text-xl">{t("requests.quotes")}</h2><QuoteCard q={openQuote} ref={r.ref} canAccept={!missing.length} onDone={() => void qc.invalidateQueries({ queryKey: ["request", ref] })} /></section>}
           {r.tickets.length > 0 && (
             <section><h2 className="font-display mb-3 text-xl">{t("requests.tickets")}</h2>
@@ -113,7 +122,7 @@ export default function RequestDetail() {
             <ul className="space-y-3">
               {r.messages.map((m) => (
                 <li key={m.id} className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${m.direction === "TO_CUSTOMER" ? "card-brand !rounded-2xl" : "ms-auto bg-navy-950 text-white"}`}>
-                  <p className="whitespace-pre-wrap">{m.body}</p><p className="mt-1 text-[11px] opacity-70">{m.authorName}{sep}{date(m.createdAt, { withTime: true })}</p>
+                  <p className="whitespace-pre-wrap" dir="auto">{m.body}</p><p className="mt-1 text-xs opacity-70"><Auto>{m.authorName}</Auto>{sep}{date(m.createdAt, { withTime: true })}</p>
                 </li>
               ))}
             </ul>
@@ -133,7 +142,7 @@ export default function RequestDetail() {
               <ul className="space-y-2">{r.documents.map((d) => <li key={d.id}><DocumentCard title={d.filename} actions={<button className="flex items-center gap-1 font-semibold underline underline-offset-4" onClick={() => void download(d.id)}><Download className="size-3.5" />{t("requests.download")}</button>} /></li>)}</ul>
             </section>
           )}
-          <section className="card-brand space-y-1 p-5 text-sm text-steel">{r.travellers.map((x) => <p key={x.travellerId}>{x.name}{sep}{x.passengerType}{sep}{x.documentComplete ? t("account.documentComplete") : t("account.documentMissing")}</p>)}</section>
+          <section className="card-brand space-y-1 p-5 text-sm text-steel">{r.travellers.map((x) => <p key={x.travellerId}><Auto>{x.name}</Auto>{sep}{t(`paxType.${x.passengerType}` as never)}{sep}{x.documentComplete ? t("account.documentComplete") : t("account.documentMissing")}</p>)}</section>
           {r.actions.includes("CANCEL") && (confirmCancel
             ? <div className="card-brand !border-danger/40 p-4 text-sm"><p>{t("requests.cancelConfirm")}</p><div className="mt-2 flex gap-2"><Button variant="destructive" size="sm" onClick={() => cancel.mutate()}>{t("common.yes")}</Button><Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" size="sm" onClick={() => setConfirmCancel(false)}>{t("common.no")}</Button></div></div>
             : <Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => setConfirmCancel(true)}>{t("requests.cancel")}</Button>)}

@@ -25,7 +25,7 @@ export function applyPrefs() {
   d.dataset.density = read(KEY.density) === "compact" ? "compact" : "comfortable"
   d.dataset.rail = read(KEY.rail) === "collapsed" ? "collapsed" : "open"
   const fa = read(KEY.locale) === "fa"
-  d.lang = fa ? "fa" : "en"
+  d.lang = fa ? "fa" : "en-GB"
   d.dir = fa ? "rtl" : "ltr"
 }
 

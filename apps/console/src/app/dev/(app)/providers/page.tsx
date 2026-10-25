@@ -4,15 +4,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import type { ProviderView } from "@unitravel/contracts"
+import { ProviderEnv, type ProviderView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 
 import { SchemaForm } from "@/components/schema-form"
 import { SecretDialog } from "@/components/secret-form"
-import { ErrorLine, Loading, PageHead, Panel, Tag } from "@/components/ui"
+import { DevPage, KV, KVRow, Section } from "@/components/dev-ui"
+import { ErrorLine, Loading, PageHead, Tag } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime } from "@/lib/format"
+import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 
 type Patch = Pick<ProviderView, "enabled" | "environment" | "priority" | "capabilities" | "limits" | "markets" | "shadowMode">
@@ -21,6 +23,7 @@ const patchOf = (p: ProviderView): Patch => ({ enabled: p.enabled, environment: 
 function ProviderCard({ p }: { p: ProviderView }) {
   const qc = useQueryClient()
   const { can } = useSession()
+  const t = useT()
   const [draft, setDraft] = useState<Patch>(patchOf(p))
   const [test, setTest] = useState<{ ok: boolean; latencyMs: number; detail?: string } | null>(null)
   const [busy, setBusy] = useState<"save" | "test" | null>(null)
@@ -28,47 +31,51 @@ function ProviderCard({ p }: { p: ProviderView }) {
   const dirty = JSON.stringify(draft) !== JSON.stringify(patchOf(p))
   const save = async () => {
     setBusy("save")
-    try { await api(`/v1/dev/providers/${p.id}`, { method: "PATCH", body: draft }); toast.success(`${p.name} updated — all processes reload within seconds`); await qc.invalidateQueries({ queryKey: ["providers"] }) } catch (e) { toast.error(errText(e)) } finally { setBusy(null) }
+    try { await api(`/v1/dev/providers/${p.id}`, { method: "PATCH", body: draft }); toast.success(t("prov.updated", { name: p.name })); await qc.invalidateQueries({ queryKey: ["providers"] }) } catch (e) { toast.error(errText(e)) } finally { setBusy(null) }
   }
   const runTest = async () => { setBusy("test"); try { setTest(await api(`/v1/dev/providers/${p.id}/test`, { body: {} })) } catch (e) { setTest({ ok: false, latencyMs: 0, detail: errText(e) }) } finally { setBusy(null) } }
   return (
-    <Panel title={<span className="flex items-center gap-2"><span className="font-mono text-[12px] text-ink normal-case">{p.id}</span><span className="normal-case">{p.name}</span></span>} aside={<span className="flex items-center gap-2"><Tag value={p.enabled ? "ENABLED" : "DISABLED"} className={p.enabled ? "border-success text-success" : ""} /><Tag value={p.environment.toUpperCase()} /><Tag value={p.health.circuit} className={p.health.circuit === "OPEN" ? "border-danger text-danger" : ""} /></span>}>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <SchemaForm value={draft as never} onChange={(v) => setDraft(v as unknown as Patch)} issues={[]} />
-        <div className="space-y-3">
-          <dl className="ledger-rows font-mono text-[12px]">
-            <div className="flex justify-between py-1"><dt>success 24h</dt><dd>{p.health.successRate == null ? "—" : `${Math.round(p.health.successRate * 100)}%`}</dd></div>
-            <div className="flex justify-between py-1"><dt>p50 / p95</dt><dd>{p.health.p50 ?? "—"} / {p.health.p95 ?? "—"} ms</dd></div>
-            <div className="flex justify-between py-1"><dt>calls today</dt><dd>{p.health.callsToday}</dd></div>
-            {p.health.lastError && <div className="py-1 text-danger">{p.health.lastError}</div>}
-          </dl>
+    <Section title={<span className="flex flex-wrap items-center gap-2"><span>{p.name}</span><span className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-[11.5px] font-normal text-steel" dir="ltr">{p.id}</span></span>} aside={<><Tag value={p.enabled ? "ENABLED" : "DISABLED"} className={p.enabled ? "border-success text-success" : ""} /><Tag value={p.environment.toUpperCase()} /><Tag value={p.health.circuit} className={p.health.circuit === "OPEN" ? "border-danger text-danger" : ""} /></>}>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div><h3 className="mb-3 text-[12.5px] font-semibold text-steel">{t("prov.settings")}</h3><SchemaForm value={draft as never} onChange={(v) => setDraft(v as unknown as Patch)} issues={[]} selects={{ environment: ProviderEnv.options }} /></div>
+        <div className="space-y-5 xl:border-s xl:border-rule xl:ps-6">
           <div>
-            <p className="cap">Credentials</p>
-            <p className="text-[12px]">{p.credentials.set ? <>Set · rotated {fmtDateTime(p.credentials.rotatedAt)}{p.credentials.rotatedBy && ` by ${p.credentials.rotatedBy}`}</> : <span className="text-danger">Not set</span>}</p>
-            {can("provider.config.write") && <Button size="xs" variant="outline" className="mt-1" onClick={() => setSecrets(true)}>{p.credentials.set ? "Rotate" : "Enter"} credentials…</Button>}
+            <h3 className="mb-2 text-[12.5px] font-semibold text-steel">{t("prov.health")}</h3>
+            <KV className="num text-[12.5px]">
+              <KVRow k={t("prov.success")}>{p.health.successRate == null ? "—" : `${Math.round(p.health.successRate * 100)}%`}</KVRow>
+              <KVRow k="p50 / p95">{p.health.p50 ?? "—"} / {p.health.p95 ?? "—"} ms</KVRow>
+              <KVRow k={t("prov.calls")}>{p.health.callsToday}</KVRow>
+            </KV>
+            {p.health.lastError && <p className="mt-2 rounded-md bg-danger-subtle px-2.5 py-1.5 text-[12px] break-words text-danger">{p.health.lastError}</p>}
           </div>
           <div>
-            <Button size="xs" variant="outline" onClick={() => void runTest()} loading={busy === "test"} data-testid={`test-${p.id}`}>Test connection</Button>
-            {test && <pre className={cn("mt-1 rounded-sm p-1.5 font-mono text-[11px] whitespace-pre-wrap", test.ok ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")} role="status">{JSON.stringify(test, null, 1)}</pre>}
+            <h3 className="mb-1 text-[12.5px] font-semibold text-steel">{t("prov.credentials")}</h3>
+            <p className="text-[12.5px]">{p.credentials.set ? <>{t("prov.set")} · {t("prov.rotated", { at: fmtDateTime(p.credentials.rotatedAt) })}{p.credentials.rotatedBy && ` · ${p.credentials.rotatedBy}`}</> : <span className="text-danger">{t("prov.notSet")}</span>}</p>
+            {can("provider.config.write") && <Button size="xs" variant="outline" className="mt-2" onClick={() => setSecrets(true)}>{p.credentials.set ? t("prov.rotate") : t("prov.enter")}</Button>}
           </div>
-          {can("provider.config.write") && dirty && <div className="flex gap-2"><Button size="sm" onClick={() => void save()} loading={busy === "save"}>Save changes</Button><Button size="sm" variant="ghost" onClick={() => setDraft(patchOf(p))}>Reset</Button></div>}
-          {dirty && draft.enabled === false && p.enabled && <p className="text-[11px] text-orange-700">Disabling a provider needs a fresh second-factor check.</p>}
+          <div>
+            <Button size="xs" variant="outline" onClick={() => void runTest()} loading={busy === "test"} data-testid={`test-${p.id}`}>{t("prov.test")}</Button>
+            {test && <p className={cn("mt-2 rounded-md p-2 text-[12.5px]", test.ok ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")} role="status" data-testid="provider-test-result">{test.ok ? t("prov.test.ok", { ms: test.latencyMs }) : t("prov.test.fail")}{test.detail && <span className="block break-words">{test.detail}</span>}</p>}
+          </div>
+          {can("provider.config.write") && dirty && <div className="flex gap-2 border-t border-rule pt-4"><Button size="sm" onClick={() => void save()} loading={busy === "save"}>{t("prov.save")}</Button><Button size="sm" variant="ghost" onClick={() => setDraft(patchOf(p))}>{t("ud.reset")}</Button></div>}
+          {dirty && draft.enabled === false && p.enabled && <p className="text-[12px] text-orange-700 dark:text-orange-300">{t("prov.disableStepUp")}</p>}
         </div>
       </div>
-      <SecretDialog open={secrets} onOpenChange={setSecrets} title={`${p.name} credentials…`} hintKeys={p.id === "duffel" ? ["accessToken"] : p.id === "amadeus-enterprise" ? ["clientId", "clientSecret"] : ["apiKey"]} onSave={async (values) => { await api(`/v1/dev/providers/${p.id}/credentials`, { method: "PUT", body: { values } }); await qc.invalidateQueries({ queryKey: ["providers"] }) }} />
-    </Panel>
+      <SecretDialog open={secrets} onOpenChange={setSecrets} title={t("prov.credsTitle", { name: p.name })} hintKeys={p.id === "duffel" ? ["accessToken"] : p.id === "amadeus-enterprise" ? ["clientId", "clientSecret"] : ["apiKey"]} onSave={async (values) => { await api(`/v1/dev/providers/${p.id}/credentials`, { method: "PUT", body: { values } }); await qc.invalidateQueries({ queryKey: ["providers"] }) }} />
+    </Section>
   )
 }
 
 /** Flight API configuration (ch. 16.2 §2). */
 export default function ProvidersPage() {
+  const t = useT()
   const q = useQuery({ queryKey: ["providers"], queryFn: () => api<ProviderView[]>("/v1/dev/providers") })
-  if (q.error) return <div className="p-5"><ErrorLine error={q.error} /></div>
+  if (q.error) return <div className="p-4 md:p-6"><ErrorLine error={q.error} /></div>
   if (!q.data) return <Loading />
   return (
     <div>
-      <PageHead kicker="Integrations" title="Flight providers" />
-      <div className="px-5" data-testid="providers">{q.data.map((p) => <ProviderCard key={`${p.id}-${p.version}`} p={p} />)}</div>
+      <PageHead kicker={t("dnav.integrations")} title={t("dnav.providers")}><span className="text-[12px] text-steel">{t("prov.desc")}</span></PageHead>
+      <DevPage data-testid="providers">{q.data.map((p) => <ProviderCard key={`${p.id}-${p.version}`} p={p} />)}</DevPage>
     </div>
   )
 }

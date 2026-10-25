@@ -146,16 +146,6 @@ class AppL10nEn extends AppL10n {
       'Fly home, or anywhere. We keep every request in one place and a real person behind it.';
 
   @override
-  String get phoneLabel => 'Mobile number';
-
-  @override
-  String get phoneHint => '+98 912 000 0000';
-
-  @override
-  String get phoneHelp =>
-      'Include the country code, or enter an Iranian number starting with 09.';
-
-  @override
   String get sendCode => 'Send code';
 
   @override
@@ -170,6 +160,25 @@ class AppL10nEn extends AppL10n {
   String get verify => 'Verify';
 
   @override
+  String get devCodeTitle =>
+      'Test sign-in (local only): code from the email sink';
+
+  @override
+  String get devCodeWaiting => 'Waiting for the code…';
+
+  @override
+  String get devCodeRefill => 'Fill again';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get emailHint => 'you@example.com';
+
+  @override
+  String get changeEmail => 'Use a different email';
+
+  @override
   String get resendCode => 'Resend code';
 
   @override
@@ -180,9 +189,6 @@ class AppL10nEn extends AppL10n {
 
     return 'Resend in ${secondsString}s';
   }
-
-  @override
-  String get changeNumber => 'Use a different number';
 
   @override
   String get languageLabel => 'Language';
@@ -754,9 +760,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get detPhone => 'Phone';
-
-  @override
-  String get emailLabel => 'Email';
 
   @override
   String detCodeSent(String value) {

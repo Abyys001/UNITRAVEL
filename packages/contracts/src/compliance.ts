@@ -11,9 +11,12 @@ export const PolicyBody = z.object({
   counselReference: z.string().max(120).optional(),
   effectiveFrom: IsoDateTime.optional(),
 })
+export const PolicyRejectBody = z.object({ reason: z.string().trim().min(3).max(500) })
 export const PolicyView = PolicyBody.extend({
-  id: Uuid, version: z.number().int(), approvedBy: z.string().nullable(), approvedAt: IsoDateTime.nullable(), status: z.enum(["PENDING_APPROVAL", "ACTIVE", "RETIRED"]),
+  id: Uuid, version: z.number().int(), approvedBy: z.string().nullable(), approvedAt: IsoDateTime.nullable(), status: z.enum(["PENDING_APPROVAL", "ACTIVE", "RETIRED", "REJECTED", "WITHDRAWN"]),
   createdBy: z.string(),
+  /** Why a proposal was rejected or withdrawn (from the audit record). */
+  decisionReason: z.string().optional(),
 })
 export type PolicyView = z.infer<typeof PolicyView>
 
@@ -40,7 +43,7 @@ export const CaseView = z.object({
   decidedAt: IsoDateTime.nullable(),
   assignedTo: z.string().nullable(),
   requiresFourEyes: z.boolean(),
-  pendingOverride: z.object({ decisionId: Uuid, requestedBy: z.string() }).nullable(),
+  pendingOverride: z.object({ decisionId: Uuid, requestedBy: z.string(), requestedById: Uuid }).nullable(),
 })
 export type CaseView = z.infer<typeof CaseView>
 

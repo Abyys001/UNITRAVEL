@@ -1,16 +1,16 @@
 // Control-deck screenshots: admin mode at phone size in light/dark x en/fa.
-//   node deck-shots.mjs     (needs: svc.sh start api worker mobile; demo admin +447700900002, local only)
+//   node deck-shots.mjs     (needs: svc.sh start api worker mobile; demo admin sara@unitravel.example, local only)
 import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { latestCode, totp } from './lib.mjs'
+import { latestEmailCode, totp } from './lib.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(HERE, '..', 'test-artifacts', 'control-deck')
 const APP = process.env.APP_URL ?? 'http://localhost:4300'
 const STAFF_TOTP = 'KVXGSVDSMF3GK3CEMVWW6VCPKRIDEMBSGY'
-const PHONE = '+447700900002'
+const EMAIL = 'sara@unitravel.example'
 fs.mkdirSync(OUT, { recursive: true })
 for (const f of fs.readdirSync(OUT)) if (f.endsWith('.png')) fs.rmSync(path.join(OUT, f))
 
@@ -31,7 +31,7 @@ const named = (re) => page.getByRole('button', { name: re }).or(page.getByRole('
 const scroll = async (dy) => { await page.mouse.move(195, 450); await page.mouse.wheel(0, dy); await settle(500) }
 
 const L = {
-  en: { signIn: /Send code/, phone: /Mobile number/, code: /Verification code/, verify: /^Verify$/, mfaCode: /6-digit code|Authenticator code|code/i, home: /Home/, queue: /Queue/, search: /Search/, alerts: /Alerts/, me: /Me/, settings: /Settings/, dark: /^Dark$/, light: /^Light$/, fa: /^فارسی$/, en: /^English$/ },
+  en: { signIn: /Send code/, email: /^Email$/, code: /Verification code/, verify: /^Verify$/, mfaCode: /6-digit code|Authenticator code|code/i, home: /Home/, queue: /Queue/, search: /Search/, alerts: /Alerts/, me: /Me/, settings: /Settings/, dark: /^Dark$/, light: /^Light$/, fa: /^فارسی$/, en: /^English$/ },
   fa: { home: /خانه/, queue: /صف/, search: /جستجو/, alerts: /هشدارها/, me: /حساب من/, settings: /تنظیمات/, dark: /^تیره$/, light: /^روشن$/, en: /^English$/ },
 }
 
@@ -39,10 +39,10 @@ let ok = false
 try {
   await page.goto(`${APP}/?semantics`)
   const since = Date.now() - 1500
-  await type(field(L.en.phone), PHONE)
+  await type(field(L.en.email), EMAIL)
   await named(L.en.signIn).click()
   await field(L.en.code).waitFor()
-  await type(field(L.en.code), await latestCode(PHONE, since))
+  await type(field(L.en.code), await latestEmailCode(EMAIL, since))
   await named(L.en.verify).click()
   // Staff second factor (demo secret is seeded for the local admin).
   await page.getByRole('textbox', { name: /code/i }).first().waitFor({ timeout: 30000 })

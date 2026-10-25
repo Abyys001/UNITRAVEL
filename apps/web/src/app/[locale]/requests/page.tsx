@@ -6,7 +6,7 @@ import Link from "next/link"
 
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
-import { Ltr } from "@/components/badges"
+import { Ltr, RouteLabel } from "@/components/badges"
 import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
 import { cacheGet, cacheSet, useRequireSignIn } from "@/lib/use-auth-redirect"
@@ -31,7 +31,7 @@ export default function RequestsPage() {
             <Link href={href(r.productType === "FLIGHT" ? `/requests/${r.ref}` : `/cargo/${r.ref}`)} className="flex items-center justify-between gap-4 px-4 py-4 transition-colors hover:bg-cloud focus-visible:outline-2 focus-visible:outline-orange sm:px-5">
               <span className="flex items-center gap-4">
                 {r.productType === "FLIGHT" ? <Plane className="size-4 rotate-45 text-navy-900 rtl:-rotate-45 rtl:-scale-x-100" aria-hidden /> : <Package className="size-4 text-navy-900" aria-hidden />}
-                <span><span className="block font-display text-lg">{r.routeLabel}</span><span className="text-xs text-steel"><Ltr className="font-mono">{r.ref}</Ltr>{sep}{r.firstDate ? date(r.firstDate, { dateOnly: true }) : ""}</span></span>
+                <span><span className="block font-display text-lg"><RouteLabel label={r.routeLabel} /></span><span className="text-xs text-steel"><Ltr className="font-mono">{r.ref}</Ltr>{sep}{r.firstDate ? date(r.firstDate, { dateOnly: true }) : ""}</span></span>
               </span>
               <span className="flex items-center gap-2">{r.unread > 0 && <span className="rounded-full bg-orange px-2 py-0.5 text-xs font-bold text-navy-950">{r.unread}</span>}<span className="rounded-full border border-navy-900/30 bg-cloud px-3 py-1 text-xs font-semibold text-navy-900">{r.statusLabel}</span></span>
             </Link>

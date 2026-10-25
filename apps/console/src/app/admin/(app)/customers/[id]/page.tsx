@@ -7,10 +7,10 @@ import { Suspense, useState } from "react"
 
 import type { TravellerView } from "@unitravel/contracts"
 
-import { BentoGrid, BentoTile, TileError } from "@/components/bento"
-import { ListSkeleton, StateChip, TableScroll } from "@/components/case"
+import { TileError } from "@/components/bento"
+import { ListSkeleton, StateChip, SummaryItem, TableScroll } from "@/components/case"
 import { Empty, Loading, PageHead, Panel, Tag, useAct } from "@/components/ui"
-import { api, errText } from "@/lib/api"
+import { api } from "@/lib/api"
 import { fmtDate, fmtDateTime } from "@/lib/format"
 import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
@@ -31,7 +31,7 @@ function Customer() {
   const q = useQuery({ queryKey: ["customer", id], queryFn: () => api<Context>(`/v1/admin/customers/${id}`) })
   const [revealed, setRevealed] = useState<Record<string, string>>({})
   const reveal = useAct((tid: string) => api<{ number: string }>(`/v1/admin/customers/travellers/${tid}/reveal-document`, { body: { ref } }).then((r) => ({ tid, n: r.number })), { onDone: ({ tid, n }) => setRevealed((x) => ({ ...x, [tid]: n })) })
-  if (q.error) return <div className="p-5"><TileError message={errText(q.error)} onRetry={() => void q.refetch()} /></div>
+  if (q.error) return <div className="p-5"><TileError error={q.error} onRetry={() => void q.refetch()} /></div>
   if (!q.data) return <><Loading /><ListSkeleton rows={5} /></>
   const c = q.data
   return (
@@ -39,16 +39,13 @@ function Customer() {
       <PageHead kicker={<>Customer context{ref && <> · from <Link className="num hover:underline" href={ref.startsWith("UT-C-") ? `/cargo/${ref}` : `/requests/${ref}`}>{ref}</Link></>}</>} title={<span dir="auto">{c.profile?.givenNamesLatin ? `${c.profile.givenNamesLatin} ${c.profile.surnameLatin ?? ""}` : c.displayName}</span>}>
         {c.profile?.nameFa && <span className="font-fa text-lg" dir="rtl" lang="fa">{c.profile.nameFa}</span>}
       </PageHead>
-      <BentoGrid className="px-5 pt-4 pb-2 max-sm:grid-cols-2 max-sm:gap-2" data-testid="case-summary">
-        <BentoTile size="s" title={t("cust.verified")}><p className="num text-[22px] leading-tight font-semibold">{c.identities.filter((i) => i.verifiedAt).length}<span className="text-[13px] font-normal text-steel"> / {c.identities.length}</span></p>{c.identities.some((i) => !i.verifiedAt) && <p className="mt-1 text-[12px] font-medium text-danger">Unverified identity on file</p>}</BentoTile>
-        <BentoTile size="s" title={t("cust.travellers")}><p className="num text-[22px] leading-tight font-semibold">{c.travellers.length}</p></BentoTile>
-        <BentoTile size="s" title={t("cust.docs")}>
-          <p className="num text-[22px] leading-tight font-semibold">{c.travellers.filter((x) => x.document).length}</p>
-          <p className="mt-1 flex flex-wrap gap-1">{c.travellers.filter((x) => x.document).map((x) => <StateChip key={x.id} value={x.verification.status} />)}</p>
-        </BentoTile>
-        <BentoTile size="s" title={t("cust.lang")}><p className="font-medium">{c.preferredLocale === "fa" ? "Persian" : "English"}</p><p className="mt-1 text-[12px] text-steel">{c.timezone}</p></BentoTile>
-      </BentoGrid>
-      <div className="grid gap-x-8 px-5 lg:grid-cols-2">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-rule bg-surface-raised px-5 py-3" data-testid="case-summary">
+        <SummaryItem label={t("cust.verified")}><span className="num font-semibold">{c.identities.filter((i) => i.verifiedAt).length}<span className="font-normal text-steel"> / {c.identities.length}</span></span>{c.identities.some((i) => !i.verifiedAt) && <span className="text-[12px] font-medium text-danger">Unverified identity on file</span>}</SummaryItem>
+        <SummaryItem label={t("cust.travellers")}><span className="num font-semibold">{c.travellers.length}</span></SummaryItem>
+        <SummaryItem label={t("cust.docs")}><span className="num font-semibold">{c.travellers.filter((x) => x.document).length}</span>{c.travellers.filter((x) => x.document).map((x) => <StateChip key={x.id} value={x.verification.status} />)}</SummaryItem>
+        <SummaryItem label={t("cust.lang")}><span className="font-medium">{c.preferredLocale === "fa" ? "Persian" : "English"}</span><span className="text-[12px] text-steel">{c.timezone}</span></SummaryItem>
+      </div>
+      <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-2">
         <Panel title="Profile">
           <dl className="grid grid-cols-[9rem_1fr] gap-y-1">
             <dt className="text-steel">Display name</dt><dd dir="auto">{c.displayName}</dd>
@@ -58,7 +55,7 @@ function Customer() {
           </dl>
         </Panel>
         <Panel title="Verified identities">
-          <ul className="ledger-rows">{c.identities.map((i) => <li key={i.value} className="flex items-center justify-between py-1"><span><span className="font-mono text-[11px] text-steel">{i.type}</span> <span className="num" dir="ltr">{i.value}</span>{i.isPrimary && <span className="ms-1 text-[11px] text-steel">primary</span>}</span>{i.verifiedAt ? <span className="text-[12px] text-success">verified {fmtDate(i.verifiedAt)}</span> : <Tag value="UNVERIFIED" className="border-danger text-danger" />}</li>)}</ul>
+          <ul className="ledger-rows">{c.identities.map((i) => <li key={i.value} className="flex items-center justify-between py-1"><span><span className="text-[12px] text-steel">{i.type}</span> <span className="num" dir="ltr">{i.value}</span>{i.isPrimary && <span className="ms-1 text-[11px] text-steel">primary</span>}</span>{i.verifiedAt ? <span className="text-[12px] text-success">verified {fmtDate(i.verifiedAt)}</span> : <Tag value="UNVERIFIED" className="border-danger text-danger" />}</li>)}</ul>
         </Panel>
         <Panel title="Travellers" className="lg:col-span-2">
           {!c.travellers.length ? <Empty>No saved travellers.</Empty> : (

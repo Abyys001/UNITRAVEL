@@ -28,7 +28,8 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "reservation.recorded": ["notify.route", "timers.sla"],
   "ticket.recorded": ["notify.route", "timers.sla"],
   "payment.recorded": ["compliance.screen"],
-  "payment.verified": ["events.misc"],
+  // Recorded for the audit trail and the staff stream; nothing consumes it yet. An empty list is deliberate and keeps it off events.misc.
+  "payment.verified": [],
   "cargo_request.submitted": ["compliance.screen", "notify.route", "timers.sla"],
   "cargo_request.transitioned": ["notify.route", "timers.sla"],
   "cargo_request.message": ["notify.route"],
@@ -80,6 +81,14 @@ export class OutboxDispatcher implements OnApplicationBootstrap, OnApplicationSh
     }
   }
 
+  private readonly unroutedLogged = new Set<string>()
+
+  private logUnrouted(type: string) {
+    if (this.unroutedLogged.has(type)) return
+    this.unroutedLogged.add(type)
+    this.log.warn({ type }, "outbox event has no consumer; marked dispatched (add it to EVENT_ROUTES if something should react)")
+  }
+
   async dispatchBatch(limit = 100): Promise<number> {
     return this.db.transaction(async (tx) => {
       const rows = (await tx.execute(sql`select id, event_type, aggregate_type, aggregate_id, payload, dedupe_key, created_at from outbox_events where dispatched_at is null order by created_at limit ${limit} for update skip locked`)).rows as {
@@ -88,7 +97,10 @@ export class OutboxDispatcher implements OnApplicationBootstrap, OnApplicationSh
       for (const r of rows) {
         const event = { id: r.id, type: r.event_type, aggregateType: r.aggregate_type, aggregateId: r.aggregate_id, payload: r.payload, occurredAt: new Date(r.created_at).toISOString() }
         try {
-          for (const q of EVENT_ROUTES[r.event_type] ?? (BROADCAST.has(r.event_type) ? [] : ["events.misc" as const])) {
+          const routes = EVENT_ROUTES[r.event_type] ?? []
+          // No consumer: the row is still marked dispatched (below). Parking it on a queue nobody reads only piled up jobs.
+          if (!EVENT_ROUTES[r.event_type] && !BROADCAST.has(r.event_type)) this.logUnrouted(r.event_type)
+          for (const q of routes) {
             // jobId dedupes: a re-dispatched outbox row never creates a second job for the same consumer.
             await this.queues.get(q).add(r.event_type, event, { jobId: `${q}--${r.id}`, priority: r.event_type === "auth.otp_requested" ? 1 : undefined })
           }

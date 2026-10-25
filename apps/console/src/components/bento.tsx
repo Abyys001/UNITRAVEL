@@ -17,11 +17,12 @@
  *
  * Tiles never nest links inside links: put the link in `aside` or in the content, not around the tile.
  */
-import { AlertTriangle, Inbox } from "lucide-react"
+import { AlertTriangle, Inbox, Lock } from "lucide-react"
 import { Toaster } from "sonner"
 
 import { cn } from "@unitravel/ui/lib/utils"
 
+import { errText, isDenied } from "@/lib/api"
 import { useT } from "@/lib/i18n"
 import { useLocale, useResolvedTheme } from "@/lib/prefs"
 
@@ -120,20 +121,29 @@ export function EmptyState({ icon, title, hint, action, className }: { icon?: Re
   )
 }
 
-export function TileError({ onRetry, message }: { onRetry?: () => void; message?: string }) {
+export function TileError({ onRetry, message, error }: { onRetry?: () => void; message?: string; error?: unknown }) {
   const t = useT()
+  if (isDenied(error)) {
+    return (
+      <div role="alert" className="flex flex-col items-center gap-1.5 py-5 text-center" data-testid="denied-state">
+        <span className="grid size-9 place-items-center rounded-full bg-surface-sunk text-steel" aria-hidden><Lock className="size-4" /></span>
+        <p className="font-medium">{t("denied.title")}</p>
+        <p className="max-w-xs text-[12px] text-steel">{t("denied.body")}</p>
+      </div>
+    )
+  }
   return (
     <div role="alert" className="flex flex-col items-center gap-1.5 py-5 text-center">
       <span className="grid size-9 place-items-center rounded-full bg-danger-subtle text-danger" aria-hidden><AlertTriangle className="size-4" /></span>
-      <p className="text-danger">{message ?? t("state.error")}</p>
-      {onRetry && <button type="button" onClick={onRetry} className="min-h-8 rounded-sm border border-rule-strong px-3 hover:bg-hover">{t("state.retry")}</button>}
+      <p className="text-danger">{error ? errText(error) : (message ?? t("state.error"))}</p>
+      {onRetry && <button type="button" onClick={onRetry} className="min-h-8 rounded-sm border border-rule-strong px-3 hover:bg-hover pointer-coarse:min-h-11">{t("state.retry")}</button>}
     </div>
   )
 }
 
-/** Single toast host for the console: follows the resolved theme and mirrors to the start edge in RTL. */
+/** Single toast host for the console: follows the resolved theme and sits at the bottom start edge, clear of the header and sticky action buttons (which sit at the end). */
 export function ToastHost() {
   const theme = useResolvedTheme()
   const [locale] = useLocale()
-  return <Toaster theme={theme} dir={locale === "fa" ? "rtl" : "ltr"} position={locale === "fa" ? "top-left" : "top-right"} offset={56} style={{ "--normal-bg": "var(--surface-raised)", "--normal-text": "var(--ink)", "--normal-border": "var(--rule-strong)" } as React.CSSProperties} />
+  return <Toaster theme={theme} dir={locale === "fa" ? "rtl" : "ltr"} position={locale === "fa" ? "bottom-right" : "bottom-left"} offset={16} mobileOffset={{ bottom: 64, left: 12, right: 12 }} style={{ "--normal-bg": "var(--surface-raised)", "--normal-text": "var(--ink)", "--normal-border": "var(--rule-strong)" } as React.CSSProperties} />
 }

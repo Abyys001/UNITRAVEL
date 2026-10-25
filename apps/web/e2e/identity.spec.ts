@@ -5,7 +5,7 @@ import { signIn } from "./helpers"
 // Uploads PUT straight to object storage, so both the page CSP (connect-src) and the bucket CORS rules must allow it;
 // the identity bucket also requires the SSE header (ADR-0005). One sign-in keeps clear of the OTP resend cooldown.
 test("pre-signed uploads PUT to storage from the browser, identity scans encrypted", async ({ page }) => {
-  await signIn(page, "+447700900077")
+  await signIn(page, "identity-e2e@student.example")
   for (const [type, sse] of [["PASSPORT_SCAN", "AES256"], ["OTHER", null]] as const) {
     const result = await page.evaluate(async (type) => {
       const csrf = document.cookie.split("; ").find((c) => c.startsWith("ut_csrf="))?.slice(8) ?? ""

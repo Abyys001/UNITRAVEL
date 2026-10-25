@@ -9,7 +9,7 @@ import { useI18n } from "@/lib/i18n"
 import { Ltr, RiskFlags, TruthBadges } from "./badges"
 import { FlightTrack } from "./flight-track"
 
-function BagText({ b }: { b?: SegmentBaggage }) {
+export function BagText({ b }: { b?: SegmentBaggage }) {
   const { t, sep } = useI18n()
   if (!b || b.checked.status === "UNKNOWN") return <span className="text-warning-subtle-fg">{t("itinerary.unknown")}</span>
   const v = b.checked.value
@@ -27,7 +27,7 @@ export function ItineraryView({ it }: { it: CustomerItinerary }) {
       {it.gateway && (
         <div className="rounded-2xl border border-orange/60 bg-warning-subtle p-4 text-sm">
           <p className="font-semibold">{t("itinerary.gatewayAccess", { gateway: it.gateway.iata, access: it.gateway.access })}</p>
-          {it.gateway.dayOffset > 0 && <p className="mt-1 text-steel">{t("itinerary.dayOffset", { gateway: it.gateway.iata, n: it.gateway.dayOffset })}</p>}
+          {it.gateway.dayOffset > 0 && <p className="mt-1 text-steel">{t(it.gateway.dayOffset === 1 ? "itinerary.dayOffset" : "itinerary.dayOffsetMany", { gateway: it.gateway.iata, n: it.gateway.dayOffset })}</p>}
         </div>
       )}
       {it.components.map((comp, ci) => {

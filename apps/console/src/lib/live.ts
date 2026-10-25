@@ -31,7 +31,7 @@ export function useFallbackInterval(ms: number): number | false {
  */
 export type ActivityEntry =
   | { id: number; at: number; kind: "queue"; changes: { key: keyof Omit<QueueSummary, "deadlinesNext24h">; from: number; to: number }[] }
-  | { id: number; at: number; kind: "request"; requestType: "FLIGHT" | "CARGO"; ref: string }
+  | { id: number; at: number; kind: "request"; requestType: "FLIGHT" | "CARGO"; ref: string; status?: string }
 const COUNT_KEYS = ["new", "mine", "awaitingCustomer", "quoted", "reserved", "complianceHolds", "slaBreaches"] as const
 const NO_ACTIVITY: ActivityEntry[] = []
 let activity = NO_ACTIVITY
@@ -67,8 +67,8 @@ export function useStaffStream(enabled: boolean) {
       qc.setQueryData(["queue-summary"], next)
     })
     es.addEventListener("request-changed", (e) => {
-      const r = JSON.parse((e as MessageEvent<string>).data) as { requestType: "FLIGHT" | "CARGO"; ref: string; version: number }
-      pushActivity({ kind: "request", requestType: r.requestType, ref: r.ref })
+      const r = JSON.parse((e as MessageEvent<string>).data) as { requestType: "FLIGHT" | "CARGO"; ref: string; version: number; status: string; statusLabel: string }
+      pushActivity({ kind: "request", requestType: r.requestType, ref: r.ref, status: r.statusLabel })
       if (r.requestType === "FLIGHT") qc.setQueryData(["fr-version", r.ref], r.version)
       else void qc.invalidateQueries({ queryKey: ["cargo-detail", r.ref] })
       lists ??= setTimeout(() => { lists = undefined; void qc.invalidateQueries({ queryKey: ["fr"] }); void qc.invalidateQueries({ queryKey: ["cargo-list"] }) }, 500)

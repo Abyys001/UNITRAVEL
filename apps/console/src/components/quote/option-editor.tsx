@@ -30,10 +30,10 @@ function ConditionEditor({ label, value, onChange, currency }: { label: string; 
   const mode = value.status === "UNKNOWN" ? "UNKNOWN" : value.value.allowed ? (value.value.penalty ? "FEE" : "FREE") : "NO"
   return (
     <div className="space-y-1">
-      <TriSelect label={label} value={mode} flagged={value.status === "UNKNOWN"} onChange={(m) => onChange(m === "UNKNOWN" ? { status: "UNKNOWN" } : m === "NO" ? { status: "KNOWN", value: { allowed: false } } : m === "FREE" ? { status: "KNOWN", value: { allowed: true } } : { status: "KNOWN", value: { allowed: true, penalty: { amountMinor: 0, currency } } })}>
+      <TriSelect label={label} value={mode} flagged={value.status === "UNKNOWN" || (mode === "FEE" && !(value.status === "KNOWN" && (value.value.penalty?.amountMinor ?? 0) > 0))} onChange={(m) => onChange(m === "UNKNOWN" ? { status: "UNKNOWN" } : m === "NO" ? { status: "KNOWN", value: { allowed: false } } : m === "FREE" ? { status: "KNOWN", value: { allowed: true } } : { status: "KNOWN", value: { allowed: true, penalty: { amountMinor: 0, currency } } })}>
         <option value="UNKNOWN">Unknown — not stated</option><option value="FREE">Allowed, no fee</option><option value="FEE">Allowed with a fee</option><option value="NO">Not allowed</option>
       </TriSelect>
-      {mode === "FEE" && value.status === "KNOWN" && <input aria-label={`${label} fee`} className="field-input num" inputMode="decimal" defaultValue={((value.value.penalty?.amountMinor ?? 0) / 100).toFixed(2)} onBlur={(e) => onChange({ status: "KNOWN", value: { allowed: true, penalty: { amountMinor: Math.round(Number(e.target.value || 0) * 100), currency } } })} />}
+      {mode === "FEE" && value.status === "KNOWN" && <input aria-label={`${label} fee`} className="field-input num" inputMode="decimal" defaultValue={value.value.penalty?.amountMinor ? (value.value.penalty.amountMinor / 100).toFixed(2) : ""} placeholder="fee amount" onBlur={(e) => onChange({ status: "KNOWN", value: { allowed: true, penalty: { amountMinor: Math.round(Number(e.target.value || 0) * 100), currency } } })} />}
     </div>
   )
 }
@@ -102,7 +102,7 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
         <span className="num text-steel">Option {index + 1}</span>
         <input aria-label="Option label" className="field-input max-w-md flex-1 font-medium" value={o.label} onChange={(e) => onChange({ ...o, label: e.target.value })} />
         <Tag value={o.source} />
-        {unk.length > 0 ? <span className="font-mono text-[11px] text-danger" data-testid="unknown-count">{unk.length} unknown</span> : <span className="font-mono text-[11px] text-success">all facts confirmed</span>}
+        {unk.length > 0 ? <span className="text-[12px] font-semibold text-danger" data-testid="unknown-count">{unk.length} unknown</span> : <span className="text-[12px] font-semibold text-success">all facts confirmed</span>}
         <span className="ms-auto flex gap-1">
           <Button type="button" size="icon-xs" variant="ghost" disabled={index === 0} onClick={() => onMove(-1)} aria-label="Move up"><ArrowUp /></Button>
           <Button type="button" size="icon-xs" variant="ghost" disabled={index === count - 1} onClick={() => onMove(1)} aria-label="Move down"><ArrowDown /></Button>

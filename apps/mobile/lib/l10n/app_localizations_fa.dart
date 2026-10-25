@@ -147,16 +147,6 @@ class AppL10nFa extends AppL10n {
       'به هر جا که می‌خواهید پرواز کنید. همه درخواست‌ها یک‌جا و با پشتیبانی یک انسان واقعی.';
 
   @override
-  String get phoneLabel => 'شماره موبایل';
-
-  @override
-  String get phoneHint => '۰۹۱۲ ۰۰۰ ۰۰۰۰';
-
-  @override
-  String get phoneHelp =>
-      'کد کشور را وارد کنید یا شماره ایرانی را با ۰۹ شروع کنید.';
-
-  @override
   String get sendCode => 'ارسال کد';
 
   @override
@@ -171,6 +161,24 @@ class AppL10nFa extends AppL10n {
   String get verify => 'تأیید';
 
   @override
+  String get devCodeTitle => 'ورود آزمایشی (فقط محلی): کد از صندوق ایمیل';
+
+  @override
+  String get devCodeWaiting => 'در انتظار کد…';
+
+  @override
+  String get devCodeRefill => 'پر کردن دوباره';
+
+  @override
+  String get emailLabel => 'ایمیل';
+
+  @override
+  String get emailHint => 'you@example.com';
+
+  @override
+  String get changeEmail => 'ایمیل دیگر';
+
+  @override
   String get resendCode => 'ارسال دوباره کد';
 
   @override
@@ -181,9 +189,6 @@ class AppL10nFa extends AppL10n {
 
     return 'ارسال دوباره تا $secondsString ثانیه دیگر';
   }
-
-  @override
-  String get changeNumber => 'شماره دیگر';
 
   @override
   String get languageLabel => 'زبان';
@@ -728,9 +733,6 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get detPhone => 'تلفن';
-
-  @override
-  String get emailLabel => 'ایمیل';
 
   @override
   String detCodeSent(String value) {

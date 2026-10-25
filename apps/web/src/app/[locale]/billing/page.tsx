@@ -35,7 +35,7 @@ export default function BillingPage() {
         <ul className="mt-3 space-y-3">
           {invoices.map((i) => (
             <li key={i.number} className="card-brand flex flex-wrap items-center justify-between gap-3 p-4" data-testid="invoice-row">
-              <Link href={href(`/billing/${i.number}`)} className="min-w-0 flex-1 rounded-lg focus-visible:outline-2 focus-visible:outline-orange">
+              <Link href={href(`/billing/${i.number}`)} className="min-w-full rounded-lg sm:min-w-0 sm:flex-1 focus-visible:outline-2 focus-visible:outline-orange">
                 <span className="block font-display text-lg"><Ltr className="font-mono">{i.number}</Ltr></span>
                 <span className="text-xs text-steel"><Ltr className="font-mono">{i.requestRef}</Ltr>{sep}{t("billing.issued")} {date(i.issuedAt, { dateOnly: true })}</span>
               </Link>
@@ -52,14 +52,14 @@ export default function BillingPage() {
         <ul className="mt-3 space-y-3">
           {quotations.map((x) => (
             <li key={x.number} className="card-brand flex flex-wrap items-center justify-between gap-3 p-4" data-testid="quotation-row">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-full sm:min-w-0 sm:flex-1">
                 <span className="block font-display text-lg"><Ltr className="font-mono">{x.number}</Ltr></span>
                 <span className="text-xs text-steel"><Ltr className="font-mono">{x.requestRef}</Ltr>{sep}{t("billing.sent")} {date(x.sentAt, { dateOnly: true })}{x.validUntil && <>{sep}{t("billing.validUntil")} {date(x.validUntil, { withTime: true })}</>}</span>
               </div>
               <span className="rounded-full border border-navy-900/30 bg-cloud px-3 py-1 text-xs font-semibold text-navy-900">{t(`billing.quoteStatus.${x.status}`)}</span>
               <div className="flex gap-4 text-sm font-semibold">
-                <Link href={href(x.productType === "FLIGHT" ? `/requests/${x.requestRef}` : `/cargo/${x.requestRef}`)} className="underline focus-visible:outline-2 focus-visible:outline-orange">{t("billing.viewQuote")}</Link>
-                {x.documentId && <button type="button" onClick={() => open(x.documentId!)} className="underline focus-visible:outline-2 focus-visible:outline-orange">{t("billing.download")}</button>}
+                <Link href={href(x.productType === "FLIGHT" ? `/requests/${x.requestRef}` : `/cargo/${x.requestRef}`)} className="inline-flex items-center underline focus-visible:outline-2 focus-visible:outline-orange pointer-coarse:min-h-11">{t("billing.viewQuote")}</Link>
+                {x.documentId && <button type="button" onClick={() => open(x.documentId!)} className="inline-flex items-center underline focus-visible:outline-2 focus-visible:outline-orange pointer-coarse:min-h-11">{t("billing.download")}</button>}
               </div>
             </li>
           ))}

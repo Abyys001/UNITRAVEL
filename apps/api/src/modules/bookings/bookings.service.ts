@@ -3,10 +3,10 @@ import { and, desc, eq, inArray } from "drizzle-orm"
 
 import type { PaymentBody, ReservationBody } from "@unitravel/contracts"
 import {
-  afterSalesCases, creditOverrides, type Db, documents, flightRequests, paymentRecords, quoteOptions, quotes, requestStatusHistory, requestTravellers,
+  afterSalesCases, cargoRequests, creditOverrides, type Db, documents, flightRequests, paymentRecords, quoteOptions, quotes, requestStatusHistory, requestTravellers,
   reservationSegments, reservations, tickets, type Tx,
 } from "@unitravel/db"
-import { AFTER_SALES_TRANSITIONS, atolAllowsPayment, evaluate, generateReference, needsSecondVerifier, normaliseReference, TRAVELLERS_NOT_VERIFIED, validateTicketNumber } from "@unitravel/domain"
+import { AFTER_SALES_TRANSITIONS, atolAllowsPayment, CARGO_PAYABLE, computePaymentStatus, evaluate, generateReference, needsSecondVerifier, normaliseReference, TRAVELLERS_NOT_VERIFIED, validateTicketNumber } from "@unitravel/domain"
 import { flightKey } from "@unitravel/engine"
 
 import { AppError, notFound } from "../../core/errors"
@@ -18,12 +18,15 @@ import { ConfigService } from "../config/config.service"
 import { DocumentsService } from "../documents/documents.service"
 import { renderPdf } from "../documents/pdf"
 import { renderQuotationPdf } from "../invoices/commercial-pdf"
+import { atolFooter, customerZone, docLabels, flightOptionSections, formatValidity } from "../invoices/quotation-content"
 import { InvoicesService } from "../invoices/invoices.service"
 import { OutboxService } from "../platform/outbox.service"
 import { ReferenceService } from "../reference/reference.service"
 import { RequestsService, staffActor, SYSTEM } from "../requests/requests.service"
 
 type Req = typeof flightRequests.$inferSelect
+type Target = { type: "FLIGHT" | "CARGO"; id: string; ref: string }
+const flightTarget = (r: Req): Target => ({ type: "FLIGHT", id: r.id, ref: r.ref })
 
 /**
  * Version 1 records what staff did in the agency terminal (ch. 13.7): reservations, tickets and offline payments,
@@ -83,15 +86,15 @@ export class BookingsService {
   }
 
   /** Payer screening at recording time; any hit stops the payment and opens a case (ch. 27.1). */
-  private async screenPayer(tx: Tx, r: Req, payerName: string) {
+  private async screenPayer(tx: Tx, r: Target, payerName: string) {
     const s = await this.compliance.screen(tx, { subjectType: "PAYER", subjectRef: `${r.id}:${payerName}`, name: payerName, contextRef: r.ref })
     if (s.result !== "CLEAR") {
-      await this.compliance.openCase(tx, { requestType: "FLIGHT", requestId: r.id, requestRef: r.ref, trigger: "SCREENING", summary: "Payer needs a compliance decision", evidence: s.hits.map((h) => ({ kind: "PAYER_MATCH", label: `${payerName} ↔ ${h.matchedName}`, detail: `${h.listId} ${h.externalId}`, score: h.score })), screeningIds: [s.screeningId] })
+      await this.compliance.openCase(tx, { requestType: r.type, requestId: r.id, requestRef: r.ref, trigger: "SCREENING", summary: "Payer needs a compliance decision", evidence: s.hits.map((h) => ({ kind: "PAYER_MATCH", label: `${payerName} ↔ ${h.matchedName}`, detail: `${h.listId} ${h.externalId}`, score: h.score })), screeningIds: [s.screeningId] })
     }
     return s
   }
 
-  private async insertPayment(tx: Tx, r: Req, p: PaymentBody, actor: Actor) {
+  private async insertPayment(tx: Tx, r: Target, p: PaymentBody, actor: Actor) {
     const s = await this.screenPayer(tx, r, p.payerName)
     if (s.result !== "CLEAR") return { blocked: true as const, screeningId: s.screeningId }
     const threshold = this.config.get("WORKFLOW").paymentFourEyesThresholdMinor
@@ -99,16 +102,16 @@ export class BookingsService {
     if (p.evidenceDocumentId) {
       const [d] = await tx.select().from(documents).where(eq(documents.id, p.evidenceDocumentId))
       if (!d) throw notFound("Evidence document")
-      await tx.update(documents).set({ requestType: "FLIGHT", requestId: r.id }).where(eq(documents.id, d.id))
+      await tx.update(documents).set({ requestType: r.type, requestId: r.id }).where(eq(documents.id, d.id))
     }
     const [row] = await tx.insert(paymentRecords).values({
-      requestType: "FLIGHT", requestId: r.id, amountMinor: p.amount.amountMinor, currency: p.amount.currency, method: p.method, receivedAt: new Date(p.receivedAt), externalReference: p.externalReference,
+      requestType: r.type, requestId: r.id, amountMinor: p.amount.amountMinor, currency: p.amount.currency, method: p.method, receivedAt: new Date(p.receivedAt), externalReference: p.externalReference,
       payerName: p.payerName, payerScreeningId: s.screeningId, evidenceDocumentId: p.evidenceDocumentId ?? null,
       // Above the threshold a different staff member must verify (ch. 13.7); below it the recording counts as verified.
       status: four ? "RECORDED" : "VERIFIED", recordedBy: actor.userId, verifiedBy: four ? null : actor.userId, verifiedAt: four ? null : new Date(),
     }).returning()
     await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.recorded", entityType: "payment_record", entityId: row!.id, contextRef: r.ref, after: { amount: p.amount, method: p.method, fourEyes: four } })
-    await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: r.id, eventType: "payment.recorded", payload: { requestId: r.id, ref: r.ref, paymentId: row!.id } })
+    await this.outbox.add(tx, { aggregateType: r.type === "CARGO" ? "cargo_request" : "flight_request", aggregateId: r.id, eventType: "payment.recorded", payload: { requestId: r.id, ref: r.ref, paymentId: row!.id } })
     return { blocked: false as const, payment: row!, fourEyes: four }
   }
 
@@ -138,7 +141,7 @@ export class BookingsService {
       if (!["ACCEPTED", "RESERVED", "TICKETED"].includes(r.status)) throw new AppError("INVALID_TRANSITION", "Payments are recorded after a quote is accepted")
       const atol = atolAllowsPayment(this.config.get("WORKFLOW").atolMode, stage === "BEFORE_RESERVATION" ? "BEFORE_RESERVATION" : "RESERVED")
       if (!atol.ok && r.status !== "TICKETED") throw new AppError("ATOL_PAYMENT_NOT_ALLOWED", atol.reason)
-      const res = await this.insertPayment(tx, r, body, actor)
+      const res = await this.insertPayment(tx, flightTarget(r), body, actor)
       if (res.blocked) throw new AppError("FORBIDDEN", "The payer needs a compliance decision before this payment can be recorded", undefined, { screeningId: res.screeningId })
       await this.requests.recomputePaymentStatus(tx, r)
       await this.maybeAtolCertificate(tx, r, actor)
@@ -155,6 +158,7 @@ export class BookingsService {
       if (p.status !== "RECORDED") throw new AppError("INVALID_TRANSITION", `Payment is ${p.status}`)
       if (p.recordedBy === actor.userId) throw new AppError("FOUR_EYES_REQUIRED", "A different staff member must verify this payment")
       await tx.update(paymentRecords).set({ status: "VERIFIED", verifiedBy: actor.userId, verifiedAt: new Date() }).where(eq(paymentRecords.id, p.id))
+      if (p.requestType === "CARGO") return this.verifyCargoPayment(tx, p, actor)
       const [r] = await tx.select().from(flightRequests).where(eq(flightRequests.id, p.requestId)).for("update")
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.verified", entityType: "payment_record", entityId: p.id, contextRef: r?.ref })
       await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: p.requestId, eventType: "payment.verified", payload: { requestId: p.requestId, paymentId: p.id } })
@@ -168,6 +172,46 @@ export class BookingsService {
       }
       return { ok: true, paymentStatus: ps }
     })
+  }
+
+  // ---------------- cargo payments (ADR-0008 W2) ----------------
+
+  private async cargoByRef(tx: Tx, ref: string) {
+    const norm = normaliseReference(ref)
+    const [r] = norm?.startsWith("UT-C-") ? await tx.select().from(cargoRequests).where(eq(cargoRequests.ref, norm)).for("update") : []
+    if (!r) throw notFound("Request")
+    return r
+  }
+
+  /** Verified records against the accepted quote's total (ch. 13.2); never set by hand. */
+  private async recomputeCargoPaymentStatus(tx: Tx, r: typeof cargoRequests.$inferSelect) {
+    const recs = await tx.select().from(paymentRecords).where(and(eq(paymentRecords.requestType, "CARGO"), eq(paymentRecords.requestId, r.id)))
+    const [q] = await tx.select({ lines: quotes.cargoLines }).from(quotes).where(and(eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id), eq(quotes.status, "ACCEPTED"))).limit(1)
+    const ps = computePaymentStatus(recs.map((p) => ({ amountMinor: p.amountMinor, currency: p.currency, status: p.status })), (q?.lines as { total?: { amountMinor: number } } | null)?.total?.amountMinor ?? null)
+    if (ps !== r.paymentStatus) await tx.update(cargoRequests).set({ paymentStatus: ps }).where(eq(cargoRequests.id, r.id))
+    return ps
+  }
+
+  async recordCargoPayment(ref: string, body: PaymentBody, actor: Actor) {
+    return this.uow.run(async (tx) => {
+      const r = await this.cargoByRef(tx, ref)
+      if (!CARGO_PAYABLE.includes(r.status)) throw new AppError("INVALID_TRANSITION", "Payments are recorded after the customer has accepted the quote")
+      const res = await this.insertPayment(tx, { type: "CARGO", id: r.id, ref: r.ref }, body, actor)
+      if (res.blocked) throw new AppError("FORBIDDEN", "The payer needs a compliance decision before this payment can be recorded", undefined, { screeningId: res.screeningId })
+      await this.recomputeCargoPaymentStatus(tx, r)
+      await this.invoices.settleFromPayments(tx, "CARGO", r.id)
+      return { paymentId: res.payment.id, status: res.payment.status, needsSecondVerifier: res.fourEyes }
+    })
+  }
+
+  private async verifyCargoPayment(tx: Tx, p: typeof paymentRecords.$inferSelect, actor: Actor) {
+    const [r] = await tx.select().from(cargoRequests).where(eq(cargoRequests.id, p.requestId)).for("update")
+    if (!r) throw notFound("Request")
+    await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.verified", entityType: "payment_record", entityId: p.id, contextRef: r.ref })
+    await this.outbox.add(tx, { aggregateType: "cargo_request", aggregateId: r.id, eventType: "payment.verified", payload: { requestId: r.id, paymentId: p.id } })
+    const ps = await this.recomputeCargoPaymentStatus(tx, r)
+    await this.invoices.settleFromPayments(tx, "CARGO", r.id)
+    return { ok: true, paymentStatus: ps }
   }
 
   private async completeTicketing(tx: Tx, r: Req, actor: Actor, requestId: string) {
@@ -206,7 +250,7 @@ export class BookingsService {
       const wf = this.config.get("WORKFLOW")
       let fourEyesPending = false
       if (body.payment) {
-        const p = await this.insertPayment(tx, r, body.payment, actor)
+        const p = await this.insertPayment(tx, flightTarget(r), body.payment, actor)
         if (p.blocked) throw new AppError("FORBIDDEN", "The payer needs a compliance decision first")
         fourEyesPending = p.fourEyes
       } else if (wf.atolMode === "PAY_ON_TICKETING" && r.paymentStatus !== "PAID" && !body.creditOverride) {
@@ -294,17 +338,16 @@ export class BookingsService {
     const opts = await tx.select().from(quoteOptions).where(eq(quoteOptions.quoteId, quoteId))
     const [q] = await tx.select().from(quotes).where(eq(quotes.id, quoteId))
     if (!q?.documentNumber) return
-    const money = (m: { amountMinor: number; currency: string }) => `${m.currency} ${(m.amountMinor / 100).toFixed(2)}`
     const cfg = this.config.settings()
+    const zone = await customerZone(tx, r.customerUserId)
+    const L = docLabels(zone.locale)
+    const travellers = await tx.select({ passengerType: requestTravellers.passengerType, nameSnapshot: requestTravellers.nameSnapshot }).from(requestTravellers).where(eq(requestTravellers.requestId, r.id)).orderBy(requestTravellers.createdAt)
+    const atolPayOnTicketing = this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING"
     const pdf = await renderQuotationPdf({
-      number: q.documentNumber, title: `Your travel options - ${r.ref}`, subtitle: `Valid until ${q.validUntil?.toISOString().slice(0, 16).replace("T", " ")} UTC`,
-      sections: opts.map((o, i) => {
-        const segs = ((o.itinerary as { slices: { segments: { marketing: { carrier: string; flightNumber: string }; origin: { iata: string }; destination: { iata: string }; departure: { local: string } }[] }[] }).slices).flatMap((s) => s.segments)
-        const pb = o.priceBreakdown as { fare: { amountMinor: number; currency: string }; taxes: { amountMinor: number; currency: string }; serviceFee: { amountMinor: number; currency: string }; total: { amountMinor: number; currency: string } }
-        return { heading: `Option ${i + 1} · ${o.label}`, rows: [...segs.map((g) => [`${g.marketing.carrier}${g.marketing.flightNumber}`, `${g.origin.iata} → ${g.destination.iata} · ${g.departure.local.replace("T", " ")} local`] as [string, string]), ["Ticketing", o.ticketingModel === "SINGLE_TICKET" ? "Single ticket (protected connections)" : "Separate tickets (self-transfer)"], ["Fare + taxes", `${money(pb.fare)} + ${money(pb.taxes)}`], ["Service fee", money(pb.serviceFee)], ["Total", money(pb.total)]] as [string, string][] }
-      }),
-      company: cfg.company, cfg: cfg.commercialDocuments,
-      footer: ["This is a quotation, not a booking: seats are reserved only after you accept and our team confirms the reservation.", this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" ? "Flights are sold as an airline ticket agent: payment is taken only when tickets are issued; this flight is not ATOL protected (wording pending counsel review)." : "ATOL protection details are provided with your ATOL Certificate."],
+      number: q.documentNumber, title: `${L.flightTitle} - ${r.ref}`, subtitle: `${L.validUntil} ${q.validUntil ? formatValidity(q.validUntil, zone) : "-"}`,
+      sections: flightOptionSections(opts, travellers, zone),
+      company: cfg.company, cfg: cfg.commercialDocuments, locale: zone.locale,
+      footer: [L.flightFooter, atolFooter(atolPayOnTicketing, zone.locale)],
     })
     const doc = await this.docs.storeGenerated(tx, { ownerUserId: r.customerUserId, requestType: "FLIGHT", requestId: r.id, type: "QUOTE_PDF", filename: `quotation-${q.documentNumber}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
     await tx.update(quotes).set({ pdfDocumentId: doc.id }).where(eq(quotes.id, quoteId))

@@ -56,9 +56,6 @@
   "sessionExpired": "Your session expired. Please sign in again.",
   "signInTitle": "Sign in",
   "signInIntro": "Fly home, or anywhere. We keep every request in one place and a real person behind it.",
-  "phoneLabel": "Mobile number",
-  "phoneHint": "+98 912 000 0000",
-  "phoneHelp": "Include the country code, or enter an Iranian number starting with 09.",
   "sendCode": "Send code",
   "codeLabel": "Verification code",
   "codeSentTo": "We sent a code to {phone}.",
@@ -70,6 +67,12 @@
     }
   },
   "verify": "Verify",
+  "devCodeTitle": "Test sign-in (local only): code from the email sink",
+  "devCodeWaiting": "Waiting for the code…",
+  "devCodeRefill": "Fill again",
+  "emailLabel": "Email",
+  "emailHint": "you@example.com",
+  "changeEmail": "Use a different email",
   "resendCode": "Resend code",
   "resendIn": "Resend in {seconds}s",
   "@resendIn": {
@@ -80,7 +83,6 @@
       }
     }
   },
-  "changeNumber": "Use a different number",
   "languageLabel": "Language",
   "langEnglish": "English",
   "langPersian": "فارسی",
@@ -420,7 +422,6 @@
   "contactHelp": "A verified phone lets you send requests; a verified email lets us send documents.",
   "addContact": "Add a phone or email",
   "detPhone": "Phone",
-  "emailLabel": "Email",
   "detCodeSent": "We sent a code to {value}.",
   "@detCodeSent": {
     "placeholders": {

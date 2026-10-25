@@ -13,7 +13,7 @@ const freshPhone = () => `+98912${String(Math.floor(Math.random() * 1e7)).padSta
 test.describe("Admin Panel", () => {
   test("admin signs in with phone OTP + TOTP and lands on the shift home", async ({ browser }) => {
     const page = await staffPage(browser, ADMIN, STAFF.admin)
-    await expect(page.getByTestId("shift-line")).toContainText("new")
+    await expect(page.getByTestId("shift-line")).toContainText(/new/i)
     await expect(page.getByRole("heading", { name: /Good (morning|afternoon|evening), Sara/ })).toBeVisible()
     await shot(page, "admin-home")
   })
@@ -41,12 +41,13 @@ test.describe("Admin Panel", () => {
     await page.goto(`${ADMIN}/requests/${ref}`)
     await expect(page.getByTestId("ref")).toHaveText(ref)
     await expect(page.getByTestId("actions").locator('[data-command="claim"]')).toBeEnabled()
-    // Server-computed actions: the disabled ones carry the guard's reason.
-    await expect(page.getByTestId("actions").locator("[data-reason]").first()).toBeVisible()
     await shot(page, "admin-request-new")
     await page.keyboard.press("c")
     await expect(page.getByTestId("assignee")).toHaveText("Assigned to you")
     await expect(page.getByTestId("status")).toHaveText("IN REVIEW")
+    // Server-computed actions: commands that cannot run yet are disabled with the guard's reason (input-only guards, e.g. a reason code, stay enabled and are collected by the dialog).
+    await page.getByTestId("actions").locator("button[aria-controls]").click()
+    await expect(page.getByTestId("actions").locator("[data-reason]").first()).toBeVisible()
 
     await page.keyboard.press("n")
     const note = `Console e2e note ${Date.now()}`

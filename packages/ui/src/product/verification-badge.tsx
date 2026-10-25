@@ -16,7 +16,7 @@ const LOOK: Record<VerificationState, { cls: string; Icon: typeof BadgeCheck }> 
 export function VerificationBadge({ status, label, className }: { status: VerificationState; label: string; className?: string }) {
   const { cls, Icon } = LOOK[status]
   return (
-    <span data-testid="verification-badge" data-status={status} className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide", cls, className)}>
+    <span data-testid="verification-badge" data-status={status} className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide", cls, className)}>
       <Icon aria-hidden className="size-3" />{label}
     </span>
   )

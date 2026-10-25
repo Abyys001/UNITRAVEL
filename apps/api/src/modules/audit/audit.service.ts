@@ -40,8 +40,23 @@ export function maskPersonal(input: unknown, depth = 0): unknown {
   return input
 }
 
-export function chainHash(prev: string, e: Omit<AuditEntry, "before" | "after"> & { before: unknown; after: unknown; occurredAt: string }): string {
-  return createHash("sha256").update(prev).update(JSON.stringify([e.occurredAt, e.actorUserId ?? null, e.actorKind, e.action, e.entityType, e.entityId ?? null, e.contextRef ?? null, e.before ?? null, e.after ?? null])).digest("hex")
+/** Recursively key-sorted JSON so the hash does not depend on key order, which jsonb does not preserve. */
+export function canonicalJson(v: unknown): string {
+  if (v === null || typeof v !== "object") return JSON.stringify(v) ?? "null"
+  if (typeof (v as { toJSON?: unknown }).toJSON === "function") return canonicalJson((v as { toJSON(): unknown }).toJSON())
+  if (Array.isArray(v)) return `[${v.map(canonicalJson).join(",")}]`
+  const o = v as Record<string, unknown>
+  return `{${Object.keys(o).filter((k) => o[k] !== undefined).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(o[k])}`).join(",")}}`
+}
+
+export const AUDIT_HASH_VERSION = 2
+
+type ChainInput = Omit<AuditEntry, "before" | "after"> & { before: unknown; after: unknown; occurredAt: string }
+
+/** Version 1 is kept only to re-check rows written before the canonical form; do not use it for new rows. */
+export function chainHash(prev: string, e: ChainInput, version: number = AUDIT_HASH_VERSION): string {
+  const body = [e.occurredAt, e.actorUserId ?? null, e.actorKind, e.action, e.entityType, e.entityId ?? null, e.contextRef ?? null, e.before ?? null, e.after ?? null]
+  return createHash("sha256").update(prev).update(version >= 2 ? canonicalJson(body) : JSON.stringify(body)).digest("hex")
 }
 
 @Injectable()
@@ -60,7 +75,7 @@ export class AuditService {
     await tx.insert(auditLog).values({
       occurredAt, actorUserId: entry.actorUserId ?? null, actorKind: entry.actorKind, action: entry.action, entityType: entry.entityType,
       entityId: entry.entityId ?? null, contextRef: entry.contextRef ?? null, before, after, ip: entry.ip ?? null,
-      userAgent: entry.userAgent?.slice(0, 400) ?? null, requestId: entry.requestId ?? null, prevHash, hash,
+      userAgent: entry.userAgent?.slice(0, 400) ?? null, requestId: entry.requestId ?? null, prevHash, hash, hashVersion: AUDIT_HASH_VERSION,
     })
   }
 
@@ -78,15 +93,22 @@ export class AuditService {
     return { items: rows.slice(0, q.limit), nextCursor: rows.length > q.limit ? String(rows[q.limit - 1]!.id) : null }
   }
 
-  /** Recomputes the chain; returns the first broken id, if any. */
-  async verify(): Promise<{ ok: boolean; checked: number; brokenAt: number | null }> {
+  /**
+   * Recomputes the chain. Every row's link to its predecessor is checked. Version 2 rows are also content-checked. Version 1 rows
+   * (before the canonical form) whose content hash no longer reproduces are reported as legacyUnverifiable, never as intact.
+   */
+  async verify(): Promise<{ ok: boolean; checked: number; brokenAt: number | null; verified: number; legacyUnverifiable: number; firstLegacyUnverifiable: number | null }> {
     const rows = await this.db.select().from(auditLog).orderBy(auditLog.id)
     let prev = "0".repeat(64)
+    let legacy = 0
+    let firstLegacy: number | null = null
     for (const r of rows) {
-      const h = chainHash(prev, { ...r, before: r.before, after: r.after, occurredAt: r.occurredAt.toISOString() })
-      if (r.prevHash !== prev || r.hash !== h) return { ok: false, checked: rows.length, brokenAt: r.id }
+      const input = { ...r, before: r.before, after: r.after, occurredAt: r.occurredAt.toISOString() }
+      const contentOk = chainHash(prev, input, r.hashVersion) === r.hash
+      if (r.prevHash !== prev || (!contentOk && r.hashVersion >= 2)) return { ok: false, checked: rows.length, brokenAt: r.id, verified: rows.length - legacy, legacyUnverifiable: legacy, firstLegacyUnverifiable: firstLegacy }
+      if (!contentOk) { legacy++; firstLegacy ??= r.id }
       prev = r.hash
     }
-    return { ok: true, checked: rows.length, brokenAt: null }
+    return { ok: true, checked: rows.length, brokenAt: null, verified: rows.length - legacy, legacyUnverifiable: legacy, firstLegacyUnverifiable: firstLegacy }
   }
 }

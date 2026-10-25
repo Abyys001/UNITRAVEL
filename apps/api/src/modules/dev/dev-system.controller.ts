@@ -5,11 +5,12 @@ import type { Response } from "express"
 import { z } from "zod"
 
 import {
-  AppSettings, AuditQuery, ConfigDomain, ConfigDraftBody, FEATURE_FLAGS, type FeatureFlag, PublishBody, SmsRouteBody, TemplateBody,
+  AppSettings, AuditQuery, ConfigDomain, ConfigDraftBody, FEATURE_FLAGS, type FeatureFlag, INTERNATIONAL_SMS_PROVIDERS, prefixCoversIran, PublishBody, SmsRouteBody, TemplateBody,
 } from "@unitravel/contracts"
 import { type Db, featureFlags, notificationTemplates, smsRoutes } from "@unitravel/db"
 import { smsSegments } from "@unitravel/domain"
 
+import { env } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { DB, UnitOfWork } from "../../core/infra.module"
 import { type Actor, Ctx, CurrentActor, DevSurface, RequirePermission, type RequestContext, StaffOnly, StepUp } from "../../core/http/decorators"
@@ -19,6 +20,8 @@ import { AuditService } from "../audit/audit.service"
 import { ConfigService } from "../config/config.service"
 import { templateVariables } from "../notifications/format"
 import { NotificationsService } from "../notifications/notifications.service"
+import { sampleVars } from "../notifications/sample-vars"
+import { isVendorId, VENDOR_CREDENTIAL_SCHEMAS, VENDOR_IDS } from "../notifications/vendor-schemas"
 import { VendorCredentialsService } from "../notifications/vendor-credentials.service"
 import { HealthService } from "../platform/health.service"
 import { SuppliersService } from "../suppliers/suppliers.service"
@@ -215,7 +218,11 @@ export class DevSystemController {
   @RequirePermission("notification.template.write")
   @HttpCode(202)
   async testSend(@Body(zbody(z.object({ eventType: z.string(), channel: z.enum(["SMS", "EMAIL", "PUSH", "INBOX"]) }))) body: { eventType: string; channel: string }, @CurrentActor() actor: Actor) {
-    await this.notifications.notify({ eventType: body.eventType as never, eventId: crypto.randomUUID(), audience: "DEVELOPERS", userIds: [actor.userId], vars: { ref: "UT-F-TEST00", route: "Tehran → London", code: "123456", status_label: "Test" } })
+    const rows = await this.db.select().from(notificationTemplates).where(and(eq(notificationTemplates.eventType, body.eventType), eq(notificationTemplates.active, true)))
+    if (!rows.length) throw new AppError("NOT_FOUND", "No active template for this event")
+    // Every declared variable of every template of the event gets a sample value (the declared set is validated at save time).
+    const declared = [...new Set([...rows.flatMap((t) => t.variables), ...rows.flatMap((t) => templateVariables(`${t.title} ${t.body}`))])]
+    await this.notifications.notify({ eventType: body.eventType as never, eventId: crypto.randomUUID(), audience: "DEVELOPERS", userIds: [actor.userId], vars: sampleVars(declared) })
     return { queued: true }
   }
 
@@ -236,7 +243,9 @@ export class DevSystemController {
   @RequirePermission("notification.template.write")
   async putRoute(@Body(zbody(SmsRouteBody)) body: z.infer<typeof SmsRouteBody>, @CurrentActor() actor: Actor) {
     // +98 must never be routed through international providers (ch. 8.1).
-    if (body.prefix === "+98" && body.providers.some((p) => ["sinch", "infobip", "twilio", "vonage"].includes(p))) throw new AppError("VALIDATION_FAILED", "Do not route +98 through international providers")
+    // Any prefix that can match Iranian numbers ("+98", "+9891", "+9") is covered, not only the exact string.
+    if (prefixCoversIran(body.prefix) && body.providers.some((p) => INTERNATIONAL_SMS_PROVIDERS.includes(p))) throw new AppError("VALIDATION_FAILED", "Do not route +98 through international providers", [{ path: "providers", code: "IRAN_INTERNATIONAL_PROVIDER" }])
+    if (env().APP_ENV === "production" && body.providers.includes("console")) throw new AppError("VALIDATION_FAILED", "The console sink is not a production provider", [{ path: "providers", code: "CONSOLE_IN_PRODUCTION" }])
     return this.uow.run(async (tx) => {
       const [row] = await tx.insert(smsRoutes).values(body).onConflictDoUpdate({ target: smsRoutes.prefix, set: { providers: body.providers, enabled: body.enabled } }).returning()
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "sms_route.saved", entityType: "sms_route", entityId: row!.id, after: body })
@@ -248,10 +257,14 @@ export class DevSystemController {
   @Put("vendors/:vendor/credentials")
   @RequirePermission("provider.config.write")
   @StepUp()
-  async vendorCredentials(@Param("vendor", zbody(z.string().regex(/^(sms|push|email):[a-z0-9-]+$/))) vendor: string, @Body(zbody(z.object({ values: z.record(z.string(), z.string().min(1).max(4096)) }))) body: { values: Record<string, string> }, @CurrentActor() actor: Actor) {
+  async vendorCredentials(@Param("vendor") vendor: string, @Body(zbody(z.object({ values: z.record(z.string(), z.string().max(4096)) }))) body: { values: Record<string, string> }, @CurrentActor() actor: Actor) {
+    if (!isVendorId(vendor)) throw new AppError("NOT_FOUND", "Unknown vendor")
+    const parsed = VENDOR_CREDENTIAL_SCHEMAS[vendor].safeParse(body.values)
+    if (!parsed.success) throw new AppError("VALIDATION_FAILED", `Credentials for ${vendor} are incomplete or have unknown fields`, parsed.error.issues.map((i) => ({ path: `values.${i.path.join(".")}`, code: i.code, message: i.message })))
+    const values = parsed.data as Record<string, string>
     await this.uow.run(async (tx) => {
-      await this.vendors.set(tx, vendor, body.values, actor.userId)
-      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "vendor.credentials_rotated", entityType: "vendor", entityId: vendor, after: { keys: Object.keys(body.values) } })
+      await this.vendors.set(tx, vendor, values, actor.userId)
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "vendor.credentials_rotated", entityType: "vendor", entityId: vendor, after: { keys: Object.keys(values) } })
     })
     return { vendor, rotatedAt: new Date().toISOString() }
   }
@@ -259,8 +272,7 @@ export class DevSystemController {
   @Get("vendors")
   @RequirePermission("provider.config.read")
   async vendorList() {
-    const vendors = ["sms:kavenegar", "sms:smsir", "sms:sinch", "sms:infobip", "push:expo", "push:pushy", "email:brevo"]
-    return Promise.all(vendors.map(async (v) => ({ vendor: v, credentials: await this.vendors.meta(v) })))
+    return Promise.all(VENDOR_IDS.map(async (v) => ({ vendor: v, credentials: await this.vendors.meta(v), fields: Object.keys(VENDOR_CREDENTIAL_SCHEMAS[v].shape) })))
   }
 }
 

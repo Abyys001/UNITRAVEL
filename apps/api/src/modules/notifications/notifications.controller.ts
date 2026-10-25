@@ -3,7 +3,7 @@ import { ApiTags } from "@nestjs/swagger"
 import type { Request } from "express"
 import type { Redis } from "ioredis"
 
-import { CursorQuery, MarkReadBody } from "@unitravel/contracts"
+import { InboxQuery, MarkReadBody } from "@unitravel/contracts"
 
 import { constantTimeEqual } from "../../core/crypto"
 import { isLocal } from "../../core/env"
@@ -21,8 +21,8 @@ export class NotificationsController {
 
   @Get("notifications")
   @Authenticated()
-  inbox(@Query(zbody(CursorQuery)) q: { limit: number; cursor?: string }, @CurrentActor() actor: Actor) {
-    return this.n.inbox(actor.userId, q.limit, q.cursor)
+  inbox(@Query(zbody(InboxQuery)) q: { limit: number; cursor?: string; locale?: "en" | "fa" }, @CurrentActor() actor: Actor) {
+    return this.n.inbox(actor.userId, q.limit, q.cursor, q.locale)
   }
 
   @Post("notifications/read")
@@ -66,12 +66,19 @@ export class NotificationsController {
     return { target }
   }
 
-  /** Local only: the console SMS/push sinks, used by the developer workflow and end-to-end tests. */
+  /** Local only: the console SMS/email/push sinks, used by the developer workflow and end-to-end tests. */
   @Get("dev-sink/sms")
   @Public()
   async smsSink() {
     if (!isLocal()) throw new AppError("NOT_FOUND")
     return (await this.redis.lrange("dev:sms", 0, 49)).map((s) => JSON.parse(s))
+  }
+
+  @Get("dev-sink/email")
+  @Public()
+  async emailSink() {
+    if (!isLocal()) throw new AppError("NOT_FOUND")
+    return (await this.redis.lrange("dev:email", 0, 49)).map((s) => JSON.parse(s))
   }
 
   @Get("dev-sink/push")

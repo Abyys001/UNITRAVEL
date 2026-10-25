@@ -11,11 +11,11 @@ import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
-import { BentoGrid, BentoTile, StatusChip, TileError } from "@/components/bento"
+import { StatusChip, TileError } from "@/components/bento"
 import { ActionBar, CaseTabs, ListSkeleton, paneClass, paneProps, StateChip, TableScroll } from "@/components/case"
 import { Empty, ErrorLine, Field, Loading, PageHead, Panel, Tag } from "@/components/ui"
-import { api, errText } from "@/lib/api"
-import { fmtDateTime, rel } from "@/lib/format"
+import { api } from "@/lib/api"
+import { fmtDateTime, human, rel } from "@/lib/format"
 import { useIsMobile } from "@/lib/hooks"
 import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
@@ -24,7 +24,7 @@ import type { CaseView } from "@/lib/types"
 export default function CasePage() {
   const { id } = useParams<{ id: string }>()
   const qc = useQueryClient()
-  const { can } = useSession()
+  const { can, me } = useSession()
   const mobile = useIsMobile()
   const t = useT()
   const [tab, setTab] = useState<"evidence" | "decide" | "history">("evidence")
@@ -42,35 +42,29 @@ export default function CasePage() {
       setF({ ...f, reason: "", customerMessage: "" })
     } catch (e) { setErr(e as Error) } finally { setBusy(false) }
   }
-  if (q.error) return <div className="p-5"><TileError message={errText(q.error)} onRetry={() => void q.refetch()} /></div>
+  if (q.error) return <div className="p-5"><TileError error={q.error} onRetry={() => void q.refetch()} /></div>
   if (!c) return <><Loading /><ListSkeleton rows={5} /></>
   const open = c.status === "OPEN" || c.status === "ESCALATED"
   const hits = c.screenings.reduce((n, x) => n + x.hits.length, 0)
   const topScore = Math.max(0, ...c.screenings.flatMap((x) => x.hits.map((h) => h.score)))
   return (
     <div>
-      <PageHead kicker={<>Compliance case · <Link className="num hover:underline" href={c.requestType === "CARGO" ? `/cargo/${c.requestRef}` : `/requests/${c.requestRef}`}>{c.requestRef}</Link> · opened {fmtDateTime(c.openedAt)}</>} title={<span dir="auto">{c.summary}</span>} />
-      <BentoGrid className="px-5 pt-4 pb-2 max-sm:grid-cols-2 max-sm:gap-2" data-testid="case-summary">
-        <BentoTile size="s" title={t("comp.state")} tone={open ? "alert" : "default"}><div className="flex flex-wrap gap-1.5"><StateChip value={c.status} className="text-[12px]" /><StateChip value={c.trigger} /></div></BentoTile>
-        <BentoTile size="s" title={t("comp.opened")}><p className="num text-[15px] font-medium">{rel(c.openedAt)}</p><p className="mt-1 text-[12px] text-steel">{fmtDateTime(c.openedAt)}</p></BentoTile>
-        <BentoTile size="s" title={t("comp.screening")}>
-          <p className={cn("num text-[22px] leading-tight font-semibold", topScore >= 0.9 ? "text-danger" : "text-ink")}>{hits ? `${Math.round(topScore * 100)}%` : "—"}</p>
-          <p className="mt-1 text-[12px] text-steel">{hits ? t("comp.hits", { n: hits }) : t("comp.clear")}</p>
-        </BentoTile>
-        <BentoTile size="s" title={t("comp.fourEyes")}>
-          <StatusChip tone={c.requiresFourEyes ? "warn" : "neutral"}>{c.requiresFourEyes ? t("comp.fourEyes.required") : t("comp.fourEyes.no")}</StatusChip>
-          {c.pendingOverride && <p className="mt-1.5 text-[12px] font-medium text-danger">{t("comp.override")}</p>}
-        </BentoTile>
-      </BentoGrid>
+      <PageHead kicker={<><Link className="hover:underline" href="/compliance">{t("nav.cases")}</Link> · <Link className="num hover:underline" href={c.requestType === "CARGO" ? `/cargo/${c.requestRef}` : `/requests/${c.requestRef}`}>{c.requestRef}</Link></>} title={<span dir="auto">{c.summary}</span>} />
+      <dl className="mx-4 mt-4 grid grid-cols-2 divide-x divide-rule overflow-hidden rounded-xl border border-rule bg-surface-raised shadow-[var(--tile-shadow)] max-sm:divide-x-0 max-sm:gap-y-3 max-sm:p-3 md:mx-6 lg:grid-cols-4 rtl:divide-x-reverse" data-testid="case-summary">
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.state")}</dt><dd className="mt-1 flex flex-wrap gap-1.5"><StateChip value={c.status} /><StateChip value={c.trigger} /></dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.opened")}</dt><dd className="num mt-1 font-medium">{rel(c.openedAt)}</dd><dd className="num text-[12px] text-steel">{fmtDateTime(c.openedAt)}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.screening")}</dt><dd className={cn("num mt-1 text-[18px] leading-tight font-semibold", topScore >= 0.9 ? "text-danger" : "text-ink")}>{hits ? `${Math.round(topScore * 100)}%` : "—"}</dd><dd className="text-[12px] text-steel">{hits ? t("comp.hits", { n: hits }) : t("comp.clear")}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.fourEyes")}</dt><dd className="mt-1"><StatusChip tone={c.requiresFourEyes || c.pendingOverride ? "warn" : "neutral"}>{c.requiresFourEyes || c.pendingOverride ? t("comp.fourEyes.required") : t("comp.fourEyes.no")}</StatusChip></dd></div>
+      </dl>
       <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "evidence", label: t("comp.tab.evidence") }, { key: "decide", label: t("comp.tab.decide") }, { key: "history", label: t("comp.tab.history"), count: c.decisions.length }]} />
-      <div className="grid gap-x-8 px-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid items-start gap-x-6 px-4 pt-2 md:px-6 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="min-w-0">
           <div {...paneProps("evidence")} className={paneClass(tab, "evidence")}>
           <Panel title="What triggered it">
-            {!c.evidence.length ? <Empty>No evidence recorded.</Empty> : <ul className="ledger-rows">{c.evidence.map((e, i) => <li key={i} className="grid grid-cols-[7rem_1fr_auto] gap-2 py-1.5"><span className="font-mono text-[11px] text-steel">{e.kind}</span><span><span className="font-medium" dir="auto">{e.label}</span><span className="block text-steel" dir="auto">{e.detail}</span></span>{e.score != null && <span className="num">{Math.round(e.score * 100)}%</span>}</li>)}</ul>}
+            {!c.evidence.length ? <Empty>No evidence recorded.</Empty> : <ul className="ledger-rows">{c.evidence.map((e, i) => <li key={i} className="grid grid-cols-[7rem_1fr_auto] gap-2 py-1.5"><span className="text-[12px] text-steel">{human(e.kind)}</span><span><span className="font-medium" dir="auto">{e.label}</span><span className="block text-steel" dir="auto">{e.detail}</span></span>{e.score != null && <span className="num">{Math.round(e.score * 100)}%</span>}</li>)}</ul>}
           </Panel>
           {c.screenings.map((s) => (
-            <Panel key={s.id} title={`Screening · ${s.subjectType.toLowerCase()} · ${fmtDateTime(s.createdAt)}`} aside={<StatusChip tone={s.result === "CLEAR" ? "ok" : "danger"} className="font-mono text-[10.5px] uppercase">{s.result.replace(/_/g, " ")}</StatusChip>}>
+            <Panel key={s.id} title={`Screening · ${s.subjectType.toLowerCase()} · ${fmtDateTime(s.createdAt)}`} aside={<StatusChip tone={s.result === "CLEAR" ? "ok" : "danger"}>{human(s.result)}</StatusChip>}>
               <p className="font-medium" dir="auto">{s.subjectName}</p>
               <p className="text-[11px] text-steel">Lists: {Object.entries(s.listsVersion).map(([k, v]) => `${k} ${v}`).join(" · ")}</p>
               {s.hits.length > 0 && (
@@ -88,18 +82,18 @@ export default function CasePage() {
           </Panel>
           </div>
         </div>
-        <div {...paneProps("decide")} className={paneClass(tab, "decide")}>
+        <div {...paneProps("decide")} className={cn(paneClass(tab, "decide"), "lg:sticky lg:top-16")}>
           {c.pendingOverride && (
             <Panel title="Override awaiting a second person">
               <p>Requested by {c.pendingOverride.requestedBy}. A different compliance officer or an owner must approve.</p>
-              {can("compliance.case.decide") && !mobile && <Button size="sm" className="mt-2" loading={busy} onClick={() => void decide({ decision: "OVERRIDE", reason: f.reason || "Second approval of override", approveOverrideOf: c.pendingOverride!.decisionId })}>Approve override</Button>}
+              {can("compliance.case.decide") && !mobile && me?.id !== c.pendingOverride.requestedById && <Button size="sm" className="mt-2" loading={busy} onClick={() => void decide({ decision: "OVERRIDE", reason: f.reason || "Second approval of override", approveOverrideOf: c.pendingOverride!.decisionId })}>Approve override</Button>}
             </Panel>
           )}
           {open && can("compliance.case.decide") && (mobile ? <p className="py-3 text-steel">Compliance decisions are a desktop feature in v1.</p> : (
             <Panel title="Decide">
               <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); void decide({ decision: f.decision, reason: f.reason, reasonCode: f.decision === "DECLINE" ? f.reasonCode : undefined, customerMessage: f.decision === "DECLINE" ? f.customerMessage || undefined : undefined, counselReference: f.counselReference || undefined }) }}>
-                <fieldset className="grid grid-cols-2 gap-1" aria-label="Decision">
-                  {[["RELEASE", c.requiresFourEyes ? "Release (needs second approver)" : "Release"], ["DECLINE", "Decline"], ["ESCALATE", "Escalate to owner"], ["OVERRIDE", "Override a block (four-eyes)"]].map(([v, l]) => <label key={v} className={cn("flex cursor-pointer items-center gap-1.5 rounded-sm border px-2 py-1.5", f.decision === v ? "border-ink bg-surface-raised" : "border-rule")}><input type="radio" name="decision" value={v} checked={f.decision === v} onChange={() => setF({ ...f, decision: v! })} />{l}</label>)}
+                <fieldset className="grid gap-1.5" aria-label="Decision">
+                  {[["RELEASE", c.requiresFourEyes ? "Release (needs second approver)" : "Release"], ["DECLINE", "Decline"], ["ESCALATE", "Escalate to owner"], ["OVERRIDE", "Override a block (four-eyes)"]].map(([v, l]) => <label key={v} className={cn("flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2", f.decision === v ? "border-navy-900 bg-hover font-medium dark:border-white/80" : "border-rule hover:bg-hover")}><input type="radio" name="decision" value={v} checked={f.decision === v} onChange={() => setF({ ...f, decision: v! })} />{l}</label>)}
                 </fieldset>
                 <Field label="Reason (recorded, internal)"><textarea className="field-input min-h-20" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} minLength={5} required /></Field>
                 {f.decision === "DECLINE" && <>

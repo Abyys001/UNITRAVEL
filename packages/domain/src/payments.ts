@@ -37,7 +37,7 @@ export function needsSecondVerifier(amountMinor: number, thresholdMinor: number)
 /** Attribute paths that are still UNKNOWN on a quote option; sending is blocked while any remain (ch. 12.5, 15.5). */
 export function unknownQuoteFields(option: {
   baggage: { segmentIndex: number; checked: Tri<unknown>; cabin: Tri<unknown> }[]
-  conditions: { change: Tri<unknown>; refund: Tri<unknown> }
+  conditions: { change: Tri<{ allowed: boolean; penalty?: { amountMinor: number } }>; refund: Tri<{ allowed: boolean; penalty?: { amountMinor: number } }> }
   segmentCount: number
 }): string[] {
   const out: string[] = []
@@ -45,7 +45,32 @@ export function unknownQuoteFields(option: {
     const b = option.baggage.find((x) => x.segmentIndex === i)
     if (!b || b.checked.status === "UNKNOWN") out.push(`baggage[${i}].checked`)
   }
-  if (option.conditions.change.status === "UNKNOWN") out.push("conditions.change")
-  if (option.conditions.refund.status === "UNKNOWN") out.push("conditions.refund")
+  for (const k of ["change", "refund"] as const) {
+    const c = option.conditions[k]
+    if (c.status === "UNKNOWN") out.push(`conditions.${k}`)
+    // "Allowed with a fee" and no amount would be sent as a zero fee (ADR-0008 W7).
+    else if (c.value.allowed && c.value.penalty && !(c.value.penalty.amountMinor > 0)) out.push(`conditions.${k}.penalty`)
+  }
   return out
+}
+
+const FLIGHT_PAYABLE = ["ACCEPTED", "RESERVED", "TICKETED"]
+/** Cargo is payable once the quote is accepted, through fulfilment and until completed (ADR-0008 W2). */
+export const CARGO_PAYABLE = ["ACCEPTED", "BOOKED", "AWAITING_HANDOVER", "RECEIVED", "IN_TRANSIT", "AT_CUSTOMS", "OUT_FOR_DELIVERY", "DELIVERED", "COMPLETED", "EXCEPTION"]
+
+export interface PaymentRecordingState { allowed: boolean; reason?: string; suggestedAmount: { amountMinor: number; currency: string } | null }
+
+/**
+ * Whether staff may record an offline payment now, and the amount still outstanding (ADR-0008 W8). Mirrors the
+ * checks `recordPayment` runs, so the console offers the action only when it will succeed.
+ * `recordedMinor` is every non-rejected record on the request.
+ */
+export function paymentRecordingState(i: { product: "FLIGHT" | "CARGO"; status: string; atolMode: AtolMode; acceptedTotal: { amountMinor: number; currency: string } | null; recordedMinor: number }): PaymentRecordingState {
+  const suggestedAmount = i.acceptedTotal ? { amountMinor: Math.max(0, i.acceptedTotal.amountMinor - i.recordedMinor), currency: i.acceptedTotal.currency } : null
+  if (!(i.product === "CARGO" ? CARGO_PAYABLE : FLIGHT_PAYABLE).includes(i.status)) return { allowed: false, reason: "Payments are recorded after the customer has accepted a quote", suggestedAmount }
+  if (i.product === "FLIGHT" && i.status !== "TICKETED") {
+    const atol = atolAllowsPayment(i.atolMode, "RESERVED")
+    if (!atol.ok) return { allowed: false, reason: "ATOL mode PAY_ON_TICKETING: the payment is recorded in the Record tickets step, not before", suggestedAmount }
+  }
+  return { allowed: true, suggestedAmount }
 }

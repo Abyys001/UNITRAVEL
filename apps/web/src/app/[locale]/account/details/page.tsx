@@ -15,15 +15,15 @@ import { PassportVerification } from "@/components/passport-verification"
 import { TravellerForm } from "@/components/traveller-form"
 import { Tag } from "@/components/badges"
 import { api, ApiError } from "@/lib/api"
+import { COUNTRIES, countryName } from "@/lib/countries"
 import { useI18n } from "@/lib/i18n"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
-const COUNTRIES = ["GB", "IR", "TR", "AM", "DE", "NL", "FR", "AT", "IQ", "AE", "AF", "US", "CA"]
 const EMPTY: AddressInput = { line1: "", line2: "", city: "", postcode: "", country: "GB" }
 
 /** My details: contact methods, profile, optional address, passport with verification (ADR-0005). */
 export default function MyDetailsPage() {
-  const { t, href } = useI18n()
+  const { t, href, locale } = useI18n()
   const { me } = useRequireSignIn()
   const qc = useQueryClient()
   const details = useQuery({ queryKey: ["details"], queryFn: () => api<MyDetails>("/v1/me/details"), enabled: !!me })
@@ -48,7 +48,7 @@ export default function MyDetailsPage() {
 
       <section aria-labelledby="contact-h"><h2 id="contact-h" className="font-display mb-1 text-xl">{t("identity.contactTitle")}</h2><p className="mb-3 text-sm text-steel">{t("identity.contactHelp")}</p>
         <div className="card-brand space-y-4 p-5 text-sm">
-          <ul className="space-y-1">{d.identities.map((i) => <li key={i.id} className="flex items-center justify-between gap-3"><span dir="ltr">{i.value}</span><Tag kind={i.verified ? "priced" : "cached"}>{i.verified ? t("account.verified") : t("account.unverified")}</Tag></li>)}</ul>
+          <ul className="space-y-1">{d.identities.map((i) => <li key={i.id} className="flex items-center justify-between gap-3"><span dir="ltr">{i.value}</span><Tag kind={i.verified ? "ok" : "cached"}>{i.verified ? t("account.verified") : t("account.unverified")}</Tag></li>)}</ul>
           <AddIdentity onDone={refresh} />
         </div>
       </section>
@@ -68,7 +68,7 @@ export default function MyDetailsPage() {
           <label className="sm:col-span-2">{t("identity.line2")}<Input className="mt-1 h-10" autoComplete="address-line2" value={a.line2 ?? ""} onChange={(e) => setAddress({ ...a, line2: e.target.value })} /></label>
           <label>{t("identity.city")}<Input className="mt-1 h-10" required autoComplete="address-level2" value={a.city} onChange={(e) => setAddress({ ...a, city: e.target.value })} /></label>
           <label>{t("identity.postcode")}<Input className="mt-1 h-10" dir="ltr" required autoComplete="postal-code" value={a.postcode} onChange={(e) => setAddress({ ...a, postcode: e.target.value })} /></label>
-          <label>{t("identity.country")}<NativeSelect className="field mt-1 h-10 w-full" value={a.country} onChange={(e) => setAddress({ ...a, country: e.target.value })}>{COUNTRIES.map((c) => <option key={c}>{c}</option>)}</NativeSelect></label>
+          <label>{t("identity.country")}<NativeSelect className="field mt-1 h-10 w-full" value={a.country} onChange={(e) => setAddress({ ...a, country: e.target.value })}>{COUNTRIES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</NativeSelect></label>
           {err && <p role="alert" className="text-sm text-danger sm:col-span-2">{err}</p>}
           <div className="flex gap-2 sm:col-span-2"><Button type="submit" disabled={save.isPending}>{t("identity.saveDetails")}</Button>{d.address && <Button type="button" variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => { setAddress(null); save.mutate({ address: null }) }}>{t("identity.clearAddress")}</Button>}</div>
         </form>
@@ -78,7 +78,7 @@ export default function MyDetailsPage() {
         <div className="card-brand space-y-4 p-5">
           {self?.document ? (
             <>
-              <p className="text-sm" dir="ltr"><span className="font-medium">{self.givenNames} {self.surname}</span> · ••••{self.document.last4} · {self.document.issuingCountry} · {self.document.expiryDate}</p>
+              <p className="text-sm"><bdi dir="ltr" className="font-medium">{self.givenNames} {self.surname}</bdi> · <bdi dir="ltr">••••{self.document.last4}</bdi> · {countryName(self.document.issuingCountry, locale)} · <bdi dir="ltr">{self.document.expiryDate}</bdi></p>
               <PassportVerification traveller={self} onChanged={refresh} />
               <Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => setEditingPassport((x) => !x)}>{t("common.edit")}</Button>
             </>

@@ -4,7 +4,7 @@ import { Inject, Injectable } from "@nestjs/common"
 import {
   generateAuthenticationOptions, generateRegistrationOptions, verifyAuthenticationResponse, verifyRegistrationResponse,
 } from "@simplewebauthn/server"
-import { and, eq, isNotNull } from "drizzle-orm"
+import { and, desc, eq, isNotNull } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
 import { type Db, mfaFactors, users } from "@unitravel/db"
@@ -93,6 +93,19 @@ export class MfaService {
     await this.sessions.markMfa(sessionId, 1)
     await this.db.transaction((tx) => this.audit.record(tx, { actorUserId: userId, actorKind: "STAFF", action: match.confirmedAt ? "mfa.verified" : "mfa.enrolled", entityType: "mfa_factor", entityId: match.id, ip: ctx.ip, requestId: ctx.requestId }))
     return { level: 1 }
+  }
+
+  /**
+   * Local test helper: the code the user's newest TOTP factor shows now (confirmed first, else a pending enrolment).
+   * If the current code was already used, returns the next step's code, which verification still accepts.
+   */
+  async currentTotp(userId: string): Promise<{ code: string } | null> {
+    const factors = await this.db.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId), eq(mfaFactors.type, "TOTP"))).orderBy(desc(mfaFactors.createdAt))
+    const f = factors.find((x) => x.confirmedAt && x.secretCiphertext) ?? factors.find((x) => x.secretCiphertext)
+    if (!f) return null
+    const secret = Buffer.from(decryptField(f.secretCiphertext!), "hex")
+    const now = totp(secret)
+    return { code: (await this.redis.get(`mfa:totp:${userId}:${now}`)) ? totp(secret, Date.now() + 30_000) : now }
   }
 
   async enrolled(userId: string): Promise<string[]> {

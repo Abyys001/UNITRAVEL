@@ -134,7 +134,7 @@ export class NotificationRouter {
         return this.n.notify({ eventType: "notification.route_degraded", eventId: e.id, audience: "DEVELOPERS", userIds: devs, vars: { route: rp.route, rate: rp.rate } })
       }
       case "document.published":
-        return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, status_label: "New document" }, linkPath: this.requestPath(p.ref) })
+        return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, status_label: "New document", status_label_fa: "سند جدید" }, linkPath: this.requestPath(p.ref) })
       default:
         return
     }
@@ -145,7 +145,7 @@ export class NotificationRouter {
     const customer = [p.customerUserId]
     if (p.command === "claim" || p.command === "assign") {
       if (p.assigneeUserId && p.assigneeUserId !== p.actorUserId) await this.n.notify({ ...base, eventType: "request.assigned", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref, route: p.routeLabel }, linkPath: `/requests/${p.ref}` })
-      return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref, status_label: p.statusLabels?.en ?? "" } })
+      return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref, status_label: p.statusLabels?.en ?? "", status_label_fa: p.statusLabels?.fa } })
     }
     switch (p.to) {
       case "AWAITING_CUSTOMER":
@@ -154,7 +154,7 @@ export class NotificationRouter {
         return this.n.notify({ ...base, eventType: "request.declined", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref, message_preview: preview(p.message) } })
       case "CANCELLED":
         if (p.command === "cancel_by_customer" && p.assigneeUserId) return this.n.notify({ ...base, eventType: "request.cancelled", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref }, linkPath: `/requests/${p.ref}` })
-        return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref, status_label: p.statusLabels?.en ?? "Cancelled" } })
+        return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref, status_label: p.statusLabels?.en ?? "Cancelled", status_label_fa: p.statusLabels?.fa ?? "لغو شد" } })
       case "EXPIRED":
         if (p.from === "QUOTED") return this.n.notify({ ...base, eventType: "quote.expired", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref } })
         return
@@ -164,7 +164,7 @@ export class NotificationRouter {
         if (p.from === "COMPLIANCE_HOLD") return // compliance.case_decided notifies admins
         return
       default:
-        return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref, status_label: p.statusLabels?.en ?? p.to } })
+        return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: customer, vars: { ref: p.ref, status_label: p.statusLabels?.en ?? p.to, status_label_fa: p.statusLabels?.fa ?? p.to } })
     }
   }
 }

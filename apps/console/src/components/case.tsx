@@ -8,18 +8,23 @@
  *   <SlaChip dueAt startAt breached done />        countdown ring + relative time; text always present, ticks every 30 s
  *   <StateChip value />                            workflow status as a StatusChip (tone from the status, text = the status)
  *   <TruthTally tally />                           known / not included / UNKNOWN counts; UNKNOWN is never softened
+ *   <CommandBar actions onRun />                   server-computed commands: one solid primary, the rest secondary, unavailable ones listed with their reason
  *   <ActionBar edge>                               sticky bar for the server-computed commands (top) or a form's submit (bottom)
  *   <CaseTabs> + paneClass()                       phone/tablet tabs over the columns; all columns show side by side at lg
  *   <Timeline items />                             day-grouped vertical activity trail
  *   <ListSkeleton rows />                          table/card placeholder rows
  */
-import { useSyncExternalStore } from "react"
+import { useEffect, useId, useState, useSyncExternalStore } from "react"
 
 import { cn } from "@unitravel/ui/lib/utils"
 
 import { StatusChip } from "@/components/bento"
+import { COMMAND_LABEL } from "@/components/ui"
+import { Button } from "@unitravel/ui/components/button"
+import { COMMAND_LABEL_FA } from "@/lib/command-labels"
 import { type MsgKey, type T, useT } from "@/lib/i18n"
-import type { StaffQuoteOption } from "@/lib/types"
+import { type Locale, useLocale } from "@/lib/prefs"
+import type { AllowedCommand, StaffQuoteOption } from "@/lib/types"
 
 /* ---------- shared clock: one interval for every countdown on the page ---------- */
 const clockSubs = new Set<() => void>()
@@ -35,10 +40,12 @@ const subscribeClock = (fn: () => void) => {
 }
 export const useNow = () => useSyncExternalStore(subscribeClock, () => clockNow, () => 0)
 
-export function duration(ms: number, t: T): string {
+const faDigits = new Intl.NumberFormat("fa-IR")
+export function duration(ms: number, t: T, locale: Locale = "en"): string {
   const m = Math.round(Math.abs(ms) / 60000)
+  const n = (x: number) => (locale === "fa" ? faDigits.format(x) : String(x))
   const d = t("time.d"), h = t("time.h"), mm = t("time.m")
-  return m >= 1440 ? `${Math.floor(m / 1440)} ${d} ${Math.floor((m % 1440) / 60)} ${h}` : m >= 60 ? `${Math.floor(m / 60)} ${h} ${m % 60} ${mm}` : `${m} ${mm}`
+  return m >= 1440 ? `${n(Math.floor(m / 1440))} ${d} ${n(Math.floor((m % 1440) / 60))} ${h}` : m >= 60 ? `${n(Math.floor(m / 60))} ${h} ${n(m % 60)} ${mm}` : `${n(m)} ${mm}`
 }
 
 /* ---------- SLA ---------- */
@@ -66,12 +73,13 @@ export function slaState(dueAt: string, startAt: string | null | undefined, brea
 
 export function SlaChip({ dueAt, startAt, breached, done, className }: { dueAt: string | null | undefined; startAt?: string | null; breached?: boolean; done?: boolean; className?: string }) {
   const t = useT()
+  const [locale] = useLocale()
   const now = useNow() || Date.now()
   if (done) return <StatusChip tone="ok" className={className}>{t("sla.done")}</StatusChip>
   if (!dueAt) return <span className="text-steel">—</span>
   const s = slaState(dueAt, startAt, breached, now)
-  const text = s.late ? t("sla.breached", { t: duration(s.diff, t) }) : t("time.in", { t: duration(s.diff, t) })
-  return <StatusChip tone={s.tone} className={cn("num", className)} icon={<SlaRing frac={s.frac} />}>{text}</StatusChip>
+  const text = s.late ? t("sla.breached", { t: duration(s.diff, t, locale) }) : t("time.in", { t: duration(s.diff, t, locale) })
+  return <StatusChip tone={s.tone} className={cn(locale === "fa" ? "font-fa" : "num", "max-sm:whitespace-normal", className)} icon={<SlaRing frac={s.frac} />}>{text}</StatusChip>
 }
 
 /* ---------- status ---------- */
@@ -81,9 +89,9 @@ const DANGER = new Set(["COMPLIANCE_HOLD", "EXCEPTION", "OPEN", "REJECTED", "PRO
 const INFO = new Set(["QUOTED", "SENT", "ISSUED", "IN_REVIEW", "RECEIVED"])
 export const statusTone = (status: string): "ok" | "warn" | "danger" | "info" | "neutral" => (OK.has(status) ? "ok" : DANGER.has(status) ? "danger" : WARN.has(status) ? "warn" : INFO.has(status) ? "info" : "neutral")
 
-/** Workflow status as a chip. The visible text is the status itself (uppercased by CSS), colour only reinforces it. */
+/** Workflow status as a chip. The DOM text is the status itself (tests and screen readers); CSS only softens the casing. */
 export function StateChip({ value, className }: { value: string; className?: string }) {
-  return <StatusChip tone={statusTone(value)} className={cn("font-mono text-[10.5px] tracking-wide uppercase", className)}>{value.replace(/_/g, " ")}</StatusChip>
+  return <StatusChip tone={statusTone(value)} className={cn("text-[11.5px] font-semibold", className)}><span className="inline-block lowercase first-letter:uppercase">{value.replace(/_/g, " ")}</span></StatusChip>
 }
 
 /* ---------- truth (known / not included / UNKNOWN) ---------- */
@@ -109,8 +117,16 @@ export function tallyOptions(options: Pick<StaffQuoteOption, "baggage" | "condit
   return out
 }
 
-export function TruthTally({ tally, className }: { tally: Tally; className?: string }) {
+export function TruthTally({ tally, className, compact }: { tally: Tally; className?: string; compact?: boolean }) {
   const t = useT()
+  if (compact) {
+    const item = (k: MsgKey, n: number, bad?: boolean) => <div className="flex items-baseline gap-1"><dt className="text-steel">{t(k)}</dt><dd className={cn("num font-semibold", bad ? "text-danger" : "text-ink")}>{n}</dd></div>
+    return (
+      <dl className={cn("flex flex-wrap items-baseline gap-x-3 gap-y-0.5", className)} data-testid="truth-tally">
+        {item("case.truth.known", tally.known)}{item("case.truth.notIncluded", tally.notIncluded)}{item("case.truth.unknown", tally.unknown, tally.unknown > 0)}
+      </dl>
+    )
+  }
   const cell = (k: MsgKey, n: number, cls: string) => (
     <div><dt className="cap">{t(k)}</dt><dd className={cn("num text-[22px] leading-tight font-semibold", cls)}>{n}</dd></div>
   )
@@ -124,15 +140,67 @@ export function TruthTally({ tally, className }: { tally: Tally; className?: str
 }
 
 /* ---------- layout ---------- */
-export function CaseHeader({ reference, title, meta, aside }: { reference: React.ReactNode; title: React.ReactNode; meta?: React.ReactNode; aside?: React.ReactNode }) {
+/** `summary` is the second line (state, SLA, owner, facts); it carries data-testid="case-summary" like the old tile row. */
+export function CaseHeader({ reference, title, meta, aside, summary }: { reference: React.ReactNode; title: React.ReactNode; meta?: React.ReactNode; aside?: React.ReactNode; summary?: React.ReactNode }) {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2 border-b border-rule bg-surface-raised px-5 py-3">
-      <div className="min-w-0">
-        <p className="flex flex-wrap items-baseline gap-x-2">{reference}<span className="font-display text-[20px] leading-tight" dir="auto">{title}</span></p>
-        {meta && <p className="mt-0.5 text-steel">{meta}</p>}
+    <header className="border-b border-rule bg-surface-raised px-5 pt-4 pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+        <div className="min-w-0">
+          <p className="flex flex-wrap items-baseline gap-x-3">{reference}<span className="font-display text-[22px] leading-tight" dir="auto">{title}</span></p>
+          {meta && <p className="mt-1 text-steel">{meta}</p>}
+        </div>
+        {aside && <div className="flex flex-wrap items-center gap-2">{aside}</div>}
       </div>
-      {aside && <div className="flex flex-wrap items-center gap-2">{aside}</div>}
+      {summary && <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-rule pt-3" data-testid="case-summary">{summary}</div>}
     </header>
+  )
+}
+
+/** A labelled fact in the header summary line. */
+export const SummaryItem = ({ label, children, className }: { label: React.ReactNode; children: React.ReactNode; className?: string }) => (
+  <div className={cn("flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1", className)}><span className="cap">{label}</span>{children}</div>
+)
+
+// Presentation order only: which allowed command is the usual next step. Whether a command is allowed is the server's call.
+const NEXT_STEP = ["claim", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "receive", "record_booking", "request_info", "assign"]
+const COOL = new Set(["cancel", "decline", "close", "reject"])
+
+/**
+ * Commands as the server computed them. The first allowed next step is solid, other allowed ones are outlined, and the
+ * ones that cannot run now sit in a collapsed disclosure (an opened one is remembered) with the server's reason beside each.
+ */
+export function CommandBar({ actions, onRun, none, hint }: { actions: AllowedCommand[]; onRun: (command: string) => void; none: React.ReactNode; hint?: React.ReactNode }) {
+  const t = useT()
+  const [locale] = useLocale()
+  const [open, setOpen] = useState(false)
+  const id = useId()
+  useEffect(() => { try { if (localStorage.getItem("ut-cmd-more") === "1") setOpen(true) } catch { /* storage blocked: stay collapsed */ } }, [])
+  const label = (c: string) => (locale === "fa" ? COMMAND_LABEL_FA[c] : undefined) ?? COMMAND_LABEL[c] ?? c
+  const allowed = actions.filter((a) => a.allowed), blocked = actions.filter((a) => !a.allowed)
+  const primary = NEXT_STEP.map((c) => allowed.find((a) => a.command === c)).find(Boolean) ?? allowed.find((a) => !COOL.has(a.command))
+  return (
+    <div>
+      <div role="group" aria-label={t("case.actions")} className="flex flex-wrap items-center gap-2">
+        {allowed.map((a) => <Button key={a.command} size="sm" variant={a === primary ? "default" : "outline"} className={a === primary ? "px-4" : undefined} onClick={() => onRun(a.command)} data-command={a.command}>{label(a.command)}</Button>)}
+        {!actions.length && <p className="py-1 text-steel">{none}</p>}
+        {hint && <p className="ms-auto hidden shrink-0 text-[11px] text-steel xl:block pointer-coarse:hidden">{hint}</p>}
+      </div>
+      {blocked.length > 0 && (
+        <div className="mt-2">
+          <button type="button" aria-expanded={open} aria-controls={id} onClick={() => { setOpen(!open); try { localStorage.setItem("ut-cmd-more", open ? "0" : "1") } catch { /* preference only */ } }} className="-ms-1 flex min-h-7 items-center gap-1 rounded-sm px-1 text-[12px] text-steel hover:text-ink">
+            <span aria-hidden className={cn("inline-block transition-transform rtl:-scale-x-100", open && "rotate-90")}>›</span>{t("case.cmd.unavailable", { n: blocked.length })}
+          </button>
+          <ul id={id} className={cn("mt-1 grid gap-x-6 gap-y-2 sm:grid-cols-2 2xl:grid-cols-3", !open && "hidden")}>
+            {blocked.map((a) => (
+              <li key={a.command} className="flex min-w-0 items-start gap-2">
+                <Button size="xs" variant="outline" disabled data-command={a.command} aria-describedby={a.reason ? `${id}-${a.command}` : undefined} className="shrink-0">{label(a.command)}</Button>
+                {a.reason && <p id={`${id}-${a.command}`} className="pt-0.5 text-[12px] leading-snug text-steel" data-reason={a.command}>{a.reason}</p>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -146,10 +214,21 @@ export function ActionBar({ edge = "top", className, children, ...rest }: React.
 }
 
 export function CaseTabs<K extends string>({ tabs, value, onChange, label }: { tabs: { key: K; label: string; count?: number }[]; value: K; onChange: (k: K) => void; label: string }) {
+  // Roving tabindex: only the selected tab is in the Tab order; arrows (mirrored in RTL), Home and End move and select.
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const i = tabs.findIndex((x) => x.key === value)
+    const rtl = document.documentElement.dir === "rtl"
+    const next = e.key === "ArrowRight" ? i + (rtl ? -1 : 1) : e.key === "ArrowLeft" ? i + (rtl ? 1 : -1) : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null
+    if (next === null) return
+    e.preventDefault()
+    const to = tabs[(next + tabs.length) % tabs.length]!
+    onChange(to.key)
+    e.currentTarget.querySelector<HTMLElement>(`[id="tab-${to.key}"]`)?.focus()
+  }
   return (
-    <div role="tablist" aria-label={label} className="flex gap-1 overflow-x-auto border-b border-rule bg-surface-raised px-4 lg:hidden" data-testid="case-tabs">
+    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex gap-1 overflow-x-auto border-b border-rule bg-surface-raised px-4 lg:hidden" data-testid="case-tabs">
       {tabs.map((x) => (
-        <button key={x.key} type="button" role="tab" id={`tab-${x.key}`} aria-selected={value === x.key} onClick={() => onChange(x.key)}
+        <button key={x.key} type="button" role="tab" id={`tab-${x.key}`} aria-selected={value === x.key} aria-controls={`pane-${x.key}`} tabIndex={value === x.key ? 0 : -1} onClick={() => onChange(x.key)}
           className={cn("-mb-px min-h-10 shrink-0 border-b-2 px-3 whitespace-nowrap", value === x.key ? "border-orange font-medium text-ink" : "border-transparent text-steel hover:text-ink")}>
           {x.label}{x.count ? <span className="num ms-1.5 text-[11px] text-steel">{x.count}</span> : null}
         </button>

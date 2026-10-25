@@ -1,6 +1,7 @@
 import type { CommercialDocumentSettings } from "@unitravel/contracts"
 
 import { type PdfSection, renderPdf } from "../documents/pdf"
+import { docLabels } from "./quotation-content"
 
 /** Printed in place of every company particular the accountant has not supplied yet (owner decision 5). Never invented. */
 export const UNKNOWN_PARTICULAR = "UNKNOWN - to be confirmed by the accountant"
@@ -11,16 +12,21 @@ export interface DocMoney { amountMinor: number; currency: string }
 export const pdfMoney = (m: DocMoney) => `${m.currency} ${(m.amountMinor / 100).toFixed(2)}`
 
 /** Company block shared by quotations and invoices. */
-export function particularsSection(company: CompanyInfo, cfg: CommercialDocumentSettings): PdfSection {
+export function particularsSection(company: CompanyInfo, cfg: CommercialDocumentSettings, locale: "en" | "fa" = "en"): PdfSection {
+  const fa = locale === "fa"
+  const unknown = fa ? "نامشخص - توسط حسابدار تأیید می‌شود" : UNKNOWN_PARTICULAR
+  const k = fa
+    ? ["شرکت", "نشانی ثبت‌شده", "شماره ثبت شرکت", "شماره مالیات بر ارزش افزوده", "وضعیت مالیات بر ارزش افزوده", "تماس"]
+    : ["Company", "Registered address", "Company registration no.", "VAT number", "VAT treatment", "Contact"]
   return {
-    heading: "Issued by",
+    heading: docLabels(locale).issuedBy,
     rows: [
-      ["Company", company.name],
-      ["Registered address", cfg.registeredAddress ?? UNKNOWN_PARTICULAR],
-      ["Company registration no.", cfg.registrationNumber ?? UNKNOWN_PARTICULAR],
-      ["VAT number", cfg.vatNumber ?? UNKNOWN_PARTICULAR],
-      ["VAT treatment", cfg.vatTreatment ?? UNKNOWN_PARTICULAR],
-      ["Contact", `${company.email} · ${company.phone}`],
+      [k[0]!, company.name],
+      [k[1]!, cfg.registeredAddress ?? unknown],
+      [k[2]!, cfg.registrationNumber ?? unknown],
+      [k[3]!, cfg.vatNumber ?? unknown],
+      [k[4]!, cfg.vatTreatment ?? unknown],
+      [k[5]!, `${company.email} · ${company.phone}`],
     ],
   }
 }
@@ -65,8 +71,12 @@ export interface QuotationPdfInput {
   company: CompanyInfo
   cfg: CommercialDocumentSettings
   footer: string[]
+  /** Customer locale: "fa" renders the whole document in Persian (right to left). */
+  locale?: "en" | "fa"
 }
 
 export function renderQuotationPdf(q: QuotationPdfInput): Promise<Buffer> {
-  return renderPdf(q.title, `${q.subtitle} · quotation ${q.number}`, [...q.sections, particularsSection(q.company, q.cfg)], q.footer, { kind: "Quotation" })
+  const locale = q.locale ?? "en"
+  const L = docLabels(locale)
+  return renderPdf(q.title, `${q.subtitle} · ${L.quotation} ${q.number}`, [...q.sections, particularsSection(q.company, q.cfg, locale)], q.footer, { kind: locale === "fa" ? L.quotation : "Quotation", locale })
 }

@@ -34,19 +34,23 @@ Use `scripts/svc.sh start|stop|restart <api|worker|web|console|mobile>...`. It k
 | RustFS (S3) | localhost:9010 |
 | Mailpit | SMTP 1035, UI http://localhost:8035 |
 
-## Demo users (local only)
-| Role | Phone |
-|---|---|
-| Owner | +447700900001 |
-| Admin | +447700900002 |
-| Cargo | +447700900003 |
-| Compliance | +447700900004 |
-| Developer | +447700900005 |
-| Customers | +989120000001, +447700900010 |
+## Signing in (local only)
+Sign-in is email-only (ADR-0010). On every sign-in screen a dashed **Test sign-in (local only)** box reads the code from the local email sink (`GET http://localhost:4100/v1/dev-sink/email`) and fills it in. For staff it also fills the current authenticator code (`GET /v1/auth/dev-sink/totp`). The box only appears when `APP_ENV=local`. Emails also arrive in Mailpit (http://localhost:8035). SMS (phone verification) still goes to `/v1/dev-sink/sms`, and push to `/v1/dev-sink/push`.
 
-Sign-in uses a one-time code. In local mode SMS goes to a dev sink: read the code from `GET http://localhost:4100/v1/dev-sink/sms`. Push is at `/v1/dev-sink/push`.
+New customers: sign in with any new email; you then get the profile form. Staff accounts are created through the Admin Panel.
 
-Staff also need TOTP. The demo staff TOTP secret (local only, seeded only when `APP_ENV=local`) is `KVXGSVDSMF3GK3CEMVWW6VCPKRIDEMBSGY`; add it to an authenticator app or generate codes with any RFC 6238 tool. Never reuse it anywhere else.
+Seeded demo users:
+| Role | Email | Phone (contact) |
+|---|---|---|
+| Owner | owner@unitravel.example | +447700900001 |
+| Admin | sara@unitravel.example | +447700900002 |
+| Cargo | cargo@unitravel.example | +447700900003 |
+| Compliance | compliance@unitravel.example | +447700900004 |
+| Developer | dev@unitravel.example | +447700900005 |
+| Customer | neda@student.example | +447700900010 |
+| Customer (no email, cannot sign in through the UIs) | none | +989120000001 |
+
+The demo staff TOTP secret (local only, seeded only when `APP_ENV=local`) is `KVXGSVDSMF3GK3CEMVWW6VCPKRIDEMBSGY`. The test box makes it unnecessary in the browser. Never reuse it anywhere else.
 
 ## Tests
 | Layer | Command |

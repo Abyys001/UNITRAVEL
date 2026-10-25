@@ -28,6 +28,7 @@ export function proxy(req: NextRequest) {
   ].join("; ")
   const headers = new Headers(req.headers)
   headers.set("x-nonce", nonce)
+  headers.set("x-locale", seg)
   const res = NextResponse.next({ request: { headers } })
   res.headers.set("Content-Security-Policy", csp)
   res.cookies.set("ut_locale", seg, { path: "/", sameSite: "lax", maxAge: 365 * 86400 })

@@ -13,9 +13,11 @@ import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { TruthBadge } from "@/components/flight/itinerary"
 import { EmptyState, TileError } from "@/components/bento"
 import { ListSkeleton, TableScroll } from "@/components/case"
+import { ListCard, Pager, tableClass, usePaged } from "@/components/data-list"
 import { Field, PageHead } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime, minutes, money } from "@/lib/format"
+import { type MsgKey, useT } from "@/lib/i18n"
 import type { FlightDetail } from "@/lib/types"
 
 const place = (code: string) => (code.length === 3 ? { city: code.toUpperCase() } : { airport: code.toUpperCase() })
@@ -53,10 +55,12 @@ function StaffSearch() {
     try { const r = await api<{ id: string }>("/v1/admin/flight-searches", { body: built }); setSearchId(r.id) } catch (e2) { setStartErr(e2) }
   }
   const s = state.data
+  const t = useT()
+  const paged = usePaged<Itinerary>(s?.results ?? [])
   return (
     <div>
       <PageHead kicker={ref ? <>Finding options for <Link className="num hover:underline" href={`/requests/${ref}`}>{ref}</Link>{req.data && ` · ${req.data.routeLabel}`}</> : "Same engine as customers, with staff fields"} title="Staff flight search" />
-      <form onSubmit={start} className="sticky top-12 z-10 flex flex-wrap items-end gap-2 border-b border-rule bg-ledger px-5 py-3">
+      <form onSubmit={start} className="mx-4 mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-rule bg-surface-raised p-4 shadow-[var(--tile-shadow)] md:mx-6">
         {!ref && <Field label="Trip" className="w-28"><NativeSelect className="field-input" value={f.trip} onChange={(e) => setF({ ...f, trip: e.target.value })}><option value="ONE_WAY">One way</option><option value="RETURN">Return</option></NativeSelect></Field>}
         <Field label="From" className="w-20"><input className="field-input font-mono uppercase" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} maxLength={3} required disabled={!!ref} /></Field>
         <Field label="To" className="w-20"><input className="field-input font-mono uppercase" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} maxLength={3} required disabled={!!ref} /></Field>
@@ -72,28 +76,28 @@ function StaffSearch() {
         {ref && <p className="pb-1.5 text-steel">Uses the request&apos;s passengers, cabin and preferences.</p>}
         <Button size="sm" type="submit" loading={state.isFetching && s?.status === "RUNNING"}>Search</Button>
       </form>
-      <div className="px-5 py-3">
+      <div className="px-4 py-4 md:px-6">
         {(startErr ?? state.error) ? <TileError message={errText(startErr ?? state.error)} /> : null}
         {s && s.status === "RUNNING" && !s.results.length && <ListSkeleton rows={4} className="p-0" />}
-        {s && <p className="mb-2 text-steel" role="status" data-testid="search-status">{s.status === "RUNNING" ? `Searching… ${s.progress.sourcesDone}/${s.progress.sourcesTotal} sources` : `${s.results.length} results · ${s.status.toLowerCase()} · rules v${s.ruleVersion}`}{s.progress.removedByPolicy > 0 && ` · ${s.progress.removedByPolicy} removed by policy`}{s.notices.length > 0 && ` · ${s.notices.join(" · ")}`}</p>}
+        {s && <p className="mb-3 text-[12.5px] text-steel" role="status" data-testid="search-status">{s.status === "RUNNING" ? `Searching… ${s.progress.sourcesDone}/${s.progress.sourcesTotal} sources` : `${s.results.length} results · ${s.status.toLowerCase()} · rules v${s.ruleVersion}`}{s.progress.removedByPolicy > 0 && ` · ${s.progress.removedByPolicy} removed by policy`}{s.notices.length > 0 && ` · ${s.notices.join(" · ")}`}</p>}
         {s && s.status !== "RUNNING" && !s.results.length && <EmptyState title="No itineraries." />}
         {s && s.results.length > 0 && (
-          <TableScroll><table className="w-full border-collapse bg-surface-raised" data-testid="search-results">
-            <thead className="bg-surface-raised"><tr className="border-b border-rule">{["Price", "Itinerary", "Duration", "Build", "Truth", "Staff fields", ""].map((h) => <th key={h} className="cap px-2 py-1.5 text-start font-normal">{h}</th>)}</tr></thead>
+          <ListCard className="mx-0"><TableScroll><table className={tableClass} data-testid="search-results">
+            <thead><tr>{(["pg.s.price", "pg.s.itinerary", "pg.s.duration", "pg.s.build", "pg.s.truth", "pg.s.staff"] as MsgKey[]).map((h) => <th key={h}>{t(h)}</th>)}<th><span className="sr-only">{t("pg.s.actions")}</span></th></tr></thead>
             <tbody>
-              {s.results.map((it: Itinerary) => (
-                <tr key={it.id} className="border-b border-rule/70 align-top">
-                  <td className="num px-2 py-1.5 font-medium whitespace-nowrap">{it.price ? money(it.price.total) : <span className="text-steel" title="Requires pricing.read.internal">Hidden</span>}{it.price?.isSumOfTickets && <span className="block text-[10px] font-normal text-steel">sum of tickets</span>}</td>
-                  <td className="px-2 py-1.5">{it.components.flatMap((c) => c.slices).map((sl, i) => <p key={i} className="num text-[12px]">{sl.segments.map((g) => `${g.marketing.carrier}${g.marketing.flightNumber} ${g.origin.iata}–${g.destination.iata} ${g.departure.local.slice(5).replace("T", " ")}`).join(" · ")}</p>)}{it.riskFlags.length > 0 && <p className="font-mono text-[10px] text-danger">{it.riskFlags.join(" ")}</p>}</td>
-                  <td className="num px-2 py-1.5 whitespace-nowrap">{minutes(it.durationMin)} · {it.stops} stop{it.stops === 1 ? "" : "s"}</td>
-                  <td className="px-2 py-1.5"><span className={cn("font-mono text-[10.5px]", it.ticketing === "SEPARATE_TICKETS" && "text-danger")}>{it.construction}{it.ticketing === "SEPARATE_TICKETS" ? " · SEPARATE" : ""}</span></td>
-                  <td className="px-2 py-1.5"><span className="flex flex-wrap gap-1">{it.truth.map((t, i) => <TruthBadge key={i} t={t} />)}</span></td>
-                  <td className="px-2 py-1.5 font-mono text-[10.5px] text-steel">{it.components.map((c, i) => <p key={i}>{c.source.provider} · {c.source.providerOfferId.slice(0, 16)} · {c.slices.flatMap((x) => x.segments).map((g) => `${g.bookingClass ?? "?"}/${g.fareBasis ?? "?"}`).join(" ")} · {fmtDateTime(c.source.fetchedAt)}</p>)}</td>
-                  <td className="px-2 py-1.5">{ref && it.price ? <Button size="xs" onClick={() => router.push(`/requests/${ref}/quote?add=${encodeURIComponent(it.id)}`)} data-testid="add-to-quote">Add to quote</Button> : null}</td>
+              {paged.rows.map((it: Itinerary) => (
+                <tr key={it.id} className="align-top">
+                  <td className="num font-medium whitespace-nowrap">{it.price ? money(it.price.total) : <span className="text-steel" title="Requires pricing.read.internal">Hidden</span>}{it.price?.isSumOfTickets && <span className="block text-[10px] font-normal text-steel">sum of tickets</span>}</td>
+                  <td>{it.components.flatMap((c) => c.slices).map((sl, i) => <p key={i} className="num text-[12px]">{sl.segments.map((g) => `${g.marketing.carrier}${g.marketing.flightNumber} ${g.origin.iata}–${g.destination.iata} ${g.departure.local.slice(5).replace("T", " ")}`).join(" · ")}</p>)}{it.riskFlags.length > 0 && <p className="text-[11.5px] text-danger">{it.riskFlags.join(" ")}</p>}</td>
+                  <td className="num whitespace-nowrap">{minutes(it.durationMin)} · {it.stops} stop{it.stops === 1 ? "" : "s"}</td>
+                  <td><span className={cn("num text-[11.5px]", it.ticketing === "SEPARATE_TICKETS" && "text-danger")}>{it.construction}{it.ticketing === "SEPARATE_TICKETS" ? " · SEPARATE" : ""}</span></td>
+                  <td><span className="flex flex-wrap gap-1">{it.truth.map((t, i) => <TruthBadge key={i} t={t} />)}</span></td>
+                  <td className="num text-[11.5px] text-steel">{it.components.map((c, i) => <p key={i}>{c.source.provider} · {c.source.providerOfferId.slice(0, 16)} · {c.slices.flatMap((x) => x.segments).map((g) => `${g.bookingClass ?? "?"}/${g.fareBasis ?? "?"}`).join(" ")} · {fmtDateTime(c.source.fetchedAt)}</p>)}</td>
+                  <td>{ref && it.price ? <Button size="xs" onClick={() => router.push(`/requests/${ref}/quote?add=${encodeURIComponent(it.id)}`)} data-testid="add-to-quote">Add to quote</Button> : null}</td>
                 </tr>
               ))}
             </tbody>
-          </table></TableScroll>
+          </table></TableScroll><Pager {...paged} className="border-t border-rule" /></ListCard>
         )}
       </div>
     </div>

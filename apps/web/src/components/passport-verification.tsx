@@ -7,6 +7,7 @@ import { Button } from "@unitravel/ui/components/button"
 
 import { VerificationBadge } from "@/components/verification-badge"
 import { api, ApiError } from "@/lib/api"
+import { countryName } from "@/lib/countries"
 import { useI18n } from "@/lib/i18n"
 import { uploadFile } from "@/lib/upload"
 
@@ -14,7 +15,7 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 /** Passport scan upload and review-then-confirm for one traveller (ADR-0005). The server decides every state; this only asks. */
 export function PassportVerification({ traveller, onChanged }: { traveller: TravellerView; onChanged: () => void }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const v = traveller.verification
   const [busy, setBusy] = useState<"scan" | "confirm" | null>(null)
   const [msg, setMsg] = useState<{ kind: "ok" | "error"; text: string } | null>(null)
@@ -33,6 +34,8 @@ export function PassportVerification({ traveller, onChanged }: { traveller: Trav
     } catch (e) { setMsg({ kind: "error", text: e instanceof ApiError ? e.problem.detail ?? e.problem.title : t("common.error") }) } finally { setBusy(null) }
   }
   const confirm = async () => {
+    // The scan is only demanded once the customer tries to send; the button is never silently dead.
+    if (!v.scan) { setMsg({ kind: "error", text: t("identity.confirmNeedScan") }); return }
     setBusy("confirm"); setMsg(null)
     try {
       await api(`/v1/me/travellers/${traveller.id}/identity/confirm`, { body: { reviewHash: v.reviewHash } })
@@ -42,7 +45,7 @@ export function PassportVerification({ traveller, onChanged }: { traveller: Trav
     } finally { setBusy(null) }
   }
   // Values are shown as they appear in the passport (ISO dates, Latin names), so they are compared like for like.
-  const row = (label: string, value: string) => <div className="flex justify-between gap-4 py-1"><dt className="text-steel">{label}</dt><dd className="font-medium" dir="ltr">{value}</dd></div>
+  const row = (label: string, value: string, dir: "ltr" | "auto" = "ltr") => <div className="flex justify-between gap-4 py-1"><dt className="text-steel">{label}</dt><dd className="font-medium" dir={dir}>{value}</dd></div>
 
   return (
     <div className="space-y-4" data-testid="passport-verification">
@@ -59,9 +62,9 @@ export function PassportVerification({ traveller, onChanged }: { traveller: Trav
         <p className="mt-1 text-xs text-steel">{t("identity.scanHelp")}</p>
         <p className="mt-2 text-sm" aria-live="polite">{v.scan ? `${t("identity.scanReady")} · ${v.scan.filename}` : t("identity.scanNone")}</p>
         {v.status === "VERIFIED" && <p className="mt-1 text-xs text-steel">{t("identity.scanReplaceWarn")}</p>}
-        <label className="mt-2 inline-block">
-          <span className="sr-only">{v.scan ? t("identity.scanReplace") : t("identity.scanUpload")}</span>
-          <input type="file" accept="image/jpeg,image/png" disabled={!doc || busy !== null} data-testid="scan-input" className="block text-sm file:me-3 file:rounded-xl file:border file:border-navy-900 file:bg-white file:px-3 file:py-2 file:text-navy-900" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = "" }} />
+        <label className="btn-outline-navy mt-2 inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-navy-900 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-orange/60 sm:w-auto pointer-coarse:min-h-11">
+          {v.scan ? t("identity.scanReplace") : t("identity.scanUpload")}
+          <input type="file" accept="image/jpeg,image/png" disabled={!doc || busy !== null} data-testid="scan-input" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); e.target.value = "" }} />
         </label>
       </div>
       {doc && canConfirm && (
@@ -71,13 +74,12 @@ export function PassportVerification({ traveller, onChanged }: { traveller: Trav
           <dl className="mt-2 text-sm">
             {row(t("identity.fieldName"), `${traveller.givenNames} ${traveller.surname}`)}
             {row(t("identity.fieldDob"), traveller.dateOfBirth)}
-            {row(t("identity.fieldNationality"), traveller.nationality)}
+            {row(t("identity.fieldNationality"), countryName(traveller.nationality, locale), "auto")}
             {row(t("identity.fieldNumber"), `••••${doc.last4}`)}
-            {row(t("identity.fieldIssuing"), doc.issuingCountry)}
+            {row(t("identity.fieldIssuing"), countryName(doc.issuingCountry, locale), "auto")}
             {row(t("identity.fieldExpiry"), doc.expiryDate)}
           </dl>
-          {!v.scan && <p className="mt-2 text-xs text-danger">{t("identity.confirmNeedScan")}</p>}
-          <Button className="mt-3" disabled={!v.scan || busy !== null} onClick={() => void confirm()}>{t("identity.confirm")}</Button>
+          <Button className="mt-3" disabled={busy !== null} onClick={() => void confirm()}>{t("identity.confirm")}</Button>
         </section>
       )}
       {msg && <p role={msg.kind === "error" ? "alert" : "status"} className={`text-sm ${msg.kind === "error" ? "text-danger" : "text-steel"}`}>{msg.text}</p>}

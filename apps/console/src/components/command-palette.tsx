@@ -26,7 +26,10 @@ export function CommandPalette({ open, onClose, items, goTo, t }: { open: boolea
     const needle = q.trim().toLowerCase()
     const hits = needle ? items.filter((i) => `${i.label} ${i.group} ${i.keywords ?? ""}`.toLowerCase().includes(needle)) : items
     const go = needle ? goTo(q.trim()) : null
-    return go ? [go, ...hits] : hits
+    if (!go) return hits
+    // A page whose own name contains the text ("lanes" → Cargo lanes) beats the surface's free-text search.
+    const named = needle.length >= 3 ? hits.filter((i) => i.label.toLowerCase().includes(needle)) : []
+    return [...named, go, ...hits.filter((i) => !named.includes(i))]
   }, [q, items, goTo])
 
   useEffect(() => {

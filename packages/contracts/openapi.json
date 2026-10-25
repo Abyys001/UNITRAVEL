@@ -307,6 +307,20 @@
         ]
       }
     },
+    "/v1/auth/dev-sink/totp": {
+      "get": {
+        "operationId": "AuthController_devTotp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/auth/mfa/totp/verify": {
       "post": {
         "operationId": "AuthController_verifyTotp",
@@ -1046,6 +1060,27 @@
     "/v1/dev/roles/{key}": {
       "put": {
         "operationId": "DevUsersController_updateRole",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      },
+      "delete": {
+        "operationId": "DevUsersController_deleteRole",
         "parameters": [
           {
             "name": "key",
@@ -1980,6 +2015,52 @@
         ]
       }
     },
+    "/v1/admin/compliance/policies/{id}/reject": {
+      "post": {
+        "operationId": "ComplianceController_rejectPolicy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
+    "/v1/admin/compliance/policies/{id}/withdraw": {
+      "post": {
+        "operationId": "ComplianceController_withdrawPolicy",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-compliance"
+        ]
+      }
+    },
     "/v1/admin/compliance/screen": {
       "post": {
         "operationId": "ComplianceController_screen",
@@ -2232,6 +2313,7 @@
     },
     "/v1/admin/events": {
       "get": {
+        "description": "text/event-stream. `queue-counts` carries the queue summary; `request-changed` carries StaffRequestChangedEvent {requestType, ref, version, status, statusLabel}.",
         "operationId": "AdminFlightRequestsController_events",
         "parameters": [],
         "responses": {
@@ -2239,6 +2321,7 @@
             "description": ""
           }
         },
+        "summary": "Staff live events (SSE)",
         "tags": [
           "admin-flight-requests"
         ]
@@ -3325,6 +3408,29 @@
         ]
       }
     },
+    "/v1/admin/cargo/requests/{ref}/payments": {
+      "post": {
+        "operationId": "AdminCargoController_payment",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo"
+        ]
+      }
+    },
     "/v1/admin/cargo/requests/{ref}/contact-attempts": {
       "post": {
         "operationId": "AdminCargoController_contact",
@@ -4112,6 +4218,20 @@
     "/v1/dev-sink/sms": {
       "get": {
         "operationId": "NotificationsController_smsSink",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/dev-sink/email": {
+      "get": {
+        "operationId": "NotificationsController_emailSink",
         "parameters": [],
         "responses": {
           "200": {

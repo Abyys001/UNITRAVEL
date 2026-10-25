@@ -103,11 +103,13 @@ describe("Stage 1 exit criteria (ch. 31.3)", () => {
     const first = s.refreshToken!
     const r1 = await s.post("/v1/auth/refresh", { refreshToken: first })
     expect(r1.status).toBe(200)
+    // Reuse inside the grace window is a concurrent refresh (hardening.e2e.ts); theft is reuse after it.
+    await new Promise((r) => setTimeout(r, 10_500))
     const reuse = await s.post("/v1/auth/refresh", { refreshToken: first })
     expect(reuse.status).toBe(401)
     const r2 = await s.post("/v1/auth/refresh", { refreshToken: r1.body.refreshToken })
     expect(r2.status).toBe(401)
-  })
+  }, 30_000)
 
   it("configuration is versioned: publishing needs step-up and produces an audited new version", async () => {
     const dev = await staffSession(STAFF.developer)

@@ -13,10 +13,10 @@ import { NotificationsService } from "../notifications/notifications.service"
 import { addBusinessMinutes } from "../platform/business-hours"
 import type { DispatchedEvent } from "../platform/outbox.dispatcher"
 import { TimersService } from "../platform/timers.service"
+import { neutralDeclineForUser } from "../compliance/customer-messages"
 import { ReferenceService } from "../reference/reference.service"
 import { RequestsService, SYSTEM } from "./requests.service"
 
-const NEUTRAL_DECLINE = { en: "We are unable to arrange this request. If you have questions, reply here and our team will help.", fa: "امکان انجام این درخواست برای ما وجود ندارد. اگر پرسشی دارید همین‌جا بنویسید تا تیم ما کمک کند." }
 const ALL_TIMERS = ["fr.unassigned", "fr.unassigned_escalate", "fr.first_contact", "fr.awaiting_1", "fr.awaiting_2", "fr.quote_reminder", "fr.quote_expiry", "fr.deadline_24", "fr.deadline_4", "fr.deadline_2", "fr.deadline", "fr.complete"]
 
 /** Automatic screening on submission (ch. 27.1) and SLA timers (ch. 13.5) for flight requests. */
@@ -45,7 +45,7 @@ export class FlightLifecycle implements OnModuleInit {
       const officer: MachineActor = { kind: "STAFF", userId: o.actorUserId, permissions: new Set(["compliance.case.decide"]) }
       if (o.decision === "RELEASE" && r.status === "COMPLIANCE_HOLD") await this.requests.transition(tx, r, "release_hold", officer, { facts: { decisionReason: o.reason }, reasonText: o.reason })
       if (o.decision === "DECLINE") {
-        const msg = o.customerMessage || NEUTRAL_DECLINE[r.submittedLocale]
+        const msg = o.customerMessage || await neutralDeclineForUser(tx, r.customerUserId)
         await this.requests.transition(tx, r, "decline", officer, { facts: { reasonCode: o.reasonCode ?? "COMPLIANCE", message: msg }, reasonCode: o.reasonCode ?? "COMPLIANCE", reasonText: o.reason, message: msg })
         await this.requests.addMessage(tx, r, o.actorUserId, "TO_CUSTOMER", msg, [], false)
       }

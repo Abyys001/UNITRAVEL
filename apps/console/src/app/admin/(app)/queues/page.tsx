@@ -14,27 +14,44 @@ import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { FormDialog } from "@/components/form-dialog"
 import { EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
 import { ListSkeleton, SlaChip, StateChip } from "@/components/case"
+import { Chips, ListCard, tableClass, Toolbar } from "@/components/data-list"
+import { PageHead } from "@/components/ui"
 import { api, errText } from "@/lib/api"
-import { fmtDate } from "@/lib/format"
-import { useT } from "@/lib/i18n"
+import { fmtDate, human } from "@/lib/format"
+import { type MsgKey, useT } from "@/lib/i18n"
 import { useFallbackInterval, useQueueSummary } from "@/lib/live"
 import { useSession } from "@/lib/session"
 import type { CargoListItem, FlightDetail, FlightListItem, Page, QueueSummary } from "@/lib/types"
 import { readViews, useSavedViews, writeViews } from "@/lib/views"
 
-const TABS = [
-  { key: "new", label: "New", count: (s: QueueSummary) => s.new },
-  { key: "mine", label: "Mine", count: (s: QueueSummary) => s.mine },
-  { key: "awaiting", label: "Awaiting customer", count: (s: QueueSummary) => s.awaitingCustomer },
-  { key: "quoted", label: "Quoted", count: (s: QueueSummary) => s.quoted },
-  { key: "reserved", label: "Reserved", count: (s: QueueSummary) => s.reserved },
-  { key: "cargo", label: "Cargo" },
-  { key: "all", label: "All" },
-] as const
+const TABS: readonly { key: string; label: MsgKey; count?: (s: QueueSummary) => number }[] = [
+  { key: "new", label: "nav.new", count: (s: QueueSummary) => s.new },
+  { key: "mine", label: "nav.mine", count: (s: QueueSummary) => s.mine },
+  { key: "awaiting", label: "nav.awaiting", count: (s: QueueSummary) => s.awaitingCustomer },
+  { key: "quoted", label: "nav.quoted", count: (s: QueueSummary) => s.quoted },
+  { key: "reserved", label: "nav.reserved", count: (s: QueueSummary) => s.reserved },
+  { key: "cargo", label: "nav.cargo" },
+  { key: "all", label: "nav.all" },
+] 
 const FLIGHT_STATUSES = ["SUBMITTED", "COMPLIANCE_HOLD", "NEW", "IN_REVIEW", "AWAITING_CUSTOMER", "QUOTED", "ACCEPTED", "RESERVED", "TICKETED", "COMPLETED", "DECLINED", "CANCELLED", "EXPIRED"]
-const CARGO_TABS = [{ key: "open", label: "Open" }, { key: "new", label: "New" }, { key: "hold", label: "Compliance hold" }, { key: "", label: "All" }]
+const CARGO_TABS: { key: string; label: MsgKey }[] = [{ key: "open", label: "cargo.tab.open" }, { key: "new", label: "nav.new" }, { key: "hold", label: "cargo.tab.hold" }, { key: "all", label: "nav.all" }]
 
 type Row = { ref: string; kind: "FLIGHT" | "CARGO"; flight?: FlightListItem; cargo?: CargoListItem }
+
+const submittedOf = (r: Row) => Date.parse((r.flight ?? r.cargo)!.submittedAt)
+/**
+ * The API orders by SLA due time, so old breached requests would bury new ones. Keep SLA state as the first key
+ * (breached, then running by due time, then none) and put the newest first among breached and none; "newest" ignores SLA state.
+ */
+function compareRows(newest: boolean) {
+  const state = (r: Row) => { const sla = r.flight ? (r.flight.slaBreached ? 0 : r.flight.slaDueAt ? 1 : 2) : r.cargo!.slaDueAt ? (Date.parse(r.cargo!.slaDueAt) < Date.now() ? 0 : 1) : 2; return sla }
+  const due = (r: Row) => Date.parse((r.flight ?? r.cargo)!.slaDueAt ?? "") || 0
+  return (a: Row, b: Row) => {
+    if (newest) return submittedOf(b) - submittedOf(a)
+    const sa = state(a)
+    return sa - state(b) || (sa === 1 ? due(a) - due(b) : 0) || submittedOf(b) - submittedOf(a)
+  }
+}
 
 function QueuesInner() {
   const params = useSearchParams()
@@ -47,12 +64,14 @@ function QueuesInner() {
   const filters = { q: params.get("q") ?? "", status: params.get("status") ?? "", from: params.get("from") ?? "", to: params.get("to") ?? "", flags: params.get("flags") ?? "", ctab: params.get("ctab") ?? "open" }
   const [draft, setDraft] = useState(filters)
   useEffect(() => { setDraft(filters) }, [params.toString()]) // eslint-disable-line react-hooks/exhaustive-deps
+  const newest = params.get("sort") === "newest"
+  const toggleSort = () => { const u = new URLSearchParams(params.toString()); if (newest) u.delete("sort"); else u.set("sort", "newest"); router.replace(`/queues?${u.toString()}`) }
   const summary = useQueueSummary()
   const listInterval = useFallbackInterval(20_000)
 
   const qs = (cursor?: string) => {
     const u = new URLSearchParams({ limit: "40" })
-    if (isCargo) { if (filters.ctab) u.set("tab", filters.ctab); if (filters.status) u.set("status", filters.status) } else {
+    if (isCargo) { if (filters.ctab && filters.ctab !== "all") u.set("tab", filters.ctab); if (filters.status) u.set("status", filters.status) } else {
       if (tab !== "all") u.set("tab", tab)
       for (const k of ["q", "status", "from", "to", "flags"] as const) if (filters[k]) u.set(k, filters[k])
     }
@@ -66,7 +85,7 @@ function QueuesInner() {
     getNextPageParam: (p) => p.nextCursor ?? undefined,
     refetchInterval: listInterval,
   })
-  const rows: Row[] = useMemo(() => (list.data?.pages ?? []).flatMap((p) => p.items.map((i) => (isCargo ? { ref: i.ref, kind: "CARGO" as const, cargo: i as CargoListItem } : { ref: i.ref, kind: "FLIGHT" as const, flight: i as FlightListItem }))), [list.data, isCargo])
+  const rows: Row[] = useMemo(() => (list.data?.pages ?? []).flatMap((p) => p.items.map((i) => (isCargo ? { ref: i.ref, kind: "CARGO" as const, cargo: i as CargoListItem } : { ref: i.ref, kind: "FLIGHT" as const, flight: i as FlightListItem }))).sort(compareRows(newest)), [list.data, isCargo, newest])
 
   const [focus, setFocus] = useState(0)
   useEffect(() => { setFocus(0) }, [tab, params.toString()])
@@ -114,8 +133,13 @@ function QueuesInner() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const views = useSavedViews()
   const activeFilters = [filters.q, filters.status, filters.from, filters.to, filters.flags].filter(Boolean).length
+  useEffect(() => {
+    if (JSON.stringify(draft) === JSON.stringify(filters)) return
+    const h = setTimeout(() => apply({}), 400)
+    return () => clearTimeout(h)
+  }) // eslint-disable-line react-hooks/exhaustive-deps
   const currentQuery = params.toString() || `tab=${tab}`
-  const startSave = () => setSaving(`${TABS.find((x) => x.key === tab)?.label ?? tab}${filters.q ? ` · ${filters.q}` : ""}`)
+  const startSave = () => setSaving(`${t(TABS.find((x) => x.key === tab)?.label ?? "nav.queues")}${filters.q ? ` · ${filters.q}` : ""}`)
   const commitSave = () => {
     const name = saving?.trim()
     setSaving(null)
@@ -126,97 +150,92 @@ function QueuesInner() {
 
   const s = summary.data
   const hrefOf = (r: Row) => (r.kind === "CARGO" ? `/cargo/${r.ref}` : `/requests/${r.ref}`)
+  const activeView = views.find((v) => v.query === currentQuery)
+  const th = (keys: MsgKey[]) => keys.map((k) => <th key={k}>{t(k)}</th>)
   return (
-    <div className="flex h-[calc(100dvh-7rem)] flex-col md:h-[calc(100dvh-3rem)]">
-      <div className="border-b border-rule bg-surface-raised px-4 pt-3">
-        <div className="flex items-baseline justify-between gap-4">
-          <h1 className="font-display text-[22px]">Queues</h1>
-          <p className="hidden text-[11px] text-steel lg:block"><span className="kbd">j</span>/<span className="kbd">k</span> {t("q.keys")} · <span className="kbd">Enter</span> open · <span className="kbd">c</span> claim · <span className="kbd">n</span> note</p>
-        </div>
-        <nav className="-mb-px mt-2 flex gap-4 overflow-x-auto" aria-label="Queue tabs">
-          {TABS.filter((x) => (x.key === "cargo" ? can("cargo_request.read.any") : can("flight_request.read.any"))).map((x) => (
-            <Link key={x.key} href={`/queues?tab=${x.key}`} aria-current={tab === x.key ? "page" : undefined} className={cn("inline-flex min-h-9 items-center border-b-2 whitespace-nowrap", tab === x.key ? "border-orange font-medium text-ink" : "border-transparent text-steel hover:text-ink")}>
-              {x.label}{"count" in x && s ? <span className="num ms-1.5 rounded-full bg-hover px-1.5 text-[11px] text-ink">{x.count(s)}</span> : null}
-            </Link>
-          ))}
-        </nav>
-      </div>
-      <div className="z-10 border-b border-rule bg-ledger" data-testid="queue-filters">
-        <div className="flex items-center gap-2 px-4 py-1.5 md:hidden">
-          <Button size="sm" variant="outline" type="button" aria-expanded={filtersOpen} aria-controls="queue-filter-form" onClick={() => setFiltersOpen((o) => !o)}><SlidersHorizontal /> {t("q.filters")}{activeFilters > 0 && <StatusChip tone="info" className="ms-1">{t("q.filters.active", { n: activeFilters })}</StatusChip>}</Button>
-        </div>
-        <form id="queue-filter-form" className={cn("flex-wrap items-end gap-2 px-4 py-2 md:flex", filtersOpen ? "flex" : "hidden")} onSubmit={(e) => { e.preventDefault(); apply({}) }}>
+    <div className="flex h-[calc(100dvh-7rem)] flex-col md:h-[calc(100dvh-3.5rem)]">
+      <PageHead title={t("nav.requests")}>
+        <Button size="sm" variant="outline" type="button" aria-pressed={newest} onClick={toggleSort} data-testid="sort-newest" className={cn(newest && "bg-hover")}>{t("q.sortNewest")}</Button>
+        <p className="hidden text-[11.5px] text-steel xl:block pointer-coarse:hidden"><span className="kbd">j</span>/<span className="kbd">k</span> {t("q.keys")} · <span className="kbd">Enter</span> open · <span className="kbd">c</span> claim · <span className="kbd">n</span> note</p>
+      </PageHead>
+      <nav className="flex gap-1 overflow-x-auto border-b border-rule bg-surface-raised px-4 md:px-6" aria-label={t("q.tabs")}>
+        {TABS.filter((x) => (x.key === "cargo" ? can("cargo_request.read.any") : can("flight_request.read.any"))).map((x) => (
+          <Link key={x.key} href={`/queues?tab=${x.key}`} aria-current={tab === x.key ? "page" : undefined} className={cn("-mb-px inline-flex min-h-10 items-center gap-1.5 border-b-2 px-2.5 whitespace-nowrap pointer-coarse:min-h-11", tab === x.key ? "border-orange font-medium text-ink" : "border-transparent text-steel hover:text-ink")}>
+            {t(x.label)}{x.count && s ? <span data-testid="nav-count" className="num rounded-full bg-hover px-1.5 text-[11px] text-ink">{x.count(s)}</span> : null}
+          </Link>
+        ))}
+      </nav>
+      <form className="z-10 border-b border-rule" data-testid="queue-filters" onSubmit={(e) => { e.preventDefault(); apply({}) }}>
+        <Toolbar query={isCargo ? undefined : draft.q} onQuery={isCargo ? undefined : (q) => setDraft({ ...draft, q })} placeholder={t("pg.q.search")} count={rows.length}>
           {isCargo ? (
-            <div className="flex flex-wrap gap-1">{CARGO_TABS.map((c) => <button key={c.key} type="button" onClick={() => apply({ ctab: c.key })} aria-pressed={filters.ctab === c.key} className={cn("min-h-8 rounded-sm border px-2.5", filters.ctab === c.key ? "border-ink bg-ink text-surface" : "border-rule-strong hover:bg-hover")}>{c.label}</button>)}</div>
+            <Chips label={t("cargo.tab.open")} value={filters.ctab} options={CARGO_TABS.map((c) => ({ value: c.key, label: t(c.label) }))} onChange={(v) => apply({ ctab: v })} />
           ) : (
             <>
-              <input aria-label="Search reference or phone" placeholder="Ref or phone" className="field-input min-h-8 w-full font-mono sm:w-44" value={draft.q} onChange={(e) => setDraft({ ...draft, q: e.target.value })} dir="ltr" />
-              <NativeSelect aria-label="Status" className="field-input min-h-8 w-full sm:w-40" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}><option value="">Any status</option>{FLIGHT_STATUSES.map((x) => <option key={x}>{x}</option>)}</NativeSelect>
-              <label className="flex flex-wrap items-center gap-1 text-steel">Travel<input type="date" aria-label="Travel from" className="field-input min-h-8 w-36" value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} />–<input type="date" aria-label="Travel to" className="field-input min-h-8 w-36" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} /></label>
-              <label className="flex min-h-8 items-center gap-1.5"><input type="checkbox" className="size-4" checked={draft.flags === "urgent"} onChange={(e) => setDraft({ ...draft, flags: e.target.checked ? "urgent" : "" })} /> Urgent only</label>
-              <Button size="sm" type="submit">Filter</Button>
-              {activeFilters > 0 && <Button size="sm" variant="ghost" type="button" onClick={() => router.replace(`/queues?tab=${tab}`)}>Clear</Button>}
+              <Button size="sm" variant="outline" type="button" className="md:hidden" aria-expanded={filtersOpen} aria-controls="queue-filter-extra" onClick={() => setFiltersOpen((o) => !o)}><SlidersHorizontal /> {t("q.filters")}{activeFilters > 0 && <StatusChip tone="info" className="ms-1">{t("q.filters.active", { n: activeFilters })}</StatusChip>}</Button>
+              <div id="queue-filter-extra" className={cn("w-full flex-wrap items-center gap-2 md:flex md:w-auto", filtersOpen ? "flex" : "hidden")}>
+                <NativeSelect aria-label={t("pg.c.status")} className="field-input w-full sm:w-44" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}><option value="">{t("pg.q.anyStatus")}</option>{FLIGHT_STATUSES.map((x) => <option key={x} value={x}>{human(x)}</option>)}</NativeSelect>
+                <label className="flex items-center gap-1.5 text-[12px] text-steel">{t("pg.q.from")}<input type="date" className="field-input w-36" value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} /></label>
+                <label className="flex items-center gap-1.5 text-[12px] text-steel">{t("pg.q.to")}<input type="date" className="field-input w-36" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} /></label>
+                <label className="flex min-h-8 items-center gap-1.5"><input type="checkbox" className="size-4" checked={draft.flags === "urgent"} onChange={(e) => setDraft({ ...draft, flags: e.target.checked ? "urgent" : "" })} /> {t("pg.q.urgentOnly")}</label>
+                {activeFilters > 0 && <Button size="sm" variant="ghost" type="button" onClick={() => router.replace(`/queues?tab=${tab}`)}>{t("pg.q.clear")}</Button>}
+              </div>
             </>
           )}
-        </form>
-        <div className="flex items-center gap-2 border-t border-rule/60 px-4 py-1.5" role="group" aria-label={t("q.views")}>
-          <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
-            <Bookmark className="size-3.5 shrink-0 text-steel" aria-hidden />
-            {views.map((v) => (
-              <span key={v.name} className={cn("inline-flex shrink-0 items-center rounded-full border", v.query === currentQuery ? "border-orange bg-warning-subtle" : "border-rule-strong")}>
-                <button type="button" onClick={() => router.replace(`/queues?${v.query}`)} aria-current={v.query === currentQuery ? "true" : undefined} className="min-h-8 rounded-s-full ps-3 pe-1.5 hover:bg-hover">{v.name}</button>
-                <button type="button" aria-label={t("q.views.remove", { name: v.name })} onClick={() => writeViews(readViews().filter((x) => x.name !== v.name))} className="grid min-h-8 min-w-8 place-items-center rounded-e-full text-steel hover:bg-hover hover:text-ink"><X className="size-3.5" /></button>
-              </span>
-            ))}
-            {!views.length && !saving && <span className="truncate text-[12px] text-steel">{t("q.views.none")}</span>}
+          <div className="flex items-center gap-1.5 md:ms-auto" role="group" aria-label={t("q.views")}>
+            {saving !== null ? (
+              <>
+                <input aria-label={t("q.views.name")} className="field-input w-36 sm:w-44" value={saving} onChange={(e) => setSaving(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); commitSave() } }} autoFocus maxLength={40} dir="auto" />
+                <Button size="sm" type="button" onClick={commitSave}>{t("common.save")}</Button>
+                <Button size="sm" variant="ghost" type="button" onClick={() => setSaving(null)}>{t("common.cancel")}</Button>
+              </>
+            ) : (
+              <>
+                {views.length > 0 && <NativeSelect aria-label={t("q.views")} className="field-input w-40" value={activeView?.name ?? ""} onChange={(e) => { const v = views.find((x) => x.name === e.target.value); if (v) router.replace(`/queues?${v.query}`) }}><option value="">{t("q.views")}</option>{views.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}</NativeSelect>}
+                {activeView && <Button size="icon-sm" variant="ghost" type="button" aria-label={t("q.views.remove", { name: activeView.name })} onClick={() => writeViews(readViews().filter((x) => x.name !== activeView.name))}><X /></Button>}
+                <Button size="sm" variant="outline" type="button" onClick={startSave}><Bookmark /> {t("q.views.save")}</Button>
+              </>
+            )}
           </div>
-          {saving !== null ? (
-            <form className="flex shrink-0 items-center gap-1" onSubmit={(e) => { e.preventDefault(); commitSave() }}>
-              <input aria-label={t("q.views.name")} className="field-input min-h-8 w-32 sm:w-44" value={saving} onChange={(e) => setSaving(e.target.value)} autoFocus maxLength={40} dir="auto" />
-              <Button size="sm" type="submit">{t("common.save")}</Button>
-              <Button size="sm" variant="ghost" type="button" onClick={() => setSaving(null)}>{t("common.cancel")}</Button>
-            </form>
-          ) : <Button size="sm" variant="outline" type="button" className="shrink-0" onClick={startSave}>{t("q.views.save")}</Button>}
-        </div>
-      </div>
+        </Toolbar>
+      </form>
       <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-auto bg-surface md:bg-surface-raised">
-          {list.error ? <TileError message={errText(list.error)} onRetry={() => void list.refetch()} /> : list.isLoading ? <ListSkeleton rows={8} /> : !rows.length ? (
+        <div className="min-w-0 flex-1 overflow-auto bg-surface pt-3">
+          {list.error ? <TileError error={list.error} onRetry={() => void list.refetch()} /> : list.isLoading ? <ListSkeleton rows={8} /> : !rows.length ? (
             <EmptyState title={t("q.empty")} hint={t("q.empty.hint")} className="py-12" action={activeFilters > 0 ? <Button size="sm" variant="outline" onClick={() => router.replace(`/queues?tab=${tab}`)}>{t("q.empty.clear")}</Button> : undefined} />
           ) : (
             <>
-              <table className="hidden w-full border-collapse md:table" data-testid="queue-table">
-                <thead className="sticky top-0 z-10 bg-surface-raised text-start">
-                  <tr className="border-b border-rule">{(isCargo ? ["Ref", "Customer", "Lane", "Service", "Ready", "Status", "SLA"] : ["Ref", "Customer", "Route", "Travel", "Pax", "Status", "SLA", "Assignee"]).map((h) => <th key={h} className="cap px-3 py-1.5 text-start font-normal">{h}</th>)}</tr>
-                </thead>
-                <tbody ref={tableRef}>
-                  {rows.map((r, i) => (
-                    <tr key={r.ref} data-idx={i} data-ref={r.ref} onClick={() => setFocus(i)} onDoubleClick={() => open(r)} className={cn("cursor-default border-b border-rule/70 hover:bg-hover/60", i === focus && "row-focus")} aria-selected={i === focus}>
-                      <td className="px-3 py-1.5 whitespace-nowrap"><Link href={hrefOf(r)} className="num inline-block py-1 text-[12px] hover:underline">{r.ref}</Link>{r.flight?.urgent && <StatusChip tone="danger" className="ms-1.5">{t("q.urgent")}</StatusChip>}</td>
-                      <td className="max-w-48 truncate px-3 py-1.5" dir="auto">{(r.flight ?? r.cargo)?.customer ?? "—"}</td>
-                      {r.flight ? (
-                        <>
-                          <td className="max-w-56 truncate px-3 py-1.5">{r.flight.routeLabel}{r.flight.hasSnapshot && <span className="ms-1.5 font-mono text-[10px] text-success" title="Has an offer snapshot">SNAP</span>}</td>
-                          <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(r.flight.firstTravelDate)}</td>
-                          <td className="num px-3 py-1.5">{r.flight.travellers}</td>
-                          <td className="px-3 py-1.5"><StateChip value={r.flight.status} /></td>
-                          <td className="px-3 py-1.5"><SlaChip dueAt={r.flight.slaDueAt} startAt={r.flight.submittedAt} breached={r.flight.slaBreached} /></td>
-                          <td className="max-w-32 truncate px-3 py-1.5 text-steel">{r.flight.assignee ?? "—"}</td>
-                        </>
-                      ) : r.cargo ? (
-                        <>
-                          <td className="px-3 py-1.5">{r.cargo.lane}</td>
-                          <td className="px-3 py-1.5 font-mono text-[11px]">{r.cargo.service}</td>
-                          <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(r.cargo.readyDate)}</td>
-                          <td className="px-3 py-1.5"><StateChip value={r.cargo.status} /></td>
-                          <td className="px-3 py-1.5"><SlaChip dueAt={r.cargo.slaDueAt} startAt={r.cargo.submittedAt} /></td>
-                        </>
-                      ) : null}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <ul className="space-y-2 p-3 md:hidden" data-testid="queue-cards" aria-label={t("q.cards")}>
+              <ListCard className="hidden overflow-clip xl:block">
+                <table className={cn(tableClass, "[&_th]:sticky [&_th]:top-0 [&_th]:z-10")} data-testid="queue-table">
+                  <thead><tr>{th(isCargo ? ["pg.c.ref", "pg.c.customer", "pg.c.lane", "pg.c.service", "pg.c.ready", "pg.c.status", "pg.c.sla"] : ["pg.c.ref", "pg.c.customer", "pg.c.route", "q.travel", "pg.c.pax", "pg.c.status", "pg.c.sla", "pg.c.assignee"])}</tr></thead>
+                  <tbody ref={tableRef}>
+                    {rows.map((r, i) => (
+                      <tr key={r.ref} data-idx={i} data-ref={r.ref} onClick={() => setFocus(i)} onDoubleClick={() => open(r)} className={cn("cursor-default", i === focus && "row-focus")} aria-selected={i === focus}>
+                        <td className="whitespace-nowrap"><Link href={hrefOf(r)} className="num inline-block py-1 text-[12.5px] hover:underline">{r.ref}</Link>{r.flight?.urgent && <StatusChip tone="danger" className="ms-1.5">{t("q.urgent")}</StatusChip>}</td>
+                        <td className="max-w-48 truncate" dir="auto">{(r.flight ?? r.cargo)?.customer ?? "—"}</td>
+                        {r.flight ? (
+                          <>
+                            <td className="max-w-56 truncate">{r.flight.routeLabel}{r.flight.hasSnapshot && <span className="ms-1.5 text-[11.5px] font-medium text-success" title={t("pg.q.snapshot")}>{t("pg.q.snap")}</span>}</td>
+                            <td className="whitespace-nowrap">{fmtDate(r.flight.firstTravelDate)}</td>
+                            <td className="num">{r.flight.travellers}</td>
+                            <td><StateChip value={r.flight.status} /></td>
+                            <td><SlaChip dueAt={r.flight.slaDueAt} startAt={r.flight.submittedAt} breached={r.flight.slaBreached} /></td>
+                            <td className="max-w-32 truncate text-steel">{r.flight.assignee ?? "—"}</td>
+                          </>
+                        ) : r.cargo ? (
+                          <>
+                            <td>{r.cargo.lane}</td>
+                            <td className="num text-[12px]">{r.cargo.service}</td>
+                            <td className="whitespace-nowrap">{fmtDate(r.cargo.readyDate)}</td>
+                            <td><StateChip value={r.cargo.status} /></td>
+                            <td><SlaChip dueAt={r.cargo.slaDueAt} startAt={r.cargo.submittedAt} /></td>
+                          </>
+                        ) : null}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ListCard>
+              <ul className="space-y-2 px-3 xl:hidden" data-testid="queue-cards" aria-label={t("q.cards")}>
                 {rows.map((r) => {
                   const it = r.flight ?? r.cargo!
                   return (
@@ -231,12 +250,12 @@ function QueuesInner() {
                   )
                 })}
               </ul>
-              {list.hasNextPage && <div className="p-3"><Button size="sm" variant="outline" onClick={() => void list.fetchNextPage()} loading={list.isFetchingNextPage}>{t("common.loadMore")}</Button></div>}
+              {list.hasNextPage && <div className="flex justify-center p-4"><Button size="sm" variant="outline" onClick={() => void list.fetchNextPage()} loading={list.isFetchingNextPage}>{t("common.loadMore")}</Button></div>}
             </>
           )}
         </div>
         {!isCargo && focused && (
-          <aside className="hidden w-[360px] shrink-0 overflow-y-auto border-s border-rule bg-surface-raised p-4 xl:block" aria-label="Preview" data-testid="queue-preview">
+          <aside className="hidden w-[360px] shrink-0 overflow-y-auto border-s border-rule bg-surface-raised p-4 2xl:block" aria-label="Preview" data-testid="queue-preview">
             {!preview.data ? <div className="space-y-3" aria-busy><Skeleton className="h-4 w-24" /><Skeleton className="h-6 w-56" /><Skeleton className="h-16" /></div> : (
               <div className="space-y-3">
                 <div>
@@ -254,8 +273,8 @@ function QueuesInner() {
                 {preview.data.customerNote && <p className="rounded-sm border border-rule bg-surface-raised p-2" dir="auto">“{preview.data.customerNote}”</p>}
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => open(focused)}>Open case</Button>
-                  {(() => { const a = preview.data.actions.find((x) => x.command === "claim"); return a ? <Button size="sm" variant="outline" disabled={!a.allowed} title={a.reason} onClick={() => void claim(focused.ref)}>Claim <span className="kbd ms-1">c</span></Button> : null })()}
-                  <Button size="sm" variant="ghost" onClick={() => { setNote(""); setNoteFor(focused.ref) }}>Note <span className="kbd ms-1">n</span></Button>
+                  {(() => { const a = preview.data.actions.find((x) => x.command === "claim"); return a ? <Button size="sm" variant="outline" disabled={!a.allowed} title={a.reason} onClick={() => void claim(focused.ref)}>Claim <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">c</span></Button> : null })()}
+                  <Button size="sm" variant="ghost" onClick={() => { setNote(""); setNoteFor(focused.ref) }}>Note <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">n</span></Button>
                 </div>
                 {preview.data.notes[0] && <div><p className="cap">Last internal note</p><p className="mt-1" dir="auto">{preview.data.notes[0].body}</p><p className="text-[11px] text-steel">{preview.data.notes[0].author}</p></div>}
               </div>

@@ -1,12 +1,12 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { and, asc, desc, eq, inArray, isNull, lt, max, ne, sql } from "drizzle-orm"
 
-import { type CargoCommand, CargoCustomerView, CargoQuoteLines, type CargoStatus, ShipmentSummary, ShipmentView, TRACKING_EVENT_LABELS, type TrackingEventCode, type CreateCargoRequestBody, FlightRequestListItem, type GoodsCategory } from "@unitravel/contracts"
+import { type CargoCommand, CargoCustomerView, CargoQuoteLines, type CargoStatus, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, TRACKING_EVENT_LABELS, type TrackingEventCode, type CreateCargoRequestBody, FlightRequestListItem, type GoodsCategory } from "@unitravel/contracts"
 import {
-  cargoItems, cargoLanes, cargoPieces, cargoRequests, contactAttempts, type Db, type DbOrTx, partnerBookings, partners, quotes, requestMessages, requestNotes,
+  cargoItems, cargoLanes, cargoPieces, cargoRequests, contactAttempts, type Db, type DbOrTx, partnerBookings, partners, paymentRecords, quotes, requestMessages, requestNotes,
   requestStatusHistory, serviceAvailability, trackingEvents, type Tx, userIdentities, users,
 } from "@unitravel/db"
-import { CARGO_TRANSITIONS, type CargoCommandName, type CargoFacts, type CargoTrackingPort, cargoWeights, dedupeIncoming, effectiveRecordIds, effectiveTimeline, evaluate, lastEvent, ManualTrackingAdapter, type TrackingRecord, generateReference, type MachineActor, normaliseReference, validateAwb, allowedCommands } from "@unitravel/domain"
+import { CARGO_TRANSITIONS, type CargoCommandName, type CargoFacts, type CargoTrackingPort, cargoWeights, dedupeIncoming, effectiveRecordIds, effectiveTimeline, evaluate, lastEvent, ManualTrackingAdapter, type TrackingRecord, generateReference, type MachineActor, normaliseReference, validateAwb, allowedCommands, paymentRecordingState, trackingEventAllowed } from "@unitravel/domain"
 
 import { AppError, notFound } from "../../core/errors"
 import { DB, UnitOfWork } from "../../core/infra.module"
@@ -14,10 +14,12 @@ import type { Actor } from "../../core/http/decorators"
 import { AccessService } from "../access/access.service"
 import { AuditService } from "../audit/audit.service"
 import { ComplianceService } from "../compliance/compliance.service"
+import { neutralDeclineForUser } from "../compliance/customer-messages"
 import { ConfigService } from "../config/config.service"
 import { DocumentsService } from "../documents/documents.service"
 import { DocumentNumbersService } from "../invoices/document-numbers.service"
 import { renderQuotationPdf } from "../invoices/commercial-pdf"
+import { cargoSections, customerZone, docLabels, formatValidity } from "../invoices/quotation-content"
 import { renderPdf } from "../documents/pdf"
 import { addBusinessMinutes } from "../platform/business-hours"
 import { OutboxService } from "../platform/outbox.service"
@@ -31,7 +33,6 @@ type Lane = typeof cargoLanes.$inferSelect
 const SHIPMENT_STATUSES: CargoStatus[] = ["ACCEPTED", "BOOKED", "AWAITING_HANDOVER", "RECEIVED", "IN_TRANSIT", "AT_CUSTOMS", "OUT_FOR_DELIVERY", "DELIVERED", "COMPLETED", "EXCEPTION"]
 const MOVING: CargoStatus[] = ["BOOKED", "AWAITING_HANDOVER", "RECEIVED", "IN_TRANSIT", "AT_CUSTOMS", "OUT_FOR_DELIVERY", "EXCEPTION"]
 const TERMINAL: CargoStatus[] = ["COMPLETED", "DECLINED", "CANCELLED"]
-const NEUTRAL = { en: "We are unable to arrange this shipment. If you have questions, reply here.", fa: "امکان انجام این ارسال برای ما وجود ندارد. اگر پرسشی دارید همین‌جا بنویسید." }
 const touchesIran = (l: { originCountry: string; destinationCountry: string }) => l.originCountry === "IR" || l.destinationCountry === "IR"
 
 /**
@@ -64,8 +65,9 @@ export class CargoService implements OnModuleInit {
       const officer: MachineActor = { kind: "STAFF", userId: o.actorUserId, permissions: new Set(["compliance.case.decide"]) }
       if (o.decision === "RELEASE" && r.status === "COMPLIANCE_HOLD") await this.transition(tx, r, "release_hold", officer, { facts: { decisionReason: o.reason }, reasonText: o.reason })
       if (o.decision === "DECLINE") {
-        const msg = o.customerMessage || NEUTRAL.en
+        const msg = o.customerMessage || await neutralDeclineForUser(tx, r.customerUserId)
         await this.transition(tx, r, "decline", officer, { facts: { reasonCode: o.reasonCode ?? "COMPLIANCE", message: msg }, reasonCode: o.reasonCode ?? "COMPLIANCE", message: msg })
+        await tx.insert(requestMessages).values({ requestType: "CARGO", requestId: r.id, authorId: o.actorUserId, direction: "TO_CUSTOMER", body: msg })
       }
     })
     this.timers.onEvent("cargo_request.transitioned", async (e) => {
@@ -235,24 +237,28 @@ export class CargoService implements OnModuleInit {
       for (let i = 0; i < items.length; i++) await tx.update(cargoItems).set({ screeningOutcome: outcomes[i]!.outcome, matchedRule: outcomes[i]!.matchedRule }).where(eq(cargoItems.id, items[i]!.id))
       const evidence: { kind: string; label: string; detail: string; score?: number }[] = []
       const screeningIds: string[] = []
+      // A strong party MATCH is released only with a second approver (ch. 15.7, risk R-01; ADR-0008 W3).
+      let requiresFourEyes = false
       for (const [type, party] of [["SHIPPER", shipper], ["CONSIGNEE", consignee]] as const) {
         for (const [name, entity] of [[party.name, false], ...(party.company ? [[party.company, true]] : [])] as [string, boolean][]) {
           const s = await this.compliance.screen(tx, { subjectType: type, subjectRef: `${r.id}:${type}:${name}`, name, contextRef: r.ref, entity })
+          if (s.result === "MATCH") requiresFourEyes = true
           if (s.result !== "CLEAR") { screeningIds.push(s.screeningId); for (const h of s.hits) evidence.push({ kind: "PARTY_MATCH", label: `${type.toLowerCase()} ${name} ↔ ${h.matchedName}`, detail: `${h.listId} ${h.externalId}`, score: h.score }) }
         }
       }
       const prohibited = outcomes.some((o) => o.outcome === "PROHIBITED")
       if (prohibited || r.dgDeclared) {
         // Prohibited hits decline with a neutral message (ch. 14.4); dangerous goods are prohibited in v1.
-        await this.transition(tx, r, "screen_prohibited", SYSTEM, { reasonCode: "PROHIBITED_GOODS", reasonText: outcomes.map((o) => o.matchedRule).filter(Boolean).join("; ") || "dangerous goods declared", message: NEUTRAL.en })
-        await tx.insert(requestMessages).values({ requestType: "CARGO", requestId: r.id, authorId: null, direction: "TO_CUSTOMER", body: NEUTRAL.en })
+        const msg = await neutralDeclineForUser(tx, r.customerUserId)
+        await this.transition(tx, r, "screen_prohibited", SYSTEM, { reasonCode: "PROHIBITED_GOODS", reasonText: outcomes.map((o) => o.matchedRule).filter(Boolean).join("; ") || "dangerous goods declared", message: msg })
+        await tx.insert(requestMessages).values({ requestType: "CARGO", requestId: r.id, authorId: null, direction: "TO_CUSTOMER", body: msg })
         return
       }
       outcomes.forEach((o, i) => { if (o.outcome === "REVIEW") evidence.push({ kind: "GOODS_RULE", label: items[i]!.description, detail: o.matchedRule ?? "review" }) })
       const lanePolicies = lane ? await this.compliance.lanePolicy(lane.originCountry, lane.destinationCountry) : []
       if (lane?.requiresComplianceApproval || lanePolicies.some((p) => p.action === "REVIEW")) evidence.push({ kind: "LANE", label: `Lane ${this.laneLabel(lane!)}`, detail: "Lane requires a compliance decision before quoting" })
       if (evidence.length) {
-        await this.compliance.openCase(tx, { requestType: "CARGO", requestId: r.id, requestRef: r.ref, trigger: screeningIds.length ? "SCREENING" : evidence.some((e) => e.kind === "LANE") ? "LANE" : "GOODS", summary: `${evidence.length} item(s) need a compliance decision`, evidence, screeningIds })
+        await this.compliance.openCase(tx, { requestType: "CARGO", requestId: r.id, requestRef: r.ref, trigger: screeningIds.length ? "SCREENING" : evidence.some((e) => e.kind === "LANE") ? "LANE" : "GOODS", summary: `${evidence.length} item(s) need a compliance decision`, evidence, screeningIds, requiresFourEyes })
         await this.transition(tx, r, "screen_flag", SYSTEM)
       } else await this.transition(tx, r, "screen_pass", SYSTEM)
     })
@@ -317,6 +323,13 @@ export class CargoService implements OnModuleInit {
     if (!fresh.length) return 0
     const rows = await tx.insert(trackingEvents).values(fresh.map((e) => ({ cargoRequestId: r.id, eventCode: e.eventCode, location: e.location, occurredAt: new Date(e.occurredAt), description: e.description, source: port.source, externalEventId: e.externalEventId, createdBy: actorId }))).onConflictDoNothing().returning({ id: trackingEvents.id })
     return rows.length
+  }
+
+  /** Only a quote created after the exception and accepted by the customer counts as the revised quote. */
+  private async revisedQuoteAccepted(tx: DbOrTx, r: Cargo): Promise<boolean> {
+    const [ex] = await tx.select().from(requestStatusHistory).where(and(eq(requestStatusHistory.requestType, "CARGO"), eq(requestStatusHistory.requestId, r.id), eq(requestStatusHistory.toStatus, "EXCEPTION"))).orderBy(desc(requestStatusHistory.createdAt)).limit(1)
+    const [q] = await tx.select().from(quotes).where(and(eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id))).orderBy(desc(quotes.version)).limit(1)
+    return !!q && q.status === "ACCEPTED" && !!ex && q.createdAt > ex.createdAt
   }
 
   async staffCommand(ref: string, command: CargoCommand, body: Record<string, unknown>, actor: Actor, expectedVersion?: number) {
@@ -406,11 +419,7 @@ export class CargoService implements OnModuleInit {
           return updated
         }
         case "resolve_exception": {
-          // Only a quote created after the exception and accepted by the customer counts as the revised quote.
-          const [ex] = await tx.select().from(requestStatusHistory).where(and(eq(requestStatusHistory.requestType, "CARGO"), eq(requestStatusHistory.requestId, r.id), eq(requestStatusHistory.toStatus, "EXCEPTION"))).orderBy(desc(requestStatusHistory.createdAt)).limit(1)
-          const [q] = await tx.select().from(quotes).where(and(eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id))).orderBy(desc(quotes.version)).limit(1)
-          const revisedQuoteAccepted = !!q && q.status === "ACCEPTED" && !!ex && q.createdAt > ex.createdAt
-          return this.transition(tx, r, "resolve_exception", m, { ...o, facts: { revisedQuoteAccepted }, patch: { exceptionReason: null, exceptionResumeTo: null }, reasonText: String(body.note) })
+          return this.transition(tx, r, "resolve_exception", m, { ...o, facts: { revisedQuoteAccepted: await this.revisedQuoteAccepted(tx, r) }, patch: { exceptionReason: null, exceptionResumeTo: null }, reasonText: String(body.note) })
         }
         case "close": case "reopen":
           return this.transition(tx, r, command, m, { ...o })
@@ -487,10 +496,19 @@ export class CargoService implements OnModuleInit {
     return this.uow.run(async (tx) => {
       const r = await this.byRef(ref, tx)
       if (TERMINAL.includes(r.status)) throw new AppError("INVALID_TRANSITION", "Request is closed")
+      this.assertTrackingFits(r, body.eventCode)
       await this.tracking(tx, r, body.eventCode, body.location, new Date(body.occurredAt), body.description, actor.userId)
       await this.outbox.add(tx, { aggregateType: "cargo_request", aggregateId: r.id, eventType: "cargo_request.transitioned", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, from: r.status, to: r.status, command: "tracking", statusLabels: { en: `${TRACKING_EVENT_LABELS[body.eventCode as TrackingEventCode].en} · ${body.location}`, fa: `${TRACKING_EVENT_LABELS[body.eventCode as TrackingEventCode].fa} · ${body.location}` } } })
       return { ok: true }
     })
+  }
+
+  /** Staff cannot record progress the request has not made (ADR-0008 W4). In EXCEPTION the shipment resumes from `exceptionResumeTo`. */
+  private assertTrackingFits(r: Cargo, code: string) {
+    if (!(TRACKING_EVENT_CODES as readonly string[]).includes(code)) return
+    const stage = r.status === "EXCEPTION" ? ((r.exceptionResumeTo as CargoStatus | null) ?? "RECEIVED") : r.status
+    const why = trackingEventAllowed(code as TrackingEventCode, stage)
+    if (why) throw new AppError("INVALID_TRANSITION", why)
   }
 
   /** A correction is a new row pointing at the event it replaces; the original stays and staff see both (ch. 14.5, 14.8, 25.6, 32.2). */
@@ -515,20 +533,20 @@ export class CargoService implements OnModuleInit {
     })
   }
 
-  /** The cargo quotation PDF: the sent quote's lines with the document number (ADR-0006 C1). Documents stay in English. */
+  /** The cargo quotation PDF: the sent quote's lines, pieces and weights with the document number (ADR-0006 C1), in the customer's language and zone. */
   private async quotationPdf(tx: Tx, r: typeof cargoRequests.$inferSelect, quoteId: string, actor: Actor) {
     const [q] = await tx.select().from(quotes).where(eq(quotes.id, quoteId))
     if (!q?.documentNumber) return
     const [lane] = await tx.select().from(cargoLanes).where(eq(cargoLanes.id, r.laneId))
     const c = CargoQuoteLines.parse(q.cargoLines)
-    const m = (x: { amountMinor: number }) => `${q.currency} ${(x.amountMinor / 100).toFixed(2)}`
-    const rows: [string, string][] = [[`Freight (${c.freight.chargeableKg} kg)`, m(c.freight.amount)], ["Fuel surcharge", m(c.fuelSurcharge)], ["Security surcharge", m(c.securitySurcharge)], ["Handling", m(c.handling)], ["Customs brokerage", m(c.customsBrokerage)], ["Insurance", m(c.insurance)], ["Pickup", m(c.pickup)], ["Delivery", m(c.delivery)],
-      ["Duties and taxes", c.dutiesTaxes === "PAYABLE_BY_CONSIGNEE" ? "Payable by consignee" : `${m(c.dutiesTaxes)}${c.dutiesEstimate ? " (estimate)" : ""}`], ["Total", m(c.total)]]
+    const zone = await customerZone(tx, r.customerUserId)
+    const L = docLabels(zone.locale)
+    const { pieces, weights } = await this.weights(r, tx)
     const cfg = this.config.settings()
     const pdf = await renderQuotationPdf({
-      number: q.documentNumber, title: `Your shipment quotation - ${r.ref}`, subtitle: `${lane ? this.laneLabel(lane) : ""} · valid until ${q.validUntil?.toISOString().slice(0, 16).replace("T", " ") ?? "see request"} UTC`,
-      sections: [{ heading: "Charges", rows }, ...(q.transitNote ? [{ heading: "Transit", paragraphs: [q.transitNote] }] : [])], company: cfg.company, cfg: cfg.commercialDocuments,
-      footer: ["This is a quotation, not a booking: your shipment is booked only after you accept and our team confirms it. Uni Travel arranges shipments through partners and does not operate transport itself."],
+      number: q.documentNumber, title: `${L.cargoTitle} - ${r.ref}`, subtitle: `${lane ? this.laneLabel(lane, zone.locale) : ""} · ${L.validUntil} ${q.validUntil ? formatValidity(q.validUntil, zone) : "-"}`,
+      sections: cargoSections({ currency: q.currency, lines: c, pieces, weights, transitNote: q.transitNote }, zone), company: cfg.company, cfg: cfg.commercialDocuments, locale: zone.locale,
+      footer: [L.cargoFooter],
     })
     const doc = await this.docs.storeGenerated(tx, { ownerUserId: r.customerUserId, requestType: "CARGO", requestId: r.id, type: "QUOTE_PDF", filename: `quotation-${q.documentNumber}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
     await tx.update(quotes).set({ pdfDocumentId: doc.id }).where(eq(quotes.id, quoteId))
@@ -656,9 +674,17 @@ export class CargoService implements OnModuleInit {
     const notes = await this.db.select({ n: requestNotes, author: users.displayName }).from(requestNotes).leftJoin(users, eq(users.id, requestNotes.authorId)).where(and(eq(requestNotes.requestType, "CARGO"), eq(requestNotes.requestId, r.id))).orderBy(desc(requestNotes.createdAt))
     const [cu] = await this.db.select().from(users).where(eq(users.id, r.customerUserId))
     const ps = await this.partners()
-    const f = await this.facts(this.db, r)
+    const f = await this.facts(this.db, r, r.status === "EXCEPTION" ? { revisedQuoteAccepted: await this.revisedQuoteAccepted(this.db, r) } : {})
+    const pays = await this.db.select().from(paymentRecords).where(and(eq(paymentRecords.requestType, "CARGO"), eq(paymentRecords.requestId, r.id))).orderBy(desc(paymentRecords.createdAt))
+    const staffNames = new Map<string, string>()
+    for (const id of new Set(pays.flatMap((x) => [x.recordedBy, x.verifiedBy]).filter(Boolean) as string[])) staffNames.set(id, (await this.db.select({ n: users.displayName }).from(users).where(eq(users.id, id)))[0]?.n ?? id)
+    const threshold = this.config.get("WORKFLOW").paymentFourEyesThresholdMinor
+    const [acceptedQuote] = await this.db.select().from(quotes).where(and(eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id), eq(quotes.status, "ACCEPTED"))).limit(1)
+    const acceptedTotal = (acceptedQuote?.cargoLines as { total?: { amountMinor: number; currency: string } } | null)?.total ?? null
     return {
       ...base,
+      payments: pays.map((x) => ({ id: x.id, amount: { amountMinor: x.amountMinor, currency: x.currency }, method: x.method, receivedAt: x.receivedAt.toISOString(), externalReference: x.externalReference, payerName: x.payerName, status: x.status, recordedBy: x.recordedBy ? staffNames.get(x.recordedBy) ?? x.recordedBy : "System (card payment)", verifiedBy: x.verifiedBy ? staffNames.get(x.verifiedBy) ?? x.verifiedBy : null, needsSecondVerifier: x.status === "RECORDED" && x.amountMinor > threshold })),
+      paymentRecording: paymentRecordingState({ product: "CARGO", status: r.status, atolMode: this.config.get("WORKFLOW").atolMode, acceptedTotal, recordedMinor: pays.filter((x) => x.status === "RECORDED" || x.status === "VERIFIED").reduce((n, x) => n + x.amountMinor, 0) }),
       // Staff see every stored row, originals and corrections, with which ones are in force.
       tracking: track.map(({ t, by }) => ({ id: t.id, eventCode: t.eventCode, location: t.location, occurredAt: t.occurredAt.toISOString(), description: t.description, source: t.source, externalEventId: t.externalEventId, correctsEventId: t.correctsEventId, correctionReason: t.correctionReason, createdBy: by, createdAt: t.createdAt.toISOString(), effective: effectiveIds.has(t.id) })),
       id: r.id, version: r.version, customer: { id: r.customerUserId, displayName: cu?.displayName }, exceptionReason: r.exceptionReason, assigneeUserId: r.assigneeUserId, customerNote: r.customerNote, declarations: r.declarations, commercial: r.commercial,

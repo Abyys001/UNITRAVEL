@@ -8,22 +8,24 @@ import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@unitravel/ui/components/button"
+import { VerificationBadge } from "@unitravel/ui/product/verification-badge"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
-import { BentoGrid, BentoTile, StatusChip, TileError } from "@/components/bento"
-import { ActionBar, CaseHeader, CaseTabs, ListSkeleton, paneClass, paneProps, SlaChip, StateChip, statusTone, tallyOptions, Timeline, TruthTally } from "@/components/case"
+import { StatusChip, TileError } from "@/components/bento"
+import { ActionBar, CaseHeader, CaseTabs, CommandBar, ListSkeleton, paneClass, paneProps, SlaChip, StateChip, statusTone, SummaryItem, tallyOptions, Timeline, TruthTally } from "@/components/case"
 import { CommandDialog, DIALOG_COMMANDS } from "@/components/flight/commands"
+import { RecordPaymentTrigger } from "@/components/payment-panel"
 import { ItineraryView } from "@/components/flight/itinerary"
 import { InvoicesPanel } from "@/components/invoices-panel"
 import { AfterSalesDialog, CreditOverrideDialog, PaymentDialog, ReservationDialog, TicketsDialog } from "@/components/flight/records"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
 import { Composer, MessagesList, NotesList } from "@/components/thread"
-import { CommandButton, Empty, ErrorLine, Field, Loading, Panel, Tag, useAct } from "@/components/ui"
+import { Empty, ErrorLine, Field, Loading, Panel, Tag, useAct } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDate, fmtDateTime, human, money } from "@/lib/format"
 import { useIsMobile, useKeys } from "@/lib/hooks"
-import { useT } from "@/lib/i18n"
+import { type MsgKey, useT } from "@/lib/i18n"
 import { useFallbackInterval } from "@/lib/live"
 import { useSession } from "@/lib/session"
 import type { FlightDetail } from "@/lib/types"
@@ -55,6 +57,7 @@ export default function FlightRequestPage() {
   const [sms, setSms] = useState("tried_to_call")
   const [tab, setTab] = useState<"case" | "customer" | "records">("case")
   const t = useT()
+  const tt = t // the travellers map below shadows `t`
 
   const run = (command: string) => {
     if (command === "record_reservation") return dlg.open("reservation")
@@ -85,7 +88,7 @@ export default function FlightRequestPage() {
     try { await api(`/v1/admin/after-sales/${asRef}/commands/${command}`, { body: command === "resolve" ? { resolutionNote: "Resolved by staff", ticketStatus: undefined } : {} }); await refresh() } catch (e) { toast.error(errText(e)) }
   }
 
-  if (q.error) return <div className="p-5"><TileError message={errText(q.error)} onRetry={() => void q.refetch()} /></div>
+  if (q.error) return <div className="p-5"><TileError error={q.error} onRetry={() => void q.refetch()} /></div>
   if (!d) return <><Loading label={`Opening ${ref}…`} /><ListSkeleton rows={6} /></>
   const mineCase = d.assignee?.id === me?.id
   // Versions only grow; ">" keeps your own command's event from flashing the banner before the reload lands.
@@ -107,46 +110,38 @@ export default function FlightRequestPage() {
         </div>
       )}
       <CaseHeader
-        reference={<span className="num text-[15px] font-medium" data-testid="ref">{d.ref}</span>}
+        reference={<span className="num text-[15px] font-semibold" data-testid="ref">{d.ref}</span>}
         title={d.routeLabel}
         meta={<>{Object.entries(pax).map(([k, n]) => `${n} ${k}`).join(" · ")} · {fmtDate(d.firstTravelDate)} · {human(d.tripType)} · {d.kind === "MANUAL" ? "manual request" : "itinerary request"} · submitted {fmtDateTime(d.submittedAt)} via {d.submittedVia.toLowerCase()} ({d.submittedLocale})</>}
         aside={mobile ? <Button size="sm" render={<a href={`tel:${d.customer.phone}`} />}><Phone /> Call</Button> : undefined}
-      />
-      <BentoGrid className="px-5 pt-4 pb-2 max-sm:grid-cols-2 max-sm:gap-2" data-testid="case-summary">
-        <BentoTile size="s" title={t("case.state")}>
+        summary={<>
           <div className="flex flex-wrap items-center gap-1.5">
-            <span data-testid="status"><StateChip value={d.status} className="text-[12px]" /></span>
-            <StatusChip tone={statusTone(d.paymentStatus)} className="font-mono text-[10.5px] tracking-wide uppercase">{t("case.payment", { status: d.paymentStatus.replace(/_/g, " ") })}</StatusChip>
-            {d.urgent && <StatusChip tone="danger">{t("case.urgent")}</StatusChip>}
+            <span data-testid="status"><StateChip value={d.status} /></span>
+            <StatusChip tone={statusTone(d.paymentStatus)} className="font-semibold">{t("case.payment", { status: d.paymentStatus.replace(/_/g, " ").toLowerCase() })}</StatusChip>
+            {d.urgent && <StatusChip tone="danger" className="font-semibold">{t("case.urgent")}</StatusChip>}
           </div>
-        </BentoTile>
-        <BentoTile size="s" title={t("case.sla")}>
-          <SlaChip dueAt={d.sla.dueAt} startAt={d.submittedAt} done={!!d.sla.firstContactAt} className="text-[12px]" />
-          <p className="mt-1.5 text-[12px] text-steel">{d.sla.firstContactAt ? fmtDateTime(d.sla.firstContactAt) : d.sla.dueAt ? <>{t("case.firstContact.due")} <span className="num">{fmtDateTime(d.sla.dueAt)}</span></> : t("sla.none")}</p>
-        </BentoTile>
-        <BentoTile size="s" className="max-sm:col-span-2" title={t("case.owner")}>
-          <p className="font-medium" data-testid="assignee">{d.assignee ? (mineCase ? t("case.assignedYou") : t("case.assignedTo", { name: d.assignee.name ?? "—" })) : <span className="text-danger">{t("case.unassigned")}</span>}</p>
-          <p className="mt-1 truncate text-[12px] text-steel" dir="auto">{d.customer.nameLatin || d.customer.displayName}</p>
-        </BentoTile>
-        <BentoTile size="s" className="max-sm:col-span-2" title={t("case.truth")} tone={tally && tally.unknown > 0 ? "alert" : "default"}>
-          {!tally ? <p className="text-[12px] text-steel">{t("case.truth.none")}</p> : (
-            <>
-              <TruthTally tally={tally} />
-              <p className={cn("mt-1.5 text-[12px]", tally.unknown > 0 ? "font-medium text-danger" : "text-steel")} data-testid="truth-note">{tally.unknown > 0 ? t("case.truth.blocks") : t("case.truth.clear")} <span className="text-steel">· {t("case.truth.quote", { v: latestQuote!.version })}</span></p>
-            </>
-          )}
-        </BentoTile>
-      </BentoGrid>
+          <SummaryItem label={t("case.sla")}>
+            <SlaChip dueAt={d.sla.dueAt} startAt={d.submittedAt} done={!!d.sla.firstContactAt} />
+            <span className="text-[12px] text-steel">{d.sla.firstContactAt ? fmtDateTime(d.sla.firstContactAt) : d.sla.dueAt ? <>{t("case.firstContact.due")} <span className="num">{fmtDateTime(d.sla.dueAt)}</span></> : t("sla.none")}</span>
+          </SummaryItem>
+          <SummaryItem label={t("case.owner.short")}><span className="font-medium" data-testid="assignee">{d.assignee ? (mineCase ? t("case.assignedYou") : t("case.assignedTo", { name: d.assignee.name ?? "—" })) : <span className="text-danger">{t("case.unassigned")}</span>}</span></SummaryItem>
+          <SummaryItem label={t("case.truth.short")} className={tally && tally.unknown > 0 ? "basis-full sm:basis-auto" : undefined}>
+            {!tally ? <span className="text-steel">{t("case.truth.none")}</span> : (
+              <>
+                <TruthTally compact tally={tally} />
+                <span className={cn("text-[12px]", tally.unknown > 0 ? "font-medium text-danger" : "text-steel")} data-testid="truth-note">{tally.unknown > 0 ? t("case.truth.blocks") : t("case.truth.clear")} <span className="text-steel">· {t("case.truth.quote", { v: latestQuote!.version })}</span></span>
+              </>
+            )}
+          </SummaryItem>
+        </>}
+      />
       <ActionBar data-testid="actions" aria-label={t("case.actions")}>
-        <div role="group" aria-label="Actions" tabIndex={0} className="flex items-start gap-2 overflow-x-auto lg:flex-wrap">
-          {visibleActions.length ? visibleActions.map((a) => <CommandButton key={a.command} className="max-w-56 shrink-0" action={a} variant={a.command === "claim" || a.command === "send_quote" ? "default" : "outline"} onRun={() => run(a.command)} />) : <p className="py-1.5 text-steel">{t("case.actions.none", { status: d.status })}</p>}
-          <p className="ms-auto hidden shrink-0 py-1.5 text-[11px] text-steel xl:block"><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</p>
-        </div>
+        <CommandBar actions={visibleActions} onRun={run} none={t("case.actions.none", { status: d.status })} hint={<><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
         {mobile && d.actions.some((a) => DESKTOP_ONLY.has(a.command)) && <p className="mt-1 text-[11px] text-steel">Quote sending and recording dialogs are desktop features in v1.</p>}
       </ActionBar>
       <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "case", label: t("case.tab.case") }, { key: "customer", label: t("case.tab.customer") }, { key: "records", label: t("case.tab.records"), count: d.reservations.length + d.tickets.length + d.payments.length }]} />
 
-      <div className="grid gap-x-6 px-5 lg:grid-cols-[minmax(250px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
+      <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-[minmax(250px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
         {/* LEFT — customer */}
         <div {...paneProps("customer")} className={paneClass(tab, "customer")}>
           <Panel title="Customer" aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className="text-orange-700">Context →</Link>}>
@@ -156,7 +151,7 @@ export default function FlightRequestPage() {
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="num text-[14px]" dir="ltr">{d.customer.phone}</span>
               {d.customer.phoneVerified ? <Tag value="VERIFIED" className="border-success text-success" title={fmtDateTime(d.customer.phoneVerifiedAt)} /> : <Tag value="UNVERIFIED" className="border-danger text-danger" />}
-              {d.customer.phoneVerifiedAt && <span className="text-[11px] text-steel">{fmtDate(d.customer.phoneVerifiedAt)}</span>}
+              {d.customer.phoneVerifiedAt && <span className="text-[11px] text-steel" suppressHydrationWarning>{fmtDateTime(d.customer.phoneVerifiedAt)}</span>}
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {!mobile && <Button size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success("Number copied") }}><Copy /> Copy number</Button>}
@@ -171,6 +166,7 @@ export default function FlightRequestPage() {
                 <li key={t.travellerId} className="py-1.5">
                   <p className="flex items-center justify-between gap-2"><span><span className="text-steel">{i + 1} · {t.passengerType}</span> {t.name.title} {t.name.givenNames} {t.name.surname}</span>{t.documentComplete ? <Tag value="COMPLETE" className="border-success text-success" /> : <Tag value="DOCS MISSING" className="border-danger text-danger" />}</p>
                   {t.name.nameFa && <p className="w-fit font-fa" dir="rtl">{t.name.nameFa}</p>}
+                  {t.verificationStatus && <p className="mt-0.5"><VerificationBadge status={t.verificationStatus} label={tt(`vstatus.${t.verificationStatus}` as MsgKey)} /></p>}
                   {t.document ? (
                     <p className="mt-0.5 flex items-center gap-2 text-[12px] text-steel">
                       <span>{human(t.document.type)} <span className="num" data-testid="doc-number">{revealed[t.travellerId] ?? `•••••${t.document.last4}`}</span> · {t.document.issuingCountry} · expires {fmtDate(t.document.expiryDate)}</span>
@@ -192,7 +188,7 @@ export default function FlightRequestPage() {
           </Panel>
         </div>
 
-        {/* CENTRE — the case */}
+        {/* CENTRE — request, conversation, activity */}
         <div {...paneProps("case")} className={cn("min-w-0", paneClass(tab, "case"))}>
           <Panel title="Request">
             <dl className="grid grid-cols-[8rem_1fr] gap-x-3 gap-y-1">
@@ -217,16 +213,20 @@ export default function FlightRequestPage() {
               <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><Tag value={c.status} />{can("compliance.case.read") && <Link className="text-orange-700" href={`/compliance/${c.id}`}>Open →</Link>}</span></li>)}</ul>
             </Panel>
           )}
+          <Panel title={t("case.conversation")}>
+            <MessagesList messages={d.messages} />
+            {can("flight_request.transition") && <Composer ref={msgRef} hint={t("case.composer.message")} label="Send message" placeholder="Write a message to the customer… (m)" testId="message-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/messages`, { body: { body } }); toast.success("Message sent"); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
+          </Panel>
+          <Panel title={t("case.notes")}>
+            <NotesList notes={d.notes} />
+            {can("flight_request.note.internal") && <Composer ref={noteRef} tone="note" label="Add note" hint={t("case.composer.note")} placeholder="Write an internal note… (n)" testId="note-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/notes`, { body: { body } }); toast.success("Note added"); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
+          </Panel>
           <Panel title={t("case.activity")}>
             <Timeline data-testid="timeline" items={d.timeline.map((x, i) => ({ id: i, at: x.at, title: x.label, detail: x.detail, meta: x.actor?.toLowerCase(), tone: x.kind === "STATUS" ? "strong" : x.kind === "CONTACT" ? "accent" : "muted" }))} />
           </Panel>
-          <Panel title="Messages with the customer">
-            <MessagesList messages={d.messages} />
-            {can("flight_request.transition") && <Composer ref={msgRef} label="Send message" placeholder="Write a message to the customer… (m)" testId="message-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/messages`, { body: { body } }); toast.success("Message sent"); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
-          </Panel>
         </div>
 
-        {/* RIGHT — actions, quotes, records, notes */}
+        {/* RIGHT — quotes, invoices, records, documents */}
         <div {...paneProps("records")} className={cn(paneClass(tab, "records"), "lg:col-span-2 xl:col-span-1")}>
           {!mobile && (can("quote.create") || can("pricing.write")) && (
             <Panel title="Quotes" aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className="text-orange-700" data-testid="open-quote-builder">{draft ? "Edit draft →" : "New quote →"}</Link>}>
@@ -254,7 +254,7 @@ export default function FlightRequestPage() {
                 {d.tickets.length ? d.tickets.map((t) => <dd key={t.id} className="flex justify-between"><span><span className="num">{t.ticketNumber}</span> {t.travellerName}</span><Tag value={t.status} /></dd>) : <dd>—</dd>}
               </div>
               <div className="py-1.5">
-                <dt className="flex items-center justify-between"><span className="text-steel">Payments · {d.paymentStatus}</span>{!mobile && can("payment.record") && ["ACCEPTED", "RESERVED", "TICKETED"].includes(d.status) && <button type="button" className="text-orange-700 underline underline-offset-2" onClick={() => dlg.open("payment")}>Record payment</button>}</dt>
+                <dt className="flex items-center justify-between"><span className="text-steel">Payments · {d.paymentStatus}</span>{!mobile && can("payment.record") && <RecordPaymentTrigger state={d.paymentRecording} onOpen={() => dlg.open("payment")} />}</dt>
                 {d.payments.length ? d.payments.map((p) => (
                   <dd key={p.id} className="mt-1">
                     <p className="flex justify-between"><span className="num">{money(p.amount)}</span><Tag value={p.status} /></p>
@@ -291,10 +291,6 @@ export default function FlightRequestPage() {
           </Panel>
           <Panel title="Documents">
             {!d.documents.length ? <Empty>No documents.</Empty> : <ul className="ledger-rows">{d.documents.map((doc) => <li key={doc.id} className="flex items-center justify-between gap-2 py-1"><button type="button" className="truncate text-start underline-offset-2 hover:underline" onClick={() => void download(doc.id)}>{doc.filename}</button><span className="flex gap-1"><Tag value={doc.type} /><Tag value={doc.visibility} /></span></li>)}</ul>}
-          </Panel>
-          <Panel title="Internal notes">
-            <NotesList notes={d.notes} />
-            {can("flight_request.note.internal") && <Composer ref={noteRef} tone="note" label="Add note" placeholder="Internal note — never shown to the customer (n)" testId="note-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/notes`, { body: { body } }); toast.success("Note added"); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
           </Panel>
         </div>
       </div>

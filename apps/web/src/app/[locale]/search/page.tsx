@@ -33,6 +33,7 @@ function Results() {
   useEffect(() => {
     const key = sp.get("q")
     if (!params || started.current === key) return
+    sessionStorage.setItem("ut_last_search", `${location.pathname}${location.search}`)
     started.current = key
     setSearchId(null); setErr(null); setVersion(0)
     api<{ id: string }>("/v1/flight-searches", { body: toQuery(params) }).then((r) => setSearchId(r.id)).catch((e: Error) => setErr(e.message))
@@ -74,7 +75,7 @@ function Results() {
       </div>
       {s?.historical && <p className="mb-4 rounded-xl bg-info-subtle px-4 py-2.5 text-sm text-info-subtle-fg">{t("results.historical")}</p>}
       {err && <p className="mb-4 flex items-center gap-2 rounded-xl bg-warning-subtle px-4 py-2.5 text-sm text-warning-subtle-fg"><AlertTriangle className="size-4" />{err}</p>}
-      <div className="grid gap-6 md:grid-cols-[1fr_280px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <div>
           <div role="tablist" className="mb-4 flex gap-2 overflow-x-auto pb-1">
             {TABS.map((k) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${tab === k ? "border-navy-900 bg-navy-900 text-white" : "border-line bg-white text-steel hover:border-navy-900/40 hover:text-navy-950"}`}>{t(`results.tabs.${k}`)}</button>)}
@@ -88,7 +89,6 @@ function Results() {
           )}
         </div>
         <aside className="space-y-4 text-sm">
-          <div className="rounded-2xl border border-dashed border-haze bg-white/60 p-4"><p className="text-steel">{t("results.illustrative")}</p></div>
           <div className="card-brand p-5"><p className="font-semibold">{t("results.talk")}</p><p className="mt-1 text-steel">{t("results.emptyBody")}</p><Link href={manualHref} className="mt-3 inline-block font-semibold text-orange-700 underline underline-offset-4">{t("results.askTeam")}</Link></div>
         </aside>
       </div>

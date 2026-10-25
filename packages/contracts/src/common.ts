@@ -31,4 +31,7 @@ export const CursorQuery = z.object({
   cursor: z.string().max(200).optional(),
 })
 
+/** `locale` re-renders stored notifications in that language (ch. 17.4); default is the language they were created in. */
+export const InboxQuery = CursorQuery.extend({ locale: z.enum(["en", "fa"]).optional() })
+
 export const page = <T extends z.ZodType>(item: T) => z.object({ items: z.array(item), nextCursor: z.string().nullable() })

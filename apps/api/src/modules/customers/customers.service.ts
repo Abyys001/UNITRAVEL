@@ -61,7 +61,7 @@ export class CustomersService {
   }
 
   async list(ownerUserId: string): Promise<TravellerView[]> {
-    const rows = await this.db.select().from(travellers).where(and(eq(travellers.ownerUserId, ownerUserId), isNull(travellers.deletedAt))).orderBy(travellers.createdAt)
+    const rows = await this.db.select().from(travellers).where(and(eq(travellers.ownerUserId, ownerUserId), isNull(travellers.deletedAt))).orderBy(travellers.createdAt, travellers.id)
     return this.withDocs(rows)
   }
 
@@ -95,8 +95,15 @@ export class CustomersService {
 
   // ---------------- traveller CRUD ----------------
 
+  /** Ch. 23 `travellers.relationship`: a customer has one SELF traveller (the "my details" passport owner). Existing duplicates are tolerated; `details()` takes the earliest. */
+  private async assertNoOtherSelf(tx: DbOrTx, ownerUserId: string, exceptId?: string) {
+    const rows = await tx.select({ id: travellers.id }).from(travellers).where(and(eq(travellers.ownerUserId, ownerUserId), eq(travellers.relationship, "SELF"), isNull(travellers.deletedAt)))
+    if (rows.some((r) => r.id !== exceptId)) throw new AppError("SELF_TRAVELLER_EXISTS", "You already have a traveller marked as yourself")
+  }
+
   async create(ownerUserId: string, input: TravellerInput, ctx: { requestId?: string; ip?: string }) {
     return this.uow.run(async (tx) => {
+      if (input.relationship === "SELF") await this.assertNoOtherSelf(tx, ownerUserId)
       const [t] = await tx.insert(travellers).values({ ownerUserId, title: input.title, givenNames: input.givenNames.toUpperCase(), surname: input.surname.toUpperCase(), nameFa: input.nameFa ?? null, dateOfBirth: input.dateOfBirth, genderOnDocument: input.genderOnDocument, nationality: input.nationality, relationship: input.relationship }).returning()
       if (input.document) await this.saveDocument(tx, t!.id, input.document)
       await this.audit.record(tx, { actorUserId: ownerUserId, actorKind: "CUSTOMER", action: "traveller.created", entityType: "traveller", entityId: t!.id, after: { nationality: input.nationality, hasDocument: !!input.document }, ip: ctx.ip, requestId: ctx.requestId })
@@ -108,6 +115,7 @@ export class CustomersService {
   async update(ownerUserId: string, id: string, input: Partial<TravellerInput>, ctx: { requestId?: string; ip?: string }) {
     return this.uow.run(async (tx) => {
       const current = await this.owned(ownerUserId, id, tx)
+      if (input.relationship === "SELF" && current.relationship !== "SELF") await this.assertNoOtherSelf(tx, ownerUserId, id)
       const before = await this.materialSnapshot(tx, current)
       const patch: Partial<typeof travellers.$inferInsert> = {}
       if (input.title) patch.title = input.title

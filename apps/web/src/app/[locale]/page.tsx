@@ -42,7 +42,6 @@ export default function Home() {
         <HeroVideo name="hero" />
         <div aria-hidden className="absolute inset-0 bg-[linear-gradient(100deg,rgb(6_31_76/0.94)_0%,rgb(8_47_107/0.82)_42%,rgb(12_103_185/0.35)_100%)] rtl:bg-[linear-gradient(260deg,rgb(6_31_76/0.94)_0%,rgb(8_47_107/0.82)_42%,rgb(12_103_185/0.35)_100%)]" />
         <div aria-hidden className="bg-dots absolute inset-0 opacity-40" />
-        <FlightPath className="absolute end-[-4%] top-[16%] hidden w-[46%] opacity-80 lg:block rtl:-scale-x-100" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-8 pt-28 md:px-6 md:pt-36 lg:grid-cols-[1.05fr_1fr] lg:pb-16">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold tracking-[0.12em] text-white/90 backdrop-blur">
@@ -58,6 +57,8 @@ export default function Home() {
           </div>
           <div className="relative">
             <div aria-hidden className="absolute -inset-6 -z-10 rounded-[32px] bg-orange/20 blur-3xl" />
+            {/* Anchored to the card so the path, plane and pin always sit in the clear space above it. */}
+            <FlightPath className="absolute inset-x-0 bottom-full mb-1 hidden w-full opacity-80 lg:block rtl:-scale-x-100" />
             <SearchForm />
           </div>
         </div>
@@ -167,7 +168,7 @@ export default function Home() {
               <p className="mt-4 max-w-lg text-lg text-white/80">{t("home.appBody")}</p>
               <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold"><span className="size-2 rounded-full bg-orange" />{t("home.appSoon")}</p>
             </div>
-            <div className="relative mx-auto w-[240px] md:w-[270px]">
+            <div className="relative mx-auto w-[240px] md:mt-12 md:w-[270px]">
               <div className="animate-float rounded-[38px] border-[10px] border-navy-950 bg-navy-950 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.7)]">
                 {/* eslint-disable-next-line @next/next/no-img-element -- real app screenshot */}
                 <img src={`/media/app/${locale === "fa" ? "search-fa" : "search-en"}.png`} alt="" loading="lazy" className="block w-full rounded-[28px]" />

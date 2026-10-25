@@ -34,7 +34,7 @@ export default function InvoicePage() {
   const notFound = q.error instanceof ApiError && q.error.problem.status === 404
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
-      <Link href={href("/billing")} className="text-sm font-semibold underline">{t("billing.back")}</Link>
+      <Link href={href("/billing")} className="inline-flex items-center text-sm font-semibold underline pointer-coarse:min-h-11">{t("billing.back")}</Link>
       {q.isLoading && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
       {notFound && <p className="card-brand mt-6 p-6 text-steel" role="alert">{t("billing.notFound")}</p>}
       {inv && (

@@ -8,7 +8,7 @@ import { fmtDateTime, minutes } from "@/lib/format"
 /** Truth badges are text first, never colour alone (DESIGN.md). */
 export function TruthBadge({ t }: { t: Pick<TruthItem, "rung" | "fake" | "provider" | "fetchedAt"> }) {
   const tone = t.fake ? "border-danger text-danger bg-[repeating-linear-gradient(-45deg,var(--color-danger-subtle)_0_4px,var(--surface-raised)_4px_8px)]" : t.rung === "PRICED_OFFER" ? "border-success bg-success text-white dark:text-navy-950" : t.rung === "LIVE_OFFER" ? "border-success text-success" : t.rung === "MANUAL" ? "border-orange bg-orange/15 text-orange-700" : "border-steel/50 text-steel"
-  return <span className={cn("inline-flex rounded-[4px] border px-1.5 font-mono text-[10px] leading-4 uppercase", tone)} title={`${t.provider} · fetched ${fmtDateTime(t.fetchedAt)}`}>{t.fake ? "FAKE · " : ""}{t.rung.replace("_OFFER", "").replace("_", " ")}</span>
+  return <span className={cn("inline-flex rounded-full border px-2 text-[11px] font-semibold leading-4", tone)} title={`${t.provider} · fetched ${fmtDateTime(t.fetchedAt)}`}>{t.fake ? "FAKE · " : ""}{t.rung.replace("_OFFER", "").replace("_", " ")}</span>
 }
 
 export function SliceView({ slice, index }: { slice: Slice; index?: number }) {
@@ -36,11 +36,11 @@ export function ItineraryView({ it }: { it: Itinerary }) {
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="font-mono text-[10.5px] uppercase">{it.construction.replace("_", " ")}</span>
-        {it.ticketing === "SEPARATE_TICKETS" && <span className="rounded-[4px] border border-danger px-1.5 font-mono text-[10px] text-danger uppercase">Separate tickets</span>}
-        {it.gateway && <span className="rounded-[4px] border border-orange px-1.5 font-mono text-[10px] text-orange-700 uppercase">Gateway {it.gateway.iata}</span>}
+        <span className="text-[12px] font-semibold">{it.construction.replace("_", " ")}</span>
+        {it.ticketing === "SEPARATE_TICKETS" && <span className="rounded-full border border-danger px-2 text-[11px] font-semibold text-danger">Separate tickets</span>}
+        {it.gateway && <span className="rounded-full border border-orange px-2 text-[11px] font-semibold text-orange-700">Gateway {it.gateway.iata}</span>}
         {it.truth.map((t, i) => <TruthBadge key={i} t={t} />)}
-        {it.riskFlags.map((f) => <span key={f} className="font-mono text-[10px] text-danger">{f}</span>)}
+        {it.riskFlags.map((f) => <span key={f} className="text-[11px] font-medium text-danger">{f}</span>)}
       </div>
       {it.components.map((c, ci) => (
         <div key={ci} className="space-y-1.5">

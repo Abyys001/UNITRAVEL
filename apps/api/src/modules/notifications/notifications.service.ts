@@ -2,9 +2,9 @@ import { Inject, Injectable, Logger } from "@nestjs/common"
 import { and, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
-import { DEFAULT_NOTIFICATION_MATRIX, type NotificationEvent, type NotificationRule } from "@unitravel/contracts"
+import { DEFAULT_NOTIFICATION_MATRIX, INTERNATIONAL_SMS_PROVIDERS, type NotificationEvent, type NotificationRule } from "@unitravel/contracts"
 import {
-  type Db, devices, notificationDeliveries, notifications, notificationTemplates, otpChallenges, shortLinks, smsRoutes, userIdentities, users,
+  airports, cities, countries, type Db, devices, notificationDeliveries, notifications, notificationTemplates, otpChallenges, shortLinks, smsRoutes, userIdentities, users,
 } from "@unitravel/db"
 
 import { decryptField, randomToken } from "../../core/crypto"
@@ -14,7 +14,8 @@ import { Queues } from "../../core/queues"
 import { ConfigService } from "../config/config.service"
 import { OutboxService } from "../platform/outbox.service"
 import { ChannelError, EmailSender, PushProviders, SmsProviders } from "./channels"
-import { formatLocal, quietHoursDelay, renderTemplate } from "./format"
+import { eventUuid, localDateVars, quietHoursDelay, renderTemplate } from "./format"
+import { localisedVars, type NamePair } from "./localise"
 import { degradedRoutes, ROUTE_HEALTH } from "./route-health"
 
 export type Audience = NotificationRule["audience"]
@@ -86,12 +87,31 @@ export class NotificationsService {
   private varsFor(r: Recipient, vars: NotifyInput["vars"]): Record<string, string | number | undefined> {
     const out: Record<string, string | number | undefined> = {}
     for (const [k, v] of Object.entries(vars)) {
-      if (k.endsWith("_at") && typeof v === "string") out[`${k.slice(0, -3)}_local`] = formatLocal(v, r)
+      if (k.endsWith("_at") && typeof v === "string") Object.assign(out, localDateVars(k, v, r))
       out[k] = v
     }
     // "<name>_fa" variables replace "<name>" for Persian recipients (localised status labels).
     if (r.locale === "fa") for (const [k, v] of Object.entries(vars)) if (k.endsWith("_fa") && v !== undefined) out[k.slice(0, -3)] = v
+    if (r.locale === "en") for (const [k, v] of Object.entries(vars)) if (k.endsWith("_en") && v !== undefined) out[k.slice(0, -3)] = v
     return out
+  }
+
+  private placeNames?: { at: number; names: Map<string, NamePair> }
+
+  /** English and Persian names of cities, airports and countries, keyed by lower-cased name in either language. */
+  private async nameMap(): Promise<Map<string, NamePair>> {
+    if (this.placeNames && Date.now() - this.placeNames.at < 600_000) return this.placeNames.names
+    const [c, a, k] = await Promise.all([this.db.select({ en: cities.nameEn, fa: cities.nameFa }).from(cities), this.db.select({ en: airports.nameEn, fa: airports.nameFa }).from(airports), this.db.select({ en: countries.nameEn, fa: countries.nameFa }).from(countries)])
+    const names = new Map<string, NamePair>()
+    for (const row of [...a, ...k, ...c]) for (const key of [row.en, row.fa]) names.set(key.toLowerCase(), row)
+    this.placeNames = { at: Date.now(), names }
+    return names
+  }
+
+  /** Raw variables plus per-language variants of route, client, decision and trigger. */
+  private async withLocalised(vars: NotifyInput["vars"]): Promise<NotifyInput["vars"]> {
+    const names = typeof vars.route === "string" && vars.route ? await this.nameMap() : new Map<string, NamePair>()
+    return { ...vars, ...localisedVars(vars, names) }
   }
 
   async shortLink(path: string): Promise<string> {
@@ -122,13 +142,13 @@ export class NotificationsService {
     for (const userId of [...new Set(input.userIds)]) {
       const r = await this.recipient(userId)
       if (!r) continue
-      const vars = this.varsFor(r, { ...input.vars, link: link ?? "" })
+      const vars = this.varsFor(r, await this.withLocalised({ ...input.vars, link: link ?? "" }))
       const inboxT = await this.template(input.eventType, "INBOX", r.locale)
       const title = renderTemplate(inboxT?.title ?? input.eventType, vars)
       const body = renderTemplate(inboxT?.body ?? "", vars)
       // 1. Always write the inbox row first; the dedupe key makes retries harmless.
       const [n] = await this.db.insert(notifications).values({
-        userId, eventType: input.eventType, eventId: input.eventId, title, body, critical: rule.critical,
+        userId, eventType: input.eventType, eventId: eventUuid(input.eventId), title, body, critical: rule.critical,
         data: { ...input.data, linkPath: input.linkPath, requestKey: input.requestKey, vars }, dedupeKey: `${input.eventId}:${userId}:${input.eventType}:${input.audience}`,
       }).onConflictDoNothing().returning()
       if (!n) continue
@@ -203,7 +223,8 @@ export class NotificationsService {
   async routeSms(phone: string, m: { to: string; body: string; templateId?: string | null; tokens?: string[]; otp?: boolean; voice?: boolean }) {
     const routes = await this.db.select().from(smsRoutes).where(eq(smsRoutes.enabled, true))
     const route = routes.filter((r) => r.prefix !== "default" && phone.startsWith(r.prefix)).sort((a, b) => b.prefix.length - a.prefix.length)[0] ?? routes.find((r) => r.prefix === "default")
-    const providers = [...(route?.providers ?? [])]
+    // The route table is validated on save, but +98 must not depend on that: a disabled +98 route would otherwise fall to "default".
+    const providers = (route?.providers ?? []).filter((p) => !(phone.startsWith("+98") && INTERNATIONAL_SMS_PROVIDERS.includes(p)))
     const errors: string[] = []
     for (const p of providers) {
       if (!(await this.sms.available(p))) { errors.push(`${p}: not configured`); continue }
@@ -306,11 +327,26 @@ export class NotificationsService {
 
   // ---------------- inbox ----------------
 
-  async inbox(userId: string, limit: number, cursor?: string) {
+  async inbox(userId: string, limit: number, cursor?: string, locale?: "en" | "fa") {
     const rows = await this.db.select().from(notifications).where(and(eq(notifications.userId, userId), cursor ? lt(notifications.createdAt, new Date(cursor)) : undefined)).orderBy(desc(notifications.createdAt)).limit(limit + 1)
     const unread = await this.db.select({ n: sql<number>`count(*)::int` }).from(notifications).where(and(eq(notifications.userId, userId), isNull(notifications.readAt)))
+    const r = locale ? await this.recipient(userId) : null
+    const templates = new Map<string, Awaited<ReturnType<NotificationsService["template"]>>>()
+    // Rows keep their rendered text; with `locale` we re-render from the stored vars so /fa shows Persian regardless of the locale at creation.
+    const render = async (n: typeof rows[number]) => {
+      const vars = (n.data as { vars?: Record<string, string | number | undefined> }).vars
+      if (!locale || !r || !vars) return { title: n.title, body: n.body }
+      if (!templates.has(`${n.eventType}:${locale}`)) templates.set(`${n.eventType}:${locale}`, await this.template(n.eventType, "INBOX", locale))
+      const t = templates.get(`${n.eventType}:${locale}`)
+      if (!t || t.locale !== locale) return { title: n.title, body: n.body }
+      const fresh = Object.fromEntries(Object.entries(vars).filter(([k]) => !k.endsWith("_local")))
+      const v = this.varsFor({ ...r, locale }, fresh as NotifyInput["vars"])
+      return { title: renderTemplate(t.title, v), body: renderTemplate(t.body, v) }
+    }
+    const page = rows.slice(0, limit)
+    const texts = await Promise.all(page.map(render))
     return {
-      items: rows.slice(0, limit).map((n) => ({ id: n.id, eventType: n.eventType, title: n.title, body: n.body, data: { linkPath: (n.data as { linkPath?: string }).linkPath }, critical: n.critical, readAt: n.readAt?.toISOString() ?? null, createdAt: n.createdAt.toISOString() })),
+      items: page.map((n, i) => ({ id: n.id, eventType: n.eventType, title: texts[i]!.title, body: texts[i]!.body, data: { linkPath: (n.data as { linkPath?: string }).linkPath }, critical: n.critical, readAt: n.readAt?.toISOString() ?? null, createdAt: n.createdAt.toISOString() })),
       nextCursor: rows.length > limit ? rows[limit - 1]!.createdAt.toISOString() : null,
       unread: unread[0]?.n ?? 0,
     }

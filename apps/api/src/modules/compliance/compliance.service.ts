@@ -3,11 +3,11 @@ import { createHash } from "node:crypto"
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm"
 
-import { type CaseView, type GoodsCategory, type OnlinePaymentPolicy, OnlinePaymentPolicyKey, type PolicyView, type ScreeningResult } from "@unitravel/contracts"
+import { type CaseView, type Permission, type GoodsCategory, type OnlinePaymentPolicy, OnlinePaymentPolicyKey, type PolicyView, type ScreeningResult } from "@unitravel/contracts"
 import {
-  complianceCases, complianceDecisions, compliancePolicies, type Db, type DbOrTx, sanctionEntries, sanctionLists, screeningHits, screenings, settings, type Tx, users,
+  complianceCases, complianceDecisions, auditLog, compliancePolicies, type Db, type DbOrTx, sanctionEntries, sanctionLists, screeningHits, screenings, settings, type Tx, users,
 } from "@unitravel/db"
-import { decide, normaliseLatin, scoreCandidate, searchTokens, tokens, phoneticKey } from "@unitravel/domain"
+import { decide, evaluate, POLICY_PROPOSAL_TRANSITIONS, normaliseLatin, scoreCandidate, searchTokens, tokens, phoneticKey } from "@unitravel/domain"
 import type { CarrierPolicy } from "@unitravel/engine"
 
 import { env, isLocal } from "../../core/env"
@@ -19,6 +19,7 @@ import { AuditService } from "../audit/audit.service"
 import type { DispatchedEvent } from "../platform/outbox.dispatcher"
 import { OutboxService } from "../platform/outbox.service"
 import { ReferenceService } from "../reference/reference.service"
+import { neutralDeclineFor } from "./customer-messages"
 import { type ParsedEntry, parseEu, parseOfac, parseUkList, TEST_LIST } from "./list-parsers"
 
 type ListId = "UK" | "OFAC_SDN" | "OFAC_NON_SDN" | "EU" | "TEST"
@@ -38,6 +39,9 @@ export const DEFAULT_COMPLIANCE: ComplianceSettings = {
     EU: "https://webgate.ec.europa.eu/fsd/fsf/public/files/csvFullSanctionsList_1_1/content?token=dG9rZW4tMjAxNw",
   },
 }
+
+/** Most entries read per screening; the rarest token is exempt. Scoring is in-process, so this bounds latency, not recall. */
+const CANDIDATE_BUDGET = 20_000
 
 export interface Subject {
   subjectType: "CUSTOMER" | "TRAVELLER" | "PAYER" | "SHIPPER" | "CONSIGNEE" | "PARTNER"
@@ -190,10 +194,10 @@ export class ComplianceService implements OnModuleInit {
     const qTokens = searchTokens([s.name])
     const active = await tx.select().from(sanctionLists).where(eq(sanctionLists.status, "ACTIVE"))
     const versions = Object.fromEntries(active.map((l) => [`${l.listId}${l.sourceUrl.startsWith("fixture") ? ":TEST" : ""}`, l.versionHash.slice(0, 12)]))
-    const candidates = qTokens.length && active.length
-      ? await tx.select().from(sanctionEntries).where(and(inArray(sanctionEntries.listVersionId, active.map((a) => a.id)), sql`${sanctionEntries.searchTokens} && ${sql.raw(`ARRAY[${qTokens.map((t) => `'${t.replace(/'/g, "''")}'`).join(",")}]::text[]`)}`)).limit(500)
-      : []
-    const types = s.entity ? ["ENTITY"] : ["PERSON"]
+    const candidates = qTokens.length && active.length ? await this.candidates(tx, qTokens, active.map((a) => a.id)) : []
+    // Parties are screened as person and as entity alike: a company name typed into a name field, or a person's name in a company
+    // field, must still reach the list (ch. 27.3). Travellers are always people.
+    const types = s.subjectType === "TRAVELLER" ? ["PERSON"] : ["PERSON", "ENTITY"]
     const hits = candidates.filter((c) => types.includes(c.type)).map((c) => {
       const r = scoreCandidate({ name: s.name, nameFa: s.nameFa, dateOfBirth: s.dateOfBirth, nationality: s.nationality }, { primary: c.names.primary, aliases: c.names.aliases, nonLatin: c.names.nonLatin, dob: c.dob, nationalities: c.nationalities })
       return { entryId: c.id, score: r.score, matchedName: r.matchedName, reasons: r.reasons, listId: c.listId, externalId: c.externalId, programmes: c.programmes }
@@ -202,6 +206,30 @@ export class ComplianceService implements OnModuleInit {
     const [row] = await tx.insert(screenings).values({ subjectType: s.subjectType, subjectRef: s.subjectRef, subjectName: s.name.slice(0, 240), contextRef: s.contextRef ?? null, listsVersion: versions, result, candidatesConsidered: candidates.length, thresholds: { match: cfg.matchThreshold, review: cfg.reviewThreshold } }).returning()
     if (hits.length) await tx.insert(screeningHits).values(hits.map((h) => ({ screeningId: row!.id, entryId: h.entryId, score: Math.round(h.score * 10000) / 10000, matchedName: h.matchedName.slice(0, 240), reasons: h.reasons })))
     return { screeningId: row!.id, result, hits: result === "CLEAR" ? [] : hits.filter((h) => h.score >= cfg.reviewThreshold) }
+  }
+
+  /**
+   * Entries sharing at least one name token with the subject. Tokens are taken rarest first and every entry for a token is read,
+   * until a budget is reached, so a common token ("ltd", "mohammad") can never crowd out the entry that shares the rare one.
+   * The previous unordered LIMIT 500 before scoring dropped true matches.
+   */
+  private async candidates(tx: DbOrTx, qTokens: string[], versionIds: string[]) {
+    const where = (ts: string[]) => and(inArray(sanctionEntries.listVersionId, versionIds), sql`${sanctionEntries.searchTokens} && ${sql.raw(`ARRAY[${ts.map((t) => `'${t.replace(/'/g, "''")}'`).join(",")}]::text[]`)}`)
+    const counts = await Promise.all(qTokens.map(async (t) => {
+      const [row] = await tx.select({ n: sql<number>`count(*)::int` }).from(sanctionEntries).where(where([t]))
+      return { t, n: row?.n ?? 0 }
+    }))
+    const picked: string[] = []
+    let total = 0
+    for (const { t, n } of counts.filter((c) => c.n > 0).sort((a, b) => a.n - b.n)) {
+      // The rarest token is always read in full; later (more common) tokens only while the budget allows.
+      if (picked.length && total + n > CANDIDATE_BUDGET) break
+      picked.push(t)
+      total += n
+    }
+    if (!picked.length) return []
+    if (picked.length < counts.filter((c) => c.n > 0).length) this.log.warn({ skipped: counts.filter((c) => !picked.includes(c.t) && c.n > 0).map((c) => c.t) }, "common name tokens skipped in candidate lookup")
+    return tx.select().from(sanctionEntries).where(where(picked))
   }
 
   screenAdHoc(s: Subject) {
@@ -268,7 +296,13 @@ export class ComplianceService implements OnModuleInit {
 
   async listPolicies(): Promise<PolicyView[]> {
     const rows = await this.db.select().from(compliancePolicies).orderBy(compliancePolicies.type, compliancePolicies.key)
-    return rows.map((r) => ({ id: r.id, type: r.type, key: r.key, action: r.action, reason: r.reason, counselReference: r.counselReference ?? undefined, effectiveFrom: r.effectiveFrom.toISOString(), version: r.version, approvedBy: r.approvedBy, approvedAt: r.approvedAt?.toISOString() ?? null, status: r.status, createdBy: r.createdBy }))
+    const closed = rows.filter((r) => r.status === "REJECTED" || r.status === "WITHDRAWN").map((r) => r.id)
+    const why = new Map<string, string>()
+    if (closed.length) for (const a of await this.db.select({ id: auditLog.entityId, after: auditLog.after }).from(auditLog).where(and(eq(auditLog.entityType, "compliance_policy"), inArray(auditLog.entityId, closed), inArray(auditLog.action, ["compliance.policy_rejected", "compliance.policy_withdrawn"]))).orderBy(auditLog.id)) {
+      const reason = (a.after as { reason?: string | null } | null)?.reason
+      if (a.id && reason) why.set(a.id, reason)
+    }
+    return rows.map((r) => ({ decisionReason: why.get(r.id), id: r.id, type: r.type, key: r.key, action: r.action, reason: r.reason, counselReference: r.counselReference ?? undefined, effectiveFrom: r.effectiveFrom.toISOString(), version: r.version, approvedBy: r.approvedBy, approvedAt: r.approvedAt?.toISOString() ?? null, status: r.status, createdBy: r.createdBy }))
   }
 
   /** Compliance officers edit; an owner approves before a policy takes effect (ch. 27.4). */
@@ -292,6 +326,19 @@ export class ComplianceService implements OnModuleInit {
       await this.audit.record(tx, { actorUserId: actorId, actorKind: "STAFF", action: "compliance.policy_approved", entityType: "compliance_policy", entityId: id, after: { type: p.type, key: p.key, action: p.action } })
       this.policyCache = undefined
       return { ok: true }
+    })
+  }
+
+  /** Reject (owner, with reason) or withdraw (proposer): ends a proposal without touching the active policy (ADR-0008 W5). */
+  async closeProposal(id: string, command: "reject" | "withdraw", actor: { userId: string; permissions: ReadonlySet<Permission>; isOwner: boolean }, reason?: string) {
+    return this.uow.run(async (tx) => {
+      const [p] = await tx.select().from(compliancePolicies).where(eq(compliancePolicies.id, id)).for("update")
+      if (!p) throw new AppError("NOT_FOUND")
+      const ev = evaluate(POLICY_PROPOSAL_TRANSITIONS, command, { status: p.status, createdBy: p.createdBy, actorId: actor.userId, actorIsOwner: actor.isOwner, reason }, { kind: "STAFF", userId: actor.userId, permissions: actor.permissions })
+      if (!ev.ok) throw new AppError(ev.code === "FORBIDDEN" ? "FORBIDDEN" : "INVALID_TRANSITION", ev.reason)
+      await tx.update(compliancePolicies).set({ status: ev.to }).where(eq(compliancePolicies.id, id))
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: `compliance.policy_${command === "reject" ? "rejected" : "withdrawn"}`, entityType: "compliance_policy", entityId: id, before: { status: p.status }, after: { type: p.type, key: p.key, action: p.action, reason: reason ?? null } })
+      return { ok: true, status: ev.to }
     })
   }
 
@@ -335,7 +382,7 @@ export class ComplianceService implements OnModuleInit {
       screenings: scr.map((s) => ({ id: s.id, subjectType: s.subjectType, subjectName: s.subjectName, result: s.result, listsVersion: s.listsVersion, createdAt: s.createdAt.toISOString(), hits: hits.filter((h) => h.h.screeningId === s.id).map((h) => ({ entryId: h.e.id, listId: h.e.listId, externalId: h.e.externalId, matchedName: h.h.matchedName, score: h.h.score, reasons: h.h.reasons, programmes: h.e.programmes })) })),
       decisions: decisions.map((d) => ({ id: d.id, decision: d.decision, reason: d.reason, decidedBy: names.get(d.decidedBy) ?? d.decidedBy, secondApprover: d.secondApprover ? names.get(d.secondApprover) ?? d.secondApprover : null, counselReference: d.counselReference, createdAt: d.createdAt.toISOString(), supersedes: d.supersedes })),
       openedAt: r.openedAt.toISOString(), decidedAt: r.decidedAt?.toISOString() ?? null, assignedTo: r.assignedTo, requiresFourEyes: r.requiresFourEyes,
-      pendingOverride: overrides[0] ? { decisionId: overrides[0].id, requestedBy: names.get(overrides[0].decidedBy) ?? overrides[0].decidedBy } : null,
+      pendingOverride: overrides[0] ? { decisionId: overrides[0].id, requestedBy: names.get(overrides[0].decidedBy) ?? overrides[0].decidedBy, requestedById: overrides[0].decidedBy } : null,
     }
   }
 
@@ -374,7 +421,7 @@ export class ComplianceService implements OnModuleInit {
         // Release only when no other open case remains on the request.
         const others = await tx.select().from(complianceCases).where(and(eq(complianceCases.requestType, c.requestType), eq(complianceCases.requestId, c.requestId), ne(complianceCases.id, caseId), inArray(complianceCases.status, ["OPEN", "ESCALATED"])))
         if (finalDecision === "DECLINE" || others.length === 0) {
-          await this.outcomeHandlers.get(c.requestType)?.(tx, c.requestId, { decision: finalDecision, reason: body.reason, reasonCode: body.reasonCode, customerMessage: body.customerMessage, actorUserId: actor.userId, caseId })
+          await this.outcomeHandlers.get(c.requestType)?.(tx, c.requestId, { decision: finalDecision, reason: body.reason, reasonCode: body.reasonCode, customerMessage: body.customerMessage || (finalDecision === "DECLINE" ? await neutralDeclineFor(tx, c.requestType, c.requestId) : undefined), actorUserId: actor.userId, caseId })
         }
         await this.outbox.add(tx, { aggregateType: "compliance_case", aggregateId: caseId, eventType: "compliance.case_decided", payload: { caseId, ref: c.requestRef, decision: finalDecision, requestId: c.requestId } })
       }

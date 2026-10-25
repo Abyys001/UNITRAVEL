@@ -26,14 +26,16 @@ export const listSep = (l: Locale) => (l === "fa" ? "، " : " · ")
 
 const FA_DIGITS = "۰۱۲۳۴۵۶۷۸۹"
 export const toPersianDigits = (s: string) => s.replace(/\d/g, (d) => FA_DIGITS[Number(d)]!)
+/** Persian (۰-۹) and Arabic-Indic (٠-٩) digits to ASCII, for identifiers that are validated as Latin alphanumerics. */
+export const toAsciiDigits = (s: string) => s.replace(/[۰-۹٠-٩]/g, (d) => String((FA_DIGITS.indexOf(d) + 1 || "٠١٢٣٤٥٦٧٨٩".indexOf(d) + 1) - 1))
 
 /** Storage is always ISO-8601 UTC; display follows the user's calendar (Gregorian/Jalali) and time zone (ch. 29.4). */
-export function formatDate(iso: string | Date, opts: { locale: Locale; calendar?: "GREGORIAN" | "JALALI"; timeZone?: string; withTime?: boolean; weekday?: boolean; dateOnly?: boolean }) {
+export function formatDate(iso: string | Date, opts: { locale: Locale; calendar?: "GREGORIAN" | "JALALI"; timeZone?: string; withTime?: boolean; weekday?: boolean; dateOnly?: boolean; year?: boolean }) {
   const d = typeof iso === "string" ? new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso) : iso
   const cal = opts.calendar ?? (opts.locale === "fa" ? "JALALI" : "GREGORIAN")
   const loc = `${opts.locale === "fa" ? "fa-IR" : "en-GB"}-u-ca-${cal === "JALALI" ? "persian" : "gregory"}`
   return new Intl.DateTimeFormat(loc, {
-    timeZone: opts.timeZone ?? (iso.toString().length === 10 ? "UTC" : undefined), day: "numeric", month: "short",
+    timeZone: opts.timeZone ?? (iso.toString().length === 10 ? "UTC" : undefined), day: "numeric", month: "short", ...(opts.year ? { year: "numeric" } : {}),
     ...(opts.weekday ? { weekday: "short" } : {}), ...(opts.dateOnly ? {} : opts.withTime ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" } : {}),
   }).format(d)
 }

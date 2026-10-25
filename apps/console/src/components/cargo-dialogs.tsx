@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 
 import { DEFAULT_WORKFLOW } from "@unitravel/contracts"
-import { validateAwb } from "@unitravel/domain"
+import { trackingEventAllowed, validateAwb } from "@unitravel/domain"
 
 import { FormDialog } from "@/components/form-dialog"
 import { StaffSelect } from "@/components/staff-select"
@@ -116,7 +116,7 @@ export function TrackingDialog({ d, done, open, onOpenChange }: { d: CargoDetail
   const submit = async () => { await api(`/v1/admin/cargo/requests/${d.ref}/tracking-events`, { body: { ...f, occurredAt: new Date(f.occurredAt).toISOString(), description: f.description || undefined } }); await done() }
   return (
     <FormDialog open={open} onOpenChange={onOpenChange} title="Add tracking event…" submitLabel="Add event" onSubmit={submit}>
-      <Field label="Event code"><NativeSelect className="field-input" value={f.eventCode} onChange={(e) => setF({ ...f, eventCode: e.target.value })}>{["PICKED_UP", "RECEIVED", "DEPARTED", "ARRIVED", "AT_CUSTOMS", "CLEARED", "OUT_FOR_DELIVERY", "DELIVERED", "HELD", "DAMAGED", "RETURNED", "NOTE"].map((c) => <option key={c}>{c}</option>)}</NativeSelect></Field>
+      <Field label="Event code"><NativeSelect className="field-input" value={f.eventCode} onChange={(e) => setF({ ...f, eventCode: e.target.value })}>{TRACKING_CODES.filter((c) => d.status === "EXCEPTION" || !trackingEventAllowed(c as never, d.status as never)).map((c) => <option key={c}>{c}</option>)}</NativeSelect></Field>
       <Field label="Location"><input className="field-input" value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} required minLength={2} /></Field>
       <Field label="Occurred at"><input type="datetime-local" className="field-input" value={f.occurredAt} onChange={(e) => setF({ ...f, occurredAt: e.target.value })} required /></Field>
       <Field label="Description"><input className="field-input" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>

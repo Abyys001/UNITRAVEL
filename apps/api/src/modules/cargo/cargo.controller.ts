@@ -2,12 +2,13 @@ import { Body, Controller, Get, Headers, HttpCode, Param, Post, Put, Query } fro
 import { ApiTags } from "@nestjs/swagger"
 import { z } from "zod"
 
-import { AvailabilityBody, CARGO_COMMANDS, CargoCommandBodies, CargoQuoteBody, ContactAttemptBody, EstimatedDeliveryBody, CreateCargoRequestBody, LaneUpsertBody, MessageBody, NoteBody, PartnerBody, TrackingCorrectionBody, TrackingEventBody } from "@unitravel/contracts"
+import { AvailabilityBody, CARGO_COMMANDS, CargoCommandBodies, CargoQuoteBody, ContactAttemptBody, EstimatedDeliveryBody, CreateCargoRequestBody, PaymentBody, LaneUpsertBody, MessageBody, NoteBody, PartnerBody, TrackingCorrectionBody, TrackingEventBody } from "@unitravel/contracts"
 
 import { AppError } from "../../core/errors"
 import { type Actor, Ctx, CurrentActor, DevSurface, Idempotent, Public, RateLimit, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
 import { zbody } from "../../core/http/zod"
 import { AccessService } from "../access/access.service"
+import { BookingsService } from "../bookings/bookings.service"
 import { RequestsService } from "../requests/requests.service"
 import { CargoService } from "./cargo.service"
 
@@ -98,7 +99,7 @@ export class CustomerCargoController {
 @Controller("v1/admin/cargo")
 @StaffOnly()
 export class AdminCargoController {
-  constructor(private readonly cargo: CargoService, private readonly access: AccessService) {}
+  constructor(private readonly cargo: CargoService, private readonly access: AccessService, private readonly bookings: BookingsService) {}
 
   @Get("requests")
   @RequirePermission("cargo_request.read.any")
@@ -157,6 +158,14 @@ export class AdminCargoController {
   @RequirePermission("cargo_request.transition")
   message(@Param("ref") ref: string, @Body(zbody(MessageBody)) body: z.infer<typeof MessageBody>, @CurrentActor() actor: Actor) {
     return this.cargo.staffMessage(ref, actor, body.body, body.documentIds)
+  }
+
+  /** Offline payment (ADR-0008 W2); verification above the threshold reuses POST /v1/admin/payments/:id/verify. */
+  @Post("requests/:ref/payments")
+  @RequirePermission("payment.record")
+  @Idempotent()
+  payment(@Param("ref") ref: string, @Body(zbody(PaymentBody)) body: z.infer<typeof PaymentBody>, @CurrentActor() actor: Actor) {
+    return this.bookings.recordCargoPayment(ref, body, actor)
   }
 
   @Post("requests/:ref/contact-attempts")

@@ -11,9 +11,11 @@ import { Button } from "@unitravel/ui/components/button"
 import { Switch } from "@unitravel/ui/components/switch"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { PassportVerification } from "@/components/passport-verification"
 import { TravellerForm } from "@/components/traveller-form"
 import { VerificationBadge } from "@/components/verification-badge"
 import { api } from "@/lib/api"
+import { describeUserAgent } from "@/lib/user-agent"
 import { useI18n } from "@/lib/i18n"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
@@ -24,6 +26,7 @@ export default function AccountPage() {
   const router = useRouter()
   const [editing, setEditing] = useState<string | "new" | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [allDevices, setAllDevices] = useState(false)
   const travellers = useQuery({ queryKey: ["travellers"], queryFn: () => api<TravellerView[]>("/v1/me/travellers"), enabled: !!me })
   const sessions = useQuery({ queryKey: ["sessions"], queryFn: () => api<{ id: string; client: string; userAgent: string | null; lastSeenAt: string; current: boolean }[]>("/v1/me/sessions"), enabled: !!me })
   const patch = useMutation({ mutationFn: (body: Record<string, unknown>) => api("/v1/me", { method: "PATCH", body }), onSuccess: () => { void qc.invalidateQueries({ queryKey: ["me"] }); toast.success("✓") } })
@@ -34,7 +37,11 @@ export default function AccountPage() {
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }))
     Object.assign(document.createElement("a"), { href: url, download: "uni-travel-my-data.json" }).click()
   }
-  const signOut = async () => { await api("/v1/auth/logout", { body: {} }); await qc.invalidateQueries({ queryKey: ["me"] }); router.replace(href("/")) }
+  // A full navigation: invalidating the session here would let the page guard bounce to /sign-in?next=… before "/" loads.
+  const signOut = async () => { await api("/v1/auth/logout", { body: {} }); window.location.assign(href("/")) }
+  const DEVICE_CAP = 5
+  const devices = [...(sessions.data ?? [])].sort((a, b) => Number(b.current) - Number(a.current) || b.lastSeenAt.localeCompare(a.lastSeenAt))
+  const shown = allDevices ? devices : devices.slice(0, DEVICE_CAP)
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8 md:py-10">
       <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="font-display text-3xl md:text-4xl">{t("account.title")}</h1><Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => void signOut()}>{t("nav.signOut")}</Button></div>
@@ -48,7 +55,8 @@ export default function AccountPage() {
       <section><h2 className="font-display mb-3 text-xl">{t("account.travellers")}</h2>
         <ul className="space-y-2">{travellers.data?.map((tr) => (
           <li key={tr.id} className="card-brand p-4">
-            <div className="flex items-center justify-between text-sm"><span dir="ltr" className="font-medium">{tr.title} {tr.givenNames} {tr.surname}</span><span className="flex items-center gap-2 text-steel">{tr.document ? `${t("account.documentComplete")} ••${tr.document.last4}` : t("account.documentMissing")}{tr.document && <VerificationBadge status={tr.verification.status} />}</span><Button variant="ghost" size="sm" onClick={() => setEditing(tr.id)}>{t("common.edit")}</Button></div>
+            <div className="flex items-center justify-between text-sm"><span dir="ltr" className="font-medium">{t(`honorifics.${tr.title}` as never)} {tr.givenNames} {tr.surname}</span><span className="flex items-center gap-2 text-steel">{tr.document ? `${t("account.documentComplete")} ••${tr.document.last4}` : t("account.documentMissing")}{tr.document && <VerificationBadge status={tr.verification.status} />}</span><Button variant="ghost" size="sm" onClick={() => setEditing(tr.id)}>{t("common.edit")}</Button></div>
+            {tr.document && <section className="mt-3 border-t border-line pt-3" aria-label={t("flow.travellerVerify")}><h3 className="mb-2 text-sm font-semibold">{t("flow.travellerVerify")}</h3><PassportVerification traveller={tr} onChanged={() => void travellers.refetch()} /></section>}
             {editing === tr.id && <div className="mt-3"><TravellerForm initial={tr} onSaved={() => { setEditing(null); void travellers.refetch() }} /></div>}
           </li>
         ))}</ul>
@@ -64,7 +72,20 @@ export default function AccountPage() {
         </div>
       </section>
       <section><h2 className="font-display mb-3 text-xl">{t("account.sessions")}</h2>
-        <ul className="card-brand divide-y divide-line overflow-hidden text-sm">{sessions.data?.map((s) => <li key={s.id} className="flex items-center justify-between px-4 py-2"><span>{s.client}{sep}{s.userAgent?.slice(0, 40)}{sep}{date(s.lastSeenAt, { withTime: true })}{s.current && " · ✓"}</span>{!s.current && <Button variant="ghost" size="sm" onClick={async () => { await api(`/v1/me/sessions/${s.id}`, { method: "DELETE" }); void sessions.refetch() }}>{t("account.revoke")}</Button>}</li>)}</ul>
+        <ul className="card-brand divide-y divide-line overflow-hidden text-sm">{shown.map((s) => {
+          const d = describeUserAgent(s.userAgent)
+          return (
+            <li key={s.id} className="flex items-center justify-between gap-3 px-4 py-2">
+              <span className="min-w-0">
+                <span className="font-medium">{d ? [d.browser, d.os].filter(Boolean).join(sep) : t("account.unknownDevice")}</span>
+                {s.current && <span className="ms-2 rounded-full bg-success-subtle px-2 py-0.5 text-xs font-semibold text-success">{t("account.thisDevice")}</span>}
+                <span className="block text-steel">{t("account.lastSeen", { time: date(s.lastSeenAt, { withTime: true }) })}</span>
+              </span>
+              {!s.current && <Button variant="ghost" size="sm" onClick={async () => { await api(`/v1/me/sessions/${s.id}`, { method: "DELETE" }); void sessions.refetch() }}>{t("account.revoke")}</Button>}
+            </li>
+          )
+        })}</ul>
+        {devices.length > DEVICE_CAP && <Button variant="ghost" size="sm" className="mt-2" onClick={() => setAllDevices((v) => !v)}>{allDevices ? t("account.showFewerDevices") : t("account.showAllDevices", { n: devices.length })}</Button>}
       </section>
       <section><h2 className="font-display mb-3 text-xl">{t("account.privacy")}</h2>
         <div className="flex flex-wrap gap-3"><Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => void exportData()}>{t("account.export")}</Button>

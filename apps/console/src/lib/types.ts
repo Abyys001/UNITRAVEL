@@ -27,6 +27,8 @@ export interface StaffQuote {
 export interface StaffTraveller {
   travellerId: string; passengerType: string; name: { title?: string; givenNames: string; surname: string; nameFa?: string | null }
   document: { type: string; last4: string; issuingCountry: string; expiryDate: string } | null; documentComplete: boolean; nationality?: string
+  /** Identity verification state. */
+  verificationStatus: "UNVERIFIED" | "SUBMITTED" | "VERIFIED" | "REJECTED" | "CORRECTION_REQUIRED"
 }
 
 export interface FlightDetail {
@@ -56,10 +58,16 @@ export interface FlightDetail {
   creditOverrides: CreditOverrideView[]
   compliance: CaseView[]
   actions: AllowedCommand[]
+  paymentRecording: PaymentRecordingState
   atolMode: string
 }
 
+/** Server-computed: whether an offline payment can be recorded now, why not, and the amount still outstanding (ADR-0008 W8). */
+export interface PaymentRecordingState { allowed: boolean; reason?: string; suggestedAmount: Money | null }
+
 export interface CargoDetail {
+  payments: FlightDetail["payments"]
+  paymentRecording: PaymentRecordingState
   ref: string; id: string; version: number; service: string; status: string; statusLabel: string; paymentStatus: string
   lane: { origin: string; destination: string; label: string }
   shipper: CargoPartyView; consignee: CargoPartyView; readyDate: string; handoverMode: string

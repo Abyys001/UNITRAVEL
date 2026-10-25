@@ -2783,7 +2783,7 @@
     "paidAt": null
    }
   },
-  "en GET /v1/notifications?limit=50": {
+  "en GET /v1/notifications?limit=50&locale=en": {
    "status": 200,
    "body": {
     "items": [
@@ -5722,7 +5722,7 @@
     "paidAt": null
    }
   },
-  "fa GET /v1/notifications?limit=50": {
+  "fa GET /v1/notifications?limit=50&locale=fa": {
    "status": 200,
    "body": {
     "items": [

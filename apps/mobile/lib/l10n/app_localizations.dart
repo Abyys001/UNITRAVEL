@@ -343,24 +343,6 @@ abstract class AppL10n {
   /// **'Fly home, or anywhere. We keep every request in one place and a real person behind it.'**
   String get signInIntro;
 
-  /// No description provided for @phoneLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Mobile number'**
-  String get phoneLabel;
-
-  /// No description provided for @phoneHint.
-  ///
-  /// In en, this message translates to:
-  /// **'+98 912 000 0000'**
-  String get phoneHint;
-
-  /// No description provided for @phoneHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Include the country code, or enter an Iranian number starting with 09.'**
-  String get phoneHelp;
-
   /// No description provided for @sendCode.
   ///
   /// In en, this message translates to:
@@ -385,6 +367,42 @@ abstract class AppL10n {
   /// **'Verify'**
   String get verify;
 
+  /// No description provided for @devCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test sign-in (local only): code from the email sink'**
+  String get devCodeTitle;
+
+  /// No description provided for @devCodeWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the code…'**
+  String get devCodeWaiting;
+
+  /// No description provided for @devCodeRefill.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill again'**
+  String get devCodeRefill;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @emailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com'**
+  String get emailHint;
+
+  /// No description provided for @changeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different email'**
+  String get changeEmail;
+
   /// No description provided for @resendCode.
   ///
   /// In en, this message translates to:
@@ -396,12 +414,6 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Resend in {seconds}s'**
   String resendIn(int seconds);
-
-  /// No description provided for @changeNumber.
-  ///
-  /// In en, this message translates to:
-  /// **'Use a different number'**
-  String get changeNumber;
 
   /// No description provided for @languageLabel.
   ///
@@ -1230,12 +1242,6 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Phone'**
   String get detPhone;
-
-  /// No description provided for @emailLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Email'**
-  String get emailLabel;
 
   /// No description provided for @detCodeSent.
   ///

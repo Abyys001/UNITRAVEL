@@ -7,7 +7,7 @@ import { formatDate, formatDuration, formatMoney, listSep, localClock, type Loca
 interface I18n {
   locale: Locale
   t: (key: MessageKey, vars?: Record<string, string | number>) => string
-  date: (iso: string, o?: { withTime?: boolean; weekday?: boolean; dateOnly?: boolean; timeZone?: string }) => string
+  date: (iso: string, o?: { withTime?: boolean; weekday?: boolean; dateOnly?: boolean; year?: boolean; timeZone?: string }) => string
   clock: (local: string) => string
   duration: (min: number) => string
   money: (m: { amountMinor: number; currency: string }) => string

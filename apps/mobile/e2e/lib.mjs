@@ -65,6 +65,16 @@ export async function latestCode(phone, since = 0) {
   throw new Error('no OTP for ' + phone)
 }
 
+export async function latestEmailCode(email, since = 0) {
+  for (let i = 0; i < 20; i++) {
+    const { json } = await call('GET', '/v1/dev-sink/email')
+    const hit = (json ?? []).find((m) => m.to === email && Date.parse(m.at) >= since)
+    if (hit) return /(\d{6})/.exec(hit.body)[1]
+    await sleep(300)
+  }
+  throw new Error('no email OTP for ' + email)
+}
+
 function solvePow(c) {
   for (let n = 0; n <= c.maxnumber; n++) {
     if (crypto.createHash('sha256').update(c.salt + n).digest('hex') === c.challenge) {

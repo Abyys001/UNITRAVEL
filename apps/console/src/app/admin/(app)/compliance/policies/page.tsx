@@ -1,20 +1,25 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import type { PolicyView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { FormDialog } from "@/components/form-dialog"
-import { BentoGrid, BentoTile, EmptyState, StatusChip, TileError } from "@/components/bento"
+import { EmptyState, StatusChip, TileError } from "@/components/bento"
 import { ListSkeleton, StateChip, TableScroll } from "@/components/case"
+import { Chips, ListCard, Pager, tableClass, Toolbar, usePaged } from "@/components/data-list"
 import { Field, PageHead, useAct } from "@/components/ui"
-import { api, errText } from "@/lib/api"
-import { fmtDateTime } from "@/lib/format"
-import { useT } from "@/lib/i18n"
+import { api } from "@/lib/api"
+import { fmtDateTime, human } from "@/lib/format"
+import { type MsgKey, useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
+
+const TYPES = ["CARRIER", "AIRPORT", "COUNTRY_ROUTE", "GOODS_CATEGORY", "KEYWORD", "LANE", "ONLINE_PAYMENT"]
+const STATUS_ORDER = ["PENDING_APPROVAL", "ACTIVE", "RETIRED", "REJECTED", "WITHDRAWN"]
+const CURRENT = "CURRENT" // active + awaiting approval; the retired, rejected and withdrawn history is one chip away
 
 /** Carrier, airport, route, goods, keyword and lane policies. Officers propose; an owner approves (step-up). */
 export default function PoliciesPage() {
@@ -23,31 +28,54 @@ export default function PoliciesPage() {
   const q = useQuery({ queryKey: ["policies"], queryFn: () => api<PolicyView[]>("/v1/admin/compliance/policies") })
   const [open, setOpen] = useState(false)
   const [f, setF] = useState({ type: "CARRIER", key: "", action: "BLOCK", reason: "", counselReference: "" })
-  const [filter, setFilter] = useState("")
+  const [type, setType] = useState("")
+  const [status, setStatus] = useState(CURRENT)
+  const [search, setSearch] = useState("")
   const approve = useAct((id: string) => api(`/v1/admin/compliance/policies/${id}/approve`, { body: {} }), { success: "Policy approved and active", invalidate: [["policies"]] })
+  const withdraw = useAct((id: string) => api(`/v1/admin/compliance/policies/${id}/withdraw`, { body: {} }), { success: "Proposal withdrawn", invalidate: [["policies"]] })
+  const [rejecting, setRejecting] = useState<PolicyView | null>(null)
+  const [rejectReason, setRejectReason] = useState("")
   const isOwner = me?.roles.includes("owner")
-  const rows = (q.data ?? []).filter((p) => !filter || p.type === filter)
+  const all = q.data ?? []
+  const inStatus = useMemo(() => all.filter((p) => status === CURRENT ? p.status === "ACTIVE" || p.status === "PENDING_APPROVAL" : !status || p.status === status), [all, status])
+  const matched = useMemo(() => {
+    const n = search.trim().toLowerCase()
+    return inStatus.filter((p) => !n || p.key.toLowerCase().includes(n) || p.reason.toLowerCase().includes(n))
+  }, [inStatus, search])
+  const rows = useMemo(() => matched.filter((p) => !type || p.type === type).sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || a.type.localeCompare(b.type) || a.key.localeCompare(b.key)), [matched, type])
+  const paged = usePaged(rows)
+  const typeCount = (x: string) => matched.filter((p) => p.type === x).length
+  const statusCount = (x: string) => all.filter((p) => p.status === x).length
+  const cols: MsgKey[] = ["pg.c.type", "pg.c.key", "pg.c.action", "pg.c.reason", "pg.c.version", "pg.c.status", "pg.c.approved"]
   return (
     <div>
-      <PageHead kicker="Compliance" title="Policies">
-        <NativeSelect aria-label="Type" className="field-input w-44" value={filter} onChange={(e) => setFilter(e.target.value)}><option value="">All types</option>{["CARRIER", "AIRPORT", "COUNTRY_ROUTE", "GOODS_CATEGORY", "KEYWORD", "LANE", "ONLINE_PAYMENT"].map((t) => <option key={t}>{t}</option>)}</NativeSelect>
+      <PageHead title={t("nav.policies")}>
         {can("compliance.case.decide") && <Button size="sm" onClick={() => setOpen(true)}>Propose change</Button>}
       </PageHead>
-      {q.data && (
-        <BentoGrid className="px-5 pt-4 pb-2 max-sm:grid-cols-2 max-sm:gap-2" data-testid="case-summary">
-          <BentoTile size="s" title={t("pol.active")}><p className="num text-[22px] leading-tight font-semibold">{q.data.filter((p) => p.status === "ACTIVE").length}</p></BentoTile>
-          <BentoTile size="s" title={t("pol.pending")} tone={q.data.some((p) => p.status === "PENDING_APPROVAL") ? "hero" : "default"}><p className="num text-[22px] leading-tight font-semibold">{q.data.filter((p) => p.status === "PENDING_APPROVAL").length}</p></BentoTile>
-          <BentoTile size="s" title={t("pol.block")}><p className="num text-[22px] leading-tight font-semibold">{q.data.filter((p) => p.status === "ACTIVE" && p.action === "BLOCK").length}</p></BentoTile>
-        </BentoGrid>
-      )}
-      <div className="px-5 py-3">
-        {q.error ? <TileError message={errText(q.error)} onRetry={() => void q.refetch()} /> : !q.data ? <ListSkeleton rows={6} className="p-0" /> : !rows.length ? <EmptyState title="No policies." /> : (
-          <TableScroll><table className="w-full bg-surface-raised" data-testid="policies">
-            <thead className="bg-surface-raised"><tr className="border-b border-rule">{["Type", "Key", "Action", "Reason", "Version", "Status", "Approved", ""].map((h) => <th key={h} className="cap px-2 py-1.5 text-start font-normal">{h}</th>)}</tr></thead>
-            <tbody>{rows.map((p) => <tr key={p.id} className="border-b border-rule/70"><td className="px-2 py-1.5 font-mono text-[11px]">{p.type}</td><td className="num px-2 py-1.5">{p.key}</td><td className="px-2 py-1.5"><StatusChip tone={p.action === "BLOCK" ? "danger" : p.action === "REVIEW" ? "warn" : "ok"} className="font-mono text-[10.5px] uppercase">{p.action}</StatusChip></td><td className="max-w-sm px-2 py-1.5">{p.reason}{p.counselReference && <span className="block text-[11px] text-steel">counsel {p.counselReference}</span>}</td><td className="num px-2 py-1.5">v{p.version}</td><td className="px-2 py-1.5"><StateChip value={p.status} /></td><td className="px-2 py-1.5 text-[12px] text-steel">{p.approvedAt ? fmtDateTime(p.approvedAt) : "—"}</td><td className="px-2 py-1.5">{p.status === "PENDING_APPROVAL" && (isOwner ? <Button size="xs" onClick={() => approve.mutate(p.id)}>Approve</Button> : <span className="text-[11px] text-steel">awaiting owner</span>)}</td></tr>)}</tbody>
+      <Toolbar query={search} onQuery={setSearch} placeholder={t("pg.pol.search")} count={q.data ? rows.length : undefined} className="pb-1.5">
+        <Chips label={t("pg.pol.status")} value={status} options={[{ value: CURRENT, label: t("pg.pol.current"), count: all.filter((p) => p.status === "ACTIVE" || p.status === "PENDING_APPROVAL").length }, ...STATUS_ORDER.filter((x) => statusCount(x)).map((x) => ({ value: x, label: human(x), count: statusCount(x) })), { value: "", label: t("pg.all"), count: all.length }]} onChange={setStatus} />
+      </Toolbar>
+      <Toolbar className="pt-0">
+        <Chips label={t("pg.pol.type")} value={type} options={[{ value: "", label: t("pg.all"), count: matched.length }, ...[...TYPES, ...new Set(all.map((p) => p.type).filter((x) => !TYPES.includes(x)))].filter((x) => typeCount(x)).map((x) => ({ value: x, label: human(x), count: typeCount(x) }))]} onChange={setType} />
+      </Toolbar>
+      {q.error ? <div className="px-6 py-3"><TileError error={q.error} onRetry={() => void q.refetch()} /></div> : !q.data ? <ListSkeleton rows={6} className="px-6" /> : !rows.length ? <EmptyState title={t("pg.pol.none")} /> : (
+        <ListCard>
+          <TableScroll><table className={tableClass} data-testid="policies">
+            <thead><tr>{cols.map((h) => <th key={h}>{t(h)}</th>)}<th><span className="sr-only">Actions</span></th></tr></thead>
+            <tbody>{paged.rows.map((p) => <tr key={p.id}><td className="whitespace-nowrap">{human(p.type)}</td><td className="num">{p.key}</td><td><StatusChip tone={p.action === "BLOCK" ? "danger" : p.action === "REVIEW" ? "warn" : "ok"}>{human(p.action)}</StatusChip></td><td className="max-w-sm">{p.reason}{p.counselReference && <span className="block text-[12px] text-steel">{t("pg.pol.counsel", { ref: p.counselReference })}</span>}{p.decisionReason && <span className="block text-[12px] text-steel" data-testid="decision-reason">{p.status === "WITHDRAWN" ? "Withdrawn" : "Rejected"}: {p.decisionReason}</span>}</td><td className="num">v{p.version}</td><td><StateChip value={p.status} /></td><td className="whitespace-nowrap text-[12px] text-steel">{p.approvedAt ? fmtDateTime(p.approvedAt) : "—"}</td><td>{p.status === "PENDING_APPROVAL" && (
+              <span className="flex items-center gap-1.5">
+                {isOwner ? <Button size="xs" onClick={() => approve.mutate(p.id)}>Approve</Button> : <span className="text-[12px] text-steel">{t("pol.pending").toLowerCase()}</span>}
+                {isOwner && <Button size="xs" variant="outline" onClick={() => { setRejectReason(""); setRejecting(p) }} data-command="reject_policy">Reject</Button>}
+                {me?.id === p.createdBy && <Button size="xs" variant="outline" loading={withdraw.isPending} onClick={() => withdraw.mutate(p.id)} data-command="withdraw_policy">Withdraw</Button>}
+              </span>
+            )}</td></tr>)}</tbody>
           </table></TableScroll>
-        )}
-      </div>
+          <Pager {...paged} className="border-t border-rule" />
+        </ListCard>
+      )}
+      <FormDialog open={!!rejecting} onOpenChange={(o) => !o && setRejecting(null)} title="Reject proposal…" description={rejecting ? `${rejecting.type} ${rejecting.key} → ${rejecting.action}. The active policy is not changed.` : undefined} submitLabel="Reject" destructive onSubmit={async () => { await api(`/v1/admin/compliance/policies/${rejecting!.id}/reject`, { body: { reason: rejectReason } }); await q.refetch() }} testId="dlg-reject-policy">
+        <Field label="Reason" hint="Recorded in the audit log and shown with the proposal."><textarea className="field-input min-h-20" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} minLength={3} required dir="auto" /></Field>
+      </FormDialog>
       <FormDialog open={open} onOpenChange={setOpen} title="Propose policy change…" description="Takes effect only after an owner approves it." submitLabel="Propose" onSubmit={async () => { await api("/v1/admin/compliance/policies", { body: { ...f, counselReference: f.counselReference || undefined } }); await q.refetch() }}>
         <div className="grid grid-cols-2 gap-2">
           <Field label="Type"><NativeSelect className="field-input" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value })}>{["CARRIER", "AIRPORT", "COUNTRY_ROUTE", "GOODS_CATEGORY", "KEYWORD", "LANE", "ONLINE_PAYMENT"].map((t) => <option key={t}>{t}</option>)}</NativeSelect></Field>

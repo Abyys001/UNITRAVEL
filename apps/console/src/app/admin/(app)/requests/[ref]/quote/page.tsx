@@ -11,11 +11,10 @@ import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
-import { BentoGrid, BentoTile, Stat } from "@/components/bento"
 import { SliceView } from "@/components/flight/itinerary"
 import { badAmounts, type DraftOption, fromInput, fromItinerary, toInput, unknowns } from "@/components/quote/model"
 import { OptionEditor } from "@/components/quote/option-editor"
-import { ListSkeleton } from "@/components/case"
+import { ListSkeleton, SummaryItem } from "@/components/case"
 import { ErrorLine, Field, Loading, PageHead, Tag } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime, money } from "@/lib/format"
@@ -51,8 +50,10 @@ function Builder() {
     const qid = params.get("quote")
     const fromServer = (q: StaffQuote): Working => ({ quoteId: q.id, rowVersion: q.rowVersion, currency: q.currency, validUntil: q.validUntil ? toLocal(q.validUntil) : "", options: q.options.map((o) => fromInput({ ...o, internalCostMinor: o.internalCostMinor ?? undefined, components: o.components ?? [] } as QuoteOptionInput)) })
     let base: Working = stored ? JSON.parse(stored) as Working : { quoteId: null, rowVersion: null, currency: "GBP", validUntil: "", options: [] }
-    const serverDraft = detail.data.quotes.find((q) => q.id === qid && q.status === "DRAFT")
-    if (!stored && serverDraft) base = fromServer(serverDraft)
+    // An untouched stored copy (no draft id, no options) must not hide a draft that exists on the server.
+    const drafts = detail.data.quotes.filter((q) => q.status === "DRAFT")
+    const serverDraft = drafts.find((q) => q.id === qid) ?? drafts.reduce<StaffQuote | undefined>((n, q) => (!n || q.version > n.version ? q : n), undefined)
+    if ((!stored || (!base.quoteId && !base.options.length)) && serverDraft) base = fromServer(serverDraft)
     const add = params.get("add")
     if (add) {
       api<{ itinerary: Itinerary }>(`/v1/admin/itineraries/${encodeURIComponent(add)}`).then(({ itinerary: it }) => {
@@ -112,15 +113,15 @@ function Builder() {
         <Button size="sm" variant="outline" onClick={addManual} disabled={w.options.length >= 5}>+ Manual entry</Button>
       </PageHead>
       <div className="mx-auto max-w-6xl space-y-3 px-5 py-4">
-        <BentoGrid className="max-sm:grid-cols-2 max-sm:gap-2">
-          <BentoTile size="s" title={t("quote.options")}><Stat label={<span className="sr-only">{t("quote.options")}</span>} value={<>{w.options.length}<span className="text-[14px] text-steel"> / 5</span></>} /></BentoTile>
-          <BentoTile size="s" title={t("quote.unknown")} tone={totalUnknown ? "alert" : "default"}>
-            <p className={cn("num text-[28px] leading-none font-semibold", totalUnknown ? "text-danger" : "text-ink")} data-testid="unknown-total">{totalUnknown}</p>
-            <p className={cn("mt-1 text-[12px]", totalUnknown ? "font-medium text-danger" : "text-steel")}>{totalUnknown ? t("quote.unknown.blocks") : t("quote.unknown.none")}</p>
-          </BentoTile>
-          <BentoTile size="s" title={t("quote.valid")}><p className="num text-[15px] font-medium">{w.validUntil ? fmtDateTime(new Date(w.validUntil).toISOString()) : "—"}</p>{!w.validUntil && <p className="mt-1 text-[12px] text-steel">{t("quote.valid.default")}</p>}</BentoTile>
-          <BentoTile size="s" title={t("quote.total")}><p className="num text-[22px] leading-tight font-semibold">{w.options.length && !badPrice ? money(w.options.map((o) => toInput(o, w.currency).priceBreakdown.total).reduce((a, b) => (b.amountMinor < a.amountMinor ? b : a))) : "—"}</p></BentoTile>
-        </BentoGrid>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-rule bg-surface-raised px-4 py-3" data-testid="case-summary">
+          <SummaryItem label={t("quote.options")}><span className="num font-semibold">{w.options.length}<span className="font-normal text-steel"> / 5</span></span></SummaryItem>
+          <SummaryItem label={t("quote.unknown")}>
+            <span className={cn("num font-semibold", totalUnknown ? "text-danger" : "text-ink")} data-testid="unknown-total">{totalUnknown}</span>
+            <span className={cn("text-[12px]", totalUnknown ? "font-medium text-danger" : "text-steel")}>{totalUnknown ? t("quote.unknown.blocks") : t("quote.unknown.none")}</span>
+          </SummaryItem>
+          <SummaryItem label={t("quote.valid")}><span className="num font-medium">{w.validUntil ? fmtDateTime(new Date(w.validUntil).toISOString()) : "—"}</span>{!w.validUntil && <span className="text-[12px] text-steel">{t("quote.valid.default")}</span>}</SummaryItem>
+          <SummaryItem label={t("quote.total")}><span className="num font-semibold">{w.options.length && !badPrice ? money(w.options.map((o) => toInput(o, w.currency).priceBreakdown.total).reduce((a, b) => (b.amountMinor < a.amountMinor ? b : a))) : "—"}</span></SummaryItem>
+        </div>
         <div className="flex flex-wrap items-end gap-3">
           <Field label="Currency" className="w-28"><NativeSelect className="field-input" value={w.currency} onChange={(e) => set({ currency: e.target.value })}>{["GBP", "EUR", "USD"].map((c) => <option key={c}>{c}</option>)}</NativeSelect></Field>
           <Field label="Valid until" hint="Blank = workflow default (24 h); never later than the supplier's offer expiry." className="w-64"><input type="datetime-local" className="field-input" value={w.validUntil} onChange={(e) => set({ validUntil: e.target.value })} /></Field>
@@ -157,9 +158,9 @@ function Builder() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2">
           {w.quoteId && <Tag value="DRAFT" />}
           {err ? <span role="alert" className="max-w-xl truncate text-danger" title={errText(err)}>{errText(err)}</span> : null}
-          {sendAction && !sendAction.allowed && <span className="text-[11px] text-steel">{sendAction.reason}</span>}
-          <span className="ms-auto flex gap-2">
-            <Button size="sm" variant="ghost" onClick={discard}>Discard working copy</Button>
+          {w.quoteId && sendAction && !sendAction.allowed && <span className="text-[11px] text-steel">{sendAction.reason}</span>}
+          <span className="ms-auto flex flex-wrap justify-end gap-2 max-sm:grid max-sm:w-full max-sm:grid-cols-2">
+            <Button size="sm" variant="ghost" onClick={discard} disabled={!w.quoteId && !w.options.length && !w.validUntil}>Discard working copy</Button>
             <Button size="sm" variant="outline" onClick={() => setPreview((p) => !p)} disabled={!w.options.length}>{preview ? "Hide preview" : "Preview"}</Button>
             <Button size="sm" variant="outline" onClick={() => void save()} loading={saving} disabled={!w.options.length}>Save draft</Button>
             <Button size="sm" onClick={() => void send()} disabled={!w.options.length || totalUnknown > 0 || badPrice || saving} title={totalUnknown ? "Confirm every unknown fact first" : badPrice ? "Fix the highlighted amounts" : undefined}>Send quote</Button>
