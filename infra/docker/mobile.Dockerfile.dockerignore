@@ -1,0 +1,7 @@
+build
+.dart_tool
+android
+ios
+test
+test-artifacts
+e2e

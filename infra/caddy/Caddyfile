@@ -35,3 +35,14 @@
 		header_up X-Forwarded-Host {host}
 	}
 }
+
+{$MOBILE_HOST} {
+	import common
+	reverse_proxy mobile:80
+}
+
+# Pre-signed uploads and downloads go straight to object storage; the signature covers the Host header, which Caddy keeps.
+{$STORAGE_HOST} {
+	import common
+	reverse_proxy storage:9000
+}

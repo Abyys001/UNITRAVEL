@@ -15,6 +15,7 @@ Source: booklet ch. 30.7 (trigger table) and ch. 30.6 (backup). Targets: ch. 30.
 | [backup-restore](backup-restore.md) | Data loss, corruption, or the monthly restore test (ch. 30.6) |
 | [identity-verification](identity-verification.md) | Staff procedure for passport verification (ADR-0005); not an incident trigger |
 | [stripe-webhook-failure](stripe-webhook-failure.md) | Failed Stripe events, or a customer paid by card but the invoice is unpaid (ADR-0007, test mode) |
+| [deploy-vps](deploy-vps.md) | Standing up or updating a staging/production stack on one VPS; not an incident trigger |
 | [refunds](refunds.md) | Staff procedure for refunding an online card payment (ADR-0007); not an incident trigger |
 
 ## Conventions

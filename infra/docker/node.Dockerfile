@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# One build for the whole workspace; targets: api (also the worker), migrate, web, console (booklet ch. 30.2).
+# One build for the whole workspace; targets: api (also the worker), migrate, seed, web, console (booklet ch. 30.2).
 FROM node:24-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable && corepack prepare pnpm@12.6.0 --activate
@@ -35,6 +35,10 @@ COPY --from=build --chown=app /out/db ./
 COPY --from=build --chown=app /repo/packages/db/migrations ./migrations
 USER app
 CMD ["node", "dist/migrate.js"]
+
+# Same artefact as migrate, runs the idempotent seed (reference data, config, and demo users outside production).
+FROM migrate AS seed
+CMD ["node", "dist/seed/index.js"]
 
 FROM runtime-base AS web
 COPY --from=build --chown=app /repo/apps/web/.next/standalone ./

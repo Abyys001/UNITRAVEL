@@ -10,8 +10,8 @@ x-app-env: &app-env
   JWT_PUBLIC_KEYS: ${JWT_PUBLIC_KEYS:?}
   MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY:?}
   OTP_PEPPER: ${OTP_PEPPER:?}
-  OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:?}
-  OBJECT_STORAGE_PUBLIC_ENDPOINT: ${OBJECT_STORAGE_PUBLIC_ENDPOINT:-}
+  OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:-http://storage:9000}
+  OBJECT_STORAGE_PUBLIC_ENDPOINT: ${OBJECT_STORAGE_PUBLIC_ENDPOINT:-https://${STORAGE_HOST:?}}
   OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-unitravel-documents}
   OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?}
   OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?}
@@ -20,6 +20,8 @@ x-app-env: &app-env
   PUBLIC_API_URL: https://${API_HOST:?}
   PUBLIC_CONSOLE_ADMIN_URL: https://${ADMIN_HOST:?}
   PUBLIC_CONSOLE_DEV_URL: https://${DEV_HOST:?}
+  PUBLIC_MOBILE_WEB_URL: https://${MOBILE_HOST:?}
+  TEST_SIGN_IN: ${TEST_SIGN_IN:-off}
   CLAMAV_HOST: clamav
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
 
@@ -27,21 +29,29 @@ services:
   caddy:
     image: caddy:2.10-alpine
     ports: ["80:80", "443:443", "443:443/udp"]
-    environment: { WEB_HOST: "${WEB_HOST}", API_HOST: "${API_HOST}", ADMIN_HOST: "${ADMIN_HOST}", DEV_HOST: "${DEV_HOST}", ACME_EMAIL: "${ACME_EMAIL:?}" }
+    environment: { WEB_HOST: "${WEB_HOST}", API_HOST: "${API_HOST}", ADMIN_HOST: "${ADMIN_HOST}", DEV_HOST: "${DEV_HOST}", MOBILE_HOST: "${MOBILE_HOST}", STORAGE_HOST: "${STORAGE_HOST}", ACME_EMAIL: "${ACME_EMAIL:?}" }
     volumes: [./caddy/Caddyfile:/etc/caddy/Caddyfile:ro, caddy-data:/data, caddy-config:/config]
-    depends_on: [web, api, console]
+    depends_on: [web, api, console, mobile]
     restart: unless-stopped
 
   migrate:
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: migrate }
-    environment: { DATABASE_MIGRATE_URL: "${DATABASE_MIGRATE_URL:?}", APP_ENV: "${APP_ENV}" }
+    # DATABASE_URL/DATABASE_RO_URL carry the app_rw/app_ro passwords; migrate.ts creates the roles (migration 0001) and sets them.
+    environment: { DATABASE_MIGRATE_URL: "${DATABASE_MIGRATE_URL:?}", DATABASE_APP_URL: "${DATABASE_URL:?}", DATABASE_RO_URL: "${DATABASE_RO_URL:?}", APP_ENV: "${APP_ENV}" }
     depends_on: { postgres: { condition: service_healthy } }
+    restart: "no"
+
+  # Idempotent reference/config seed; demo users only when APP_ENV is not production (packages/db/src/seed/index.ts).
+  seed:
+    build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: seed }
+    environment: { DATABASE_MIGRATE_URL: "${DATABASE_MIGRATE_URL:?}", APP_ENV: "${APP_ENV}", SEED_DEMO: "${SEED_DEMO:-1}" }
+    depends_on: { migrate: { condition: service_completed_successfully } }
     restart: "no"
 
   api:
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: api }
     environment: { <<: *app-env }
-    depends_on: { migrate: { condition: service_completed_successfully }, valkey: { condition: service_healthy } }
+    depends_on: { seed: { condition: service_completed_successfully }, valkey: { condition: service_healthy }, storage: { condition: service_healthy } }
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
@@ -50,19 +60,28 @@ services:
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: api }
     command: ["node", "dist/main.worker.js"]
     environment: { <<: *app-env }
-    depends_on: { migrate: { condition: service_completed_successfully }, valkey: { condition: service_healthy } }
+    depends_on: { seed: { condition: service_completed_successfully }, valkey: { condition: service_healthy }, storage: { condition: service_healthy } }
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
 
   web:
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: web }
-    environment: { API_INTERNAL_URL: "http://api:4100" }
+    # The CSP and canonical links are built from these at request time.
+    environment: { API_INTERNAL_URL: "http://api:4100", PUBLIC_WEB_URL: "https://${WEB_HOST}", OBJECT_STORAGE_PUBLIC_ENDPOINT: "${OBJECT_STORAGE_PUBLIC_ENDPOINT:-https://${STORAGE_HOST}}" }
     restart: unless-stopped
 
   console:
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: console }
-    environment: { API_INTERNAL_URL: "http://api:4100" }
+    # The host split between the Admin Panel and the Developer Panel reads these.
+    environment: { API_INTERNAL_URL: "http://api:4100", PUBLIC_CONSOLE_ADMIN_URL: "https://${ADMIN_HOST}", PUBLIC_CONSOLE_DEV_URL: "https://${DEV_HOST}" }
+    restart: unless-stopped
+
+  mobile:
+    build:
+      context: ../apps/mobile
+      dockerfile: ../../infra/docker/mobile.Dockerfile
+      args: { API_URL: "https://${API_HOST:?}", WEB_URL: "https://${WEB_HOST:?}" }
     restart: unless-stopped
 
   postgres:
@@ -83,4 +102,21 @@ services:
     image: clamav/clamav:1.4
     restart: unless-stopped
 
-volumes: { pg: {}, valkey: {}, caddy-data: {}, caddy-config: {} }
+  # S3-compatible store (ADR-0005). The API creates the buckets and their CORS/SSE at start-up (core/storage.ts).
+  # Set OBJECT_STORAGE_ENDPOINT to a managed EU S3 endpoint to stop using this service.
+  storage:
+    image: rustfs/rustfs:1.0.1
+    environment: { RUSTFS_ACCESS_KEY: "${OBJECT_STORAGE_ACCESS_KEY:?}", RUSTFS_SECRET_KEY: "${OBJECT_STORAGE_SECRET_KEY:?}", RUSTFS_SSE_S3_MASTER_KEY: "${RUSTFS_SSE_S3_MASTER_KEY:?}" }
+    command: ["/data"]
+    volumes: [storage:/data]
+    healthcheck: { test: ["CMD-SHELL", "nc -z 127.0.0.1 9000"], interval: 5s, retries: 30 }
+    restart: unless-stopped
+
+  # Staging only: catches all outgoing mail (UI on 127.0.0.1:8025). Use with SMTP_URL=smtp://mailpit:1025.
+  mailpit:
+    profiles: [mail-sink]
+    image: axllent/mailpit:v1.27
+    ports: ["127.0.0.1:8025:8025"]
+    restart: unless-stopped
+
+volumes: { pg: {}, valkey: {}, storage: {}, caddy-data: {}, caddy-config: {} }
