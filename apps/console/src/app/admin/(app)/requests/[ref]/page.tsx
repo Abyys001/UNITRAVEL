@@ -7,7 +7,7 @@ import { useParams } from "next/navigation"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { Button } from "@unitravel/ui/components/button"
+import { Button, buttonVariants } from "@unitravel/ui/components/button"
 import { VerificationBadge } from "@unitravel/ui/product/verification-badge"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
@@ -110,10 +110,10 @@ export default function FlightRequestPage() {
         </div>
       )}
       <CaseHeader
-        reference={<span className="num text-[15px] font-semibold" data-testid="ref">{d.ref}</span>}
+        reference={<span className="ref text-lead font-semibold" data-testid="ref">{d.ref}</span>}
         title={d.routeLabel}
         meta={<>{Object.entries(pax).map(([k, n]) => `${n} ${k}`).join(" · ")} · {fmtDate(d.firstTravelDate)} · {human(d.tripType)} · {d.kind === "MANUAL" ? "manual request" : "itinerary request"} · submitted {fmtDateTime(d.submittedAt)} via {d.submittedVia.toLowerCase()} ({d.submittedLocale})</>}
-        aside={mobile ? <Button size="sm" render={<a href={`tel:${d.customer.phone}`} />}><Phone /> Call</Button> : undefined}
+        aside={mobile ? <a href={`tel:${d.customer.phone}`} className={buttonVariants({ size: "sm" })}><Phone /> Call</a> : undefined}
         summary={<>
           <div className="flex flex-wrap items-center gap-1.5">
             <span data-testid="status"><StateChip value={d.status} /></span>
@@ -122,14 +122,14 @@ export default function FlightRequestPage() {
           </div>
           <SummaryItem label={t("case.sla")}>
             <SlaChip dueAt={d.sla.dueAt} startAt={d.submittedAt} done={!!d.sla.firstContactAt} />
-            <span className="text-[12px] text-steel">{d.sla.firstContactAt ? fmtDateTime(d.sla.firstContactAt) : d.sla.dueAt ? <>{t("case.firstContact.due")} <span className="num">{fmtDateTime(d.sla.dueAt)}</span></> : t("sla.none")}</span>
+            <span className="text-meta text-steel">{d.sla.firstContactAt ? fmtDateTime(d.sla.firstContactAt) : d.sla.dueAt ? <>{t("case.firstContact.due")} <span className="num">{fmtDateTime(d.sla.dueAt)}</span></> : t("sla.none")}</span>
           </SummaryItem>
           <SummaryItem label={t("case.owner.short")}><span className="font-medium" data-testid="assignee">{d.assignee ? (mineCase ? t("case.assignedYou") : t("case.assignedTo", { name: d.assignee.name ?? "—" })) : <span className="text-danger">{t("case.unassigned")}</span>}</span></SummaryItem>
           <SummaryItem label={t("case.truth.short")} className={tally && tally.unknown > 0 ? "basis-full sm:basis-auto" : undefined}>
             {!tally ? <span className="text-steel">{t("case.truth.none")}</span> : (
               <>
                 <TruthTally compact tally={tally} />
-                <span className={cn("text-[12px]", tally.unknown > 0 ? "font-medium text-danger" : "text-steel")} data-testid="truth-note">{tally.unknown > 0 ? t("case.truth.blocks") : t("case.truth.clear")} <span className="text-steel">· {t("case.truth.quote", { v: latestQuote!.version })}</span></span>
+                <span className={cn("text-meta", tally.unknown > 0 ? "font-medium text-danger" : "text-steel")} data-testid="truth-note">{tally.unknown > 0 ? t("case.truth.blocks") : t("case.truth.clear")} <span className="text-steel">· {t("case.truth.quote", { v: latestQuote!.version })}</span></span>
               </>
             )}
           </SummaryItem>
@@ -137,21 +137,21 @@ export default function FlightRequestPage() {
       />
       <ActionBar data-testid="actions" aria-label={t("case.actions")}>
         <CommandBar actions={visibleActions} onRun={run} none={t("case.actions.none", { status: d.status })} hint={<><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
-        {mobile && d.actions.some((a) => DESKTOP_ONLY.has(a.command)) && <p className="mt-1 text-[11px] text-steel">Quote sending and recording dialogs are desktop features in v1.</p>}
+        {mobile && d.actions.some((a) => DESKTOP_ONLY.has(a.command)) && <p className="mt-1 text-caption text-steel">Quote sending and recording dialogs are desktop features in v1.</p>}
       </ActionBar>
       <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "case", label: t("case.tab.case") }, { key: "customer", label: t("case.tab.customer") }, { key: "records", label: t("case.tab.records"), count: d.reservations.length + d.tickets.length + d.payments.length }]} />
 
       <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-[minmax(250px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
         {/* LEFT — customer */}
         <div {...paneProps("customer")} className={paneClass(tab, "customer")}>
-          <Panel title="Customer" aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className="text-orange-700">Context →</Link>}>
-            <p className="text-[15px] font-medium" dir="auto" data-testid="customer-name">{d.customer.nameLatin || d.customer.displayName}</p>
-            {d.customer.nameFa && <p className="w-fit font-fa text-[15px]" dir="rtl" lang="fa" data-testid="customer-name-fa">{d.customer.nameFa}</p>}
+          <Panel title="Customer" aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className="font-medium text-link hover:underline">Context →</Link>}>
+            <p className="text-lead font-medium" dir="auto" data-testid="customer-name">{d.customer.nameLatin || d.customer.displayName}</p>
+            {d.customer.nameFa && <p className="w-fit font-fa text-lead" dir="rtl" lang="fa" data-testid="customer-name-fa">{d.customer.nameFa}</p>}
             <p className="text-steel">Prefers {d.customer.preferredLocale === "fa" ? "Persian" : "English"}{d.customer.contactTimePref && <> · best time {d.customer.contactTimePref}</>}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="num text-[14px]" dir="ltr">{d.customer.phone}</span>
+              <span className="num text-lead" dir="ltr">{d.customer.phone}</span>
               {d.customer.phoneVerified ? <Tag value="VERIFIED" className="border-success text-success" title={fmtDateTime(d.customer.phoneVerifiedAt)} /> : <Tag value="UNVERIFIED" className="border-danger text-danger" />}
-              {d.customer.phoneVerifiedAt && <span className="text-[11px] text-steel" suppressHydrationWarning>{fmtDateTime(d.customer.phoneVerifiedAt)}</span>}
+              {d.customer.phoneVerifiedAt && <span className="text-caption text-steel" suppressHydrationWarning>{fmtDateTime(d.customer.phoneVerifiedAt)}</span>}
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {!mobile && <Button size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success("Number copied") }}><Copy /> Copy number</Button>}
@@ -168,23 +168,23 @@ export default function FlightRequestPage() {
                   {t.name.nameFa && <p className="w-fit font-fa" dir="rtl">{t.name.nameFa}</p>}
                   {t.verificationStatus && <p className="mt-0.5"><VerificationBadge status={t.verificationStatus} label={tt(`vstatus.${t.verificationStatus}` as MsgKey)} /></p>}
                   {t.document ? (
-                    <p className="mt-0.5 flex items-center gap-2 text-[12px] text-steel">
+                    <p className="mt-0.5 flex items-center gap-2 text-meta text-steel">
                       <span>{human(t.document.type)} <span className="num" data-testid="doc-number">{revealed[t.travellerId] ?? `•••••${t.document.last4}`}</span> · {t.document.issuingCountry} · expires {fmtDate(t.document.expiryDate)}</span>
-                      {can("customer.read.documents") && !revealed[t.travellerId] && <button type="button" className="text-orange-700 underline underline-offset-2" onClick={() => reveal.mutate(t.travellerId)} title="Logged as customer.read.documents">Reveal</button>}
+                      {can("customer.read.documents") && !revealed[t.travellerId] && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => reveal.mutate(t.travellerId)} title="Logged as customer.read.documents">Reveal</button>}
                     </p>
-                  ) : <p className="text-[12px] text-danger">No passport on file</p>}
+                  ) : <p className="text-meta text-danger">No passport on file</p>}
                 </li>
               ))}
             </ul>
-            {Object.keys(revealed).length > 0 && <p className="text-[11px] text-steel">Revealed numbers hide again after a minute. Each reveal is in the audit log.</p>}
+            {Object.keys(revealed).length > 0 && <p className="text-caption text-steel">Revealed numbers hide again after a minute. Each reveal is in the audit log.</p>}
           </Panel>
           <Panel title="Contact log">
             {!d.contacts.length ? <Empty>No calls logged.</Empty> : (
-              <ul className="ledger-rows" data-testid="contacts">{d.contacts.map((c) => <li key={c.id} className="py-1"><span className="num text-[12px]">{fmtDateTime(c.createdAt)}</span> · <Tag value={c.outcome} />{c.channel === "SMS_TEMPLATE" && <span className="ms-1 text-steel">SMS</span>}{c.note && <p className="text-steel" dir="auto">“{c.note}”</p>}{c.callBackAt && <p className="text-[11px] text-orange-700">Call back {fmtDateTime(c.callBackAt)}</p>}</li>)}</ul>
+              <ul className="ledger-rows" data-testid="contacts">{d.contacts.map((c) => <li key={c.id} className="py-1"><span className="num text-meta">{fmtDateTime(c.createdAt)}</span> · <Tag value={c.outcome} />{c.channel === "SMS_TEMPLATE" && <span className="ms-1 text-steel">SMS</span>}{c.note && <p className="text-steel" dir="auto">“{c.note}”</p>}{c.callBackAt && <p className="text-caption text-orange-700">Call back {fmtDateTime(c.callBackAt)}</p>}</li>)}</ul>
             )}
           </Panel>
           <Panel title="History">
-            {!d.customer.history.length ? <Empty>First request from this customer.</Empty> : <ul className="ledger-rows">{d.customer.history.map((h) => <li key={h.ref} className="flex justify-between py-1"><Link className="num text-[12px] hover:underline" href={h.productType === "CARGO" ? `/cargo/${h.ref}` : `/requests/${h.ref}`}>{h.ref}</Link><Tag value={h.status} /></li>)}</ul>}
+            {!d.customer.history.length ? <Empty>First request from this customer.</Empty> : <ul className="ledger-rows">{d.customer.history.map((h) => <li key={h.ref} className="flex justify-between py-1"><Link className="ref text-meta hover:underline" href={h.productType === "CARGO" ? `/cargo/${h.ref}` : `/requests/${h.ref}`}>{h.ref}</Link><Tag value={h.status} /></li>)}</ul>}
           </Panel>
         </div>
 
@@ -203,14 +203,14 @@ export default function FlightRequestPage() {
             <Panel title="Offer snapshot (immutable)" aside={can("pricing.read.internal") && <Button size="xs" variant="outline" onClick={() => recheck.mutate()} loading={recheck.isPending}>Re-check price</Button>}>
               <div className="rounded-md border border-rule bg-surface-raised p-3">
                 <ItineraryView it={d.snapshot.itinerary} />
-                <p className="mt-2 flex flex-wrap gap-x-4 text-[12px] text-steel">{d.snapshot.priceAtSubmit && <span>At submission <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>Revalidated <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>Rules v{d.snapshot.ruleVersion} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
+                <p className="mt-2 flex flex-wrap gap-x-4 text-meta text-steel">{d.snapshot.priceAtSubmit && <span>At submission <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>Revalidated <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>Rules v{d.snapshot.ruleVersion} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
                 {recheck.error && <ErrorLine error={recheck.error} />}
               </div>
             </Panel>
           )}
           {d.compliance.length > 0 && (
             <Panel title="Compliance">
-              <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><Tag value={c.status} />{can("compliance.case.read") && <Link className="text-orange-700" href={`/compliance/${c.id}`}>Open →</Link>}</span></li>)}</ul>
+              <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><Tag value={c.status} />{can("compliance.case.read") && <Link className="font-medium text-link hover:underline" href={`/compliance/${c.id}`}>Open →</Link>}</span></li>)}</ul>
             </Panel>
           )}
           <Panel title={t("case.conversation")}>
@@ -229,13 +229,13 @@ export default function FlightRequestPage() {
         {/* RIGHT — quotes, invoices, records, documents */}
         <div {...paneProps("records")} className={cn(paneClass(tab, "records"), "lg:col-span-2 xl:col-span-1")}>
           {!mobile && (can("quote.create") || can("pricing.write")) && (
-            <Panel title="Quotes" aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className="text-orange-700" data-testid="open-quote-builder">{draft ? "Edit draft →" : "New quote →"}</Link>}>
+            <Panel title="Quotes" aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className="font-medium text-link hover:underline" data-testid="open-quote-builder">{draft ? "Edit draft →" : "New quote →"}</Link>}>
               {!d.quotes.length ? <Empty>No quotes yet.</Empty> : (
                 <ul className="ledger-rows" data-testid="quotes">
                   {d.quotes.map((qv) => (
                     <li key={qv.id} className="py-1.5">
                       <p className="flex items-center justify-between"><span>v{qv.version} · {qv.options.length} option{qv.options.length === 1 ? "" : "s"}{qv.validUntil && <span className="text-steel"> · valid until {fmtDateTime(qv.validUntil)}</span>}</span><Tag value={qv.status} /></p>
-                      <ul className="text-[12px]">{qv.options.map((o) => <li key={o.id} className="flex justify-between gap-2"><span className="truncate">{o.id === qv.acceptedOptionId && "✓ "}{o.label}{o.source === "MANUAL" && <span className="ms-1 font-mono text-[10px] text-orange-700">MANUAL</span>}{o.unknownFields.length > 0 && <span className="ms-1 text-danger">· {o.unknownFields.length} to confirm</span>}</span><span className="num">{money(o.priceBreakdown.total)}</span></li>)}</ul>
+                      <ul className="text-meta">{qv.options.map((o) => <li key={o.id} className="flex justify-between gap-2"><span className="truncate">{o.id === qv.acceptedOptionId && "✓ "}{o.label}{o.source === "MANUAL" && <span className="ms-1 font-mono text-2xs text-orange-700">MANUAL</span>}{o.unknownFields.length > 0 && <span className="ms-1 text-danger">· {o.unknownFields.length} to confirm</span>}</span><span className="num">{money(o.priceBreakdown.total)}</span></li>)}</ul>
                     </li>
                   ))}
                 </ul>
@@ -247,7 +247,7 @@ export default function FlightRequestPage() {
             <dl className="ledger-rows">
               <div className="py-1.5">
                 <dt className="flex justify-between"><span className="text-steel">Reservation</span></dt>
-                {d.reservations.length ? d.reservations.map((r) => <dd key={r.id} className="flex flex-wrap items-center justify-between gap-1"><span><span className="num font-medium">{r.recordLocator}</span> <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-[11px]">TTL {fmtDateTime(r.ticketingDeadline)}</span><Tag value={r.status} /></span></dd>) : <dd>—</dd>}
+                {d.reservations.length ? d.reservations.map((r) => <dd key={r.id} className="flex flex-wrap items-center justify-between gap-1"><span><span className="num font-medium">{r.recordLocator}</span> <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-caption">TTL {fmtDateTime(r.ticketingDeadline)}</span><Tag value={r.status} /></span></dd>) : <dd>—</dd>}
               </div>
               <div className="py-1.5">
                 <dt className="text-steel">Tickets</dt>
@@ -258,18 +258,18 @@ export default function FlightRequestPage() {
                 {d.payments.length ? d.payments.map((p) => (
                   <dd key={p.id} className="mt-1">
                     <p className="flex justify-between"><span className="num">{money(p.amount)}</span><Tag value={p.status} /></p>
-                    <p className="text-[11px] text-steel">{p.method} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · recorded by {p.recordedBy}{p.verifiedBy && ` · verified by ${p.verifiedBy}`}</p>
-                    {p.status === "RECORDED" && can("payment.record") && <div className="mt-1 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>Verify (second person)</Button>{p.needsSecondVerifier && <span className="text-[11px] text-orange-700">Above the four-eyes threshold</span>}</div>}
+                    <p className="text-caption text-steel">{p.method} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · recorded by {p.recordedBy}{p.verifiedBy && ` · verified by ${p.verifiedBy}`}</p>
+                    {p.status === "RECORDED" && can("payment.record") && <div className="mt-1 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>Verify (second person)</Button>{p.needsSecondVerifier && <span className="text-caption text-orange-700">Above the four-eyes threshold</span>}</div>}
                   </dd>
                 )) : <dd>—</dd>}
               </div>
               {(canOverride || d.creditOverrides.length > 0) && (
                 <div className="py-1.5" data-testid="credit-overrides">
-                  <dt className="flex justify-between"><span className="text-steel">Credit override</span>{canOverride && <button type="button" className="text-orange-700 underline underline-offset-2" onClick={() => dlg.open("override")}>Request override</button>}</dt>
+                  <dt className="flex justify-between"><span className="text-steel">Credit override</span>{canOverride && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("override")}>Request override</button>}</dt>
                   {d.creditOverrides.map((o) => (
                     <dd key={o.id} className="mt-1">
                       <p className="flex flex-wrap items-center justify-between gap-2"><span dir="auto">“{o.reason}”</span>{o.approvedAt ? <Tag value="APPROVED" className="border-success text-success" /> : <Tag value="PENDING" />}</p>
-                      <p className="text-[11px] text-steel">requested by {o.requestedBy} · {fmtDateTime(o.createdAt)}{o.approvedBy && ` · approved by ${o.approvedBy} ${fmtDateTime(o.approvedAt)}`}</p>
+                      <p className="text-caption text-steel">requested by {o.requestedBy} · {fmtDateTime(o.createdAt)}{o.approvedBy && ` · approved by ${o.approvedBy} ${fmtDateTime(o.approvedAt)}`}</p>
                       {!o.approvedAt && !o.requestedByMe && can("user.role.assign.privileged") && <Button size="xs" variant="outline" className="mt-1" onClick={() => approveOverride.mutate(o.id)} loading={approveOverride.isPending}>Approve (owner)</Button>}
                     </dd>
                   ))}
@@ -277,11 +277,11 @@ export default function FlightRequestPage() {
               )}
               {(d.afterSales.length > 0 || (["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition"))) && (
                 <div className="py-1.5" data-testid="after-sales">
-                  <dt className="flex justify-between"><span className="text-steel">After-sales</span>{["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition") && <button type="button" className="text-orange-700 underline underline-offset-2" onClick={() => dlg.open("aftersales")}>Open case</button>}</dt>
+                  <dt className="flex justify-between"><span className="text-steel">After-sales</span>{["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition") && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("aftersales")}>Open case</button>}</dt>
                   {d.afterSales.map((a) => (
                     <dd key={a.ref} className="mt-1">
-                      <p className="flex flex-wrap items-center gap-1.5"><span className="num">{a.ref}</span><span className="text-steel">{a.type}</span><Tag value={a.status} /><span className="num text-[11px] text-steel">{fmtDate(a.createdAt)}</span></p>
-                      {a.note && <p className="text-[12px] text-steel" dir="auto">“{a.note}”</p>}
+                      <p className="flex flex-wrap items-center gap-1.5"><span className="ref">{a.ref}</span><span className="text-steel">{a.type}</span><Tag value={a.status} /><span className="num text-caption text-steel">{fmtDate(a.createdAt)}</span></p>
+                      {a.note && <p className="text-meta text-steel" dir="auto">“{a.note}”</p>}
                       {can("flight_request.transition") && !["RESOLVED", "REJECTED"].includes(a.status) && <p className="flex flex-wrap gap-1">{["start", "request_info", "resolve", "reject"].map((c) => <Button key={c} size="xs" variant="ghost" onClick={() => void asCommand(a.ref, c)}>{human(c)}</Button>)}</p>}
                     </dd>
                   ))}

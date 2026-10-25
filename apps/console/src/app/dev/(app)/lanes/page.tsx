@@ -29,7 +29,7 @@ export default function LanesPage() {
   const lanes = q.data.filter((l) => (!status || (status === "on") === l.enabled) && (!text || `${l.originCountry} ${l.destinationCountry} ${l.services.join(" ")}`.toLowerCase().includes(text.toLowerCase())))
   return (
     <div>
-      <PageHead kicker={t("dpage.config")} title={t("dnav.lanes")}><span className="text-[12px] text-steel">{t("lanes.desc")}</span></PageHead>
+      <PageHead kicker={t("dpage.config")} title={t("dnav.lanes")}><span className="text-meta text-steel">{t("lanes.desc")}</span></PageHead>
       <Toolbar query={text} onQuery={setText} placeholder={t("lanes.search")} count={lanes.length}>
         <Chips label={t("lanes.c.status")} value={status} onChange={setStatus} options={[{ value: "", label: t("list.all"), count: q.data.length }, { value: "on", label: t("lanes.enabled"), count: q.data.filter((l) => l.enabled).length }, { value: "off", label: t("lanes.disabled"), count: q.data.filter((l) => !l.enabled).length }]} />
       </Toolbar>
@@ -41,11 +41,11 @@ export default function LanesPage() {
               const iran = l.originCountry === "IR" || l.destinationCountry === "IR"
               return (
                 <tr key={l.id} className="align-top">
-                  <td className="num font-medium whitespace-nowrap" dir="ltr">{l.originCountry} → {l.destinationCountry}{iran && <span className="ms-2 rounded-full bg-danger-subtle px-1.5 text-[10.5px] font-semibold text-danger">IRAN</span>}</td>
-                  <td><span className="flex flex-wrap gap-1">{l.services.map((x) => <span key={x} className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-[11px]" dir="ltr">{x}</span>)}</span></td>
+                  <td className="num font-medium whitespace-nowrap" dir="ltr">{l.originCountry} → {l.destinationCountry}{iran && <span className="ms-2 rounded-full bg-danger-subtle px-1.5 text-2xs font-semibold text-danger">IRAN</span>}</td>
+                  <td><span className="flex flex-wrap gap-1">{l.services.map((x) => <span key={x} className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-caption" dir="ltr">{x}</span>)}</span></td>
                   <td className="num">{l.volumetricDivisor}</td>
-                  <td className="text-[12.5px]">{l.requiresComplianceApproval ? t("lanes.casePer") : "—"}{l.counselReference && <span className="block text-[11.5px] text-steel">{t("lanes.counsel")} <span dir="ltr">{l.counselReference}</span></span>}</td>
-                  <td className="text-[12.5px]">{iran ? <span className="flex flex-col gap-0.5"><span className={l.enabledByOwner ? "text-success" : "text-steel"}>{l.enabledByOwner ? "✓" : "○"} {t("lanes.owner")}</span><span className={l.enabledByCompliance ? "text-success" : "text-steel"}>{l.enabledByCompliance ? "✓" : "○"} {t("lanes.complianceOfficer")}</span></span> : t("lanes.single")}</td>
+                  <td className="text-meta">{l.requiresComplianceApproval ? t("lanes.casePer") : "—"}{l.counselReference && <span className="block text-caption text-steel">{t("lanes.counsel")} <span dir="ltr">{l.counselReference}</span></span>}</td>
+                  <td className="text-meta">{iran ? <span className="flex flex-col gap-0.5"><span className={l.enabledByOwner ? "text-success" : "text-steel"}>{l.enabledByOwner ? "✓" : "○"} {t("lanes.owner")}</span><span className={l.enabledByCompliance ? "text-success" : "text-steel"}>{l.enabledByCompliance ? "✓" : "○"} {t("lanes.complianceOfficer")}</span></span> : t("lanes.single")}</td>
                   <td><Tag value={l.enabled ? "ENABLED" : "DISABLED"} className={l.enabled ? "border-success text-success" : ""} /></td>
                   <td className="text-end"><Button size="xs" variant="ghost" onClick={() => setEdit(l)}>{t("lanes.edit")}</Button></td>
                 </tr>
@@ -62,7 +62,7 @@ export default function LanesPage() {
             await q.refetch()
           }}>
           <label className="flex items-center gap-2"><input type="checkbox" checked={edit.enabled} onChange={(e) => setEdit({ ...edit, enabled: e.target.checked })} /> {t("lanes.enabled")}</label>
-          <fieldset><legend className="cap">{t("lanes.c.services")}</legend><div className="mt-1 grid grid-cols-2 gap-1">{CargoService.options.map((s) => <label key={s} className="flex items-center gap-1.5 font-mono text-[12px]"><input type="checkbox" checked={edit.services.includes(s)} onChange={(e) => setEdit({ ...edit, services: e.target.checked ? [...edit.services, s] : edit.services.filter((x) => x !== s) })} />{s}</label>)}</div></fieldset>
+          <fieldset><legend className="cap">{t("lanes.c.services")}</legend><div className="mt-1 grid grid-cols-2 gap-1">{CargoService.options.map((s) => <label key={s} className="flex items-center gap-1.5 font-mono text-meta"><input type="checkbox" checked={edit.services.includes(s)} onChange={(e) => setEdit({ ...edit, services: e.target.checked ? [...edit.services, s] : edit.services.filter((x) => x !== s) })} />{s}</label>)}</div></fieldset>
           <div className="grid grid-cols-2 gap-2">
             <Field label={t("lanes.c.divisor")}><input type="number" className="field-input num" value={edit.volumetricDivisor} onChange={(e) => setEdit({ ...edit, volumetricDivisor: Number(e.target.value) })} /></Field>
             <Field label={t("lanes.counselRef")}><input className="field-input font-mono" value={edit.counselReference ?? ""} onChange={(e) => setEdit({ ...edit, counselReference: e.target.value || null })} /></Field>

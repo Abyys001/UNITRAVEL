@@ -2,9 +2,9 @@
 import { type ClassValue, clsx } from "clsx"
 import { extendTailwindMerge } from "tailwind-merge"
 
-// The kit primitives use semantic type-scale names (`text-body`, `text-caption`); without this tailwind-merge reads
-// them as text colours and drops the variant's foreground colour.
-const twMerge = extendTailwindMerge({ extend: { classGroups: { "font-size": [{ text: ["body", "caption"] }] } } })
+// Semantic type-scale names (console scale in apps/console/src/app/globals.css: 2xs … display). Without this tailwind-merge
+// reads `text-display` as a text colour, so a later `text-ink` would silently drop the size (and vice versa).
+const twMerge = extendTailwindMerge({ extend: { classGroups: { "font-size": [{ text: ["2xs", "caption", "meta", "body", "lead", "section", "title", "display"] }] } } })
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

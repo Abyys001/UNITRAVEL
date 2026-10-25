@@ -73,9 +73,9 @@ export default function VerificationPage() {
     <div>
       <PageHead kicker={<Link className="hover:underline" href="/verifications">{t0("nav.passport")}</Link>} title={<span dir="ltr">{t.givenNames} {t.surname}</span>} />
       <dl className="mx-4 mt-4 grid grid-cols-2 divide-x divide-rule overflow-hidden rounded-xl border border-rule bg-surface-raised shadow-[var(--tile-shadow)] max-sm:divide-x-0 max-sm:gap-y-3 max-sm:p-3 md:mx-6 lg:grid-cols-4 rtl:divide-x-reverse" data-testid="case-summary">
-        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.waiting")}</dt><dd className="num mt-1 font-medium">{d.confirmedAt ? rel(d.confirmedAt) : "—"}</dd><dd className="num text-[12px] text-steel">{d.confirmedAt ? fmtDateTime(d.confirmedAt) : ""}</dd></div>
-        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.document")}</dt><dd className="mt-1 font-medium">{d.document.type === "PASSPORT" ? t0("pg.ver.passport") : t0("pg.ver.nid")} <span className="num" dir="ltr">••••{d.document.last4}</span></dd><dd className={cn("text-[12px]", expired ? "font-medium text-danger" : "text-steel")}>{expired ? `EXPIRED ${d.document.expiryDate}` : `Expires ${d.document.expiryDate}`} · {d.document.issuingCountry}</dd></div>
-        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.scan")}</dt><dd className="mt-1"><StatusChip tone={d.scan ? "ok" : "danger"}>{d.scan ? t0("ver.scan.onfile") : t0("ver.scan.none")}</StatusChip></dd>{d.scan && <dd className="truncate text-[12px] text-steel">{d.scan.filename}</dd>}</div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.waiting")}</dt><dd className="num mt-1 font-medium">{d.confirmedAt ? rel(d.confirmedAt) : "—"}</dd><dd className="num text-meta text-steel">{d.confirmedAt ? fmtDateTime(d.confirmedAt) : ""}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.document")}</dt><dd className="mt-1 font-medium">{d.document.type === "PASSPORT" ? t0("pg.ver.passport") : t0("pg.ver.nid")} <span className="num" dir="ltr">••••{d.document.last4}</span></dd><dd className={cn("text-meta", expired ? "font-medium text-danger" : "text-steel")}>{expired ? `EXPIRED ${d.document.expiryDate}` : `Expires ${d.document.expiryDate}`} · {d.document.issuingCountry}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.scan")}</dt><dd className="mt-1"><StatusChip tone={d.scan ? "ok" : "danger"}>{d.scan ? t0("ver.scan.onfile") : t0("ver.scan.none")}</StatusChip></dd>{d.scan && <dd className="truncate text-meta text-steel">{d.scan.filename}</dd>}</div>
         <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.state")}</dt><dd className="mt-1"><StateChip value={d.status} /></dd></div>
       </dl>
       <CaseTabs label={t0("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "scan", label: t0("ver.tab.scan") }, { key: "fields", label: t0("ver.tab.fields") }, ...(d.status === "SUBMITTED" ? [{ key: "decide" as const, label: t0("ver.tab.decide") }] : [])]} />
@@ -100,7 +100,7 @@ export default function VerificationPage() {
               {row("Gender on document", t.genderOnDocument)}
               {row("Nationality", t.nationality)}
               {row("Document", d.document.type === "PASSPORT" ? "Passport" : "National ID")}
-              {row("Number", <span className="num" dir="ltr">{number ?? `••••${d.document.last4}`}{can("customer.read.documents") && number === null && <button type="button" className="ms-3 text-[12px] font-normal text-royal underline" onClick={() => void reveal()}>Reveal (audited)</button>}</span>)}
+              {row("Number", <span className="num" dir="ltr">{number ?? `••••${d.document.last4}`}{can("customer.read.documents") && number === null && <button type="button" className="ms-3 text-meta font-normal text-royal underline" onClick={() => void reveal()}>Reveal (audited)</button>}</span>)}
               {row("Issuing country", d.document.issuingCountry)}
               {row("Expiry date", <span dir="ltr">{d.document.expiryDate}</span>)}
             </dl>

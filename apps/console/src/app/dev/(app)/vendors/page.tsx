@@ -26,13 +26,13 @@ export default function VendorsPage() {
   if (!q.data) return <Loading />
   return (
     <div>
-      <PageHead kicker={t("dnav.integrations")} title={t("vend.title")}><span className="text-[12px] text-steel">{t("vend.desc")}</span></PageHead>
+      <PageHead kicker={t("dnav.integrations")} title={t("vend.title")}><span className="text-meta text-steel">{t("vend.desc")}</span></PageHead>
       <DevPage>
         <Section title={t("vend.section")} hint={t("vend.hint")} flush>
           {!q.data.length ? <EmptyState title={t("vend.none")} /> : (
             <DataTable data-testid="vendors">
               <thead><tr>{[t("vend.c.vendor"), t("vend.c.fields"), t("vend.c.status"), t("vend.c.rotated"), ""].map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
-              <tbody>{q.data.map((v) => <tr key={v.vendor}><td className="font-medium" dir="ltr">{v.vendor}</td><td className="font-mono text-[11.5px] text-steel" dir="ltr">{v.fields.join(", ") || "—"}</td><td><Tag value={v.credentials ? t("prov.set") : t("prov.notSet")} className={v.credentials ? "border-success text-success" : "border-danger text-danger"} /></td><td className="text-[12.5px] text-steel">{v.credentials ? <>{fmtDateTime(v.credentials.rotatedAt)}{v.credentials.rotatedBy && ` · ${v.credentials.rotatedBy}`}</> : "—"}</td><td className="text-end">{can("provider.config.write") && <Button size="xs" variant="outline" onClick={() => setOpen(v.vendor)}>{v.credentials ? t("prov.rotate") : t("prov.enter")}</Button>}</td></tr>)}</tbody>
+              <tbody>{q.data.map((v) => <tr key={v.vendor}><td className="font-medium" dir="ltr">{v.vendor}</td><td className="font-mono text-caption text-steel" dir="ltr">{v.fields.join(", ") || "—"}</td><td><Tag value={v.credentials ? t("prov.set") : t("prov.notSet")} className={v.credentials ? "border-success text-success" : "border-danger text-danger"} /></td><td className="text-meta text-steel">{v.credentials ? <>{fmtDateTime(v.credentials.rotatedAt)}{v.credentials.rotatedBy && ` · ${v.credentials.rotatedBy}`}</> : "—"}</td><td className="text-end">{can("provider.config.write") && <Button size="xs" variant="outline" onClick={() => setOpen(v.vendor)}>{v.credentials ? t("prov.rotate") : t("prov.enter")}</Button>}</td></tr>)}</tbody>
             </DataTable>
           )}
         </Section>

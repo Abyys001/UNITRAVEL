@@ -22,15 +22,15 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const cargo = can("cargo_request.read.any")
   // A short flat list; each queue is a tab on the Requests page and policies/lists are tabs under Compliance.
   const items: NavItem[] = [
-    { href: "/", label: t("nav.home"), mobile: true, icon: <Home className="size-[18px]" /> },
-    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests", "/cargo", "/customers"], count: flights ? s?.new : undefined, alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
+    { href: "/", label: t("nav.home"), mobile: true, group: "work", icon: <Home className="size-[18px]" /> },
+    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests", "/cargo", "/customers"], group: "work", count: flights ? s?.new : undefined, alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
     ...(can("compliance.case.read") ? [{
-      href: "/compliance", label: t("nav.compliance"), count: s?.complianceHolds, alert: true, mobile: true, icon: <ShieldAlert className="size-[18px]" />,
+      href: "/compliance", label: t("nav.compliance"), count: s?.complianceHolds, alert: true, mobile: true, group: "work", icon: <ShieldAlert className="size-[18px]" />,
       tabs: [{ href: "/compliance", label: t("nav.cases") }, { href: "/compliance/policies", label: t("nav.policies") }, { href: "/compliance/lists", label: t("nav.lists") }],
     }] : []),
-    ...(can("identity.verify") ? [{ href: "/verifications", label: t("nav.identityChecks"), short: t("nav.identity"), mobile: true, icon: <IdCard className="size-[18px]" /> }] : []),
-    ...(can("commercial_document.issue", "flight_request.read.any", "cargo_request.read.any") ? [{ href: "/invoices", label: t("nav.invoices"), icon: <Receipt className="size-[18px]" /> }] : []),
-    ...(can("flight_search.run") ? [{ href: "/search", label: t("nav.flightSearch"), icon: <Search className="size-[18px]" /> }] : []),
+    ...(can("identity.verify") ? [{ href: "/verifications", label: t("nav.identityChecks"), short: t("nav.identity"), mobile: true, group: "work", icon: <IdCard className="size-[18px]" /> }] : []),
+    ...(can("commercial_document.issue", "flight_request.read.any", "cargo_request.read.any") ? [{ href: "/invoices", label: t("nav.invoices"), group: "records", icon: <Receipt className="size-[18px]" /> }] : []),
+    ...(can("flight_search.run") ? [{ href: "/search", label: t("nav.flightSearch"), group: "tools", icon: <Search className="size-[18px]" /> }] : []),
   ]
   const alerts: ShellAlert[] = s ? [
     ...(flights ? [{ id: "sla", label: t("bell.sla", { n: s.slaBreaches }), count: s.slaBreaches, href: "/queues?tab=new", tone: "danger" as const }] : []),

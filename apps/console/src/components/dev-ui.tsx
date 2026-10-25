@@ -11,8 +11,8 @@ export function Section({ title, hint, aside, flush, children, className, ...res
   return (
     <section className={cn("min-w-0 overflow-hidden rounded-xl border border-rule bg-surface-raised shadow-[var(--tile-shadow)]", className)} {...rest}>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-rule px-4 py-3 md:px-5">
-        <div className="min-w-0"><h2 className="text-[14px] font-semibold text-ink">{title}</h2>{hint && <p className="mt-0.5 text-[12px] text-steel">{hint}</p>}</div>
-        {aside && <div className="flex flex-wrap items-center gap-2 text-[12px]">{aside}</div>}
+        <div className="min-w-0"><h2 className="text-lead font-semibold text-ink">{title}</h2>{hint && <p className="mt-0.5 text-meta text-steel">{hint}</p>}</div>
+        {aside && <div className="flex flex-wrap items-center gap-2 text-meta">{aside}</div>}
       </header>
       <div className={flush ? undefined : "p-4 md:p-5"}>{children}</div>
     </section>

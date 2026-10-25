@@ -30,7 +30,7 @@ export default function ListsPage() {
     <div>
       <PageHead title={t("nav.lists")}>{can("compliance.case.decide") && <Button size="sm" variant="outline" onClick={() => sync.mutate()} loading={sync.isPending}>Sync now</Button>}</PageHead>
       {q.data && (
-        <p className="flex flex-wrap gap-x-5 gap-y-1 px-4 pt-4 text-[12.5px] text-steel md:px-6" data-testid="lists-summary">
+        <p className="flex flex-wrap gap-x-5 gap-y-1 px-4 pt-4 text-meta text-steel md:px-6" data-testid="lists-summary">
           <span>{t("lists.versions")}: <b className="num font-semibold text-ink">{q.data.filter((l) => l.status === "ACTIVE").length}</b></span>
           <span>{t("lists.entries")}: <b className="num font-semibold text-ink">{q.data.filter((l) => l.status === "ACTIVE").reduce((n, l) => n + l.entryCount, 0).toLocaleString("en-GB")}</b></span>
           <span>{t("lists.fetched")}: <b className="font-semibold text-ink">{q.data.length ? rel(q.data.map((l) => l.fetchedAt).sort().at(-1)) : "—"}</b></span>
@@ -42,7 +42,7 @@ export default function ListsPage() {
           {q.error ? <TileError error={q.error} onRetry={() => void q.refetch()} /> : !q.data ? <ListSkeleton rows={4} className="p-0" /> : !q.data.length ? <EmptyState title="No lists ingested yet." /> : (
             <ListCard className="mx-0"><TableScroll><table className={tableClass} data-testid="lists">
               <thead><tr>{(["pg.c.list", "pg.c.version", "lists.entries", "pg.c.fetched", "pg.c.source", "pg.c.status"] as MsgKey[]).map((h) => <th key={h}>{t(h)}</th>)}</tr></thead>
-              <tbody>{q.data.map((l) => <tr key={l.id} className="align-top"><td className="num">{l.listId}</td><td className="num text-[12px]">{l.version.slice(0, 12)}</td><td className="num">{l.entryCount.toLocaleString("en-GB")}</td><td className="whitespace-nowrap text-[12px]">{fmtDateTime(l.fetchedAt)}</td><td className="max-w-56 truncate text-[12px] text-steel" title={l.sourceUrl} dir="ltr">{l.sourceUrl}</td><td><StateChip value={l.status} />{l.error && <span className="block text-[12px] text-danger">{l.error}</span>}</td></tr>)}</tbody>
+              <tbody>{q.data.map((l) => <tr key={l.id} className="align-top"><td className="num">{l.listId}</td><td className="num text-meta">{l.version.slice(0, 12)}</td><td className="num">{l.entryCount.toLocaleString("en-GB")}</td><td className="whitespace-nowrap text-meta">{fmtDateTime(l.fetchedAt)}</td><td className="max-w-56 truncate text-meta text-steel" title={l.sourceUrl} dir="ltr">{l.sourceUrl}</td><td><StateChip value={l.status} />{l.error && <span className="block text-meta text-danger">{l.error}</span>}</td></tr>)}</tbody>
             </table></TableScroll></ListCard>
           )}
         </Panel>
@@ -56,7 +56,7 @@ export default function ListsPage() {
               <div className="mt-3 space-y-1" role="status">
                 <p><StateChip value={res.result} /> {res.hits.length} candidate{res.hits.length === 1 ? "" : "s"}</p>
                 <ul className="ledger-rows">{res.hits.slice(0, 10).map((h, i) => <li key={i} className="py-1"><span dir="auto">{h.matchedName}</span> <span className="num text-steel">{Math.round(h.score * 100)}% · {h.listId}</span></li>)}</ul>
-                <p className="text-[11px] break-words text-steel">Tokens: {res.tokens.map((t) => `${t.token}→${t.phonetic}`).join(" · ")}</p>
+                <p className="text-caption break-words text-steel">Tokens: {res.tokens.map((t) => `${t.token}→${t.phonetic}`).join(" · ")}</p>
               </div>
             )}
           </Panel>

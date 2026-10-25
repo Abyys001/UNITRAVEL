@@ -11,12 +11,13 @@ import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { TruthBadge } from "@/components/flight/itinerary"
+import { Search as SearchIcon } from "lucide-react"
 import { EmptyState, TileError } from "@/components/bento"
 import { ListSkeleton, TableScroll } from "@/components/case"
 import { ListCard, Pager, tableClass, usePaged } from "@/components/data-list"
 import { Field, PageHead } from "@/components/ui"
 import { api, errText } from "@/lib/api"
-import { fmtDateTime, minutes, money } from "@/lib/format"
+import { fmtDateTime, human, minutes, money } from "@/lib/format"
 import { type MsgKey, useT } from "@/lib/i18n"
 import type { FlightDetail } from "@/lib/types"
 
@@ -59,7 +60,7 @@ function StaffSearch() {
   const paged = usePaged<Itinerary>(s?.results ?? [])
   return (
     <div>
-      <PageHead kicker={ref ? <>Finding options for <Link className="num hover:underline" href={`/requests/${ref}`}>{ref}</Link>{req.data && ` · ${req.data.routeLabel}`}</> : "Same engine as customers, with staff fields"} title="Staff flight search" />
+      <PageHead kicker={ref ? <>Finding options for <Link className="ref hover:underline" href={`/requests/${ref}`}>{ref}</Link>{req.data && ` · ${req.data.routeLabel}`}</> : "Same engine as customers, with staff fields"} title="Staff flight search" />
       <form onSubmit={start} className="mx-4 mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-rule bg-surface-raised p-4 shadow-[var(--tile-shadow)] md:mx-6">
         {!ref && <Field label="Trip" className="w-28"><NativeSelect className="field-input" value={f.trip} onChange={(e) => setF({ ...f, trip: e.target.value })}><option value="ONE_WAY">One way</option><option value="RETURN">Return</option></NativeSelect></Field>}
         <Field label="From" className="w-20"><input className="field-input font-mono uppercase" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} maxLength={3} required disabled={!!ref} /></Field>
@@ -68,7 +69,7 @@ function StaffSearch() {
         {(f.trip === "RETURN") && <Field label="Return" className="w-36"><input type="date" className="field-input" value={f.back} onChange={(e) => setF({ ...f, back: e.target.value })} /></Field>}
         {!ref && <>
           <Field label="Adults" className="w-16"><input type="number" min={1} max={9} className="field-input num" value={f.adults} onChange={(e) => setF({ ...f, adults: Number(e.target.value) })} /></Field>
-          <Field label="Cabin" className="w-36"><NativeSelect className="field-input" value={f.cabin} onChange={(e) => setF({ ...f, cabin: e.target.value })}>{["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"].map((c) => <option key={c}>{c}</option>)}</NativeSelect></Field>
+          <Field label="Cabin" className="w-36"><NativeSelect className="field-input" value={f.cabin} onChange={(e) => setF({ ...f, cabin: e.target.value })}>{["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"].map((c) => <option key={c} value={c}>{human(c)}</option>)}</NativeSelect></Field>
           <Field label="Max stops" className="w-20"><input type="number" min={0} max={3} className="field-input num" value={f.maxStops} onChange={(e) => setF({ ...f, maxStops: Number(e.target.value) })} /></Field>
           <label className="flex items-center gap-1 pb-1.5"><input type="checkbox" checked={f.selfTransfer} onChange={(e) => setF({ ...f, selfTransfer: e.target.checked })} /> Self-transfer</label>
           <label className="flex items-center gap-1 pb-1.5"><input type="checkbox" checked={f.gateways} onChange={(e) => setF({ ...f, gateways: e.target.checked })} /> Gateways</label>
@@ -79,7 +80,8 @@ function StaffSearch() {
       <div className="px-4 py-4 md:px-6">
         {(startErr ?? state.error) ? <TileError message={errText(startErr ?? state.error)} /> : null}
         {s && s.status === "RUNNING" && !s.results.length && <ListSkeleton rows={4} className="p-0" />}
-        {s && <p className="mb-3 text-[12.5px] text-steel" role="status" data-testid="search-status">{s.status === "RUNNING" ? `Searching… ${s.progress.sourcesDone}/${s.progress.sourcesTotal} sources` : `${s.results.length} results · ${s.status.toLowerCase()} · rules v${s.ruleVersion}`}{s.progress.removedByPolicy > 0 && ` · ${s.progress.removedByPolicy} removed by policy`}{s.notices.length > 0 && ` · ${s.notices.join(" · ")}`}</p>}
+        {s && <p className="mb-3 text-meta text-steel" role="status" data-testid="search-status">{s.status === "RUNNING" ? `Searching… ${s.progress.sourcesDone}/${s.progress.sourcesTotal} sources` : `${s.results.length} results · ${s.status.toLowerCase()} · rules v${s.ruleVersion}`}{s.progress.removedByPolicy > 0 && ` · ${s.progress.removedByPolicy} removed by policy`}{s.notices.length > 0 && ` · ${s.notices.join(" · ")}`}</p>}
+        {!s && <EmptyState icon={<SearchIcon />} title="Search the same engine customers use" hint="Results show live, cached and gateway options with their truth badges. Nothing here is a booking or a guaranteed price." className="py-14" />}
         {s && s.status !== "RUNNING" && !s.results.length && <EmptyState title="No itineraries." />}
         {s && s.results.length > 0 && (
           <ListCard className="mx-0"><TableScroll><table className={tableClass} data-testid="search-results">
@@ -87,12 +89,12 @@ function StaffSearch() {
             <tbody>
               {paged.rows.map((it: Itinerary) => (
                 <tr key={it.id} className="align-top">
-                  <td className="num font-medium whitespace-nowrap">{it.price ? money(it.price.total) : <span className="text-steel" title="Requires pricing.read.internal">Hidden</span>}{it.price?.isSumOfTickets && <span className="block text-[10px] font-normal text-steel">sum of tickets</span>}</td>
-                  <td>{it.components.flatMap((c) => c.slices).map((sl, i) => <p key={i} className="num text-[12px]">{sl.segments.map((g) => `${g.marketing.carrier}${g.marketing.flightNumber} ${g.origin.iata}–${g.destination.iata} ${g.departure.local.slice(5).replace("T", " ")}`).join(" · ")}</p>)}{it.riskFlags.length > 0 && <p className="text-[11.5px] text-danger">{it.riskFlags.join(" ")}</p>}</td>
+                  <td className="num font-medium whitespace-nowrap">{it.price ? money(it.price.total) : <span className="text-steel" title="Requires pricing.read.internal">Hidden</span>}{it.price?.isSumOfTickets && <span className="block text-2xs font-normal text-steel">sum of tickets</span>}</td>
+                  <td>{it.components.flatMap((c) => c.slices).map((sl, i) => <p key={i} className="num text-meta">{sl.segments.map((g) => `${g.marketing.carrier}${g.marketing.flightNumber} ${g.origin.iata}–${g.destination.iata} ${g.departure.local.slice(5).replace("T", " ")}`).join(" · ")}</p>)}{it.riskFlags.length > 0 && <p className="text-caption text-danger">{it.riskFlags.join(" ")}</p>}</td>
                   <td className="num whitespace-nowrap">{minutes(it.durationMin)} · {it.stops} stop{it.stops === 1 ? "" : "s"}</td>
-                  <td><span className={cn("num text-[11.5px]", it.ticketing === "SEPARATE_TICKETS" && "text-danger")}>{it.construction}{it.ticketing === "SEPARATE_TICKETS" ? " · SEPARATE" : ""}</span></td>
+                  <td><span className={cn("num text-caption", it.ticketing === "SEPARATE_TICKETS" && "text-danger")}>{it.construction}{it.ticketing === "SEPARATE_TICKETS" ? " · SEPARATE" : ""}</span></td>
                   <td><span className="flex flex-wrap gap-1">{it.truth.map((t, i) => <TruthBadge key={i} t={t} />)}</span></td>
-                  <td className="num text-[11.5px] text-steel">{it.components.map((c, i) => <p key={i}>{c.source.provider} · {c.source.providerOfferId.slice(0, 16)} · {c.slices.flatMap((x) => x.segments).map((g) => `${g.bookingClass ?? "?"}/${g.fareBasis ?? "?"}`).join(" ")} · {fmtDateTime(c.source.fetchedAt)}</p>)}</td>
+                  <td className="num text-caption text-steel">{it.components.map((c, i) => <p key={i}>{c.source.provider} · {c.source.providerOfferId.slice(0, 16)} · {c.slices.flatMap((x) => x.segments).map((g) => `${g.bookingClass ?? "?"}/${g.fareBasis ?? "?"}`).join(" ")} · {fmtDateTime(c.source.fetchedAt)}</p>)}</td>
                   <td>{ref && it.price ? <Button size="xs" onClick={() => router.push(`/requests/${ref}/quote?add=${encodeURIComponent(it.id)}`)} data-testid="add-to-quote">Add to quote</Button> : null}</td>
                 </tr>
               ))}

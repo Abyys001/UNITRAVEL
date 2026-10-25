@@ -56,40 +56,40 @@ export function CommandPalette({ open, onClose, items, goTo, t }: { open: boolea
   }
   let lastGroup = ""
   return (
-    <div className="fixed inset-0 z-50 grid place-items-start justify-items-center bg-navy-950/55 p-3 pt-[12dvh] backdrop-blur-[2px]" onMouseDown={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={t("search.open")} data-testid="palette" onKeyDown={onKey} onMouseDown={(e) => e.stopPropagation()} className="w-full max-w-xl overflow-hidden rounded-xl border border-rule-strong bg-surface-raised shadow-2xl">
-        <div className="flex items-center gap-2 border-b border-rule px-3">
-          <Search className="size-4 shrink-0 text-steel" aria-hidden />
+    <div className="fixed inset-0 z-modal grid place-items-start justify-items-center bg-navy-950/50 p-3 pt-[12dvh] backdrop-blur-[2px]" onMouseDown={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={t("search.open")} data-testid="palette" onKeyDown={onKey} onMouseDown={(e) => e.stopPropagation()} className="pop-surface animate-in w-full max-w-xl overflow-hidden rounded-2xl">
+        <div className="flex items-center gap-2.5 border-b border-rule px-4">
+          <Search className="size-[18px] shrink-0 text-steel" aria-hidden />
           <input
             ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} dir="auto" autoComplete="off" spellCheck={false}
             role="combobox" aria-expanded="true" aria-controls={`${uid}-list`} aria-activedescendant={results[active] ? `${uid}-${active}` : undefined} aria-autocomplete="list"
             placeholder={t("search.placeholder")} aria-label={t("search.open")}
-            className="h-11 min-w-0 flex-1 bg-transparent text-[14px] outline-none focus-visible:outline-none placeholder:text-steel"
+            className="h-13 min-w-0 flex-1 bg-transparent text-lead outline-none focus-visible:outline-none placeholder:text-ink-subtle"
           />
           <span className="kbd">Esc</span>
         </div>
-        <ul id={`${uid}-list`} ref={listRef} role="listbox" aria-label={t("search.open")} className="max-h-[50dvh] overflow-y-auto p-1.5">
+        <ul id={`${uid}-list`} ref={listRef} role="listbox" aria-label={t("search.open")} className="max-h-[52dvh] overflow-y-auto p-2">
           {results.length === 0 && <li role="presentation" className="px-3 py-6 text-center text-steel">{t("search.none")}</li>}
           {results.map((r, idx) => {
             const head = r.group !== lastGroup
             lastGroup = r.group
             return (
               <li key={r.id} role="presentation">
-                {head && <p className="cap px-2 pt-2 pb-1" role="presentation">{r.group}</p>}
+                {head && <p className="cap px-2.5 pt-2.5 pb-1" role="presentation">{r.group}</p>}
                 <div
                   id={`${uid}-${idx}`} data-idx={idx} role="option" aria-selected={idx === active} onMouseMove={() => setActive(idx)} onClick={() => run(r)}
-                  className={cn("flex min-h-9 cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5", idx === active && "bg-hover outline outline-1 -outline-offset-1 outline-orange/60")}
+                  className={cn("flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-2.5 py-1.5", idx === active && "bg-selected text-selected-ink")}
                 >
-                  <span className="grid size-5 shrink-0 place-items-center text-steel" aria-hidden>{r.icon}</span>
+                  <span className={cn("grid size-5 shrink-0 place-items-center [&_svg]:size-4", idx === active ? "text-selected-ink" : "text-steel")} aria-hidden>{r.icon}</span>
                   <span className="min-w-0 flex-1 truncate" dir="auto">{r.label}</span>
-                  {r.hint && <span className="num text-[11px] text-steel">{r.hint}</span>}
+                  {r.hint && <span className="num text-caption text-steel">{r.hint}</span>}
                   {idx === active && <CornerDownLeft className="size-3.5 text-steel rtl:-scale-x-100" aria-hidden />}
                 </div>
               </li>
             )
           })}
         </ul>
-        <p className="border-t border-rule px-3 py-1.5 text-[11px] text-steel">{t("search.hint")}</p>
+        <p className="border-t border-rule bg-surface-sunk px-4 py-2 text-caption text-steel">{t("search.hint")}</p>
       </div>
     </div>
   )

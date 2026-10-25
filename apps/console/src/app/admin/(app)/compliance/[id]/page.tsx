@@ -14,6 +14,7 @@ import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { StatusChip, TileError } from "@/components/bento"
 import { ActionBar, CaseTabs, ListSkeleton, paneClass, paneProps, StateChip, TableScroll } from "@/components/case"
 import { Empty, ErrorLine, Field, Loading, PageHead, Panel, Tag } from "@/components/ui"
+import { useCrumbLabel } from "@/lib/crumb"
 import { api } from "@/lib/api"
 import { fmtDateTime, human, rel } from "@/lib/format"
 import { useIsMobile } from "@/lib/hooks"
@@ -33,6 +34,7 @@ export default function CasePage() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<Error | null>(null)
   const c = q.data
+  useCrumbLabel(c ? `${t("crumb.case")} · ${c.requestRef}` : null)
   const decide = async (body: Record<string, unknown>) => {
     setBusy(true); setErr(null)
     try {
@@ -49,11 +51,11 @@ export default function CasePage() {
   const topScore = Math.max(0, ...c.screenings.flatMap((x) => x.hits.map((h) => h.score)))
   return (
     <div>
-      <PageHead kicker={<><Link className="hover:underline" href="/compliance">{t("nav.cases")}</Link> · <Link className="num hover:underline" href={c.requestType === "CARGO" ? `/cargo/${c.requestRef}` : `/requests/${c.requestRef}`}>{c.requestRef}</Link></>} title={<span dir="auto">{c.summary}</span>} />
+      <PageHead kicker={<><Link className="hover:underline" href="/compliance">{t("nav.cases")}</Link> · <Link className="ref hover:underline" href={c.requestType === "CARGO" ? `/cargo/${c.requestRef}` : `/requests/${c.requestRef}`}>{c.requestRef}</Link></>} title={<span dir="auto">{c.summary}</span>} />
       <dl className="mx-4 mt-4 grid grid-cols-2 divide-x divide-rule overflow-hidden rounded-xl border border-rule bg-surface-raised shadow-[var(--tile-shadow)] max-sm:divide-x-0 max-sm:gap-y-3 max-sm:p-3 md:mx-6 lg:grid-cols-4 rtl:divide-x-reverse" data-testid="case-summary">
         <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.state")}</dt><dd className="mt-1 flex flex-wrap gap-1.5"><StateChip value={c.status} /><StateChip value={c.trigger} /></dd></div>
-        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.opened")}</dt><dd className="num mt-1 font-medium">{rel(c.openedAt)}</dd><dd className="num text-[12px] text-steel">{fmtDateTime(c.openedAt)}</dd></div>
-        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.screening")}</dt><dd className={cn("num mt-1 text-[18px] leading-tight font-semibold", topScore >= 0.9 ? "text-danger" : "text-ink")}>{hits ? `${Math.round(topScore * 100)}%` : "—"}</dd><dd className="text-[12px] text-steel">{hits ? t("comp.hits", { n: hits }) : t("comp.clear")}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.opened")}</dt><dd className="num mt-1 font-medium">{rel(c.openedAt)}</dd><dd className="num text-meta text-steel">{fmtDateTime(c.openedAt)}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.screening")}</dt><dd className={cn("num mt-1 text-section leading-tight font-semibold", topScore >= 0.9 ? "text-danger" : "text-ink")}>{hits ? `${Math.round(topScore * 100)}%` : "—"}</dd><dd className="text-meta text-steel">{hits ? t("comp.hits", { n: hits }) : t("comp.clear")}</dd></div>
         <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t("comp.fourEyes")}</dt><dd className="mt-1"><StatusChip tone={c.requiresFourEyes || c.pendingOverride ? "warn" : "neutral"}>{c.requiresFourEyes || c.pendingOverride ? t("comp.fourEyes.required") : t("comp.fourEyes.no")}</StatusChip></dd></div>
       </dl>
       <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "evidence", label: t("comp.tab.evidence") }, { key: "decide", label: t("comp.tab.decide") }, { key: "history", label: t("comp.tab.history"), count: c.decisions.length }]} />
@@ -61,16 +63,16 @@ export default function CasePage() {
         <div className="min-w-0">
           <div {...paneProps("evidence")} className={paneClass(tab, "evidence")}>
           <Panel title="What triggered it">
-            {!c.evidence.length ? <Empty>No evidence recorded.</Empty> : <ul className="ledger-rows">{c.evidence.map((e, i) => <li key={i} className="grid grid-cols-[7rem_1fr_auto] gap-2 py-1.5"><span className="text-[12px] text-steel">{human(e.kind)}</span><span><span className="font-medium" dir="auto">{e.label}</span><span className="block text-steel" dir="auto">{e.detail}</span></span>{e.score != null && <span className="num">{Math.round(e.score * 100)}%</span>}</li>)}</ul>}
+            {!c.evidence.length ? <Empty>No evidence recorded.</Empty> : <ul className="ledger-rows">{c.evidence.map((e, i) => <li key={i} className="grid grid-cols-[7rem_1fr_auto] gap-2 py-1.5"><span className="text-meta text-steel">{human(e.kind)}</span><span><span className="font-medium" dir="auto">{e.label}</span><span className="block text-steel" dir="auto">{e.detail}</span></span>{e.score != null && <span className="num">{Math.round(e.score * 100)}%</span>}</li>)}</ul>}
           </Panel>
           {c.screenings.map((s) => (
             <Panel key={s.id} title={`Screening · ${s.subjectType.toLowerCase()} · ${fmtDateTime(s.createdAt)}`} aside={<StatusChip tone={s.result === "CLEAR" ? "ok" : "danger"}>{human(s.result)}</StatusChip>}>
               <p className="font-medium" dir="auto">{s.subjectName}</p>
-              <p className="text-[11px] text-steel">Lists: {Object.entries(s.listsVersion).map(([k, v]) => `${k} ${v}`).join(" · ")}</p>
+              <p className="text-caption text-steel">Lists: {Object.entries(s.listsVersion).map(([k, v]) => `${k} ${v}`).join(" · ")}</p>
               {s.hits.length > 0 && (
                 <TableScroll><table className="mt-1 w-full bg-surface-raised" data-testid="hits">
                   <thead><tr className="border-b border-rule">{["Matched name", "List", "Score", "Why", "Programmes"].map((h) => <th key={h} className="cap px-1.5 py-1 text-start font-normal">{h}</th>)}</tr></thead>
-                  <tbody>{s.hits.map((h) => <tr key={h.entryId} className="border-b border-rule/70 align-top"><td className="px-1.5 py-1" dir="auto">{h.matchedName}</td><td className="px-1.5 py-1 font-mono text-[11px]">{h.listId} {h.externalId}</td><td className={cn("num px-1.5 py-1", h.score >= 0.9 ? "text-danger" : "")}>{Math.round(h.score * 100)}%</td><td className="px-1.5 py-1 text-[12px] text-steel">{h.reasons.join(", ")}</td><td className="px-1.5 py-1 text-[11px]">{h.programmes.join(", ")}</td></tr>)}</tbody>
+                  <tbody>{s.hits.map((h) => <tr key={h.entryId} className="border-b border-rule/70 align-top"><td className="px-1.5 py-1" dir="auto">{h.matchedName}</td><td className="px-1.5 py-1 font-mono text-caption">{h.listId} {h.externalId}</td><td className={cn("num px-1.5 py-1", h.score >= 0.9 ? "text-danger" : "")}>{Math.round(h.score * 100)}%</td><td className="px-1.5 py-1 text-meta text-steel">{h.reasons.join(", ")}</td><td className="px-1.5 py-1 text-caption">{h.programmes.join(", ")}</td></tr>)}</tbody>
                 </table></TableScroll>
               )}
             </Panel>
@@ -78,7 +80,7 @@ export default function CasePage() {
           </div>
           <div {...paneProps("history")} className={paneClass(tab, "history")}>
           <Panel title="Decisions (immutable)">
-            {!c.decisions.length ? <Empty>No decisions yet.</Empty> : <ol className="ledger-rows">{c.decisions.map((x) => <li key={x.id} className="py-1.5"><p><Tag value={x.decision} /> <span className="num text-[12px] text-steel">{fmtDateTime(x.createdAt)}</span> · {x.decidedBy}{x.secondApprover && <> · second approver {x.secondApprover}</>}{x.counselReference && <> · counsel {x.counselReference}</>}</p><p dir="auto">{x.reason}</p></li>)}</ol>}
+            {!c.decisions.length ? <Empty>No decisions yet.</Empty> : <ol className="ledger-rows">{c.decisions.map((x) => <li key={x.id} className="py-1.5"><p><Tag value={x.decision} /> <span className="num text-meta text-steel">{fmtDateTime(x.createdAt)}</span> · {x.decidedBy}{x.secondApprover && <> · second approver {x.secondApprover}</>}{x.counselReference && <> · counsel {x.counselReference}</>}</p><p dir="auto">{x.reason}</p></li>)}</ol>}
           </Panel>
           </div>
         </div>

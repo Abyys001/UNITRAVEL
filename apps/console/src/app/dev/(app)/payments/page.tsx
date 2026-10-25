@@ -40,7 +40,7 @@ export default function PaymentsPage() {
   return (
     <div>
       {dialog}
-      <PageHead kicker={t("paydev.kicker")} title={t("paydev.title")}><span className="text-[12px] text-steel">{t("paydev.desc")}</span></PageHead>
+      <PageHead kicker={t("paydev.kicker")} title={t("paydev.title")}><span className="text-meta text-steel">{t("paydev.desc")}</span></PageHead>
       <DevPage data-testid="payments-config">
         <div className="grid gap-4 lg:grid-cols-2">
           <Section title={t("paydev.state")}>
@@ -52,29 +52,29 @@ export default function PaymentsPage() {
                 </span></KVRow>
               <KVRow k={t("paydev.mode")}><Tag value={d.mode} /></KVRow>
             </KV>
-            {d.liveBlocked && <p className="mt-3 rounded-md bg-surface-sunk px-3 py-2 text-[12.5px] text-steel" data-testid="live-blocked">{t("paydev.liveBlocked")}</p>}
-            {d.provider === "FAKE" && <p className="mt-2 text-[12.5px] text-steel">{t("paydev.fakeOnly")}</p>}
-            {d.pendingModeRequest && <p className="mt-2 rounded-md bg-warning-subtle px-3 py-2 text-[12.5px] text-warning-subtle-fg">{t("paydev.pending", { mode: d.pendingModeRequest.mode, by: d.pendingModeRequest.requestedBy })}</p>}
+            {d.liveBlocked && <p className="mt-3 rounded-md bg-surface-sunk px-3 py-2 text-meta text-steel" data-testid="live-blocked">{t("paydev.liveBlocked")}</p>}
+            {d.provider === "FAKE" && <p className="mt-2 text-meta text-steel">{t("paydev.fakeOnly")}</p>}
+            {d.pendingModeRequest && <p className="mt-2 rounded-md bg-warning-subtle px-3 py-2 text-meta text-warning-subtle-fg">{t("paydev.pending", { mode: d.pendingModeRequest.mode, by: d.pendingModeRequest.requestedBy })}</p>}
             <div className="mt-4 flex flex-wrap gap-2 border-t border-rule pt-4">
               <Button size="sm" variant="outline" loading={check.isPending} onClick={() => check.mutate()} data-command="payments_health">{t("paydev.health")}</Button>
               {can("payments.configure") && <Button size="sm" variant="ghost" onClick={() => askLive.mutate()} data-command="request_live">{t("paydev.requestLive")}</Button>}
               {d.pendingModeRequest && can("payments.mode.approve") && <Button size="sm" onClick={() => approve.mutate()}>{t("paydev.approve")}</Button>}
             </div>
-            {health && <p role="status" className={cn("mt-3 rounded-md px-3 py-2 text-[12.5px]", health.ok ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")} data-testid="payments-health">{health.ok ? t("paydev.healthy") : t("paydev.unhealthy")} · {health.provider} · {health.latencyMs} ms · {health.detail}</p>}
+            {health && <p role="status" className={cn("mt-3 rounded-md px-3 py-2 text-meta", health.ok ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")} data-testid="payments-health">{health.ok ? t("paydev.healthy") : t("paydev.unhealthy")} · {health.provider} · {health.latencyMs} ms · {health.detail}</p>}
           </Section>
           <Section title={t("paydev.keys")} hint={d.credentials.rotatedAt ? fmtDateTime(d.credentials.rotatedAt) : undefined} aside={can("payments.configure") && <Button size="sm" variant="outline" onClick={() => setKeys(true)} data-command="payments_keys">{t("paydev.enter")}</Button>}>
             <KV>{cred(t("paydev.secretKey"), d.credentials.secretKey)}{cred(t("paydev.publishableKey"), d.credentials.publishableKey)}{cred(t("paydev.webhookSecret"), d.credentials.webhookSecret)}</KV>
             <div className="mt-4 border-t border-rule pt-4">
-              <p className="text-[12.5px] text-steel">{t("paydev.webhook")}</p>
-              <p className="num mt-1 rounded-md bg-surface-sunk px-3 py-2 text-[12.5px] break-all" dir="ltr" data-testid="webhook-url">{d.webhookUrl}</p>
+              <p className="text-meta text-steel">{t("paydev.webhook")}</p>
+              <p className="num mt-1 rounded-md bg-surface-sunk px-3 py-2 text-meta break-all" dir="ltr" data-testid="webhook-url">{d.webhookUrl}</p>
             </div>
           </Section>
         </div>
         <Section title={t("paydev.events")} aside={<span className="text-steel">{t("paydev.failed", { n: d.failedEvents })} · {t("paydev.open", { n: d.openSessions })}</span>} flush={d.events.length > 0}>
-          {!d.events.length ? <p className="text-[12.5px] text-steel">{t("paydev.noEvents")}</p> : (
+          {!d.events.length ? <p className="text-meta text-steel">{t("paydev.noEvents")}</p> : (
             <DataTable data-testid="stripe-events">
               <thead><tr>{[t("paydev.c.event"), t("paydev.c.outcome"), t("paydev.c.received")].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-              <tbody>{d.events.map((e) => <tr key={e.id}><td className="num text-[12.5px]" dir="ltr">{e.type}</td><td><Tag value={e.outcome} title={e.error ?? undefined} /></td><td className="whitespace-nowrap text-[12.5px] text-steel">{fmtDateTime(e.receivedAt)}</td></tr>)}</tbody>
+              <tbody>{d.events.map((e) => <tr key={e.id}><td className="num text-meta" dir="ltr">{e.type}</td><td><Tag value={e.outcome} title={e.error ?? undefined} /></td><td className="whitespace-nowrap text-meta text-steel">{fmtDateTime(e.receivedAt)}</td></tr>)}</tbody>
             </DataTable>
           )}
         </Section>

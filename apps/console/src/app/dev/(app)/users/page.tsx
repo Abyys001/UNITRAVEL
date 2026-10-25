@@ -42,7 +42,7 @@ function Users() {
   const lastPage = paged.page >= paged.pages - 1
   return (
     <div>
-      <PageHead kicker={t("dpage.people")} title={t("dpage.users.title")}><span className="text-[12px] text-steel">{t("users.desc")}</span></PageHead>
+      <PageHead kicker={t("dpage.people")} title={t("dpage.users.title")}><span className="text-meta text-steel">{t("users.desc")}</span></PageHead>
       <form onSubmit={(e) => { e.preventDefault(); apply() }}>
         <Toolbar count={rows.length}>
           <label className="relative min-w-56 flex-1 md:max-w-80">
@@ -62,7 +62,7 @@ function Users() {
         <ListCard>
           <DataTable data-testid="users">
             <thead><tr>{[t("users.c.name"), t("users.c.phone"), t("users.c.email"), t("users.c.roles"), t("users.c.status"), t("users.c.active"), t("users.c.joined")].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-            <tbody>{paged.rows.map((u) => <tr key={u.id}><td className="font-medium"><Link href={`/users/${u.id}`} className="hover:underline" dir="auto">{u.displayName}</Link></td><td className="num whitespace-nowrap" dir="ltr">{u.primaryPhone ?? "—"}{u.primaryPhone && !u.phoneVerified && <span className="ms-1.5 rounded-full bg-danger-subtle px-1.5 text-[10.5px] text-danger">{t("users.unverified")}</span>}</td><td className="text-steel" dir="ltr">{u.email ?? "—"}</td><td><span className="flex flex-wrap gap-1">{u.roles.map((r) => <span key={r} className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-[11px]" dir="ltr">{r}</span>)}</span></td><td><Tag value={u.status} /></td><td className="text-[12.5px] text-steel" title={fmtDateTime(u.lastActiveAt)}>{rel(u.lastActiveAt)}</td><td className="whitespace-nowrap text-[12.5px] text-steel">{fmtDateTime(u.createdAt)}</td></tr>)}</tbody>
+            <tbody>{paged.rows.map((u) => <tr key={u.id}><td className="font-medium"><Link href={`/users/${u.id}`} className="hover:underline" dir="auto">{u.displayName}</Link></td><td className="num whitespace-nowrap" dir="ltr">{u.primaryPhone ?? "—"}{u.primaryPhone && !u.phoneVerified && <span className="ms-1.5 rounded-full bg-danger-subtle px-1.5 text-2xs text-danger">{t("users.unverified")}</span>}</td><td className="text-steel" dir="ltr">{u.email ?? "—"}</td><td><span className="flex flex-wrap gap-1">{u.roles.map((r) => <span key={r} className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-caption" dir="ltr">{r}</span>)}</span></td><td><Tag value={u.status} /></td><td className="text-meta text-steel" title={fmtDateTime(u.lastActiveAt)}>{rel(u.lastActiveAt)}</td><td className="whitespace-nowrap text-meta text-steel">{fmtDateTime(u.createdAt)}</td></tr>)}</tbody>
           </DataTable>
           <Pager {...paged} className="border-t border-rule" />
           {list.hasNextPage && lastPage && <div className="border-t border-rule px-4 py-3 md:px-6"><Button size="sm" variant="outline" loading={list.isFetchingNextPage} onClick={() => void list.fetchNextPage()}>{t("list.loadMore")}</Button></div>}

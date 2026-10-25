@@ -107,9 +107,9 @@ function Builder() {
 
   return (
     <div>
-      <PageHead kicker={<><Link href={`/requests/${ref}`} className="num hover:underline">{ref}</Link> · {d.routeLabel} · {d.customer.preferredLocale === "fa" ? "customer reads Persian" : "customer reads English"}</>} title={w.quoteId ? "Quote draft" : "New quote"}>
+      <PageHead kicker={<><Link href={`/requests/${ref}`} className="ref hover:underline">{ref}</Link> · {d.routeLabel} · {d.customer.preferredLocale === "fa" ? "customer reads Persian" : "customer reads English"}</>} title={w.quoteId ? "Quote draft" : "New quote"}>
         <Button size="sm" variant="outline" onClick={() => void addSnapshot()} disabled={!d.snapshot || w.options.length >= 5 || !can("pricing.read.internal")}>+ From snapshot</Button>
-        <Button size="sm" variant="outline" render={<Link href={`/search?ref=${ref}`} />} disabled={w.options.length >= 5}>+ From staff search</Button>
+        <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`/search?ref=${ref}`} />} disabled={w.options.length >= 5}>+ From staff search</Button>
         <Button size="sm" variant="outline" onClick={addManual} disabled={w.options.length >= 5}>+ Manual entry</Button>
       </PageHead>
       <div className="mx-auto max-w-6xl space-y-3 px-5 py-4">
@@ -117,9 +117,9 @@ function Builder() {
           <SummaryItem label={t("quote.options")}><span className="num font-semibold">{w.options.length}<span className="font-normal text-steel"> / 5</span></span></SummaryItem>
           <SummaryItem label={t("quote.unknown")}>
             <span className={cn("num font-semibold", totalUnknown ? "text-danger" : "text-ink")} data-testid="unknown-total">{totalUnknown}</span>
-            <span className={cn("text-[12px]", totalUnknown ? "font-medium text-danger" : "text-steel")}>{totalUnknown ? t("quote.unknown.blocks") : t("quote.unknown.none")}</span>
+            <span className={cn("text-meta", totalUnknown ? "font-medium text-danger" : "text-steel")}>{totalUnknown ? t("quote.unknown.blocks") : t("quote.unknown.none")}</span>
           </SummaryItem>
-          <SummaryItem label={t("quote.valid")}><span className="num font-medium">{w.validUntil ? fmtDateTime(new Date(w.validUntil).toISOString()) : "—"}</span>{!w.validUntil && <span className="text-[12px] text-steel">{t("quote.valid.default")}</span>}</SummaryItem>
+          <SummaryItem label={t("quote.valid")}><span className="num font-medium">{w.validUntil ? fmtDateTime(new Date(w.validUntil).toISOString()) : "—"}</span>{!w.validUntil && <span className="text-meta text-steel">{t("quote.valid.default")}</span>}</SummaryItem>
           <SummaryItem label={t("quote.total")}><span className="num font-semibold">{w.options.length && !badPrice ? money(w.options.map((o) => toInput(o, w.currency).priceBreakdown.total).reduce((a, b) => (b.amountMinor < a.amountMinor ? b : a))) : "—"}</span></SummaryItem>
         </div>
         <div className="flex flex-wrap items-end gap-3">
@@ -142,10 +142,10 @@ function Builder() {
               {w.options.map((o) => { const inp = toInput(o, w.currency); return (
                 <li key={o.key} className="rounded-md border border-rule bg-surface-raised p-3">
                   <p className="flex justify-between font-medium"><span>{o.label}</span><span className="num">{money(inp.priceBreakdown.total)}</span></p>
-                  {o.ticketingModel === "SEPARATE_TICKETS" && <p className="font-mono text-[10px] text-danger">SEPARATE TICKETS</p>}
+                  {o.ticketingModel === "SEPARATE_TICKETS" && <p className="font-mono text-2xs text-danger">SEPARATE TICKETS</p>}
                   <div className="mt-1 space-y-1">{o.slices.map((s, i) => <SliceView key={i} slice={s} />)}</div>
-                  <p className="mt-1 text-[12px] text-steel">Baggage: {inp.baggage.map((b) => (b.checked.status === "KNOWN" ? (b.checked.value.pieces ? `${b.checked.value.pieces}×${b.checked.value.kgPerPiece ?? "?"} kg` : "none") : "to be confirmed")).join(" · ")} · Change: {o.conditions.change.status === "KNOWN" ? (o.conditions.change.value.allowed ? (o.conditions.change.value.penalty ? `fee ${money(o.conditions.change.value.penalty)}` : "free") : "not allowed") : "to be confirmed"} · Refund: {o.conditions.refund.status === "KNOWN" ? (o.conditions.refund.value.allowed ? (o.conditions.refund.value.penalty ? `fee ${money(o.conditions.refund.value.penalty)}` : "free") : "not allowed") : "to be confirmed"}</p>
-                  <p className="text-[11px] text-steel">Fare {money(inp.priceBreakdown.fare)} · taxes {money(inp.priceBreakdown.taxes)} · service fee {money(inp.priceBreakdown.serviceFee)}</p>
+                  <p className="mt-1 text-meta text-steel">Baggage: {inp.baggage.map((b) => (b.checked.status === "KNOWN" ? (b.checked.value.pieces ? `${b.checked.value.pieces}×${b.checked.value.kgPerPiece ?? "?"} kg` : "none") : "to be confirmed")).join(" · ")} · Change: {o.conditions.change.status === "KNOWN" ? (o.conditions.change.value.allowed ? (o.conditions.change.value.penalty ? `fee ${money(o.conditions.change.value.penalty)}` : "free") : "not allowed") : "to be confirmed"} · Refund: {o.conditions.refund.status === "KNOWN" ? (o.conditions.refund.value.allowed ? (o.conditions.refund.value.penalty ? `fee ${money(o.conditions.refund.value.penalty)}` : "free") : "not allowed") : "to be confirmed"}</p>
+                  <p className="text-caption text-steel">Fare {money(inp.priceBreakdown.fare)} · taxes {money(inp.priceBreakdown.taxes)} · service fee {money(inp.priceBreakdown.serviceFee)}</p>
                 </li>
               ) })}
             </ol>
@@ -158,7 +158,7 @@ function Builder() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2">
           {w.quoteId && <Tag value="DRAFT" />}
           {err ? <span role="alert" className="max-w-xl truncate text-danger" title={errText(err)}>{errText(err)}</span> : null}
-          {w.quoteId && sendAction && !sendAction.allowed && <span className="text-[11px] text-steel">{sendAction.reason}</span>}
+          {w.quoteId && sendAction && !sendAction.allowed && <span className="text-caption text-steel">{sendAction.reason}</span>}
           <span className="ms-auto flex flex-wrap justify-end gap-2 max-sm:grid max-sm:w-full max-sm:grid-cols-2">
             <Button size="sm" variant="ghost" onClick={discard} disabled={!w.quoteId && !w.options.length && !w.validUntil}>Discard working copy</Button>
             <Button size="sm" variant="outline" onClick={() => setPreview((p) => !p)} disabled={!w.options.length}>{preview ? "Hide preview" : "Preview"}</Button>

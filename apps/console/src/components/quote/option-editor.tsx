@@ -20,7 +20,7 @@ type Baggage = DraftOption["baggage"][number]
 function TriSelect({ label, value, onChange, flagged, children }: { label: string; value: "UNKNOWN" | "KNOWN" | string; onChange: (v: string) => void; flagged: boolean; children: React.ReactNode }) {
   return (
     <label className={cn("block rounded-sm border p-1.5", flagged ? "border-danger bg-danger-subtle" : "border-rule")}>
-      <span className="cap block">{label}</span>{flagged && <span className="block text-[10.5px] text-danger">Unknown — confirm from fare rules</span>}
+      <span className="cap block">{label}</span>{flagged && <span className="block text-2xs text-danger">Unknown — confirm from fare rules</span>}
       <NativeSelect className="field-input mt-1" value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={flagged}>{children}</NativeSelect>
     </label>
   )
@@ -102,7 +102,7 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
         <span className="num text-steel">Option {index + 1}</span>
         <input aria-label="Option label" className="field-input max-w-md flex-1 font-medium" value={o.label} onChange={(e) => onChange({ ...o, label: e.target.value })} />
         <Tag value={o.source} />
-        {unk.length > 0 ? <span className="text-[12px] font-semibold text-danger" data-testid="unknown-count">{unk.length} unknown</span> : <span className="text-[12px] font-semibold text-success">all facts confirmed</span>}
+        {unk.length > 0 ? <span className="text-meta font-semibold text-danger" data-testid="unknown-count">{unk.length} unknown</span> : <span className="text-meta font-semibold text-success">all facts confirmed</span>}
         <span className="ms-auto flex gap-1">
           <Button type="button" size="icon-xs" variant="ghost" disabled={index === 0} onClick={() => onMove(-1)} aria-label="Move up"><ArrowUp /></Button>
           <Button type="button" size="icon-xs" variant="ghost" disabled={index === count - 1} onClick={() => onMove(1)} aria-label="Move down"><ArrowDown /></Button>
@@ -111,10 +111,10 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
       </header>
       <div className="grid gap-4 p-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <div className="space-y-2">
-          {o.slices.map((s, i) => <div key={i} className="flex items-start justify-between gap-2"><SliceView slice={s} index={i} />{o.source === "MANUAL" && <button type="button" className="text-[11px] text-danger underline" onClick={() => onChange({ ...o, slices: o.slices.filter((_, j) => j !== i), baggage: [] })}>remove</button>}</div>)}
+          {o.slices.map((s, i) => <div key={i} className="flex items-start justify-between gap-2"><SliceView slice={s} index={i} />{o.source === "MANUAL" && <button type="button" className="text-caption text-danger underline" onClick={() => onChange({ ...o, slices: o.slices.filter((_, j) => j !== i), baggage: [] })}>remove</button>}</div>)}
           {o.source === "MANUAL" && <ManualSegments onDone={(sl) => { const slices = [...o.slices, sl]; onChange({ ...o, slices, baggage: normaliseBaggage(slices, o.baggage) }) }} />}
           <Field label="Ticketing" className="max-w-xs"><NativeSelect className="field-input" value={o.ticketingModel} onChange={(e) => onChange({ ...o, ticketingModel: e.target.value as DraftOption["ticketingModel"] })}><option value="SINGLE_TICKET">Single ticket</option><option value="SEPARATE_TICKETS">Separate tickets</option></NativeSelect></Field>
-          {o.components.length > 0 && <p className="text-[11px] text-steel">Sources: {o.components.map((c) => `${c.provider} ${c.rung}${c.offerId ? ` ${c.offerId.slice(0, 12)}` : ""}${c.fetchedAt ? ` @ ${fmtDateTime(c.fetchedAt)}` : ""}`).join(" · ")}</p>}
+          {o.components.length > 0 && <p className="text-caption text-steel">Sources: {o.components.map((c) => `${c.provider} ${c.rung}${c.offerId ? ` ${c.offerId.slice(0, 12)}` : ""}${c.fetchedAt ? ` @ ${fmtDateTime(c.fetchedAt)}` : ""}`).join(" · ")}</p>}
         </div>
         <div className="space-y-3">
           <div>
@@ -125,8 +125,8 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
               <Field label="Service fee"><input {...amt("serviceFee")} inputMode="decimal" value={o.serviceFee} onChange={(e) => onChange({ ...o, serviceFee: e.target.value })} /></Field>
               <Field label="Total"><output className="field-input num flex items-center bg-ledger font-medium" data-testid="option-total">{bad.size ? "—" : money({ amountMinor: total, currency })}</output></Field>
             </div>
-            {o.supplierExpiresAt && Date.parse(o.supplierExpiresAt) < Date.now() && <p className="mt-1 rounded-sm bg-danger-subtle px-1.5 py-1 text-[11px] text-danger" role="alert">The supplier offer expired {fmtDateTime(o.supplierExpiresAt)}. Validity cannot exceed it — re-check the price or add a fresh option from staff search.</p>}
-            {o.supplierPrice && <p className="mt-1 text-[11px] text-steel">Supplier {money(o.supplierPrice)}{o.supplierFetchedAt && ` fetched ${fmtDateTime(o.supplierFetchedAt)}`}{diff !== null && <> · difference <span className={diff < 0 ? "text-danger" : ""}>{diff >= 0 ? "+" : ""}{money({ amountMinor: diff, currency })}</span></>}{o.supplierExpiresAt && ` · offer expires ${fmtDateTime(o.supplierExpiresAt)}`}</p>}
+            {o.supplierExpiresAt && Date.parse(o.supplierExpiresAt) < Date.now() && <p className="mt-1 rounded-sm bg-danger-subtle px-1.5 py-1 text-caption text-danger" role="alert">The supplier offer expired {fmtDateTime(o.supplierExpiresAt)}. Validity cannot exceed it — re-check the price or add a fresh option from staff search.</p>}
+            {o.supplierPrice && <p className="mt-1 text-caption text-steel">Supplier {money(o.supplierPrice)}{o.supplierFetchedAt && ` fetched ${fmtDateTime(o.supplierFetchedAt)}`}{diff !== null && <> · difference <span className={diff < 0 ? "text-danger" : ""}>{diff >= 0 ? "+" : ""}{money({ amountMinor: diff, currency })}</span></>}{o.supplierExpiresAt && ` · offer expires ${fmtDateTime(o.supplierExpiresAt)}`}</p>}
             {can("pricing.read.internal") && <Field label="Internal cost (never shown to the customer)" className="mt-1.5 max-w-48"><input {...amt("internalCost")} inputMode="decimal" value={o.internalCost} onChange={(e) => onChange({ ...o, internalCost: e.target.value })} /></Field>}
           </div>
           <div className="space-y-1.5">

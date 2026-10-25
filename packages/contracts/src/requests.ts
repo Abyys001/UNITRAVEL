@@ -4,7 +4,7 @@ import { CarrierCode, IsoDate, IsoDateTime, Money, Reference, Uuid, tri } from "
 import {
   ContactChannel, ContactOutcome, FlightRequestKind, FlightRequestStatus, PassengerType, PaymentMethod, PaymentRecordStatus,
   PaymentStatus, QuoteOptionSource, QuoteStatus, ReservationStatus, ReservationSystem, TicketStatus, TicketingModel, TripType,
-  AfterSalesStatus, AfterSalesType,
+  AfterSalesStatus, AfterSalesType, CargoStatus,
 } from "./enums"
 import { Condition, SegmentBaggage, Slice } from "./offer"
 import { CustomerItinerary, SearchQuery } from "./search"
@@ -277,3 +277,23 @@ export type CreditOverrideView = z.infer<typeof CreditOverrideView>
 /** Staff directory entry for pickers (assign dialog); no contact details. */
 export const StaffDirectoryEntry = z.object({ id: Uuid, displayName: z.string(), roles: z.array(z.string()), onDuty: z.boolean() })
 export type StaffDirectoryEntry = z.infer<typeof StaffDirectoryEntry>
+
+/**
+ * Admin dashboard aggregates (GET /v1/admin/dashboard/metrics). Counts come straight from the request and invoice tables;
+ * nothing is estimated. A section is null when the viewer lacks the permission behind it; invoice money is null without
+ * `pricing.read.internal` (ADR-0004). Days are calendar days in Europe/London, the business day used for invoices.
+ */
+export const DashboardMetrics = z.object({
+  range: z.object({ days: z.number().int(), from: z.string(), to: z.string(), timezone: z.literal("Europe/London") }),
+  submissions: z.array(z.object({ date: z.string(), flight: z.number().int().nullable(), cargo: z.number().int().nullable() })),
+  flightStatus: z.array(z.object({ status: FlightRequestStatus, count: z.number().int() })).nullable(),
+  cargoStatus: z.array(z.object({ status: CargoStatus, count: z.number().int() })).nullable(),
+  /** Flight requests submitted in the range: first contact on time, late (or overdue with none yet), or still within SLA. */
+  firstContact: z.object({ met: z.number().int(), missed: z.number().int(), pending: z.number().int() }).nullable(),
+  invoices: z.object({
+    byStatus: z.array(z.object({ status: z.enum(["DRAFT", "ISSUED", "PAID", "CANCELLED", "REFUNDED"]), count: z.number().int() })),
+    outstanding: z.array(z.object({ currency: z.string(), amountMinor: z.number().int(), count: z.number().int() })).nullable(),
+    paidInRange: z.array(z.object({ currency: z.string(), amountMinor: z.number().int(), count: z.number().int() })).nullable(),
+  }).nullable(),
+})
+export type DashboardMetrics = z.infer<typeof DashboardMetrics>

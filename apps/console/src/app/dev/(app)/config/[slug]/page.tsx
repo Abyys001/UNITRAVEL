@@ -96,24 +96,24 @@ export default function ConfigPage() {
   return (
     <div className="pb-10">
       <PageHead kicker={<>{t("dpage.config")} · <span dir="ltr">{domain}</span></>} title={t(`dnav.${def.slug}` as MsgKey)}>
-        <span className="rounded-full border border-success-border bg-success-subtle px-2.5 py-0.5 text-[12px] text-success-subtle-fg">{t("cfg.inForce", { v: published?.version ?? "—" })}{published?.publishedAt && ` · ${t("cfg.since", { at: fmtDateTime(published.publishedAt) })}`}</span>
+        <span className="rounded-full border border-success-border bg-success-subtle px-2.5 py-0.5 text-meta text-success-subtle-fg">{t("cfg.inForce", { v: published?.version ?? "—" })}{published?.publishedAt && ` · ${t("cfg.since", { at: fmtDateTime(published.publishedAt) })}`}</span>
       </PageHead>
       <DevPage>
-        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-rule bg-surface-raised px-4 py-3 text-[12.5px]" aria-label={t("cfg.steps")}>
-          {steps.map((s, i) => <li key={s} aria-current={i + 1 === step ? "step" : undefined} className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1", i + 1 < step ? "border-success-border bg-success-subtle text-success-subtle-fg" : i + 1 === step ? "border-navy-900 bg-navy-900 text-white dark:border-white/80 dark:bg-white/90 dark:text-navy-950" : "border-rule-strong text-steel")}><span className="num text-[11.5px]">{i + 1}</span>{s}</li>)}
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-rule bg-surface-raised px-4 py-3 text-meta" aria-label={t("cfg.steps")}>
+          {steps.map((s, i) => <li key={s} aria-current={i + 1 === step ? "step" : undefined} className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1", i + 1 < step ? "border-success-border bg-success-subtle text-success-subtle-fg" : i + 1 === step ? "border-navy-900 bg-navy-900 text-white dark:border-white/80 dark:bg-white/90 dark:text-navy-950" : "border-rule-strong text-steel")}><span className="num text-caption">{i + 1}</span>{s}</li>)}
         </ol>
         <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0 space-y-4">
             <Section title={t("cfg.draftFrom", { v: base?.version ?? "—" })} hint={t("cfg.draftHint")} aside={<span className={cn("rounded-full px-2.5 py-0.5", issues.length ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success-subtle-fg")} data-testid="validation">{issues.length ? t("cfg.issues", { n: issues.length }) : t("cfg.valid")}</span>}>
               {draft != null && <SchemaForm value={draft as never} onChange={(v) => { setDraft(v); setSavedVersion(null); setSim(null) }} issues={issues} />}
-              {issues.length > 0 && <ul className="mt-4 rounded-lg border border-danger bg-danger-subtle p-3 text-[12.5px] text-danger">{issues.slice(0, 8).map((i) => <li key={i.path + i.message}><span className="font-mono" dir="ltr">{i.path || "(root)"}</span>: {friendlyIssue(i.message, t)}</li>)}</ul>}
-              {changes.length > 0 && <p className="mt-4 text-[12.5px] text-steel">{t("cfg.changed", { v: published?.version ?? "—" })} <span className="font-mono" dir="ltr">{changes.slice(0, 12).join(", ")}{changes.length > 12 ? ` +${changes.length - 12}` : ""}</span></p>}
+              {issues.length > 0 && <ul className="mt-4 rounded-lg border border-danger bg-danger-subtle p-3 text-meta text-danger">{issues.slice(0, 8).map((i) => <li key={i.path + i.message}><span className="font-mono" dir="ltr">{i.path || "(root)"}</span>: {friendlyIssue(i.message, t)}</li>)}</ul>}
+              {changes.length > 0 && <p className="mt-4 text-meta text-steel">{t("cfg.changed", { v: published?.version ?? "—" })} <span className="font-mono" dir="ltr">{changes.slice(0, 12).join(", ")}{changes.length > 12 ? ` +${changes.length - 12}` : ""}</span></p>}
               {canWrite && (
                 <div className="-mx-4 mt-5 -mb-4 flex flex-wrap items-end gap-2 border-t border-rule bg-surface-sunk px-4 py-3 md:-mx-5 md:-mb-5 md:px-5">
                   <Field label={t("cfg.note")} className="min-w-64 flex-1"><input className="field-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("cfg.notePh")} /></Field>
                   <Button size="sm" variant="outline" disabled={!!issues.length || !changes.length} loading={saving} onClick={() => void saveDraft()}>{t("cfg.saveDraft")}</Button>
                   {savedVersion && <Button size="sm" onClick={() => { setPublishOf(versions.data!.find((v) => v.version === savedVersion) ?? null); setPublishNote(note) }} disabled={simulable && !sim}>{t("cfg.publishV", { v: savedVersion })}</Button>}
-                  {simulable && savedVersion && !sim && <span className="pb-1.5 text-[12px] text-steel">{t("cfg.simFirst")}</span>}
+                  {simulable && savedVersion && !sim && <span className="pb-1.5 text-meta text-steel">{t("cfg.simFirst")}</span>}
                 </div>
               )}
             </Section>
@@ -129,13 +129,13 @@ export default function ConfigPage() {
                 <div className="mt-3"><ErrorLine error={simErr} /></div>
                 {sim && (
                   <div className="mt-4" data-testid="simulation">
-                    <p className="text-[12.5px] text-steel">{t("cfg.simRan", { id: sim.searchId.slice(0, 8), n: sim.cachedCalls })} <b className="text-ink">{t("cfg.simCalls", { n: sim.supplierCallsMade })}</b></p>
+                    <p className="text-meta text-steel">{t("cfg.simRan", { id: sim.searchId.slice(0, 8), n: sim.cachedCalls })} <b className="text-ink">{t("cfg.simCalls", { n: sim.supplierCallsMade })}</b></p>
                     <div className="mt-3 grid gap-4 lg:grid-cols-2">
                       {(["published", "draft"] as const).map((side) => (
                         <div key={side} className={cn("rounded-lg border bg-surface p-3", side === "draft" ? "border-orange" : "border-rule")}>
                           <p className="flex justify-between"><span className="font-semibold">{side === "draft" ? "Draft" : t("cfg.publishedV", { v: published?.version ?? "—" })}</span><span className="num text-steel">{t("cfg.results", { n: sim[side].count })}</span></p>
-                          <p className="mt-0.5 font-mono text-[11px] text-steel" dir="ltr">{Object.entries(sim[side].stats).map(([k, v]) => `${k} ${v}`).join(" · ")}</p>
-                          <ol className="mt-2 divide-y divide-rule">{sim[side].top.slice(0, 8).map((x, i) => <li key={x.id} className="py-1.5 text-[12.5px]"><span className="num">{i + 1}. {money(x.price)} · {minutes(x.durationMin)} · {t("cfg.score")} {x.score.toFixed(3)}</span><span className="block truncate font-mono text-[11px] text-steel" dir="ltr" title={x.route}>{x.construction} · {x.route}</span></li>)}</ol>
+                          <p className="mt-0.5 font-mono text-caption text-steel" dir="ltr">{Object.entries(sim[side].stats).map(([k, v]) => `${k} ${v}`).join(" · ")}</p>
+                          <ol className="mt-2 divide-y divide-rule">{sim[side].top.slice(0, 8).map((x, i) => <li key={x.id} className="py-1.5 text-meta"><span className="num">{i + 1}. {money(x.price)} · {minutes(x.durationMin)} · {t("cfg.score")} {x.score.toFixed(3)}</span><span className="block truncate font-mono text-caption text-steel" dir="ltr" title={x.route}>{x.construction} · {x.route}</span></li>)}</ol>
                         </div>
                       ))}
                     </div>
@@ -150,8 +150,8 @@ export default function ConfigPage() {
                 {versions.data.map((v) => (
                   <li key={v.id} className={cn("px-4 py-3 md:px-5", v.id === base?.id && "bg-hover/50")}>
                     <p className="flex items-center justify-between"><span className="num font-semibold">v{v.version}</span><Tag value={v.status} /></p>
-                    <p className="mt-0.5 text-[12.5px]">{v.changeNote ?? <span className="text-steel">{t("cfg.noNote")}</span>}</p>
-                    <p className="text-[11.5px] text-steel">{v.publishedAt ? t("cfg.publishedAt", { at: fmtDateTime(v.publishedAt) }) : t("cfg.draftedAt", { at: fmtDateTime(v.createdAt) })}</p>
+                    <p className="mt-0.5 text-meta">{v.changeNote ?? <span className="text-steel">{t("cfg.noNote")}</span>}</p>
+                    <p className="text-caption text-steel">{v.publishedAt ? t("cfg.publishedAt", { at: fmtDateTime(v.publishedAt) }) : t("cfg.draftedAt", { at: fmtDateTime(v.createdAt) })}</p>
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       <Button size="xs" variant="ghost" onClick={() => { setBase(v); setDraft(structuredClone(v.payload)); setSavedVersion(v.status === "DRAFT" ? v.version : null); setSim(null) }}>{t("cfg.load")}</Button>
                       {canWrite && v.status === "DRAFT" && <Button size="xs" variant="outline" onClick={() => { setPublishOf(v); setPublishNote(v.changeNote ?? "") }}>{t("cfg.publish")}</Button>}

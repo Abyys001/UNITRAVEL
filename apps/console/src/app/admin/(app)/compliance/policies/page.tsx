@@ -10,7 +10,7 @@ import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { FormDialog } from "@/components/form-dialog"
 import { EmptyState, StatusChip, TileError } from "@/components/bento"
 import { ListSkeleton, StateChip, TableScroll } from "@/components/case"
-import { Chips, ListCard, Pager, tableClass, Toolbar, usePaged } from "@/components/data-list"
+import { Chips, ListCard, ListPage, Pager, tableClass, Toolbar, usePaged } from "@/components/data-list"
 import { Field, PageHead, useAct } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDateTime, human } from "@/lib/format"
@@ -48,7 +48,7 @@ export default function PoliciesPage() {
   const statusCount = (x: string) => all.filter((p) => p.status === x).length
   const cols: MsgKey[] = ["pg.c.type", "pg.c.key", "pg.c.action", "pg.c.reason", "pg.c.version", "pg.c.status", "pg.c.approved"]
   return (
-    <div>
+    <ListPage>
       <PageHead title={t("nav.policies")}>
         {can("compliance.case.decide") && <Button size="sm" onClick={() => setOpen(true)}>Propose change</Button>}
       </PageHead>
@@ -59,12 +59,12 @@ export default function PoliciesPage() {
         <Chips label={t("pg.pol.type")} value={type} options={[{ value: "", label: t("pg.all"), count: matched.length }, ...[...TYPES, ...new Set(all.map((p) => p.type).filter((x) => !TYPES.includes(x)))].filter((x) => typeCount(x)).map((x) => ({ value: x, label: human(x), count: typeCount(x) }))]} onChange={setType} />
       </Toolbar>
       {q.error ? <div className="px-6 py-3"><TileError error={q.error} onRetry={() => void q.refetch()} /></div> : !q.data ? <ListSkeleton rows={6} className="px-6" /> : !rows.length ? <EmptyState title={t("pg.pol.none")} /> : (
-        <ListCard>
+        <ListCard fill>
           <TableScroll><table className={tableClass} data-testid="policies">
             <thead><tr>{cols.map((h) => <th key={h}>{t(h)}</th>)}<th><span className="sr-only">Actions</span></th></tr></thead>
-            <tbody>{paged.rows.map((p) => <tr key={p.id}><td className="whitespace-nowrap">{human(p.type)}</td><td className="num">{p.key}</td><td><StatusChip tone={p.action === "BLOCK" ? "danger" : p.action === "REVIEW" ? "warn" : "ok"}>{human(p.action)}</StatusChip></td><td className="max-w-sm">{p.reason}{p.counselReference && <span className="block text-[12px] text-steel">{t("pg.pol.counsel", { ref: p.counselReference })}</span>}{p.decisionReason && <span className="block text-[12px] text-steel" data-testid="decision-reason">{p.status === "WITHDRAWN" ? "Withdrawn" : "Rejected"}: {p.decisionReason}</span>}</td><td className="num">v{p.version}</td><td><StateChip value={p.status} /></td><td className="whitespace-nowrap text-[12px] text-steel">{p.approvedAt ? fmtDateTime(p.approvedAt) : "—"}</td><td>{p.status === "PENDING_APPROVAL" && (
+            <tbody>{paged.rows.map((p) => <tr key={p.id}><td className="whitespace-nowrap">{human(p.type)}</td><td className="ref">{p.key}</td><td><StatusChip tone={p.action === "BLOCK" ? "danger" : p.action === "REVIEW" ? "warn" : "ok"}>{human(p.action)}</StatusChip></td><td className="max-w-md"><span className="line-clamp-2" title={p.reason}>{p.reason}</span>{p.counselReference && <span className="block text-meta text-steel">{t("pg.pol.counsel", { ref: p.counselReference })}</span>}{p.decisionReason && <span className="block text-meta text-steel" data-testid="decision-reason">{p.status === "WITHDRAWN" ? "Withdrawn" : "Rejected"}: {p.decisionReason}</span>}</td><td className="num">v{p.version}</td><td><StateChip value={p.status} /></td><td className="whitespace-nowrap text-meta text-steel">{p.approvedAt ? fmtDateTime(p.approvedAt) : "—"}</td><td>{p.status === "PENDING_APPROVAL" && (
               <span className="flex items-center gap-1.5">
-                {isOwner ? <Button size="xs" onClick={() => approve.mutate(p.id)}>Approve</Button> : <span className="text-[12px] text-steel">{t("pol.pending").toLowerCase()}</span>}
+                {isOwner ? <Button size="xs" onClick={() => approve.mutate(p.id)}>Approve</Button> : <span className="text-meta text-steel">{t("pol.pending").toLowerCase()}</span>}
                 {isOwner && <Button size="xs" variant="outline" onClick={() => { setRejectReason(""); setRejecting(p) }} data-command="reject_policy">Reject</Button>}
                 {me?.id === p.createdBy && <Button size="xs" variant="outline" loading={withdraw.isPending} onClick={() => withdraw.mutate(p.id)} data-command="withdraw_policy">Withdraw</Button>}
               </span>
@@ -85,6 +85,6 @@ export default function PoliciesPage() {
           <Field label="Counsel reference" className="col-span-2"><input className="field-input font-mono" value={f.counselReference} onChange={(e) => setF({ ...f, counselReference: e.target.value })} /></Field>
         </div>
       </FormDialog>
-    </div>
+    </ListPage>
   )
 }

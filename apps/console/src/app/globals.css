@@ -2,10 +2,12 @@
 @source "../../node_modules/@unitravel/ui/src";
 
 /*
- * Console tokens on top of the shared palette (docs/design/DESIGN.md, "Control deck"). Light is the ledger look; dark
- * (html[data-theme="dark"], set before paint by the script in layout.tsx) re-points the semantic variables below, so
- * pages written against bg-surface-raised / text-ink / text-steel / border-rule follow the theme without edits.
- * The dev host swaps the accent for a hatched orange/navy "workshop" strip and a cyan active indicator.
+ * Console design system ("Control deck v2", docs/design/DESIGN.md; audit docs/design/UI-AUDIT-2026-10-25.md).
+ * Colours come from packages/ui/tokens/tokens.json: the console's <html data-surface> selects the console light set, and
+ * html[data-theme="dark"] (set before paint by the script in layout.tsx) the dark set. Pages are written against semantic
+ * utilities (bg-surface-raised, text-ink, text-steel, border-rule), so theme, density and RTL need no per-page code.
+ *
+ * Root size is the browser default (16 px). Every console size is a token below — no literal px text sizes in components.
  */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -13,105 +15,323 @@
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --color-surface-sunk: var(--surface-sunk);
+  --color-surface-overlay: var(--surface-overlay);
   --color-ink: var(--ink);
+  --color-ink-subtle: var(--ink-subtle);
   --color-chrome: var(--chrome);
+  --color-chrome-raised: var(--chrome-raised);
+  --color-chrome-ink: var(--chrome-ink);
+  --color-chrome-muted: var(--chrome-muted);
   --color-hover: var(--hover);
+  --color-selected: var(--selected);
+  --color-selected-ink: var(--selected-ink);
+  --color-link: var(--link);
+  --color-control: var(--control-border);
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
+  --color-viz-3: var(--viz-3);
+  --color-viz-4: var(--viz-4);
+  --color-viz-5: var(--viz-5);
+  --color-viz-6: var(--viz-6);
 }
 
 @theme {
-  --font-sans: var(--font-montserrat), var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
+  /* Typefaces (ADR-0011). Persian falls through to Vazirmatn glyph by glyph; html[lang=fa] switches the whole UI. */
+  --font-sans: var(--font-inter), var(--font-vazirmatn), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-montserrat), var(--font-vazirmatn), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Type scale: 11 counters · 12 captions · 13 meta · 14 body/table · 15 lead · 18 section · 22 page title · 28 display */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.125rem;
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.25rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.375rem;
+  --text-lead: 0.9375rem;
+  --text-lead--line-height: 1.5rem;
+  --text-section: 1.125rem;
+  --text-section--line-height: 1.625rem;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.875rem;
+  --text-display: 1.75rem;
+  --text-display--line-height: 2.25rem;
+
   --color-steel: var(--ink-muted);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
   --color-ledger: var(--surface-sunk);
   --color-workshop: #ff8617;
-  --indicator: var(--color-orange);
+
+  --radius-xs: 4px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --animate-in: fade-in 140ms var(--ease-out);
 }
 
 :root {
-  --tile-shadow: 0 1px 2px rgb(6 31 76 / 0.05);
-  --tile-pad: calc(var(--spacing) * 4);
-  --grid-gap: calc(var(--spacing) * 3);
+  /* Layout */
+  --header-h: 3.5rem;
+  --rail-w: 15.5rem;
+  --rail-w-collapsed: 4.5rem;
+  --content-max: 1440px;
+  --gutter: 1.5rem;
+  --row-h: 2.75rem;
+  --control-h: 2.25rem;
+  --control-h-sm: 2rem;
+  --indicator: var(--color-orange);
+  --tile-pad: 1.25rem;
+  --grid-gap: 1rem;
+  /* Elevation: hairline first, shadow only to separate layers that float. */
+  --shadow-xs: 0 1px 2px rgb(11 27 51 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(11 27 51 / 0.05), 0 1px 1px rgb(11 27 51 / 0.03);
+  --shadow-pop: 0 1px 2px rgb(11 27 51 / 0.06), 0 12px 32px -8px rgb(11 27 51 / 0.18);
+  --tile-shadow: var(--shadow-sm);
+  /* Stacking order (lowest → highest). Components use the z-* utilities below, never raw numbers. */
+  --z-sticky: 10;
+  --z-header: 30;
+  --z-rail: 35;
+  --z-dropdown: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-tooltip: 80;
+  /* Motion */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
 }
+@media (max-width: 767px) { :root { --gutter: 1rem; --tile-pad: 1rem; } }
 
-/* Dark values come from the generated tokens.css (tokens/tokens.json): navy-950 page, navy-900 raised cards, hairline white
-   rules, accent text on the -300 shades for AA (DESIGN.md table). Only the shadow is local. */
 [data-theme="dark"] {
-  --tile-shadow: 0 0 0 1px rgb(255 255 255 / 0.02), 0 12px 28px -18px rgb(0 0 0 / 0.6);
+  --shadow-xs: 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-sm: 0 0 0 1px rgb(255 255 255 / 0.02), 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -12px rgb(0 0 0 / 0.65);
 }
 
-/* Compact density: tightens every spacing utility on fine pointers only, so touch targets stay >= 32 px. */
+/* Compact density: tighter rows and gaps on fine pointers only, so touch targets stay >= 44 px on touch screens. */
 @media (pointer: fine) {
   [data-density="compact"] {
-    --spacing: 0.215rem;
-    --tile-pad: calc(var(--spacing) * 3);
-    --grid-gap: calc(var(--spacing) * 2.5);
+    --spacing: 0.21rem;
+    --row-h: 2.25rem;
+    --control-h: 2rem;
+    --control-h-sm: 1.75rem;
+    --tile-pad: 1rem;
+    --grid-gap: 0.75rem;
   }
 }
 
-/* Touch: checkbox rows get a 44 px hit area; desktop density is unchanged. */
-@media (pointer: coarse) {
-  label:has(> input[type="checkbox"]) { min-height: 2.75rem; }
-  input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+[data-surface="dev"] { --indicator: var(--color-cyan); }
+
+html { font-size: 100%; }
+body {
+  background: var(--surface); color: var(--ink);
+  font-size: var(--text-body); line-height: var(--text-body--line-height);
+  font-feature-settings: "cv11" 1, "ss01" 1; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
+}
+/* The console sets numbers in tabular figures by default: columns of counts, money and times line up. */
+body { font-variant-numeric: tabular-nums; }
+html[lang="fa"] body { font-family: var(--font-fa); font-feature-settings: normal; }
+[dir="auto"], .bidi { unicode-bidi: plaintext; }
+::selection { background: color-mix(in oklab, var(--link) 22%, transparent); }
+@layer base {
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  /* Tailwind's preflight leaves a bare `border` in currentColor (heavy navy outlines on every outline button); hairline by default. */
+  *, ::before, ::after, ::backdrop { border-color: var(--rule-strong); }
 }
 
-[data-surface="dev"] { --indicator: var(--color-cyan); }
-html, body { font-size: 13px; line-height: 1.5; }
-body { background: var(--surface); color: var(--ink); }
-[dir="auto"], .bidi { unicode-bidi: plaintext; }
+/* ---- Scrollbars: thin, theme-coloured, never hidden. Standard properties first; WebKit fallback only where they are missing. ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border: 3px solid transparent; border-radius: 999px; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--scroll-thumb-hover); }
+  ::-webkit-scrollbar-track { background: transparent; }
+}
+/* The rail is dark in both themes. */
+.scroll-on-dark { scrollbar-color: rgb(255 255 255 / 0.18) transparent; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
+@keyframes fade-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+/* ---- Stacking utilities (see --z-* above) ---- */
+@utility z-sticky { z-index: var(--z-sticky); }
+@utility z-header { z-index: var(--z-header); }
+@utility z-rail { z-index: var(--z-rail); }
+@utility z-dropdown { z-index: var(--z-dropdown); }
+@utility z-overlay { z-index: var(--z-overlay); }
+@utility z-modal { z-index: var(--z-modal); }
+@utility z-toast { z-index: var(--z-toast); }
+@utility z-tooltip { z-index: var(--z-tooltip); }
+@utility h-control { height: var(--control-h); }
+@utility h-control-sm { height: var(--control-h-sm); }
+@utility min-h-control { min-height: var(--control-h); }
+@utility min-h-row { min-height: var(--row-h); }
+@utility px-gutter { padding-inline: var(--gutter); }
+@utility mx-gutter { margin-inline: var(--gutter); }
+
 /* Component classes sit in the components layer so Tailwind utilities (w-40, bg-transparent…) still override them. */
 @layer components {
-  .workshop-strip {
-    background: repeating-linear-gradient(-45deg, var(--color-orange) 0 8px, var(--color-navy-950) 8px 16px);
-  }
+  .workshop-strip { background: repeating-linear-gradient(-45deg, var(--color-orange) 0 8px, var(--color-navy-950) 8px 16px); }
   .ledger-rows > * + * { border-top: 1px solid var(--rule); }
-  /* Section and column labels: quiet sentence-case sans; mono is kept for references, codes and numbers only. */
-  .cap { font-size: 11.5px; font-weight: 600; letter-spacing: 0.01em; color: var(--ink-muted); }
-  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-  .kbd { font-family: var(--font-mono); font-size: 10.5px; border: 1px solid var(--rule-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: var(--surface-raised); color: var(--ink-muted); }
-  .field-input {
-    height: 34px; width: 100%; border: 1px solid var(--rule-strong); border-radius: 8px; background: var(--surface-raised); color: var(--ink); padding: 0 8px; font-size: 13px;
+
+  /* Section, field and column labels: sentence case, 12 px semibold. */
+  .cap { font-size: var(--text-caption); line-height: var(--text-caption--line-height); font-weight: 600; letter-spacing: 0.01em; color: var(--ink-muted); }
+  /* Numbers: tabular sans figures (counts, money, dates). */
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "cv11" 1; }
+  /* References and codes (UT-F-…, INV-…, carrier codes): the only place mono is used, a step smaller to sit on the sans baseline. */
+  .ref { font-family: var(--font-mono); font-size: 0.92em; font-weight: 500; letter-spacing: 0; font-variant-ligatures: none; }
+  .kbd {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3rem;
+    font-family: var(--font-sans); font-size: var(--text-2xs); font-weight: 600; line-height: 1;
+    border: 1px solid var(--rule-strong); border-bottom-width: 2px; border-radius: var(--radius-xs); background: var(--surface-raised); color: var(--ink-muted);
   }
-  .field-input:hover { border-color: color-mix(in oklab, var(--ink-muted) 45%, var(--rule-strong)); }
-  .field-input:focus-visible { outline: 2px solid var(--color-orange); outline-offset: 0; border-color: transparent; }
-  textarea.field-input { height: auto; padding: 6px 8px; }
-  .row-focus { box-shadow: inset 3px 0 0 var(--indicator); background: var(--hover); }
+
+  /* ---- Form fields (native inputs, selects, textareas share one look) ---- */
+  .field-input {
+    height: var(--control-h); width: 100%; min-width: 0;
+    border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--surface-raised); color: var(--ink);
+    padding: 0 0.75rem; font-size: var(--text-body); line-height: 1.25rem;
+    transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background-color var(--dur-fast);
+  }
+  .field-input::placeholder { color: var(--ink-subtle); opacity: 1; }
+  .field-input:hover:not(:disabled) { border-color: var(--ink-muted); }
+  .field-input:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 22%, transparent); }
+  .field-input:disabled { opacity: 0.6; cursor: not-allowed; background: var(--surface-sunk); }
+  .field-input[aria-invalid="true"], .field-input:user-invalid { border-color: var(--color-danger); }
+  .field-input[aria-invalid="true"]:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-danger) 22%, transparent); }
+  textarea.field-input { height: auto; min-height: 5.5rem; padding: 0.5rem 0.75rem; line-height: 1.375rem; resize: vertical; }
+  input[type="date"].field-input, input[type="time"].field-input, input[type="datetime-local"].field-input { padding-inline-end: 0.5rem; }
+  input[type="date"].field-input::-webkit-calendar-picker-indicator { opacity: 0.6; cursor: pointer; }
+  /* Dark mode needs no filter: html[data-theme=dark] sets color-scheme: dark, which already draws native icons light. */
+  input[type="file"].field-input { padding: 0.3rem; height: auto; }
+  input[type="file"].field-input::file-selector-button {
+    margin-inline-end: 0.75rem; height: calc(var(--control-h) - 0.6rem - 2px); padding: 0 0.75rem; border: 1px solid var(--rule-strong); border-radius: 6px;
+    background: var(--surface-sunk); color: var(--ink); font: inherit; font-size: var(--text-meta); font-weight: 600; cursor: pointer;
+  }
+  .field-search { padding-inline-start: 2.25rem; }
+
+  /*
+   * Native checkboxes and radios, restyled (the console uses real inputs, so keyboard, forms and labels keep working).
+   * Fixed box size, the mark is drawn with a mask, nothing changes size on check: the control can never shift its row.
+   */
+  input[type="checkbox"]:not([role="switch"]), input[type="radio"] {
+    appearance: none; flex: none; display: inline-grid; place-content: center; margin: 0;
+    width: 1rem; height: 1rem; border: 1.5px solid var(--control-border); background: var(--surface-raised); color: var(--color-white);
+    border-radius: 5px; cursor: pointer; vertical-align: middle;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-fast);
+  }
+  input[type="radio"] { border-radius: 999px; }
+  input[type="checkbox"]:not([role="switch"])::before, input[type="radio"]::before {
+    content: ""; width: 0.75rem; height: 0.75rem; transform: scale(0); transition: transform var(--dur-fast) var(--ease-out); background: currentColor;
+  }
+  input[type="checkbox"]:not([role="switch"])::before {
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  input[type="checkbox"]:not([role="switch"]):indeterminate::before {
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  input[type="radio"]::before { width: 0.4rem; height: 0.4rem; border-radius: 999px; }
+  input[type="checkbox"]:not([role="switch"]):hover:not(:disabled), input[type="radio"]:hover:not(:disabled) { border-color: var(--ink-muted); }
+  input[type="checkbox"]:not([role="switch"]):checked, input[type="checkbox"]:not([role="switch"]):indeterminate, input[type="radio"]:checked {
+    background: var(--link); border-color: var(--link);
+  }
+  [data-theme="dark"] input[type="checkbox"]:not([role="switch"]), [data-theme="dark"] input[type="radio"] { color: #0b1220; }
+  input[type="checkbox"]:not([role="switch"]):checked::before, input[type="checkbox"]:not([role="switch"]):indeterminate::before, input[type="radio"]:checked::before { transform: scale(1); }
+  input[type="checkbox"]:not([role="switch"]):focus-visible, input[type="radio"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  input[type="checkbox"]:not([role="switch"]):disabled, input[type="radio"]:disabled { opacity: 0.5; cursor: not-allowed; }
+  input[type="checkbox"]:not([role="switch"])[aria-invalid="true"], input[type="radio"][aria-invalid="true"] { border-color: var(--color-danger); }
+
+  /* Switch: <input type="checkbox" role="switch"> (components/controls.tsx). Track and thumb are fixed size; only the thumb moves. */
+  input[type="checkbox"][role="switch"] {
+    appearance: none; flex: none; position: relative; margin: 0; width: 2.25rem; height: 1.25rem; border-radius: 999px; cursor: pointer;
+    background: var(--rule-strong); border: 1px solid transparent; transition: background-color var(--dur-base);
+  }
+  input[type="checkbox"][role="switch"]::before {
+    content: ""; position: absolute; top: 1px; inset-inline-start: 1px; width: calc(1.25rem - 4px); height: calc(1.25rem - 4px); border-radius: 999px;
+    background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.25); transition: translate var(--dur-base) var(--ease-out);
+  }
+  input[type="checkbox"][role="switch"]:checked { background: var(--color-success); }
+  input[type="checkbox"][role="switch"]:checked::before { translate: 1rem 0; }
+  [dir="rtl"] input[type="checkbox"][role="switch"]:checked::before { translate: -1rem 0; }
+  input[type="checkbox"][role="switch"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  input[type="checkbox"][role="switch"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @media (pointer: coarse) {
+    label:has(> input[type="checkbox"], > input[type="radio"]) { min-height: 2.75rem; }
+    input[type="checkbox"]:not([role="switch"]), input[type="radio"] { width: 1.25rem; height: 1.25rem; }
+  }
+
+  .row-focus { background: var(--selected) !important; box-shadow: inset 3px 0 0 var(--indicator); }
   [dir="rtl"] .row-focus { box-shadow: inset -3px 0 0 var(--indicator); }
 
-  /* ---- Shell rail: width and label visibility come from html[data-rail] (set before paint), so a collapsed rail never flashes open ---- */
-  .rail { width: 15rem; transition: width 0.18s ease; }
-  .rail-brand-mark { display: none; }
-  .rail-active::before { content: ""; position: absolute; inset-block: 8px; inset-inline-start: -10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--indicator); }
-  [dir="rtl"] .rail-active::before { border-radius: 3px 0 0 3px; }
-  [data-rail="collapsed"] .rail { width: 4.25rem; }
-  [data-rail="collapsed"] .rail-brand { justify-content: center; padding-inline: 0; }
-  [data-rail="collapsed"] .rail-brand-full { display: none; }
-  [data-rail="collapsed"] .rail-brand-mark { display: inline-flex; }
-  [data-rail="collapsed"] .rail-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  [data-rail="collapsed"] .rail-link { justify-content: center; padding-inline: 0; }
-  [data-rail="collapsed"] .rail-count { position: absolute; inset-block-start: 2px; inset-inline-end: 2px; min-width: 16px; text-align: center; font-size: 9.5px; line-height: 16px; padding: 0 3px; }
-
-  /* ---- Tables (components/data-list.tsx): sentence-case headers on a sunk band, roomy rows, hover; mono only via .num ---- */
-  .data-table { border-collapse: separate; border-spacing: 0; }
-  .data-table th { background: var(--surface-sunk); color: var(--ink-muted); font-size: 11.5px; font-weight: 600; text-align: start; padding: 8px 12px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-  .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  /* ---- Data grid (components/data-list.tsx DataGrid). The card is the scroll container, so the header sticks at its top
+     edge with no gap, and wide tables scroll sideways inside the card instead of widening the page. ---- */
+  .data-table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: var(--text-body); }
+  .data-table thead th {
+    position: sticky; top: 0; z-index: var(--z-sticky);
+    background: var(--surface-sunk); color: var(--ink-muted); font-size: var(--text-caption); line-height: 1rem; font-weight: 600; letter-spacing: 0.01em;
+    text-align: start; padding: 0.625rem 1rem; border-bottom: 1px solid var(--rule); white-space: nowrap;
+  }
+  .data-table td { height: var(--row-h); padding: 0.375rem 1rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
   .data-table tbody tr:last-child td { border-bottom: 0; }
-  .data-table tbody tr:hover td { background: color-mix(in oklab, var(--hover) 60%, transparent); }
+  /* scroll-margin keeps a keyboard-focused row (j/k) clear of the sticky header when it is scrolled into view. */
+  .data-table tbody tr { transition: background-color var(--dur-fast); scroll-margin-top: 2.75rem; }
+  .data-table tbody tr:hover td { background: var(--hover); }
+  .data-table .cell-num { text-align: end; font-variant-numeric: tabular-nums; }
+  .data-table th.cell-num { text-align: end; }
+  .data-table .cell-muted { color: var(--ink-muted); }
+  .grid-scroll { overflow: auto; overscroll-behavior: contain; }
 
   /* ---- Bento primitives (components/bento.tsx) ---- */
   .bento-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: var(--grid-gap); }
   @media (min-width: 640px) { .bento-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
   @media (min-width: 1024px) { .bento-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); } }
   .bento-tile {
-    position: relative; min-width: 0; border: 1px solid var(--rule); border-radius: 14px; background: var(--surface-raised);
+    position: relative; min-width: 0; border: 1px solid var(--rule); border-radius: var(--radius-card); background: var(--surface-raised);
     padding: var(--tile-pad); box-shadow: var(--tile-shadow);
   }
-  .bento-tile[data-tone="hero"] { border-color: var(--color-orange); }
-  .bento-tile[data-tone="alert"] { border-color: var(--color-danger); background: color-mix(in oklab, var(--color-danger) 7%, var(--surface-raised)); }
+  .bento-tile[data-tone="hero"] { border-color: color-mix(in oklab, var(--color-orange) 60%, var(--rule)); }
+  .bento-tile[data-tone="alert"] { border-color: color-mix(in oklab, var(--color-danger) 45%, var(--rule)); box-shadow: inset 0 3px 0 var(--color-danger), var(--tile-shadow); }
   .skeleton { border-radius: 6px; background: linear-gradient(90deg, var(--hover) 0%, var(--rule) 50%, var(--hover) 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+
+  /* Popover / menu surface shared by header menus, palette and selects. */
+  .pop-surface { background: var(--surface-overlay); color: var(--ink); border: 1px solid var(--rule-strong); border-radius: var(--radius-card); box-shadow: var(--shadow-pop); }
+  .menu-item { display: flex; align-items: center; gap: 0.625rem; min-height: 2.25rem; padding: 0 0.625rem; border-radius: 6px; font-size: var(--text-body); color: var(--ink); text-align: start; width: 100%; }
+  .menu-item:hover, .menu-item:focus-visible { background: var(--hover); outline: none; }
+  @media (pointer: coarse) { .menu-item { min-height: 2.75rem; } }
+
+  /* Tooltip bubble (components/controls.tsx Tip). */
+  .tip-bubble {
+    position: fixed; z-index: var(--z-tooltip); pointer-events: none; max-width: 16rem; padding: 0.35rem 0.55rem; border-radius: 6px;
+    background: #0b1b33; color: #fff; font-size: var(--text-caption); font-weight: 500; line-height: 1.1rem; box-shadow: var(--shadow-pop); animation: var(--animate-in);
+  }
+  [data-theme="dark"] .tip-bubble { background: #e6ebf3; color: #0b1220; }
+
 }
+
+/* ---- Shell rail. Unlayered on purpose: these are *state* rules (html[data-rail], set before paint) and must beat the layout
+   utilities on the same elements (flex, px-3); in the components layer they lost to them and the collapsed rail kept its full logo. ---- */
+.rail { width: var(--rail-w); transition: width var(--dur-base) var(--ease-out); }
+.rail-collapsible { transition: opacity var(--dur-fast); }
+[data-rail="collapsed"] .rail { width: var(--rail-w-collapsed); }
+[data-rail="collapsed"] .rail-collapsible { opacity: 0; width: 0; overflow: hidden; pointer-events: none; }
+[data-rail="collapsed"] .rail-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+[data-rail="collapsed"] .rail-link { justify-content: center; padding-inline: 0; }
+[data-rail="collapsed"] .rail-group-title { visibility: hidden; height: 0.5rem; margin: 0; }
+[data-rail="collapsed"] .rail-count { display: none; }
+[data-rail="collapsed"] .rail-dot { display: block; }
+.rail-dot { display: none; }
+[data-rail="collapsed"] .rail-brand-full { display: none; }
+.rail-brand-mark { display: none; }
+[data-rail="collapsed"] .rail-brand-mark { display: inline-flex; }
+[data-rail="collapsed"] .rail-brand { justify-content: center; padding-inline: 0; }
+
+@keyframes shimmer { to { background-position: -200% 0; } }

@@ -44,17 +44,17 @@ export function InvoicesPanel({ requestRef }: { requestRef: string }) {
             const cancelAction = i.actions.find((a) => a.command === "cancel")
             return (
               <li key={i.id} className="space-y-1 py-2" data-testid="invoice-item">
-                <p className="flex items-center justify-between gap-2"><span className="num font-medium">{i.number ?? "Draft"}</span><Tag value={i.status} /></p>
-                <p className="flex justify-between text-[12px] text-steel"><span>{i.lines.length} line{i.lines.length === 1 ? "" : "s"}{i.expiresAt && i.status === "ISSUED" && <> · expires {fmtDateTime(i.expiresAt)}</>}{i.cancelReason && <> · {human(i.cancelReason)}</>}</span><span className="num">{money(i.total)}</span></p>
+                <p className="flex items-center justify-between gap-2"><span className="ref font-medium">{i.number ?? "Draft"}</span><Tag value={i.status} /></p>
+                <p className="flex justify-between text-meta text-steel"><span>{i.lines.length} line{i.lines.length === 1 ? "" : "s"}{i.expiresAt && i.status === "ISSUED" && <> · expires {fmtDateTime(i.expiresAt)}</>}{i.cancelReason && <> · {human(i.cancelReason)}</>}</span><span className="num">{money(i.total)}</span></p>
                 {issuer && (
                   <div className="flex flex-wrap gap-1.5">
-                    {issueAction && <div><Button size="xs" variant="default" disabled={!issueAction.allowed} loading={issue.isPending && issue.variables === i.id} onClick={() => issue.mutate(i.id)} data-command="issue_invoice">Issue</Button>{!issueAction.allowed && <p className="text-[11px] leading-snug text-steel" data-reason="issue_invoice">{issueAction.reason}</p>}</div>}
+                    {issueAction && <div><Button size="xs" variant="default" disabled={!issueAction.allowed} loading={issue.isPending && issue.variables === i.id} onClick={() => issue.mutate(i.id)} data-command="issue_invoice">Issue</Button>{!issueAction.allowed && <p className="text-caption leading-snug text-steel" data-reason="issue_invoice">{issueAction.reason}</p>}</div>}
                     {cancelAction?.allowed && <Button size="xs" variant="outline" onClick={() => { setTarget(i); setF({ reasonCode: "CORRECTION", note: "" }); dlg.open("cancel") }} data-command="cancel_invoice">Cancel…</Button>}
                   </div>
                 )}
                 {i.status !== "DRAFT" && <PaymentPanel invoice={i} />}
-                <details className="text-[12px]"><summary className="cursor-pointer text-steel">History</summary>
-                  <ol className="mt-1 space-y-0.5" data-testid="invoice-history">{i.history.map((h, n) => <li key={n}><span className="num text-[11.5px] text-steel">{fmtDateTime(h.createdAt)}</span> {human(h.command)} → {h.toStatus}{h.reasonCode && <> · {human(h.reasonCode)}</>}{h.reasonText && <span className="text-steel"> — {h.reasonText}</span>} <span className="text-steel">· {h.actorName ?? (h.actorKind === "SYSTEM" ? "System" : "Staff")}</span></li>)}</ol>
+                <details className="text-meta"><summary className="cursor-pointer text-steel">History</summary>
+                  <ol className="mt-1 space-y-0.5" data-testid="invoice-history">{i.history.map((h, n) => <li key={n}><span className="num text-caption text-steel">{fmtDateTime(h.createdAt)}</span> {human(h.command)} → {h.toStatus}{h.reasonCode && <> · {human(h.reasonCode)}</>}{h.reasonText && <span className="text-steel"> — {h.reasonText}</span>} <span className="text-steel">· {h.actorName ?? (h.actorKind === "SYSTEM" ? "System" : "Staff")}</span></li>)}</ol>
                 </details>
               </li>
             )

@@ -150,7 +150,7 @@ function SignInInner({ surface }: { surface: Surface }) {
                 <Button type="submit" size="lg" className="w-full" loading={busy} disabled={code.length < 6}>{t("signin.verify")}</Button>
                 <div className="flex justify-between text-steel">
                   <button type="button" className="underline underline-offset-4 hover:text-ink" onClick={() => { setStep("phone"); setErr(null) }}>{t("signin.change")}</button>
-                  {wait > 0 ? <span className="num">{t("signin.resendIn", { n: wait })}</span> : <button type="button" className="text-orange-700 underline underline-offset-4 dark:text-orange-300" onClick={() => void send()}>{t("signin.resend")}</button>}
+                  {wait > 0 ? <span className="num">{t("signin.resendIn", { n: wait })}</span> : <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => void send()}>{t("signin.resend")}</button>}
                 </div>
               </form>
             )}

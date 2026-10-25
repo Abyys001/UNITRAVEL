@@ -35,7 +35,7 @@ export default function JobsPage() {
   return (
     <div>
       {dialog}
-      <PageHead kicker={t("dnav.control")} title={t("jobs.title")}><span className="text-[12px] text-steel">{t("jobs.desc")}</span></PageHead>
+      <PageHead kicker={t("dnav.control")} title={t("jobs.title")}><span className="text-meta text-steel">{t("jobs.desc")}</span></PageHead>
       {q.error ? <div className="p-4 md:p-6"><TileError error={q.error} onRetry={() => void q.refetch()} /></div> : !q.data ? <ListSkeleton rows={6} /> : !all.length ? (
         <ListCard className="mt-4"><EmptyState icon={<CheckCircle2 className="size-4 text-success" />} title={t("jobs.none")} hint={t("jobs.noneHint")} className="py-10" /></ListCard>
       ) : (
@@ -53,13 +53,13 @@ export default function JobsPage() {
                     return [
                       <tr key={k} className="align-top">
                         <td className="font-medium" dir="ltr">{j.queue}</td>
-                        <td dir="ltr"><span className="font-mono text-[12px]">{j.name}</span> <span className="num text-steel">#{j.id}</span></td>
-                        <td className="whitespace-nowrap text-[12.5px]">{fmtDateTime(j.timestamp)}</td>
+                        <td dir="ltr"><span className="font-mono text-meta">{j.name}</span> <span className="num text-steel">#{j.id}</span></td>
+                        <td className="whitespace-nowrap text-meta">{fmtDateTime(j.timestamp)}</td>
                         <td className="num">{j.attemptsMade}</td>
                         <td className="min-w-48 max-w-md text-danger"><p className="line-clamp-2 break-all" title={j.failedReason}>{j.failedReason}</p></td>
                         <td className="whitespace-nowrap"><Button size="xs" variant="ghost" aria-expanded={open === k} onClick={() => setOpen(open === k ? null : k)}>{t("jobs.payload")}</Button><Button size="xs" variant="outline" onClick={() => retry.mutate(j)}>{t("jobs.retry")}</Button> <Button size="xs" variant="ghost" onClick={() => ask({ title: t("confirm.discard.title"), description: t("confirm.discard.body", { job: `${j.name} #${j.id}` }), label: t("confirm.discard.label"), destructive: true, run: () => discard.mutateAsync(j) })}>{t("jobs.discard")}</Button></td>
                       </tr>,
-                      open === k && <tr key={`${k}-p`}><td colSpan={6} className="!bg-surface-sunk"><p className="mb-2 break-all whitespace-pre-wrap text-danger" data-testid="full-reason">{j.failedReason}</p><pre className="max-h-72 overflow-auto font-mono text-[11.5px]" dir="ltr">{JSON.stringify(j.data, null, 2)}</pre></td></tr>,
+                      open === k && <tr key={`${k}-p`}><td colSpan={6} className="!bg-surface-sunk"><p className="mb-2 break-all whitespace-pre-wrap text-danger" data-testid="full-reason">{j.failedReason}</p><pre className="max-h-72 overflow-auto font-mono text-caption" dir="ltr">{JSON.stringify(j.data, null, 2)}</pre></td></tr>,
                     ]
                   })}
                 </tbody>

@@ -14,7 +14,8 @@ import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { FormDialog } from "@/components/form-dialog"
 import { EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
 import { ListSkeleton, SlaChip, StateChip } from "@/components/case"
-import { Chips, ListCard, tableClass, Toolbar } from "@/components/data-list"
+import { Chips, GridScroll, ListCard, tableClass, Toolbar } from "@/components/data-list"
+import { Check } from "@/components/controls"
 import { PageHead } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDate, human } from "@/lib/format"
@@ -151,37 +152,9 @@ function QueuesInner() {
   const s = summary.data
   const hrefOf = (r: Row) => (r.kind === "CARGO" ? `/cargo/${r.ref}` : `/requests/${r.ref}`)
   const activeView = views.find((v) => v.query === currentQuery)
-  const th = (keys: MsgKey[]) => keys.map((k) => <th key={k}>{t(k)}</th>)
-  return (
-    <div className="flex h-[calc(100dvh-7rem)] flex-col md:h-[calc(100dvh-3.5rem)]">
-      <PageHead title={t("nav.requests")}>
-        <Button size="sm" variant="outline" type="button" aria-pressed={newest} onClick={toggleSort} data-testid="sort-newest" className={cn(newest && "bg-hover")}>{t("q.sortNewest")}</Button>
-        <p className="hidden text-[11.5px] text-steel xl:block pointer-coarse:hidden"><span className="kbd">j</span>/<span className="kbd">k</span> {t("q.keys")} · <span className="kbd">Enter</span> open · <span className="kbd">c</span> claim · <span className="kbd">n</span> note</p>
-      </PageHead>
-      <nav className="flex gap-1 overflow-x-auto border-b border-rule bg-surface-raised px-4 md:px-6" aria-label={t("q.tabs")}>
-        {TABS.filter((x) => (x.key === "cargo" ? can("cargo_request.read.any") : can("flight_request.read.any"))).map((x) => (
-          <Link key={x.key} href={`/queues?tab=${x.key}`} aria-current={tab === x.key ? "page" : undefined} className={cn("-mb-px inline-flex min-h-10 items-center gap-1.5 border-b-2 px-2.5 whitespace-nowrap pointer-coarse:min-h-11", tab === x.key ? "border-orange font-medium text-ink" : "border-transparent text-steel hover:text-ink")}>
-            {t(x.label)}{x.count && s ? <span data-testid="nav-count" className="num rounded-full bg-hover px-1.5 text-[11px] text-ink">{x.count(s)}</span> : null}
-          </Link>
-        ))}
-      </nav>
-      <form className="z-10 border-b border-rule" data-testid="queue-filters" onSubmit={(e) => { e.preventDefault(); apply({}) }}>
-        <Toolbar query={isCargo ? undefined : draft.q} onQuery={isCargo ? undefined : (q) => setDraft({ ...draft, q })} placeholder={t("pg.q.search")} count={rows.length}>
-          {isCargo ? (
-            <Chips label={t("cargo.tab.open")} value={filters.ctab} options={CARGO_TABS.map((c) => ({ value: c.key, label: t(c.label) }))} onChange={(v) => apply({ ctab: v })} />
-          ) : (
-            <>
-              <Button size="sm" variant="outline" type="button" className="md:hidden" aria-expanded={filtersOpen} aria-controls="queue-filter-extra" onClick={() => setFiltersOpen((o) => !o)}><SlidersHorizontal /> {t("q.filters")}{activeFilters > 0 && <StatusChip tone="info" className="ms-1">{t("q.filters.active", { n: activeFilters })}</StatusChip>}</Button>
-              <div id="queue-filter-extra" className={cn("w-full flex-wrap items-center gap-2 md:flex md:w-auto", filtersOpen ? "flex" : "hidden")}>
-                <NativeSelect aria-label={t("pg.c.status")} className="field-input w-full sm:w-44" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}><option value="">{t("pg.q.anyStatus")}</option>{FLIGHT_STATUSES.map((x) => <option key={x} value={x}>{human(x)}</option>)}</NativeSelect>
-                <label className="flex items-center gap-1.5 text-[12px] text-steel">{t("pg.q.from")}<input type="date" className="field-input w-36" value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} /></label>
-                <label className="flex items-center gap-1.5 text-[12px] text-steel">{t("pg.q.to")}<input type="date" className="field-input w-36" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} /></label>
-                <label className="flex min-h-8 items-center gap-1.5"><input type="checkbox" className="size-4" checked={draft.flags === "urgent"} onChange={(e) => setDraft({ ...draft, flags: e.target.checked ? "urgent" : "" })} /> {t("pg.q.urgentOnly")}</label>
-                {activeFilters > 0 && <Button size="sm" variant="ghost" type="button" onClick={() => router.replace(`/queues?tab=${tab}`)}>{t("pg.q.clear")}</Button>}
-              </div>
-            </>
-          )}
-          <div className="flex items-center gap-1.5 md:ms-auto" role="group" aria-label={t("q.views")}>
+  const th = (keys: MsgKey[]) => keys.map((k) => <th key={k} className={k === "pg.c.pax" ? "cell-num" : undefined}>{t(k)}</th>)
+  const viewsGroup = (
+          <div className="flex items-center gap-1.5" role="group" aria-label={t("q.views")}>
             {saving !== null ? (
               <>
                 <input aria-label={t("q.views.name")} className="field-input w-36 sm:w-44" value={saving} onChange={(e) => setSaving(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); commitSave() } }} autoFocus maxLength={40} dir="auto" />
@@ -196,35 +169,71 @@ function QueuesInner() {
               </>
             )}
           </div>
+  )
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <PageHead title={t("nav.requests")}>
+        {viewsGroup}
+        <Button size="sm" variant="outline" type="button" aria-pressed={newest} onClick={toggleSort} data-testid="sort-newest" className={cn(newest && "bg-hover")}>{t("q.sortNewest")}</Button>
+        <p className="hidden items-center gap-1.5 text-caption text-steel xl:flex pointer-coarse:hidden" dir="ltr"><span className="kbd">j</span><span className="kbd">k</span> {t("q.keys")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">Enter</span> {t("q.k.open")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">c</span> {t("q.k.claim")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">n</span> {t("q.k.note")}</p>
+      </PageHead>
+      <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-rule px-4 md:px-6" aria-label={t("q.tabs")}>
+        {TABS.filter((x) => (x.key === "cargo" ? can("cargo_request.read.any") : can("flight_request.read.any"))).map((x) => (
+          <Link key={x.key} href={`/queues?tab=${x.key}`} aria-current={tab === x.key ? "page" : undefined} className={cn("-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-3 whitespace-nowrap transition-colors", tab === x.key ? "border-[var(--indicator)] font-semibold text-ink" : "border-transparent text-steel hover:text-ink")}>
+            {t(x.label)}{x.count && s ? <span data-testid="nav-count" className={cn("num min-w-6 rounded-full px-1.5 text-center text-2xs leading-5 font-semibold", tab === x.key ? "bg-selected text-selected-ink" : "bg-surface-sunk text-steel ring-1 ring-rule")}>{x.count(s)}</span> : null}
+          </Link>
+        ))}
+      </nav>
+      <form className="shrink-0 border-b border-rule pt-3" data-testid="queue-filters" onSubmit={(e) => { e.preventDefault(); apply({}) }}>
+        <Toolbar query={isCargo ? undefined : draft.q} onQuery={isCargo ? undefined : (q) => setDraft({ ...draft, q })} placeholder={t("pg.q.search")} count={rows.length}>
+          {isCargo ? (
+            <Chips label={t("cargo.tab.open")} value={filters.ctab} options={CARGO_TABS.map((c) => ({ value: c.key, label: t(c.label) }))} onChange={(v) => apply({ ctab: v })} />
+          ) : (
+            <>
+              <Button size="sm" variant="outline" type="button" className="md:hidden" aria-expanded={filtersOpen} aria-controls="queue-filter-extra" onClick={() => setFiltersOpen((o) => !o)}><SlidersHorizontal /> {t("q.filters")}{activeFilters > 0 && <StatusChip tone="info" className="ms-1">{t("q.filters.active", { n: activeFilters })}</StatusChip>}</Button>
+              <div id="queue-filter-extra" className={cn("w-full flex-wrap items-center gap-2 md:flex md:w-auto", filtersOpen ? "flex" : "hidden")}>
+                <NativeSelect aria-label={t("pg.c.status")} className="field-input w-full sm:w-40" value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}><option value="">{t("pg.q.anyStatus")}</option>{FLIGHT_STATUSES.map((x) => <option key={x} value={x}>{human(x)}</option>)}</NativeSelect>
+                <div className="flex items-center gap-1.5" role="group" aria-label={t("q.travelRange")}>
+                  <label className="flex items-center gap-2 text-meta text-steel"><span className="whitespace-nowrap">{t("pg.q.from")}</span><input type="date" className="field-input w-[9.5rem]" value={draft.from} onChange={(e) => setDraft({ ...draft, from: e.target.value })} /></label>
+                  <label className="flex items-center gap-2 text-meta text-steel"><span className="whitespace-nowrap">{t("pg.q.to")}</span><input type="date" className="field-input w-[9.5rem]" value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} /></label>
+                </div>
+                <Check label={t("pg.q.urgentOnly")} checked={draft.flags === "urgent"} onChange={(e) => setDraft({ ...draft, flags: e.target.checked ? "urgent" : "" })} className="px-1" />
+                {/* Always rendered: inserting it on the first filter used to reflow the row and move the checkbox under the pointer. */}
+                <Button size="sm" variant="ghost" type="button" disabled={activeFilters === 0} onClick={() => router.replace(`/queues?tab=${tab}`)}>{t("pg.q.clear")}</Button>
+              </div>
+            </>
+          )}
         </Toolbar>
       </form>
       <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-auto bg-surface pt-3">
+        {/* Phones and tablets scroll the card list here; at xl the table card scrolls inside itself (header pinned). */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto pt-4 xl:overflow-hidden">
           {list.error ? <TileError error={list.error} onRetry={() => void list.refetch()} /> : list.isLoading ? <ListSkeleton rows={8} /> : !rows.length ? (
             <EmptyState title={t("q.empty")} hint={t("q.empty.hint")} className="py-12" action={activeFilters > 0 ? <Button size="sm" variant="outline" onClick={() => router.replace(`/queues?tab=${tab}`)}>{t("q.empty.clear")}</Button> : undefined} />
           ) : (
             <>
-              <ListCard className="hidden overflow-clip xl:block">
-                <table className={cn(tableClass, "[&_th]:sticky [&_th]:top-0 [&_th]:z-10")} data-testid="queue-table">
+              <ListCard fill className="hidden xl:flex">
+                <GridScroll label={t("nav.requests")}>
+                <table className={tableClass} data-testid="queue-table">
                   <thead><tr>{th(isCargo ? ["pg.c.ref", "pg.c.customer", "pg.c.lane", "pg.c.service", "pg.c.ready", "pg.c.status", "pg.c.sla"] : ["pg.c.ref", "pg.c.customer", "pg.c.route", "q.travel", "pg.c.pax", "pg.c.status", "pg.c.sla", "pg.c.assignee"])}</tr></thead>
                   <tbody ref={tableRef}>
                     {rows.map((r, i) => (
                       <tr key={r.ref} data-idx={i} data-ref={r.ref} onClick={() => setFocus(i)} onDoubleClick={() => open(r)} className={cn("cursor-default", i === focus && "row-focus")} aria-selected={i === focus}>
-                        <td className="whitespace-nowrap"><Link href={hrefOf(r)} className="num inline-block py-1 text-[12.5px] hover:underline">{r.ref}</Link>{r.flight?.urgent && <StatusChip tone="danger" className="ms-1.5">{t("q.urgent")}</StatusChip>}</td>
-                        <td className="max-w-48 truncate" dir="auto">{(r.flight ?? r.cargo)?.customer ?? "—"}</td>
+                        <td className="whitespace-nowrap"><Link href={hrefOf(r)} className="ref inline-block py-1 font-semibold text-ink hover:text-link hover:underline">{r.ref}</Link>{r.flight?.urgent && <StatusChip tone="danger" className="ms-1.5">{t("q.urgent")}</StatusChip>}</td>
+                        <td className="max-w-48 truncate font-medium" dir="auto">{(r.flight ?? r.cargo)?.customer ?? "—"}</td>
                         {r.flight ? (
                           <>
-                            <td className="max-w-56 truncate">{r.flight.routeLabel}{r.flight.hasSnapshot && <span className="ms-1.5 text-[11.5px] font-medium text-success" title={t("pg.q.snapshot")}>{t("pg.q.snap")}</span>}</td>
-                            <td className="whitespace-nowrap">{fmtDate(r.flight.firstTravelDate)}</td>
-                            <td className="num">{r.flight.travellers}</td>
+                            <td className="max-w-64"><span className="flex min-w-0 items-center gap-2"><span className="truncate" title={r.flight.routeLabel}>{r.flight.routeLabel}</span>{r.flight.hasSnapshot && <span className="shrink-0 rounded-md bg-success-subtle px-1.5 text-2xs leading-5 font-semibold text-success-subtle-fg" title={t("pg.q.snapshot")}>{t("pg.q.snap")}</span>}</span></td>
+                            <td className="whitespace-nowrap text-steel">{fmtDate(r.flight.firstTravelDate)}</td>
+                            <td className="cell-num">{r.flight.travellers}</td>
                             <td><StateChip value={r.flight.status} /></td>
                             <td><SlaChip dueAt={r.flight.slaDueAt} startAt={r.flight.submittedAt} breached={r.flight.slaBreached} /></td>
-                            <td className="max-w-32 truncate text-steel">{r.flight.assignee ?? "—"}</td>
+                            <td className="max-w-36 truncate text-steel" title={r.flight.assignee ?? undefined}>{r.flight.assignee ?? "—"}</td>
                           </>
                         ) : r.cargo ? (
                           <>
                             <td>{r.cargo.lane}</td>
-                            <td className="num text-[12px]">{r.cargo.service}</td>
+                            <td className="num text-meta">{r.cargo.service}</td>
                             <td className="whitespace-nowrap">{fmtDate(r.cargo.readyDate)}</td>
                             <td><StateChip value={r.cargo.status} /></td>
                             <td><SlaChip dueAt={r.cargo.slaDueAt} startAt={r.cargo.submittedAt} /></td>
@@ -234,6 +243,8 @@ function QueuesInner() {
                     ))}
                   </tbody>
                 </table>
+                {list.hasNextPage && <div className="flex justify-center border-t border-rule p-3"><Button size="sm" variant="outline" onClick={() => void list.fetchNextPage()} loading={list.isFetchingNextPage}>{t("common.loadMore")}</Button></div>}
+                </GridScroll>
               </ListCard>
               <ul className="space-y-2 px-3 xl:hidden" data-testid="queue-cards" aria-label={t("q.cards")}>
                 {rows.map((r) => {
@@ -241,26 +252,26 @@ function QueuesInner() {
                   return (
                     <li key={r.ref}>
                       <Link href={hrefOf(r)} className="block min-h-11 rounded-xl border border-rule bg-surface-raised p-3 shadow-[var(--tile-shadow)] active:bg-hover">
-                        <span className="flex items-center justify-between gap-2"><span className="num font-medium">{r.ref}</span><span className="flex items-center gap-1.5">{r.flight?.urgent && <StatusChip tone="danger">{t("q.urgent")}</StatusChip>}<StateChip value={it.status} /></span></span>
+                        <span className="flex items-center justify-between gap-2"><span className="ref font-medium">{r.ref}</span><span className="flex items-center gap-1.5">{r.flight?.urgent && <StatusChip tone="danger">{t("q.urgent")}</StatusChip>}<StateChip value={it.status} /></span></span>
                         <span className="mt-1 block font-medium" dir="auto">{it.customer ?? "—"}</span>
                         <span className="block text-steel">{r.flight ? `${r.flight.routeLabel} · ${fmtDate(r.flight.firstTravelDate)}` : `${r.cargo!.lane} · ${r.cargo!.service}`}</span>
-                        <span className="mt-2 flex items-center justify-between gap-2"><SlaChip dueAt={it.slaDueAt} startAt={it.submittedAt} breached={r.flight?.slaBreached} />{r.flight && <span className="truncate text-[12px] text-steel">{r.flight.assignee ?? "—"}</span>}</span>
+                        <span className="mt-2 flex items-center justify-between gap-2"><SlaChip dueAt={it.slaDueAt} startAt={it.submittedAt} breached={r.flight?.slaBreached} />{r.flight && <span className="truncate text-meta text-steel">{r.flight.assignee ?? "—"}</span>}</span>
                       </Link>
                     </li>
                   )
                 })}
               </ul>
-              {list.hasNextPage && <div className="flex justify-center p-4"><Button size="sm" variant="outline" onClick={() => void list.fetchNextPage()} loading={list.isFetchingNextPage}>{t("common.loadMore")}</Button></div>}
+              {list.hasNextPage && <div className="flex justify-center p-4 xl:hidden"><Button size="sm" variant="outline" onClick={() => void list.fetchNextPage()} loading={list.isFetchingNextPage}>{t("common.loadMore")}</Button></div>}
             </>
           )}
         </div>
         {!isCargo && focused && (
-          <aside className="hidden w-[360px] shrink-0 overflow-y-auto border-s border-rule bg-surface-raised p-4 2xl:block" aria-label="Preview" data-testid="queue-preview">
+          <aside className="hidden w-[380px] shrink-0 overflow-y-auto border-s border-rule bg-surface-raised p-5 2xl:block" aria-label={t("q.preview")} data-testid="queue-preview">
             {!preview.data ? <div className="space-y-3" aria-busy><Skeleton className="h-4 w-24" /><Skeleton className="h-6 w-56" /><Skeleton className="h-16" /></div> : (
               <div className="space-y-3">
                 <div>
-                  <p className="num">{preview.data.ref}</p>
-                  <p className="font-display text-lg leading-snug">{preview.data.routeLabel}</p>
+                  <p className="ref text-steel">{preview.data.ref}</p>
+                  <p className="mt-1 font-display text-section leading-snug font-bold">{preview.data.routeLabel}</p>
                   <p className="text-steel">{fmtDate(preview.data.firstTravelDate)} · {preview.data.travellers.length} traveller{preview.data.travellers.length === 1 ? "" : "s"} · {preview.data.kind.toLowerCase()} request</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2"><StateChip value={preview.data.status} />{preview.data.assignee && <span className="text-steel">→ {preview.data.assignee.name}</span>}</div>
@@ -276,7 +287,7 @@ function QueuesInner() {
                   {(() => { const a = preview.data.actions.find((x) => x.command === "claim"); return a ? <Button size="sm" variant="outline" disabled={!a.allowed} title={a.reason} onClick={() => void claim(focused.ref)}>Claim <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">c</span></Button> : null })()}
                   <Button size="sm" variant="ghost" onClick={() => { setNote(""); setNoteFor(focused.ref) }}>Note <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">n</span></Button>
                 </div>
-                {preview.data.notes[0] && <div><p className="cap">Last internal note</p><p className="mt-1" dir="auto">{preview.data.notes[0].body}</p><p className="text-[11px] text-steel">{preview.data.notes[0].author}</p></div>}
+                {preview.data.notes[0] && <div><p className="cap">Last internal note</p><p className="mt-1" dir="auto">{preview.data.notes[0].body}</p><p className="text-caption text-steel">{preview.data.notes[0].author}</p></div>}
               </div>
             )}
           </aside>

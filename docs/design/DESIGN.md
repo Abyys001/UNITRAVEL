@@ -168,3 +168,26 @@ list toolbar, chip filters. Not taken: nested accordion groups (they were the cl
   `ListCard`, `.data-table` (sunk header band, 10 px rows, hover). Long lists (policies, audit, invoices, users) page and group.
 - **One number, one place.** A count appears once per screen; dashboards do not repeat the same queue numbers in a summary
   line, a hero, KPI tiles and a bar.
+
+## Control deck v2 (2026-10-25)
+Owner-requested redesign after the UI/UX audit (`docs/design/UI-AUDIT-2026-10-25.md`); typeface and theme decisions in
+ADR-0011. Supersedes "Type" and the console colours above for the Admin and Developer panels only.
+
+- **Frame.** Fixed-height app frame: navy rail and top bar never scroll; `<main>` is the only page scroller, so nothing slides
+  under the header and sticky offsets are relative to `main`. Rail groups (Work / Records / Tools; Operate / Configure),
+  collapses to 72 px icons with tooltips and dot badges (`[` toggles, remembered per browser). Phones: bottom bar + More sheet.
+- **Type.** Inter UI/data with tabular figures; Montserrat for titles and brand; mono only for references (`.ref`).
+  Scale tokens `text-2xs` 11 · `caption` 12 · `meta` 13 · `body` 14 · `lead` 15 · `section` 18 · `title` 22 · `display` 28.
+- **Colour.** Console light/dark token sets in `tokens.json` (`console`, `dark`); links royal (`text-link`), focus ring royal
+  (light) / blue-400 (dark); orange is the active indicator and attention colour, never link text.
+- **Layers.** `z-sticky` 10 < `z-header` 30 < `z-rail` 35 < `z-dropdown` 40 < `z-overlay` 50 < `z-modal` 60 < `z-toast` 70 < `z-tooltip` 80.
+- **Lists.** `ListPage` + `Toolbar` (fixed count slot, controls never reflow) + `ListCard fill` + `GridScroll`/`TableScroll`:
+  the card is the scroll container, the header sticks with no gap, wide tables scroll inside the card.
+- **Controls.** Native inputs restyled in `globals.css`: checkbox and radio boxes are fixed size and draw the mark with a mask,
+  so nothing moves on click; `Switch` (`role="switch"`) keeps a fixed label; `Segmented` is a radio group with arrow keys;
+  `Tip` is the tooltip for icon-only controls. Scrollbars are thin and themed, never hidden.
+- **Dashboard.** KPI cards, requests-submitted chart (14/30/90 days), open requests by stage, first-contact SLA outcome and
+  invoices come from `GET /v1/admin/dashboard/metrics` (real counts; money only with `pricing.read.internal`). Charts are SVG
+  on `--viz-*` tokens with tooltips, keyboard focus, a screen-reader table and an empty state.
+- **Feedback.** Toasts bottom-end, above every layer, with close buttons; the bell is a notification centre over the live
+  queue counts (no persistent staff inbox exists in the API yet).

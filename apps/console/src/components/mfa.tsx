@@ -65,7 +65,7 @@ export function TotpEnrol({ onDone, prefill }: { onDone: () => void | Promise<vo
       <div className="rounded-lg border border-rule bg-surface-sunk p-3">
         <p className="cap">{t("mfa.secret")}</p>
         <p className="mt-1 break-all font-mono text-base tracking-wider" dir="ltr" data-testid="totp-secret">{enrol.secret.match(/.{1,4}/g)?.join(" ")}</p>
-        <a className="mt-2 inline-block text-orange-700 underline underline-offset-4" href={enrol.otpauthUrl}>{t("mfa.open")}</a>
+        <a className="mt-2 inline-block font-medium text-link underline-offset-4 hover:underline" href={enrol.otpauthUrl}>{t("mfa.open")}</a>
       </div>
       <TotpVerify onDone={onDone} submitLabel={t("mfa.confirmContinue")} prefill={prefill} />
     </div>

@@ -58,7 +58,7 @@ export default function AuditPage() {
   return (
     <div>
       <PageHead kicker={t("dpage.platform")} title={t("dpage.audit.title")}>
-        <span className="text-[12px] text-steel">{t("aud.desc")}</span>
+        <span className="text-meta text-steel">{t("aud.desc")}</span>
         <Button size="sm" variant="outline" onClick={() => void verify()}>{t("aud.verify")}</Button>
         <Button size="sm" variant="outline" onClick={() => void exportCsv()}>{t("aud.export")}</Button>
       </PageHead>
@@ -80,14 +80,14 @@ export default function AuditPage() {
               const head = d !== day ? (day = d, <tr key={`d-${r.id}`}><th colSpan={7} scope="colgroup" className="!bg-surface-sunk/60 !py-1.5 !text-ink">{new Date(r.occurredAt).toLocaleDateString(undefined, { dateStyle: "full" })}</th></tr>) : null
               return [head,
                 <tr key={r.id} onClick={() => setOpen(open === r.id ? null : r.id)} className={cn("cursor-pointer", open === r.id && "bg-hover/60")}>
-                  <td className="num text-steel">{r.id}</td><td className="num whitespace-nowrap text-[12.5px]">{fmtDateTime(r.occurredAt)}</td>
-                  <td className="max-w-44 truncate text-[12.5px]"><span className="font-mono" dir="ltr">{(r.actor ?? r.actorUserId)?.slice(0, 8) ?? "—"}</span> <span className="rounded-full bg-surface-sunk px-1.5 text-[10.5px] text-steel">{r.actorKind.toLowerCase()}</span></td>
-                  <td className="font-mono text-[12px] font-medium" dir="ltr">{r.action}</td>
-                  <td className="max-w-48 truncate text-[12.5px]" dir="ltr">{r.entityType}{r.entityId && <span className="font-mono text-steel"> {r.entityId.slice(0, 8)}</span>}</td>
-                  <td className="num text-[12.5px]" dir="ltr">{r.contextRef ?? ""}</td>
+                  <td className="num text-steel">{r.id}</td><td className="num whitespace-nowrap text-meta">{fmtDateTime(r.occurredAt)}</td>
+                  <td className="max-w-44 truncate text-meta"><span className="font-mono" dir="ltr">{(r.actor ?? r.actorUserId)?.slice(0, 8) ?? "—"}</span> <span className="rounded-full bg-surface-sunk px-1.5 text-2xs text-steel">{r.actorKind.toLowerCase()}</span></td>
+                  <td className="font-mono text-meta font-medium" dir="ltr">{r.action}</td>
+                  <td className="max-w-48 truncate text-meta" dir="ltr">{r.entityType}{r.entityId && <span className="font-mono text-steel"> {r.entityId.slice(0, 8)}</span>}</td>
+                  <td className="ref text-meta" dir="ltr">{r.contextRef ?? ""}</td>
                   <td className="w-10 text-end"><button type="button" aria-expanded={open === r.id} aria-label={t("aud.details", { id: r.id })} onClick={(e) => { e.stopPropagation(); setOpen(open === r.id ? null : r.id) }} className="inline-grid size-8 place-items-center rounded-md text-steel hover:bg-hover hover:text-ink pointer-coarse:size-11"><ChevronDown className={cn("size-4 transition-transform", open === r.id && "rotate-180")} aria-hidden /></button></td>
                 </tr>,
-                open === r.id && <tr key={`${r.id}-d`}><td colSpan={7} className="!bg-surface-sunk"><div className="grid gap-4 md:grid-cols-2"><div><p className="cap">{t("aud.before")}</p><pre className="mt-1 max-h-60 overflow-auto font-mono text-[11.5px] whitespace-pre-wrap" dir="ltr">{JSON.stringify(r.before, null, 2) ?? "—"}</pre></div><div><p className="cap">{t("aud.after")}</p><pre className="mt-1 max-h-60 overflow-auto font-mono text-[11.5px] whitespace-pre-wrap" dir="ltr">{JSON.stringify(r.after, null, 2) ?? "—"}</pre></div></div><p className="mt-3 font-mono text-[11.5px] break-all text-steel" dir="ltr">IP {r.ip ?? "—"} · request {r.requestId ?? "—"} · hash {r.hash}</p></td></tr>]
+                open === r.id && <tr key={`${r.id}-d`}><td colSpan={7} className="!bg-surface-sunk"><div className="grid gap-4 md:grid-cols-2"><div><p className="cap">{t("aud.before")}</p><pre className="mt-1 max-h-60 overflow-auto font-mono text-caption whitespace-pre-wrap" dir="ltr">{JSON.stringify(r.before, null, 2) ?? "—"}</pre></div><div><p className="cap">{t("aud.after")}</p><pre className="mt-1 max-h-60 overflow-auto font-mono text-caption whitespace-pre-wrap" dir="ltr">{JSON.stringify(r.after, null, 2) ?? "—"}</pre></div></div><p className="mt-3 font-mono text-caption break-all text-steel" dir="ltr">IP {r.ip ?? "—"} · request {r.requestId ?? "—"} · hash {r.hash}</p></td></tr>]
             })}</tbody>
           </DataTable>
           <Pager {...paged} className="border-t border-rule" />

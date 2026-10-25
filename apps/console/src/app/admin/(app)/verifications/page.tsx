@@ -9,7 +9,7 @@ import type { VerificationQueueItem } from "@unitravel/contracts"
 
 import { EmptyState, TileError } from "@/components/bento"
 import { ListSkeleton, StateChip, TableScroll } from "@/components/case"
-import { Chips, ListCard, Pager, tableClass, Toolbar, usePaged } from "@/components/data-list"
+import { Chips, ListCard, ListPage, Pager, tableClass, Toolbar, usePaged } from "@/components/data-list"
 import { PageHead } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDateTime, rel } from "@/lib/format"
@@ -28,7 +28,7 @@ export default function VerificationQueue() {
   const paged = usePaged(rows)
   const passports = matched.filter((v) => v.documentType === "PASSPORT").length
   return (
-    <div>
+    <ListPage>
       <PageHead title={t("nav.passport")} />
       <Toolbar query={search} onQuery={setSearch} placeholder={t("pg.ver.search")} count={q.data ? rows.length : undefined}>
         <Chips label={t("pg.c.document")} value={doc} options={[{ value: "", label: t("pg.all"), count: matched.length }, { value: "PASSPORT", label: t("pg.ver.passport"), count: passports }, { value: "OTHER", label: t("pg.ver.nid"), count: matched.length - passports }]} onChange={setDoc} />
@@ -38,15 +38,15 @@ export default function VerificationQueue() {
           <ul className="space-y-2 px-4 md:hidden" data-testid="verification-cards">
             {paged.rows.map((v) => (
               <li key={v.id}>
-                <Link href={`/verifications/${v.id}`} className="block min-h-11 rounded-xl border border-rule bg-surface-raised p-3 active:bg-hover">
+                <Link href={`/verifications/${v.id}`} className="block min-h-11 rounded-[var(--radius-card)] border border-rule bg-surface-raised p-3.5 shadow-[var(--tile-shadow)] active:bg-hover">
                   <span className="flex items-center justify-between gap-2"><span className="font-medium" dir="ltr">{v.travellerName}</span><StateChip value="SUBMITTED" /></span>
                   <span className="mt-1 block text-steel">{v.nationality} · {docLabel(v.documentType)}</span>
-                  <span className="num mt-1 block text-[12px] text-steel">{t("ver.waiting")} {rel(v.submittedAt)}</span>
+                  <span className="num mt-1 block text-meta text-steel">{t("ver.waiting")} {rel(v.submittedAt)}</span>
                 </Link>
               </li>
             ))}
           </ul>
-          <ListCard className="hidden md:block">
+          <ListCard fill className="hidden md:flex">
             <TableScroll>
               <table className={tableClass} data-testid="verifications">
                 <thead><tr><th>{t("pg.c.traveller")}</th><th>{t("pg.c.nationality")}</th><th>{t("pg.c.document")}</th><th>{t("ver.waiting")}</th></tr></thead>
@@ -56,7 +56,7 @@ export default function VerificationQueue() {
                       <td><Link href={`/verifications/${v.id}`} className="inline-block py-1 font-medium hover:underline" dir="ltr">{v.travellerName}</Link></td>
                       <td>{v.nationality}</td>
                       <td>{docLabel(v.documentType)}</td>
-                      <td className="num text-[12px]" title={fmtDateTime(v.submittedAt)}>{rel(v.submittedAt)}</td>
+                      <td className="num text-steel" title={fmtDateTime(v.submittedAt)}>{rel(v.submittedAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -67,6 +67,6 @@ export default function VerificationQueue() {
           <div className="md:hidden"><Pager {...paged} /></div>
         </>
       )}
-    </div>
+    </ListPage>
   )
 }

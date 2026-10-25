@@ -36,7 +36,7 @@ export function PaymentPanel({ invoice }: { invoice: StaffInvoice }) {
   const card = d.payments.find((p) => p.method === "CARD_ONLINE" && p.status === "VERIFIED")
   const nothing = !d.sessions.length && !d.payments.length && !d.refunds.length
   return (
-    <div className="mt-1 space-y-1 border-t border-line pt-2 text-[12px]" data-testid="payment-panel">
+    <div className="mt-1 space-y-1 border-t border-line pt-2 text-meta" data-testid="payment-panel">
       <p className="font-semibold">{t("pay.title")}</p>
       {invoice.status === "ISSUED" && (
         <p data-testid="online-state">{d.online.offered ? t("pay.offered") : t("pay.notOffered", { why: d.online.reasons.map((r) => t(`pay.reason.${r}` as never)).join(", ") })}</p>
@@ -86,6 +86,6 @@ export function PaymentPanel({ invoice }: { invoice: StaffInvoice }) {
  */
 export function RecordPaymentTrigger({ state, onOpen }: { state?: PaymentRecordingState; onOpen: () => void }) {
   if (!state) return null
-  if (state.allowed) return <button type="button" className="text-orange-700 underline underline-offset-2" onClick={onOpen} data-command="record_payment">Record payment</button>
-  return <span className="max-w-56 text-end text-[11px] text-steel" title={state.reason} data-command="record_payment" aria-disabled="true">Record payment unavailable{state.reason ? `: ${state.reason}` : ""}</span>
+  if (state.allowed) return <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={onOpen} data-command="record_payment">Record payment</button>
+  return <span className="max-w-56 text-end text-caption text-steel" title={state.reason} data-command="record_payment" aria-disabled="true">Record payment unavailable{state.reason ? `: ${state.reason}` : ""}</span>
 }

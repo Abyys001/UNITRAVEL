@@ -14,6 +14,7 @@ import { zbody } from "../../core/http/zod"
 import { AccessService } from "../access/access.service"
 import { BookingsService } from "../bookings/bookings.service"
 import { StaffEvents } from "../platform/staff-events"
+import { DashboardService } from "./dashboard.service"
 import { QuotesService } from "./quotes.service"
 import { RequestsService } from "./requests.service"
 
@@ -90,13 +91,22 @@ export class CustomerFlightRequestsController {
 @Controller("v1/admin")
 @StaffOnly()
 export class AdminFlightRequestsController {
-  constructor(private readonly requests: RequestsService, private readonly quotes: QuotesService, private readonly bookings: BookingsService, private readonly uow: UnitOfWork, private readonly access: AccessService, private readonly staffEvents: StaffEvents) {}
+  constructor(private readonly requests: RequestsService, private readonly quotes: QuotesService, private readonly bookings: BookingsService, private readonly uow: UnitOfWork, private readonly access: AccessService, private readonly staffEvents: StaffEvents, private readonly dashboard: DashboardService) {}
 
   /** Staff directory for the assign dialog: whoever may assign needs to see who can be assigned. */
   @Get("staff")
   @RequirePermission("flight_request.assign")
   staff() {
     return this.access.staffDirectory().then((items) => ({ items }))
+  }
+
+  /** Dashboard aggregates (counts and sums over existing rows; sections the viewer cannot read are null). */
+  @Get("dashboard/metrics")
+  @ApiOperation({ summary: "Admin dashboard metrics", description: "DashboardMetrics: daily submissions (Europe/London days), open requests by status, first-contact SLA outcome, invoice status counts; invoice money only with pricing.read.internal." })
+  @RequirePermission("flight_request.read.any", "cargo_request.read.any")
+  @RateLimit({ name: "dashboard-metrics", limit: 120, windowSeconds: 60, key: "user" })
+  metrics(@Query(zbody(z.object({ days: z.coerce.number().int().min(7).max(90).default(30) }))) q: { days: number }, @CurrentActor() actor: Actor) {
+    return this.dashboard.metrics(actor, q.days)
   }
 
   @Get("queues/summary")

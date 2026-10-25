@@ -34,8 +34,14 @@ ${theme}
 ${decl(t.light)}
 }
 
-/* Console dark theme (html[data-theme="dark"]); the customer site never sets it. */
-[data-theme="dark"] {
+/* Console light theme: only the console's <html> carries data-surface, so the customer site keeps :root. Scoped to html so
+   no inner element can re-match it and undo the dark values it inherits. */
+html[data-surface] {
+${decl(t.console)}
+}
+
+/* Console dark theme (html[data-theme="dark"]); the customer site never sets it. Same specificity as the block above, so it wins by order. */
+html[data-theme="dark"] {
   color-scheme: dark;
 ${decl(t.dark)}
 }

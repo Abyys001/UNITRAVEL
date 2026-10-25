@@ -67,7 +67,7 @@ export default function CargoPage() {
   return (
     <div className="pb-8">
       <CaseHeader
-        reference={<span className="num text-[15px] font-semibold" data-testid="ref">{d.ref}</span>}
+        reference={<span className="ref text-lead font-semibold" data-testid="ref">{d.ref}</span>}
         title={d.lane.label}
         meta={<>{human(d.service)} · ready {fmtDate(d.readyDate)} · {human(d.handoverMode)} · declared {money(d.declaredTotal)} · submitted {fmtDateTime(d.submittedAt)}</>}
         summary={<>
@@ -78,15 +78,15 @@ export default function CargoPage() {
           </div>
           <SummaryItem label={t("cargo.screening")}>
             <span className={cn("num font-semibold", prohibited ? "text-danger" : "text-ink")}>{d.items.length - reviewLines}<span className="font-normal text-steel"> / {d.items.length} allowed</span></span>
-            <span className={cn("text-[12px]", prohibited ? "font-medium text-danger" : "text-steel")}>{prohibited ? `${prohibited} PROHIBITED` : reviewLines ? t("cargo.screening.review", { n: reviewLines }) : t("cargo.screening.ok")}</span>
+            <span className={cn("text-meta", prohibited ? "font-medium text-danger" : "text-steel")}>{prohibited ? `${prohibited} PROHIBITED` : reviewLines ? t("cargo.screening.review", { n: reviewLines }) : t("cargo.screening.ok")}</span>
           </SummaryItem>
           <SummaryItem label={t("cargo.weight")}>
             <span className="num font-semibold">{d.weights.chargeableKg} kg</span>
-            <span className="text-[12px] text-steel">{d.pieces.every((p) => p.verifiedWeightKg != null) ? "Verified by re-weigh" : t("cargo.weight.est")}</span>
+            <span className="text-meta text-steel">{d.pieces.every((p) => p.verifiedWeightKg != null) ? "Verified by re-weigh" : t("cargo.weight.est")}</span>
           </SummaryItem>
           <SummaryItem label={t("cargo.eta")}>
             <span className="num font-medium">{d.estimatedDeliveryAt ? fmtDateTime(d.estimatedDeliveryAt) : t("cargo.eta.none")}</span>
-            <span className="text-[12px] text-steel">{d.compliance.length ? `${d.compliance.length} compliance case${d.compliance.length === 1 ? "" : "s"}` : "No compliance case"}</span>
+            <span className="text-meta text-steel">{d.compliance.length ? `${d.compliance.length} compliance case${d.compliance.length === 1 ? "" : "s"}` : "No compliance case"}</span>
           </SummaryItem>
         </>}
       />
@@ -96,7 +96,7 @@ export default function CargoPage() {
       <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "case", label: t("case.tab.case") }, { key: "people", label: t("case.tab.people") }, { key: "records", label: t("case.tab.records") }]} />
       <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_340px]">
         <div {...paneProps("people")} className={paneClass(tab, "people")}>
-          <Panel title="Customer" aside={can("customer.read.pii") && <Link className="text-orange-700" href={`/customers/${d.customer.id}?ref=${d.ref}`}>Context →</Link>}><p dir="auto" className="font-medium">{d.customer.displayName}</p>{d.customerNote && <p className="mt-1 text-steel" dir="auto">“{d.customerNote}”</p>}</Panel>
+          <Panel title="Customer" aside={can("customer.read.pii") && <Link className="font-medium text-link hover:underline" href={`/customers/${d.customer.id}?ref=${d.ref}`}>Context →</Link>}><p dir="auto" className="font-medium">{d.customer.displayName}</p>{d.customerNote && <p className="mt-1 text-steel" dir="auto">“{d.customerNote}”</p>}</Panel>
           <Party title="Shipper" p={d.shipper} />
           <Party title="Consignee" p={d.consignee} />
           <Panel title="Declarations">
@@ -108,7 +108,7 @@ export default function CargoPage() {
           <Panel title={`Goods · screening ${reviewLines ? `${reviewLines} line${reviewLines === 1 ? " needs" : "s need"} review` : "all allowed"}`}>
             <TableScroll><table className="w-full bg-surface-raised" data-testid="goods">
               <thead><tr className="border-b border-rule">{["Description", "Category", "Qty", "Value", "Origin", "HS", "Screening"].map((h) => <th key={h} className="cap px-1.5 py-1 text-start font-normal">{h}</th>)}</tr></thead>
-              <tbody>{d.items.map((i) => <tr key={i.id} className={cn("border-b border-rule/70 align-top", i.screeningOutcome === "PROHIBITED" && "bg-danger-subtle")}><td className="px-1.5 py-1" dir="auto">{i.description}</td><td className="px-1.5 py-1 font-mono text-[10.5px]">{i.category}</td><td className="num px-1.5 py-1">{i.quantity}</td><td className="num px-1.5 py-1">{money({ ...i.unitValue, amountMinor: i.unitValue.amountMinor * i.quantity })}</td><td className="px-1.5 py-1">{i.originCountry}</td><td className="num px-1.5 py-1">{i.hsCode ?? "—"}</td><td className="px-1.5 py-1"><Tag value={i.screeningOutcome} />{i.matchedRule && <span className="block text-[11px] text-steel">{i.matchedRule}</span>}</td></tr>)}</tbody>
+              <tbody>{d.items.map((i) => <tr key={i.id} className={cn("border-b border-rule/70 align-top", i.screeningOutcome === "PROHIBITED" && "bg-danger-subtle")}><td className="px-1.5 py-1" dir="auto">{i.description}</td><td className="px-1.5 py-1 font-mono text-2xs">{i.category}</td><td className="num px-1.5 py-1">{i.quantity}</td><td className="num px-1.5 py-1">{money({ ...i.unitValue, amountMinor: i.unitValue.amountMinor * i.quantity })}</td><td className="px-1.5 py-1">{i.originCountry}</td><td className="num px-1.5 py-1">{i.hsCode ?? "—"}</td><td className="px-1.5 py-1"><Tag value={i.screeningOutcome} />{i.matchedRule && <span className="block text-caption text-steel">{i.matchedRule}</span>}</td></tr>)}</tbody>
             </table></TableScroll>
           </Panel>
           <Panel title="Pieces and weight">
@@ -118,12 +118,12 @@ export default function CargoPage() {
           <Panel title="Tracking" aside={can("cargo_request.transition") && <Button size="xs" variant="outline" onClick={() => dlg.open("tracking")}>Add event</Button>}>
             {!d.tracking.length ? <Empty>No tracking events.</Empty> : <ol className="ledger-rows" data-testid="tracking-history">{d.tracking.map((t) => (
               <li key={t.id} className={cn("grid grid-cols-[8rem_7rem_1fr] gap-2 py-1", !t.effective && "text-steel")} data-effective={t.effective}>
-                <span className="num text-[12px]">{fmtDateTime(t.occurredAt)}</span>
-                <span className={cn("font-mono text-[11px]", !t.effective && "line-through")}>{t.eventCode}</span>
+                <span className="num text-meta">{fmtDateTime(t.occurredAt)}</span>
+                <span className={cn("font-mono text-caption", !t.effective && "line-through")}>{t.eventCode}</span>
                 <span>{t.location}{t.description && <span className="text-steel"> · {t.description}</span>}
-                  <span className="ms-1 text-[10px] text-steel">{t.source}{t.externalEventId && ` · ${t.externalEventId}`}{t.correctsEventId && ` · correction by ${t.createdBy ?? "staff"}`}{!t.effective && " · superseded"}</span>
-                  {t.correctionReason && <span className="block text-[11px] text-steel">Reason: {t.correctionReason}</span>}
-                  {t.effective && can("cargo_request.transition") && <button type="button" className="ms-2 text-[11px] text-orange-700 hover:underline" onClick={() => setCorrecting(t)}>Correct</button>}
+                  <span className="ms-1 text-2xs text-steel">{t.source}{t.externalEventId && ` · ${t.externalEventId}`}{t.correctsEventId && ` · correction by ${t.createdBy ?? "staff"}`}{!t.effective && " · superseded"}</span>
+                  {t.correctionReason && <span className="block text-caption text-steel">Reason: {t.correctionReason}</span>}
+                  {t.effective && can("cargo_request.transition") && <button type="button" className="ms-2 text-caption font-medium text-link hover:underline" onClick={() => setCorrecting(t)}>Correct</button>}
                 </span>
               </li>))}</ol>}
           </Panel>
@@ -143,19 +143,19 @@ export default function CargoPage() {
         <div {...paneProps("records")} className={cn(paneClass(tab, "records"), "lg:col-span-2 xl:col-span-1")}>
           {d.compliance.length > 0 && <Panel title="Compliance"><ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex justify-between gap-2 py-1"><span dir="auto">{c.summary}</span><Tag value={c.status} /></li>)}</ul></Panel>}
           <Panel title="Partner quotes" aside={!mobile && can("cargo_request.transition") && ["IN_REVIEW", "QUOTED", "EXCEPTION"].includes(d.status) && <Button size="xs" variant="outline" onClick={() => dlg.open("quote")}>Draft quote</Button>}>
-            {!d.quotes.length ? <Empty>No quotes.</Empty> : <ul className="ledger-rows">{d.quotes.map((x) => <li key={x.id} className="py-1"><p className="flex justify-between"><span>v{x.version} · {x.partnerName}</span><Tag value={x.status} /></p><p className="num text-[12px]">{money(x.lines.total)} · {x.lines.freight.chargeableKg} kg × {money(x.lines.freight.ratePerKg)}{x.lines.dutiesTaxes === "PAYABLE_BY_CONSIGNEE" ? " · duties payable by consignee" : ""}</p></li>)}</ul>}
-            <p className="mt-1 text-[11px] text-steel">Eligible partners: {d.eligiblePartners.map((p) => `${p.name} (${p.complianceStatus.toLowerCase()})`).join(", ") || "none for this lane and service"}</p>
+            {!d.quotes.length ? <Empty>No quotes.</Empty> : <ul className="ledger-rows">{d.quotes.map((x) => <li key={x.id} className="py-1"><p className="flex justify-between"><span>v{x.version} · {x.partnerName}</span><Tag value={x.status} /></p><p className="num text-meta">{money(x.lines.total)} · {x.lines.freight.chargeableKg} kg × {money(x.lines.freight.ratePerKg)}{x.lines.dutiesTaxes === "PAYABLE_BY_CONSIGNEE" ? " · duties payable by consignee" : ""}</p></li>)}</ul>}
+            <p className="mt-1 text-caption text-steel">Eligible partners: {d.eligiblePartners.map((p) => `${p.name} (${p.complianceStatus.toLowerCase()})`).join(", ") || "none for this lane and service"}</p>
           </Panel>
           {!mobile && d.quotes.some((x) => x.status === "ACCEPTED") && <InvoicesPanel requestRef={d.ref} />}
           <Panel title={`Payments · ${d.paymentStatus.replace(/_/g, " ")}`} aside={!mobile && can("payment.record") && <RecordPaymentTrigger state={d.paymentRecording} onOpen={() => dlg.open("payment")} />}>
             {!d.payments.length ? <Empty>No payments recorded.</Empty> : <ul className="ledger-rows" data-testid="cargo-payments">{d.payments.map((p) => (
               <li key={p.id} className="py-1">
                 <p className="flex justify-between"><span className="num">{money(p.amount)}</span><Tag value={p.status} /></p>
-                <p className="text-[11px] text-steel">{p.method} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · recorded by {p.recordedBy}{p.verifiedBy && ` · verified by ${p.verifiedBy}`}</p>
-                {p.status === "RECORDED" && can("payment.record") && <div className="mt-1 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>Verify (second person)</Button>{p.needsSecondVerifier && <span className="text-[11px] text-orange-700">Above the four-eyes threshold</span>}</div>}
+                <p className="text-caption text-steel">{p.method} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · recorded by {p.recordedBy}{p.verifiedBy && ` · verified by ${p.verifiedBy}`}</p>
+                {p.status === "RECORDED" && can("payment.record") && <div className="mt-1 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>Verify (second person)</Button>{p.needsSecondVerifier && <span className="text-caption text-orange-700">Above the four-eyes threshold</span>}</div>}
               </li>))}</ul>}
           </Panel>
-          <Panel title="Booking">{d.booking ? <p>{d.booking.partnerName} · ref <span className="num">{d.booking.partnerReference ?? "—"}</span> · AWB <span className="num">{d.booking.awbNumber ?? "—"}</span></p> : <Empty>Not booked.</Empty>}</Panel>
+          <Panel title="Booking">{d.booking ? <p>{d.booking.partnerName} · ref <span className="ref">{d.booking.partnerReference ?? "—"}</span> · AWB <span className="ref">{d.booking.awbNumber ?? "—"}</span></p> : <Empty>Not booked.</Empty>}</Panel>
           <Panel title="Documents" aside={can("cargo_request.transition") && <Button size="xs" variant="outline" onClick={() => gen.mutate()} loading={gen.isPending}>Generate PDFs</Button>}>
             {!d.documents.length ? <Empty>No documents.</Empty> : <ul className="ledger-rows">{d.documents.map((doc) => <li key={doc.id} className="flex justify-between gap-2 py-1"><button type="button" className="truncate text-start hover:underline" onClick={() => void download(doc.id)}>{doc.filename}</button><Tag value={doc.type} /></li>)}</ul>}
           </Panel>

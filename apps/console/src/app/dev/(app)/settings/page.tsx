@@ -35,7 +35,7 @@ export default function SettingsPage() {
   return (
     <div>
       {dialog}
-      <PageHead kicker={t("dpage.platform")} title={t("dpage.settings.title")}><span className="text-[12px] text-steel">{t("set.desc")}</span></PageHead>
+      <PageHead kicker={t("dpage.platform")} title={t("dpage.settings.title")}><span className="text-meta text-steel">{t("set.desc")}</span></PageHead>
       <DevPage className="grid items-start gap-4 space-y-0 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Section title={t("set.app")} hint={t("set.appHint")} aside={issues.length ? <span className="rounded-full bg-danger-subtle px-2.5 py-0.5 text-danger">{t("cfg.issues", { n: issues.length })}</span> : dirty ? <span className="text-steel">{t("set.unsaved")}</span> : null}>
           <ErrorLine error={settings.error} />
@@ -47,12 +47,12 @@ export default function SettingsPage() {
           <ul className="divide-y divide-rule" data-testid="flags">
             {(flags.data ?? []).map((f) => (
               <li key={f.key} className="flex items-start justify-between gap-3 px-4 py-3 md:px-5">
-                <span className="min-w-0"><span className="font-mono text-[12.5px] break-all" dir="ltr">{f.key}</span>{(f.description || f.owner) && <span className="mt-0.5 block text-[12px] text-steel">{f.description}{f.owner && ` · ${t("set.owner", { o: f.owner })}`}{f.removeBy && ` · ${t("set.removeBy", { d: f.removeBy })}`}</span>}{f.updatedAt && <span className="mt-0.5 block text-[11.5px] text-steel">{t("set.changed", { at: fmtDateTime(f.updatedAt) })}</span>}</span>
+                <span className="min-w-0"><span className="font-mono text-meta break-all" dir="ltr">{f.key}</span>{(f.description || f.owner) && <span className="mt-0.5 block text-meta text-steel">{f.description}{f.owner && ` · ${t("set.owner", { o: f.owner })}`}{f.removeBy && ` · ${t("set.removeBy", { d: f.removeBy })}`}</span>}{f.updatedAt && <span className="mt-0.5 block text-caption text-steel">{t("set.changed", { at: fmtDateTime(f.updatedAt) })}</span>}</span>
                 <label className="flex shrink-0 items-center gap-2 pointer-coarse:min-h-11"><input type="checkbox" role="switch" aria-label={f.key} checked={f.enabled} disabled={!can("flags.write")} onChange={() => ask({ title: t("confirm.flag.title", { key: f.key, state: f.enabled ? t("flag.off") : t("flag.on") }), description: t("confirm.flag.body"), label: t("confirm.flag.label", { state: f.enabled ? t("flag.off") : t("flag.on") }), destructive: f.enabled, run: () => toggle(f) })} /><span className={f.enabled ? "text-success" : "text-steel"}>{f.enabled ? t("flag.on") : t("flag.off")}</span></label>
               </li>
             ))}
           </ul>
-          <p className="border-t border-rule px-4 py-3 text-[12px] text-steel md:px-5">{t("set.payNote")}</p>
+          <p className="border-t border-rule px-4 py-3 text-meta text-steel md:px-5">{t("set.payNote")}</p>
         </Section>
       </DevPage>
     </div>

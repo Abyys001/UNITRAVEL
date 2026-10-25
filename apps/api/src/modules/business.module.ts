@@ -23,6 +23,7 @@ import { TimersService } from "./platform/timers.service"
 import { FlightLifecycle } from "./requests/flight-lifecycle"
 import { QuotesService } from "./requests/quotes.service"
 import { AdminFlightRequestsController, CustomerFlightRequestsController } from "./requests/requests.controllers"
+import { DashboardService } from "./requests/dashboard.service"
 import { RequestsService } from "./requests/requests.service"
 import { SearchController, StaffSearchController } from "./search/search.controller"
 import { SearchService } from "./search/search.service"
@@ -34,7 +35,7 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

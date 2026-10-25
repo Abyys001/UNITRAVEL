@@ -1,29 +1,31 @@
 import { cn } from "../lib/utils"
 
 /** Status chips for the staff consoles: dense mono tags. Unknown statuses fall back to a neutral outline; text always carries the meaning. */
+const OK = "border-success-border bg-success-subtle text-success-subtle-fg"
+const OK_SOLID = "border-success bg-success text-white dark:text-[#0b1220]"
+const WARN = "border-warning-border bg-warning-subtle text-warning-subtle-fg"
+const INFO = "border-info-border bg-info-subtle text-info-subtle-fg"
+const BAD = "border-danger/30 bg-danger-subtle text-danger"
+const QUIET = "border-rule-strong bg-surface-sunk text-steel"
+/** Status chips for the staff consoles: one tone per meaning (ok / warn / info / risk / quiet); unknown statuses stay quiet. Text always carries the meaning. */
 const TONE: Record<string, string> = {
-  NEW: "border-orange text-orange-700 bg-warning-subtle", SUBMITTED: "border-steel/40 text-steel", IN_REVIEW: "border-ink/30 text-ink bg-surface-raised",
-  AWAITING_CUSTOMER: "border-warning-border text-warning-subtle-fg bg-warning-subtle", QUOTED: "border-info-border text-info-subtle-fg bg-info-subtle",
-  ACCEPTED: "border-success-border text-success-subtle-fg bg-success-subtle", RESERVED: "border-success text-success bg-success-subtle", TICKETED: "border-success bg-success text-white dark:text-navy-950",
-  COMPLETED: "border-success/40 text-success", DELIVERED: "border-success bg-success text-white dark:text-navy-950", BOOKED: "border-success text-success bg-success-subtle",
-  COMPLIANCE_HOLD: "border-danger text-danger bg-danger-subtle", EXCEPTION: "border-danger text-danger bg-danger-subtle", DECLINED: "border-steel/40 text-steel line-through",
-  CANCELLED: "border-steel/40 text-steel line-through", EXPIRED: "border-steel/40 text-steel", OPEN: "border-danger text-danger bg-danger-subtle", ESCALATED: "border-orange text-orange-700",
-  RELEASED: "border-success/50 text-success", ALLOWED: "border-success/50 text-success", REVIEW: "border-warning-border text-warning-subtle-fg bg-warning-subtle", PROHIBITED: "border-danger bg-danger text-white dark:text-navy-950",
-  DRAFT: "border-dashed border-steel/50 text-steel", SENT: "border-info-border text-info-subtle-fg bg-info-subtle", SUPERSEDED: "border-steel/30 text-steel/70",
-  PENDING_APPROVAL: "border-orange text-orange-700 bg-warning-subtle", ACTIVE: "border-success/50 text-success", RETIRED: "border-steel/30 text-steel/70",
-  RECORDED: "border-orange text-orange-700", VERIFIED: "border-success text-success", HELD: "border-orange text-orange-700", CONFIRMED: "border-success text-success",
-  REJECTED: "border-danger text-danger bg-danger-subtle", CORRECTION_REQUIRED: "border-warning-border text-warning-subtle-fg bg-warning-subtle",
-  ISSUED: "border-info-border text-info-subtle-fg bg-info-subtle", PAID: "border-success bg-success text-white dark:text-navy-950", REFUNDED: "border-steel/40 text-steel", PUBLISHED: "border-success bg-success text-white dark:text-navy-950", FAILED: "border-danger text-danger", MANUAL: "border-orange bg-orange/15 text-orange-700",
+  NEW: WARN, SUBMITTED: QUIET, IN_REVIEW: INFO, AWAITING_CUSTOMER: WARN, QUOTED: INFO, ACCEPTED: OK, RESERVED: OK, TICKETED: OK_SOLID,
+  COMPLETED: OK, DELIVERED: OK_SOLID, BOOKED: OK, COMPLIANCE_HOLD: BAD, EXCEPTION: BAD, DECLINED: `${QUIET} line-through`, CANCELLED: `${QUIET} line-through`,
+  EXPIRED: QUIET, OPEN: BAD, ESCALATED: WARN, RELEASED: OK, ALLOWED: OK, REVIEW: WARN, PROHIBITED: "border-danger bg-danger text-white dark:text-[#0b1220]",
+  DRAFT: "border-dashed border-rule-strong text-steel", SENT: INFO, SUPERSEDED: QUIET, PENDING_APPROVAL: WARN, ACTIVE: OK, RETIRED: QUIET,
+  RECORDED: WARN, VERIFIED: OK, HELD: WARN, CONFIRMED: OK, REJECTED: BAD, CORRECTION_REQUIRED: WARN, ISSUED: INFO, PAID: OK_SOLID, REFUNDED: QUIET,
+  PUBLISHED: OK_SOLID, FAILED: BAD, MANUAL: WARN, BLOCK: BAD, ALLOW: OK,
 }
 export function Tag({ value, className, title }: { value: string; className?: string; title?: string }) {
-  return <span title={title} className={cn("inline-flex items-center rounded-full border px-2 py-px text-[10.5px] font-semibold leading-4 tracking-[0.03em] whitespace-nowrap uppercase", TONE[value] ?? "border-rule-strong text-steel", className)}>{value.replace(/_/g, " ")}</span>
+  // DOM text stays the status itself (tests, screen readers); CSS only sets sentence case.
+  return <span title={title} className={cn("inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 text-caption font-medium whitespace-nowrap", TONE[value] ?? QUIET, className)}><span aria-hidden className="size-1.5 shrink-0 rounded-full bg-current opacity-80" /><span className="lowercase first-letter:uppercase">{value.replace(/_/g, " ")}</span></span>
 }
 
 /** A ruled section of a case page. */
 export function Panel({ title, aside, children, className, id }: { title: React.ReactNode; aside?: React.ReactNode; children: React.ReactNode; className?: string; id?: string }) {
   return (
-    <section id={id} className={cn("border-t border-rule pt-2.5 pb-4", className)}>
-      <header className="mb-2.5 flex items-center justify-between gap-2"><h2 className="text-[13px] font-semibold text-ink">{title}</h2>{aside}</header>
+    <section id={id} className={cn("border-t border-rule pt-4 pb-5", className)}>
+      <header className="mb-3 flex items-center justify-between gap-2"><h2 className="text-lead font-semibold text-ink">{title}</h2>{aside}</header>
       {children}
     </section>
   )
@@ -31,10 +33,10 @@ export function Panel({ title, aside, children, className, id }: { title: React.
 
 export function PageHead({ title, kicker, children }: { title: React.ReactNode; kicker?: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-rule bg-surface-raised px-4 pt-5 pb-4 md:px-6">
+    <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-4 pt-6 pb-4 md:px-6">
       <div className="min-w-0">
-        {kicker && <p className="mb-1 text-[12px] text-steel">{kicker}</p>}
-        <h1 className="font-display text-[22px] leading-tight md:text-[24px]">{title}</h1>
+        {kicker && <p className="mb-1.5 text-meta text-steel">{kicker}</p>}
+        <h1 className="font-display text-title leading-tight font-bold tracking-[-0.01em] text-ink">{title}</h1>
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>
@@ -45,9 +47,9 @@ export function PageHead({ title, kicker, children }: { title: React.ReactNode; 
 export function LedgerField({ label, children, hint, className }: { label: string; children: React.ReactNode; hint?: React.ReactNode; className?: string }) {
   return (
     <label className={cn("block", className)}>
-      <span className="cap">{label}</span>
-      <span className="mt-1 block">{children}</span>
-      {hint && <span className="mt-0.5 block text-[11px] text-steel">{hint}</span>}
+      <span className="block text-meta font-medium text-ink">{label}</span>
+      <span className="mt-1.5 block">{children}</span>
+      {hint && <span className="mt-1 block text-caption text-steel">{hint}</span>}
     </label>
   )
 }

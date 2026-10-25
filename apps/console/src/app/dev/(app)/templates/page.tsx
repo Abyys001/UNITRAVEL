@@ -43,7 +43,7 @@ export default function TemplatesPage() {
   const count = (k: "channel" | "locale", v: string) => all.filter((x) => x[k] === v).length
   return (
     <div>
-      <PageHead kicker={tp("dpage.notifications")} title={tp("dpage.templates.title")}><span className="text-[12px] text-steel">{tp("tpl.desc")}</span>{canWrite && <Button size="sm" onClick={() => setEdit({ eventType: filter.event || NOTIFICATION_EVENTS[1], channel: filter.channel || "SMS", locale: (filter.locale || "en") as "en", title: "", body: "", variables: ["ref"], active: true })}>{tp("tpl.new")}</Button>}</PageHead>
+      <PageHead kicker={tp("dpage.notifications")} title={tp("dpage.templates.title")}><span className="text-meta text-steel">{tp("tpl.desc")}</span>{canWrite && <Button size="sm" onClick={() => setEdit({ eventType: filter.event || NOTIFICATION_EVENTS[1], channel: filter.channel || "SMS", locale: (filter.locale || "en") as "en", title: "", body: "", variables: ["ref"], active: true })}>{tp("tpl.new")}</Button>}</PageHead>
       <Toolbar query={filter.text} onQuery={(text) => setFilter({ ...filter, text })} placeholder={tp("tpl.search")} count={rows.length}>
         <NativeSelect aria-label="Event" className="field-input w-56" value={filter.event} onChange={(e) => setFilter({ ...filter, event: e.target.value })}><option value="">{tp("tpl.allEvents")}</option>{NOTIFICATION_EVENTS.map((e) => <option key={e}>{e}</option>)}</NativeSelect>
         <Chips label="Channel" value={filter.channel} onChange={(channel) => setFilter({ ...filter, channel })} options={[{ value: "", label: tp("list.all") }, ...["SMS", "PUSH", "EMAIL", "INBOX"].map((c) => ({ value: c, label: c, count: count("channel", c) }))]} />
@@ -55,9 +55,9 @@ export default function TemplatesPage() {
             <ul className="divide-y divide-rule" data-testid="templates">{paged.rows.map((t) => {
               const on = edit?.eventType === t.eventType && edit.channel === t.channel && edit.locale === t.locale
               return <li key={t.id}><button type="button" aria-pressed={on} onClick={() => setEdit({ eventType: t.eventType, channel: t.channel, locale: t.locale, title: t.title, body: t.body, variables: t.variables, providerTemplateId: t.providerTemplateId, active: t.active })} className={cn("block w-full px-4 py-3 text-start hover:bg-hover/60", on && "bg-hover/70 shadow-[inset_3px_0_0_var(--indicator)]")}>
-                <span className="flex flex-wrap items-center justify-between gap-1.5"><span className="font-mono text-[12px] font-medium" dir="ltr">{t.eventType}</span><span className="flex gap-1"><Tag value={t.channel} /><Tag value={t.locale.toUpperCase()} />{!t.active && <Tag value="INACTIVE" />}</span></span>
-                <span className="mt-1 block truncate text-[12.5px] text-steel" dir={t.locale === "fa" ? "rtl" : "ltr"}>{t.body}</span>
-                <span className="mt-0.5 block text-[11.5px] text-steel">v{t.version}{t.segments && ` · ${t.segments.encoding} · ${tp("tpl.segments", { n: t.segments.count })}`}</span>
+                <span className="flex flex-wrap items-center justify-between gap-1.5"><span className="font-mono text-meta font-medium" dir="ltr">{t.eventType}</span><span className="flex gap-1"><Tag value={t.channel} /><Tag value={t.locale.toUpperCase()} />{!t.active && <Tag value="INACTIVE" />}</span></span>
+                <span className="mt-1 block truncate text-meta text-steel" dir={t.locale === "fa" ? "rtl" : "ltr"}>{t.body}</span>
+                <span className="mt-0.5 block text-caption text-steel">v{t.version}{t.segments && ` · ${t.segments.encoding} · ${tp("tpl.segments", { n: t.segments.count })}`}</span>
               </button></li>
             })}</ul>
           )}

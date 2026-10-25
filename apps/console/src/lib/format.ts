@@ -10,12 +10,13 @@ const d = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "2-digit", m
 export const fmtDateTime = (iso: string | null | undefined) => (iso ? dt.format(new Date(iso)) : "—")
 export const fmtDate = (iso: string | null | undefined) => (iso ? d.format(new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso)) : "—")
 
-/** "in 1 h 12 m" / "3 h 5 m ago" — SLA style relative times. */
+/** "in 1h 12m" / "3h 5m ago" / "just now" — compact relative times for tables and SLA lines (exact time goes in a title). */
 export function rel(iso: string | null | undefined, now = Date.now()) {
   if (!iso) return "—"
   const diff = new Date(iso).getTime() - now
   const m = Math.round(Math.abs(diff) / 60000)
-  const s = m >= 1440 ? `${Math.floor(m / 1440)} d ${Math.floor((m % 1440) / 60)} h` : m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} m` : `${m} m`
+  if (m < 1) return "just now"
+  const s = m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`
   return diff >= 0 ? `in ${s}` : `${s} ago`
 }
 

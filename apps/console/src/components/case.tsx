@@ -44,8 +44,10 @@ const faDigits = new Intl.NumberFormat("fa-IR")
 export function duration(ms: number, t: T, locale: Locale = "en"): string {
   const m = Math.round(Math.abs(ms) / 60000)
   const n = (x: number) => (locale === "fa" ? faDigits.format(x) : String(x))
+  // English reads "2d 6h"; Persian keeps the unit as a separate word ("۲ روز ۶ ساعت").
+  const u = (x: number, unit: string) => (locale === "fa" ? `${n(x)} ${unit}` : `${n(x)}${unit}`)
   const d = t("time.d"), h = t("time.h"), mm = t("time.m")
-  return m >= 1440 ? `${n(Math.floor(m / 1440))} ${d} ${n(Math.floor((m % 1440) / 60))} ${h}` : m >= 60 ? `${n(Math.floor(m / 60))} ${h} ${n(m % 60)} ${mm}` : `${n(m)} ${mm}`
+  return m >= 1440 ? `${u(Math.floor(m / 1440), d)} ${u(Math.floor((m % 1440) / 60), h)}` : m >= 60 ? `${u(Math.floor(m / 60), h)} ${u(m % 60, mm)}` : u(m, mm)
 }
 
 /* ---------- SLA ---------- */
@@ -79,7 +81,7 @@ export function SlaChip({ dueAt, startAt, breached, done, className }: { dueAt: 
   if (!dueAt) return <span className="text-steel">—</span>
   const s = slaState(dueAt, startAt, breached, now)
   const text = s.late ? t("sla.breached", { t: duration(s.diff, t, locale) }) : t("time.in", { t: duration(s.diff, t, locale) })
-  return <StatusChip tone={s.tone} className={cn(locale === "fa" ? "font-fa" : "num", "max-sm:whitespace-normal", className)} icon={<SlaRing frac={s.frac} />}>{text}</StatusChip>
+  return <StatusChip tone={s.tone} className={cn(locale === "fa" ? "font-fa" : "num", "max-sm:whitespace-normal", className)} icon={<SlaRing frac={s.frac} className="size-3.5" />}>{text}</StatusChip>
 }
 
 /* ---------- status ---------- */
@@ -91,7 +93,7 @@ export const statusTone = (status: string): "ok" | "warn" | "danger" | "info" | 
 
 /** Workflow status as a chip. The DOM text is the status itself (tests and screen readers); CSS only softens the casing. */
 export function StateChip({ value, className }: { value: string; className?: string }) {
-  return <StatusChip tone={statusTone(value)} className={cn("text-[11.5px] font-semibold", className)}><span className="inline-block lowercase first-letter:uppercase">{value.replace(/_/g, " ")}</span></StatusChip>
+  return <StatusChip tone={statusTone(value)} className={className}><span className="inline-block lowercase first-letter:uppercase">{value.replace(/_/g, " ")}</span></StatusChip>
 }
 
 /* ---------- truth (known / not included / UNKNOWN) ---------- */
@@ -128,7 +130,7 @@ export function TruthTally({ tally, className, compact }: { tally: Tally; classN
     )
   }
   const cell = (k: MsgKey, n: number, cls: string) => (
-    <div><dt className="cap">{t(k)}</dt><dd className={cn("num text-[22px] leading-tight font-semibold", cls)}>{n}</dd></div>
+    <div><dt className="cap">{t(k)}</dt><dd className={cn("num text-title leading-tight font-semibold", cls)}>{n}</dd></div>
   )
   return (
     <dl className={cn("grid grid-cols-3 gap-2", className)} data-testid="truth-tally">
@@ -143,10 +145,10 @@ export function TruthTally({ tally, className, compact }: { tally: Tally; classN
 /** `summary` is the second line (state, SLA, owner, facts); it carries data-testid="case-summary" like the old tile row. */
 export function CaseHeader({ reference, title, meta, aside, summary }: { reference: React.ReactNode; title: React.ReactNode; meta?: React.ReactNode; aside?: React.ReactNode; summary?: React.ReactNode }) {
   return (
-    <header className="border-b border-rule bg-surface-raised px-5 pt-4 pb-3">
+    <header className="border-b border-rule bg-surface-raised px-5 pt-5 pb-4 md:px-6">
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div className="min-w-0">
-          <p className="flex flex-wrap items-baseline gap-x-3">{reference}<span className="font-display text-[22px] leading-tight" dir="auto">{title}</span></p>
+          <p className="flex flex-wrap items-baseline gap-x-3">{reference}<span className="font-display text-title leading-tight font-bold" dir="auto">{title}</span></p>
           {meta && <p className="mt-1 text-steel">{meta}</p>}
         </div>
         {aside && <div className="flex flex-wrap items-center gap-2">{aside}</div>}
@@ -183,18 +185,18 @@ export function CommandBar({ actions, onRun, none, hint }: { actions: AllowedCom
       <div role="group" aria-label={t("case.actions")} className="flex flex-wrap items-center gap-2">
         {allowed.map((a) => <Button key={a.command} size="sm" variant={a === primary ? "default" : "outline"} className={a === primary ? "px-4" : undefined} onClick={() => onRun(a.command)} data-command={a.command}>{label(a.command)}</Button>)}
         {!actions.length && <p className="py-1 text-steel">{none}</p>}
-        {hint && <p className="ms-auto hidden shrink-0 text-[11px] text-steel xl:block pointer-coarse:hidden">{hint}</p>}
+        {hint && <p className="ms-auto hidden shrink-0 text-caption text-steel xl:block pointer-coarse:hidden">{hint}</p>}
       </div>
       {blocked.length > 0 && (
         <div className="mt-2">
-          <button type="button" aria-expanded={open} aria-controls={id} onClick={() => { setOpen(!open); try { localStorage.setItem("ut-cmd-more", open ? "0" : "1") } catch { /* preference only */ } }} className="-ms-1 flex min-h-7 items-center gap-1 rounded-sm px-1 text-[12px] text-steel hover:text-ink">
+          <button type="button" aria-expanded={open} aria-controls={id} onClick={() => { setOpen(!open); try { localStorage.setItem("ut-cmd-more", open ? "0" : "1") } catch { /* preference only */ } }} className="-ms-1 flex min-h-7 items-center gap-1 rounded-sm px-1 text-meta text-steel hover:text-ink">
             <span aria-hidden className={cn("inline-block transition-transform rtl:-scale-x-100", open && "rotate-90")}>›</span>{t("case.cmd.unavailable", { n: blocked.length })}
           </button>
           <ul id={id} className={cn("mt-1 grid gap-x-6 gap-y-2 sm:grid-cols-2 2xl:grid-cols-3", !open && "hidden")}>
             {blocked.map((a) => (
               <li key={a.command} className="flex min-w-0 items-start gap-2">
                 <Button size="xs" variant="outline" disabled data-command={a.command} aria-describedby={a.reason ? `${id}-${a.command}` : undefined} className="shrink-0">{label(a.command)}</Button>
-                {a.reason && <p id={`${id}-${a.command}`} className="pt-0.5 text-[12px] leading-snug text-steel" data-reason={a.command}>{a.reason}</p>}
+                {a.reason && <p id={`${id}-${a.command}`} className="pt-0.5 text-meta leading-snug text-steel" data-reason={a.command}>{a.reason}</p>}
               </li>
             ))}
           </ul>
@@ -204,10 +206,13 @@ export function CommandBar({ actions, onRun, none, hint }: { actions: AllowedCom
   )
 }
 
-/** Sticky strip. `top` sits under the 48 px app bar (case commands); `bottom` docks above the phone tab bar (form submit). */
+/**
+ * Sticky strip inside <main> (the shell's only scroller, so offsets are relative to it, not the window): `top` pins the
+ * server-computed case commands to the top edge; `bottom` docks a form's submit above the phone tab bar (main's padding).
+ */
 export function ActionBar({ edge = "top", className, children, ...rest }: React.ComponentProps<"div"> & { edge?: "top" | "bottom" }) {
   return (
-    <div {...rest} className={cn("z-20 bg-surface-raised/95 px-5 py-2 backdrop-blur", edge === "top" ? "sticky top-12 border-b border-rule" : "sticky bottom-[calc(3rem+env(safe-area-inset-bottom))] border-t border-rule md:bottom-0", className)}>
+    <div {...rest} className={cn("z-sticky bg-surface-raised px-5 py-2.5 md:px-6", edge === "top" ? "sticky top-0 border-b border-rule" : "sticky bottom-0 border-t border-rule shadow-[0_-8px_16px_-12px_rgb(11_27_51/0.25)]", className)}>
       {children}
     </div>
   )
@@ -229,8 +234,8 @@ export function CaseTabs<K extends string>({ tabs, value, onChange, label }: { t
     <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex gap-1 overflow-x-auto border-b border-rule bg-surface-raised px-4 lg:hidden" data-testid="case-tabs">
       {tabs.map((x) => (
         <button key={x.key} type="button" role="tab" id={`tab-${x.key}`} aria-selected={value === x.key} aria-controls={`pane-${x.key}`} tabIndex={value === x.key ? 0 : -1} onClick={() => onChange(x.key)}
-          className={cn("-mb-px min-h-10 shrink-0 border-b-2 px-3 whitespace-nowrap", value === x.key ? "border-orange font-medium text-ink" : "border-transparent text-steel hover:text-ink")}>
-          {x.label}{x.count ? <span className="num ms-1.5 text-[11px] text-steel">{x.count}</span> : null}
+          className={cn("-mb-px min-h-11 shrink-0 border-b-2 px-3 whitespace-nowrap transition-colors", value === x.key ? "border-[var(--indicator)] font-semibold text-ink" : "border-transparent text-steel hover:text-ink")}>
+          {x.label}{x.count ? <span className="num ms-1.5 text-caption text-steel">{x.count}</span> : null}
         </button>
       ))}
     </div>
@@ -249,7 +254,7 @@ const clock = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-dig
 export function Timeline({ items, className, ...rest }: { items: TimelineItem[] } & Omit<React.ComponentProps<"ol">, "children">) {
   let last = ""
   return (
-    <ol className={cn("text-[13px]", className)} {...rest}>
+    <ol className={cn("text-body", className)} {...rest}>
       {items.map((i) => {
         const d = day.format(new Date(i.at))
         const head = d !== last
@@ -258,7 +263,7 @@ export function Timeline({ items, className, ...rest }: { items: TimelineItem[] 
           <li key={i.id} className="relative ps-5 pb-3 before:absolute before:inset-y-0 before:start-[4.5px] before:w-px before:bg-rule-strong last:before:bottom-auto last:before:h-3">
             {head && <p className="cap pb-1">{d}</p>}
             <span aria-hidden className={cn("absolute start-0 size-2.5 rounded-full ring-2 ring-surface-raised", DOT[i.tone ?? "muted"], head ? "top-6" : "top-1.5")} />
-            <p><span className="num text-[11.5px] text-steel">{clock.format(new Date(i.at))}</span> <span className={i.tone === "strong" ? "font-medium" : ""}>{i.title}</span>{i.meta && <span className="text-steel"> · {i.meta}</span>}</p>
+            <p><span className="num text-caption text-steel">{clock.format(new Date(i.at))}</span> <span className={i.tone === "strong" ? "font-medium" : ""}>{i.title}</span>{i.meta && <span className="text-steel"> · {i.meta}</span>}</p>
             {i.detail && <p className="text-steel" dir="auto">{i.detail}</p>}
           </li>
         )
@@ -271,10 +276,13 @@ export function Timeline({ items, className, ...rest }: { items: TimelineItem[] 
 export function ListSkeleton({ rows = 6, className }: { rows?: number; className?: string }) {
   return (
     <div className={cn("space-y-2 p-4", className)} aria-busy aria-label="Loading">
-      {Array.from({ length: rows }, (_, i) => <div key={i} aria-hidden className="skeleton h-9 w-full" style={{ opacity: 1 - i * 0.1 }} />)}
+      {Array.from({ length: rows }, (_, i) => <div key={i} aria-hidden className="skeleton h-10 w-full" style={{ opacity: 1 - i * 0.1 }} />)}
     </div>
   )
 }
 
-/** Wide tables scroll sideways inside their own box instead of pushing the page wider than a phone. */
-export const TableScroll = ({ children, className }: { children: React.ReactNode; className?: string }) => <div tabIndex={0} className={cn("overflow-x-auto", className)}>{children}</div>
+/**
+ * Wide tables scroll sideways inside their own box instead of pushing the page wider than a phone. Inside a bounded
+ * <ListCard fill> it is also the vertical scroller, so `.data-table` headers stick to its top edge.
+ */
+export const TableScroll = ({ children, className, label }: { children: React.ReactNode; className?: string; label?: string }) => <div tabIndex={0} role="region" aria-label={label ?? "Table"} className={cn("grid-scroll min-h-0 flex-1 focus-visible:outline-offset-[-2px]", className)}>{children}</div>

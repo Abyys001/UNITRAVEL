@@ -2297,6 +2297,22 @@
         ]
       }
     },
+    "/v1/admin/dashboard/metrics": {
+      "get": {
+        "description": "DashboardMetrics: daily submissions (Europe/London days), open requests by status, first-contact SLA outcome, invoice status counts; invoice money only with pricing.read.internal.",
+        "operationId": "AdminFlightRequestsController_metrics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Admin dashboard metrics",
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
     "/v1/admin/queues/summary": {
       "get": {
         "operationId": "AdminFlightRequestsController_summary",

@@ -27,13 +27,13 @@ export default function SmsRoutesPage() {
   const canWrite = can("notification.template.write")
   return (
     <div>
-      <PageHead kicker={t("dnav.integrations")} title={t("dnav.sms")}><span className="text-[12px] text-steel">{t("sms.desc")}</span>{canWrite && <Button size="sm" onClick={() => setEdit({ prefix: "", providers: "", enabled: true })}>{t("sms.new")}</Button>}</PageHead>
+      <PageHead kicker={t("dnav.integrations")} title={t("dnav.sms")}><span className="text-meta text-steel">{t("sms.desc")}</span>{canWrite && <Button size="sm" onClick={() => setEdit({ prefix: "", providers: "", enabled: true })}>{t("sms.new")}</Button>}</PageHead>
       <DevPage>
-        <p className="max-w-3xl rounded-lg border border-rule bg-surface-raised px-4 py-3 text-[12.5px] text-steel">{t("sms.rule")}</p>
+        <p className="max-w-3xl rounded-lg border border-rule bg-surface-raised px-4 py-3 text-meta text-steel">{t("sms.rule")}</p>
         {!q.data.length ? <ListCard className="mx-0 mb-0 md:mx-0"><EmptyState title={t("sms.none")} className="py-10" /></ListCard> : (
           <ListCard className="mx-0 mb-0 md:mx-0"><DataTable data-testid="sms-routes">
             <thead><tr>{[t("sms.c.prefix"), t("sms.c.providers"), t("sms.c.enabled"), t("sms.c.success"), t("sms.c.sent"), ""].map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
-            <tbody>{q.data.map((r) => <tr key={r.id}><td className="num font-medium" dir="ltr">{r.prefix}</td><td className="font-mono text-[12px]" dir="ltr">{r.providers.join(" → ")}</td><td><Tag value={r.enabled ? "ON" : "OFF"} className={r.enabled ? "border-success text-success" : ""} /></td><td className="num">{r.successRate == null ? "—" : `${Math.round(r.successRate * 100)}%`}</td><td className="num">{r.sent24h}</td><td className="text-end">{canWrite && <Button size="xs" variant="ghost" onClick={() => setEdit({ prefix: r.prefix, providers: r.providers.join(", "), enabled: r.enabled })}>{t("lanes.edit")}</Button>}</td></tr>)}</tbody>
+            <tbody>{q.data.map((r) => <tr key={r.id}><td className="num font-medium" dir="ltr">{r.prefix}</td><td className="font-mono text-meta" dir="ltr">{r.providers.join(" → ")}</td><td><Tag value={r.enabled ? "ON" : "OFF"} className={r.enabled ? "border-success text-success" : ""} /></td><td className="num">{r.successRate == null ? "—" : `${Math.round(r.successRate * 100)}%`}</td><td className="num">{r.sent24h}</td><td className="text-end">{canWrite && <Button size="xs" variant="ghost" onClick={() => setEdit({ prefix: r.prefix, providers: r.providers.join(", "), enabled: r.enabled })}>{t("lanes.edit")}</Button>}</td></tr>)}</tbody>
           </DataTable></ListCard>
         )}
       </DevPage>
