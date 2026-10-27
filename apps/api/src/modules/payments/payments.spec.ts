@@ -37,9 +37,9 @@ describe("adapters are gated (ADR-0007 P1, P12)", () => {
   it("a test key constructs", () => {
     expect(new StripeAdapter({ secretKey: "sk_test_" + "x".repeat(24), publishableKey: "pk_test_" + "y".repeat(24), webhookSecret: secret }).id).toBe("STRIPE")
   })
-  it("the FAKE adapter refuses to run in production, like the FAKE flight adapter", () => {
+  it("the FAKE adapter refuses a production build even when APP_ENV is local, like the FAKE flight adapter", () => {
     vi.stubEnv("NODE_ENV", "production")
-    expect(() => new FakePaymentAdapter({} as never)).toThrowError(/blocked in production/)
+    expect(() => new FakePaymentAdapter({} as never)).toThrowError(/APP_ENV=local/)
   })
   it("FAKE events are signed in Stripe's format and verify through the same code", async () => {
     const store = new Map<string, string>()

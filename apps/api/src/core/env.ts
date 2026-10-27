@@ -55,3 +55,8 @@ export function env(): Env {
 
 export const isLocal = () => env().APP_ENV === "local"
 export const testSignInEnabled = () => env().TEST_SIGN_IN === "on"
+/**
+ * ADR-0014: FAKE adapters, sandbox credentials and Stripe test mode exist only on a developer machine or CI. NODE_ENV is
+ * a second net: a production image with APP_ENV unset would otherwise default to "local".
+ */
+export const sandboxAllowed = () => isLocal() && process.env.NODE_ENV !== "production"

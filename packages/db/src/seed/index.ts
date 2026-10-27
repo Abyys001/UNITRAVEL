@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 
 import {
   BUILT_IN_ROLES, DEFAULT_AUTH, DEFAULT_ENGINE_RULES, DEFAULT_FLAGS, DEFAULT_HUBS, DEFAULT_NOTIFICATION_MATRIX, DEFAULT_ROLE_PERMISSIONS,
@@ -10,6 +10,7 @@ import * as s from "../schema"
 import { AIRCRAFT, AIRLINES, AIRPORTS, CITIES, COUNTRIES } from "./reference-data"
 import { TEMPLATES } from "./templates"
 import { DEMO_TOTP_SECRET_HEX, devEncrypt } from "./dev-crypto"
+import { providerSeedRows, shouldSeedDemo } from "./providers"
 
 const FLAG_META: Record<string, { owner: string; removeBy: string | null; description: string }> = {
   "cargo.enabled": { owner: "operations", removeBy: null, description: "Cargo requests on web and app" },
@@ -20,6 +21,16 @@ const FLAG_META: Record<string, { owner: string; removeBy: string | null; descri
   "sms.free_text.enabled": { owner: "operations", removeBy: null, description: "Free-text SMS from the console (off: templates only)" },
   "push.pushy_pilot.enabled": { owner: "developers", removeBy: "2027-03-31", description: "Pushy (non-FCM) pilot for Android users in Iran" },
   "maintenance.enabled": { owner: "developers", removeBy: null, description: "Maintenance banner for customers" },
+  // ADR-0015 (spec docs/CONTENT-MENU-LIVE-DATA.md section 4.1): every new product is off until the owner switches it on.
+  "hotels.enabled": { owner: "owner", removeBy: null, description: "Hotel listings and requests; stays off until a hotel provider is contracted and its adapter exists (O8, ADR-0015)" },
+  "stays.enabled": { owner: "owner", removeBy: null, description: "Villa and stay listings and requests; off until a provider is contracted and its adapter exists (O8, ADR-0015)" },
+  "trains.enabled": { owner: "owner", removeBy: null, description: "Train listings and requests; off until a rail provider is contracted and its adapter exists (O8, ADR-0015)" },
+  "buses.enabled": { owner: "owner", removeBy: null, description: "Bus listings and requests; off until a coach provider is contracted and its adapter exists (O8, ADR-0015)" },
+  "services.visa.enabled": { owner: "owner", removeBy: null, description: "Visa order requests; off until counsel confirms what may be offered (O6, ADR-0015)" },
+  "services.tours.enabled": { owner: "owner", removeBy: null, description: "Tour call-back requests; a call, never a package sale, until counsel advises on package travel rules (O10, ADR-0015)" },
+  "services.cip.enabled": { owner: "owner", removeBy: null, description: "Airport CIP requests at Tehran Imam Khomeini only; off until counsel clears the operator and sanctions position (O9, ADR-0015)" },
+  "services.insurance.enabled": { owner: "owner", removeBy: null, description: "Travel insurance requests; off until counsel confirms insurance distribution permissions (O7, ADR-0015)" },
+  "loyalty.enabled": { owner: "owner", removeBy: null, description: "Customer club: membership, benefits and credit; off until the owner launches it (ADR-0016)" },
 }
 
 export async function seedReference(db: Db) {
@@ -70,12 +81,7 @@ export async function seedConfig(db: Db) {
     await db.insert(s.notificationTemplates).values(rows).onConflictDoNothing()
   }
 
-  await db.insert(s.providers).values([
-    { id: "fake", name: "Fake supplier (local and tests only)", environment: "test", enabled: true, priority: 1, capabilities: { search: true, price: true, seatMap: true, order: false }, limits: { timeoutMs: 6000, maxConcurrent: 8, rps: 20, dailyBudget: 100000, lookToBookAlert: 1000 }, markets: { pointOfSale: "GB", currency: "GBP", originRegions: [], destinationRegions: [] } },
-    { id: "duffel", name: "Duffel", environment: "test", enabled: false, priority: 2, capabilities: { search: true, price: true, seatMap: true, order: false }, limits: { timeoutMs: 10000, maxConcurrent: 6, rps: 5, dailyBudget: 3000, lookToBookAlert: 1500 }, markets: { pointOfSale: "GB", currency: "GBP", originRegions: [], destinationRegions: [] } },
-    { id: "amadeus-enterprise", name: "Amadeus Enterprise (Master Pricer)", environment: "test", enabled: false, priority: 3, capabilities: { search: true, price: true, seatMap: false, order: false }, limits: { timeoutMs: 12000, maxConcurrent: 4, rps: 2, dailyBudget: 2000, lookToBookAlert: 1000 }, markets: { pointOfSale: "GB", currency: "GBP", originRegions: [], destinationRegions: [] } },
-    { id: "manual", name: "Manual inventory (staff-entered)", environment: "production", enabled: true, priority: 0, capabilities: { search: false, price: false, seatMap: false, order: false }, limits: { timeoutMs: 0, maxConcurrent: 0, rps: 0, dailyBudget: 0, lookToBookAlert: 0 }, markets: { pointOfSale: "GB", currency: "GBP", originRegions: [], destinationRegions: [] } },
-  ]).onConflictDoNothing()
+  await db.insert(s.providers).values(providerSeedRows(process.env.APP_ENV)).onConflictDoNothing()
 }
 
 const SYSTEM_ID = "00000000-0000-7000-8000-000000000000"
@@ -98,6 +104,23 @@ export async function seedCompliance(db: Db) {
     policy("LANE", "IR:*", "REVIEW", "Lanes touching Iran start disabled and require approval (D-05)"),
     policy("LANE", "IR:EXCESS_BAGGAGE", "BLOCK", "Unaccompanied excess baggage on Iran lanes stays disabled until counsel confirms the personal-effects exception (ch. 14.2)"),
   ])
+}
+
+/**
+ * ADR-0015: SERVICE policies are keyed `<TYPE>:<context>`. Run on every seed (not only the first) so existing databases
+ * receive them; rows are only added when the key is missing, and an edited or retired policy is never touched.
+ */
+export async function seedServicePolicies(db: Db) {
+  const policy = (key: string, reason: string) =>
+    ({ type: "SERVICE" as const, key, action: "REVIEW" as const, reason, status: "ACTIVE" as const, createdBy: SYSTEM_ID, approvedBy: SYSTEM_ID, approvedAt: new Date(), seededPendingCounsel: true })
+  const rows = [
+    policy("CIP:IKA", "O9: the IKA CIP operator and payments to it need a sanctions view from counsel; every CIP request is reviewed until then. Seed, pending counsel."),
+    policy("INSURANCE:IR", "O7: insurance for customers resident in Iran needs counsel's view (sanctions, distribution permissions); reviewed until then. Seed, pending counsel."),
+  ]
+  const existing = await db.select({ key: s.compliancePolicies.key }).from(s.compliancePolicies).where(eq(s.compliancePolicies.type, "SERVICE"))
+  const have = new Set(existing.map((r) => r.key))
+  const fresh = rows.filter((r) => !have.has(r.key))
+  if (fresh.length) await db.insert(s.compliancePolicies).values(fresh)
 }
 
 export async function seedCargo(db: Db) {
@@ -157,7 +180,7 @@ export async function seedDemoUsers(db: Db) {
     if (u.email) await db.insert(s.userIdentities).values({ userId: user!.id, type: "EMAIL", valueNormalised: u.email, verifiedAt: new Date(), isPrimary: false })
     await db.insert(s.customerProfiles).values({ userId: user!.id, givenNamesLatin: u.given, surnameLatin: u.surname, nameFa: u.nameFa ?? null, termsVersion: "2026-10-22", privacyVersion: "2026-10-22" })
     for (const r of u.roles) await db.insert(s.userRoles).values({ userId: user!.id, roleId: roleRows.find((x) => x.key === r)!.id })
-    // The known demo TOTP secret is local only (rule 6); staging staff use the ADR-0012 test sign-in or enrol their own factor.
+    // The known demo TOTP secret is local only (rule 6).
     if (local && u.roles.some((r) => r !== "customer")) await db.insert(s.mfaFactors).values({ userId: user!.id, type: "TOTP", secretCiphertext: devEncrypt(DEMO_TOTP_SECRET_HEX), confirmedAt: new Date() })
   }
   return ids
@@ -175,9 +198,10 @@ async function main() {
   await seedConfig(db)
   const policies = await db.select().from(s.compliancePolicies).limit(1)
   if (policies.length === 0) await seedCompliance(db)
+  await seedServicePolicies(db)
   const lanes = await db.select().from(s.cargoLanes).limit(1)
   if (lanes.length === 0) await seedCargo(db)
-  if (process.env.APP_ENV !== "production" && process.env.SEED_DEMO !== "0") {
+  if (shouldSeedDemo(process.env.APP_ENV, process.env.SEED_DEMO)) {
     const users = await db.select().from(s.users).limit(1)
     if (users.length === 0) {
       const ids = await seedDemoUsers(db)

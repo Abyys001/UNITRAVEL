@@ -1,7 +1,7 @@
 import type { NormalisedOffer, SeatElement, SeatMap } from "@unitravel/contracts"
 import { localToUtc, utcToLocal } from "@unitravel/engine"
 
-import { env } from "../../../core/env"
+import { sandboxAllowed } from "../../../core/env"
 import { type CallContext, type Capabilities, type FlightSupplierAdapter, type HealthResult, type OfferRef, type SliceQuery, SupplierError } from "../adapter"
 import { FAKE_OFFERS, hash32, type LegTemplate, type OfferTemplate } from "./fake-network"
 
@@ -24,14 +24,14 @@ const TEMPLATES: OfferTemplate[] = FAKE_OFFERS.flatMap((t, i) => [t, reverse(t, 
 
 /**
  * Deterministic FAKE supplier for local development and end-to-end tests (ch. 21.8). Every offer is labelled
- * fake; the adapter refuses to run when APP_ENV=production.
+ * fake; the adapter refuses to run unless APP_ENV=local (ADR-0014).
  */
 export class FakeAdapter implements FlightSupplierAdapter {
   readonly id = "fake" as const
 
   constructor() {
-    if (env().APP_ENV === "production" || process.env.NODE_ENV === "production") {
-      throw new Error("The FAKE supplier adapter is blocked in production (ch. 21.1 principle 6)")
+    if (!sandboxAllowed()) {
+      throw new Error("The FAKE supplier adapter only runs with APP_ENV=local (ADR-0014)")
     }
   }
 

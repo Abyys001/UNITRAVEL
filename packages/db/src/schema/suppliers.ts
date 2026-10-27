@@ -16,6 +16,8 @@ export const providers = pgTable("providers", {
   limits: jsonb().$type<{ timeoutMs: number; maxConcurrent: number; rps: number; dailyBudget: number; lookToBookAlert: number }>().notNull(),
   markets: jsonb().$type<{ pointOfSale: string; currency: string; originRegions: string[]; destinationRegions: string[] }>().notNull(),
   shadowMode: boolean().notNull().default(false),
+  /** ADR-0015: which product the provider serves; existing flight code ignores every other vertical. */
+  vertical: text({ enum: ["FLIGHT", "STAY", "RAIL", "BUS"] }).notNull().default("FLIGHT"),
   version: integer().notNull().default(1),
   ...timestamps,
 })

@@ -21,7 +21,7 @@ export const Iata = z.string().regex(/^[A-Z0-9]{3}$/)
 export const CarrierCode = z.string().regex(/^[A-Z0-9]{2,3}$/)
 export const CountryCode = z.string().regex(/^[A-Z]{2}$/)
 export const Uuid = z.uuid()
-export const Reference = z.string().regex(/^UT-[FCA]-[0-9A-HJKMNP-TV-Z]{6}$/i)
+export const Reference = z.string().regex(/^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$/i)
 
 export const LocalisedText = z.object({ en: z.string(), fa: z.string() })
 export type LocalisedText = z.infer<typeof LocalisedText>

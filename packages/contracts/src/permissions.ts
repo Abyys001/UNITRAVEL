@@ -23,6 +23,14 @@ export const PERMISSIONS = [
   "cargo_request.read.own",
   "cargo_request.read.any",
   "cargo_request.transition",
+  "service_request.create.own",
+  "service_request.read.own",
+  "service_request.read.any",
+  "service_request.write",
+  "loyalty.read.own",
+  "loyalty.read",
+  "loyalty.manage",
+  "loyalty.benefit.approve",
   "customer.read.pii",
   "customer.read.documents",
   "identity.verify",
@@ -71,6 +79,14 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "cargo_request.read.own": { privileged: false },
   "cargo_request.read.any": { privileged: false },
   "cargo_request.transition": { privileged: false },
+  "service_request.create.own": { privileged: false },
+  "service_request.read.own": { privileged: false },
+  "service_request.read.any": { privileged: false },
+  "service_request.write": { privileged: false },
+  "loyalty.read.own": { privileged: false },
+  "loyalty.read": { privileged: false },
+  "loyalty.manage": { privileged: true },
+  "loyalty.benefit.approve": { privileged: true },
   "customer.read.pii": { privileged: true },
   "customer.read.documents": { privileged: true },
   "identity.verify": { privileged: true },
@@ -104,11 +120,15 @@ export const PRIVILEGED_ROLES: readonly BuiltInRole[] = ["developer", "owner", "
 
 /** Table 10.1 — default permission matrix. */
 export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]> = {
-  customer: ["flight_search.run", "flight_request.create.own", "flight_request.read.own", "cargo_request.create.own", "cargo_request.read.own"],
+  customer: [
+    "flight_search.run", "flight_request.create.own", "flight_request.read.own", "cargo_request.create.own", "cargo_request.read.own",
+    "service_request.create.own", "service_request.read.own", "loyalty.read.own",
+  ],
   admin: [
     "flight_search.run", "flight_request.read.any", "flight_request.assign", "flight_request.transition",
     "flight_request.note.internal", "quote.create", "pricing.read.internal", "pricing.write", "commercial_document.issue", "reservation.record", "ticket.record",
     "payment.record", "payment.refund.request", "payment.refund.approve", "customer.read.pii", "customer.read.documents", "identity.verify", "engine.rules.read",
+    "service_request.read.any", "service_request.write", "loyalty.read", "loyalty.manage", "loyalty.benefit.approve",
   ],
   cargo_admin: [
     "flight_search.run", "flight_request.note.internal", "payment.record", "cargo_request.read.any",
@@ -116,7 +136,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
   ],
   compliance_officer: [
     "flight_request.read.any", "flight_request.note.internal", "cargo_request.read.any", "customer.read.pii",
-    "customer.read.documents", "compliance.case.read", "compliance.case.decide", "audit.read",
+    "customer.read.documents", "compliance.case.read", "compliance.case.decide", "audit.read", "service_request.read.any",
   ],
   developer: [
     "flight_search.run", "user.read", "user.role.assign", "provider.config.read", "provider.config.write",
@@ -127,7 +147,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
 }
 
 /** Permissions that only make sense for staff; their presence turns on admin mode in the apps. */
-export const STAFF_SURFACE_PERMISSIONS: readonly Permission[] = ["flight_request.read.any", "cargo_request.read.any"]
+export const STAFF_SURFACE_PERMISSIONS: readonly Permission[] = ["flight_request.read.any", "cargo_request.read.any", "service_request.read.any"]
 export const DEV_SURFACE_PERMISSIONS: readonly Permission[] = ["user.read", "provider.config.read", "diagnostics.read", "settings.write"]
 
 export function isPermission(value: string): value is Permission {

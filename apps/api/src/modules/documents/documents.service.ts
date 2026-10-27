@@ -70,7 +70,7 @@ export class DocumentsService implements OnModuleInit {
     return d.storageBucket ?? this.storage.bucket
   }
 
-  async createUpload(input: { ownerUserId: string | null; filename: string; mime: string; size: number; type: string; requestType?: "FLIGHT" | "CARGO" | "AFTER_SALES"; requestId?: string; visibility?: "INTERNAL" | "CUSTOMER"; createdBy: string }) {
+  async createUpload(input: { ownerUserId: string | null; filename: string; mime: string; size: number; type: string; requestType?: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE"; requestId?: string; visibility?: "INTERNAL" | "CUSTOMER"; createdBy: string }) {
     const ext = input.filename.toLowerCase().slice(input.filename.lastIndexOf("."))
     const identity = isIdentityType(input.type)
     if (identity) {
@@ -93,7 +93,7 @@ export class DocumentsService implements OnModuleInit {
   }
 
   /** Server-generated documents (quote PDF, receipts, ATOL certificate) are clean by construction. */
-  async storeGenerated(tx: DbOrTx, input: { ownerUserId: string; requestType: "FLIGHT" | "CARGO"; requestId: string; type: string; filename: string; body: Buffer; createdBy: string; visibility: "INTERNAL" | "CUSTOMER" }) {
+  async storeGenerated(tx: DbOrTx, input: { ownerUserId: string; requestType: "FLIGHT" | "CARGO" | "SERVICE"; requestId: string; type: string; filename: string; body: Buffer; createdBy: string; visibility: "INTERNAL" | "CUSTOMER" }) {
     const storageKey = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}.pdf`
     await this.storage.put(storageKey, input.body, "application/pdf")
     const [doc] = await tx.insert(documents).values({ ownerUserId: input.ownerUserId, requestType: input.requestType, requestId: input.requestId, type: input.type, filename: input.filename, mime: "application/pdf", size: input.body.length, storageKey, sha256: createHash("sha256").update(input.body).digest("hex"), scanStatus: "CLEAN", visibility: input.visibility, uploadCompletedAt: new Date(), createdBy: input.createdBy }).returning()
@@ -145,12 +145,12 @@ export class DocumentsService implements OnModuleInit {
     return d
   }
 
-  async forRequest(requestType: "FLIGHT" | "CARGO" | "AFTER_SALES", requestId: string, customerView: boolean) {
+  async forRequest(requestType: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE", requestId: string, customerView: boolean) {
     const rows = await this.db.select().from(documents).where(and(eq(documents.requestType, requestType), eq(documents.requestId, requestId)))
     return rows.filter((d) => d.scanStatus === "CLEAN" && d.uploadCompletedAt && (!customerView || d.visibility === "CUSTOMER" || d.ownerUserId === d.createdBy))
   }
 
-  async attach(tx: DbOrTx, ids: string[], requestType: "FLIGHT" | "CARGO" | "AFTER_SALES", requestId: string, userId: string) {
+  async attach(tx: DbOrTx, ids: string[], requestType: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE", requestId: string, userId: string) {
     if (!ids.length) return
     const rows = await tx.select().from(documents).where(inArray(documents.id, ids))
     if (rows.length !== ids.length || rows.some((r) => r.createdBy !== userId && r.ownerUserId !== userId)) throw new AppError("NOT_FOUND", "Document not found")

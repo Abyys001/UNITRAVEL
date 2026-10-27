@@ -20,6 +20,10 @@ describe("online payment: live mode stays blocked (ADR-0007 P1)", () => {
     expect(canEnterStripeMode("live")).toMatchObject({ ok: false })
     expect(canEnterStripeMode("test")).toEqual({ ok: true })
   })
+  it("deployed hosts refuse test mode too, so no sandbox ever serves them (ADR-0014)", () => {
+    expect(canEnterStripeMode("test", true)).toMatchObject({ ok: false, reason: expect.stringMatching(/ADR-0014/) })
+    expect(canEnterStripeMode("live", true)).toMatchObject({ ok: false })
+  })
   it("the FAKE provider is a payment provider but not a mode", () => expect(PAYMENT_PROVIDERS).toEqual(["STRIPE", "FAKE"]))
 })
 

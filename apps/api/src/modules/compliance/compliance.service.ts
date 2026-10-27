@@ -87,7 +87,7 @@ export class ComplianceService implements OnModuleInit {
     await this.queues.get("compliance.lists-sync").upsertJobScheduler("lists-every-6h", { every: DEFAULT_COMPLIANCE.listsSyncHours * 3600_000 }, { name: "sync" }).catch(() => undefined)
   }
 
-  onOutcome(requestType: "FLIGHT" | "CARGO", h: OutcomeHandler) {
+  onOutcome(requestType: "FLIGHT" | "CARGO" | "SERVICE", h: OutcomeHandler) {
     this.outcomeHandlers.set(requestType, h)
   }
 
@@ -289,6 +289,12 @@ export class ComplianceService implements OnModuleInit {
     return out
   }
 
+  /** ADR-0015: active SERVICE policies (`<TYPE>:<context>`) among the given keys; BLOCK and REVIEW rows only. */
+  async servicePolicies(keys: string[]) {
+    const rows = await this.activePolicies()
+    return rows.filter((r) => r.type === "SERVICE" && r.action !== "ALLOW" && keys.includes(r.key))
+  }
+
   async lanePolicy(origin: string, destination: string) {
     const rows = await this.activePolicies()
     return rows.filter((r) => r.type === "LANE" && (r.key === `${origin}:*` || r.key === `*:${destination}` || r.key === `${origin}:${destination}` || r.key === `${destination}:*`))
@@ -344,7 +350,7 @@ export class ComplianceService implements OnModuleInit {
 
   // ---------------- cases ----------------
 
-  async openCase(tx: Tx, c: { requestType: "FLIGHT" | "CARGO"; requestId: string; requestRef: string; trigger: "SCREENING" | "POLICY" | "LANE" | "GOODS"; summary: string; evidence: { kind: string; label: string; detail: string; score?: number }[]; screeningIds?: string[]; requiresFourEyes?: boolean }) {
+  async openCase(tx: Tx, c: { requestType: "FLIGHT" | "CARGO" | "SERVICE"; requestId: string; requestRef: string; trigger: "SCREENING" | "POLICY" | "LANE" | "GOODS"; summary: string; evidence: { kind: string; label: string; detail: string; score?: number }[]; screeningIds?: string[]; requiresFourEyes?: boolean }) {
     const [row] = await tx.insert(complianceCases).values({ ...c, screeningIds: c.screeningIds ?? [], requiresFourEyes: !!c.requiresFourEyes }).returning()
     await this.audit.record(tx, { actorKind: "SYSTEM", action: "compliance.case_opened", entityType: "compliance_case", entityId: row!.id, contextRef: c.requestRef, after: { trigger: c.trigger, summary: c.summary } })
     await this.outbox.add(tx, { aggregateType: "compliance_case", aggregateId: row!.id, eventType: "compliance.case_opened", payload: { caseId: row!.id, ref: c.requestRef, trigger: c.trigger, requestId: c.requestId } })
@@ -362,7 +368,7 @@ export class ComplianceService implements OnModuleInit {
     return this.caseView(r)
   }
 
-  async casesForRequest(requestType: "FLIGHT" | "CARGO", requestId: string) {
+  async casesForRequest(requestType: "FLIGHT" | "CARGO" | "SERVICE", requestId: string) {
     const rows = await this.db.select().from(complianceCases).where(and(eq(complianceCases.requestType, requestType), eq(complianceCases.requestId, requestId))).orderBy(desc(complianceCases.openedAt))
     return Promise.all(rows.map((r) => this.caseView(r)))
   }
@@ -378,7 +384,7 @@ export class ComplianceService implements OnModuleInit {
     }
     const overrides = decisions.filter((d) => d.decision === "OVERRIDE" && !d.secondApprover && !decisions.some((x) => x.supersedes === d.id))
     return {
-      id: r.id, requestType: r.requestType as "FLIGHT" | "CARGO", requestRef: r.requestRef, trigger: r.trigger, status: r.status, summary: r.summary, evidence: r.evidence,
+      id: r.id, requestType: r.requestType as "FLIGHT" | "CARGO" | "SERVICE", requestRef: r.requestRef, trigger: r.trigger, status: r.status, summary: r.summary, evidence: r.evidence,
       screenings: scr.map((s) => ({ id: s.id, subjectType: s.subjectType, subjectName: s.subjectName, result: s.result, listsVersion: s.listsVersion, createdAt: s.createdAt.toISOString(), hits: hits.filter((h) => h.h.screeningId === s.id).map((h) => ({ entryId: h.e.id, listId: h.e.listId, externalId: h.e.externalId, matchedName: h.h.matchedName, score: h.h.score, reasons: h.h.reasons, programmes: h.e.programmes })) })),
       decisions: decisions.map((d) => ({ id: d.id, decision: d.decision, reason: d.reason, decidedBy: names.get(d.decidedBy) ?? d.decidedBy, secondApprover: d.secondApprover ? names.get(d.secondApprover) ?? d.secondApprover : null, counselReference: d.counselReference, createdAt: d.createdAt.toISOString(), supersedes: d.supersedes })),
       openedAt: r.openedAt.toISOString(), decidedAt: r.decidedAt?.toISOString() ?? null, assignedTo: r.assignedTo, requiresFourEyes: r.requiresFourEyes,

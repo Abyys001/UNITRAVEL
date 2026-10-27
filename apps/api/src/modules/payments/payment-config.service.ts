@@ -6,7 +6,7 @@ import { type Db, paymentConfig, stripeEvents, users } from "@unitravel/db"
 import { canEnterStripeMode } from "@unitravel/domain"
 
 import { AppError } from "../../core/errors"
-import { env } from "../../core/env"
+import { env, sandboxAllowed } from "../../core/env"
 import type { Actor } from "../../core/http/decorators"
 import { DB, UnitOfWork } from "../../core/infra.module"
 import { AuditService } from "../audit/audit.service"
@@ -14,7 +14,7 @@ import { ConfigService } from "../config/config.service"
 import { VendorCredentialsService } from "../notifications/vendor-credentials.service"
 import { PaymentsService, STRIPE_VENDOR } from "./payments.service"
 
-const fakeAllowed = () => env().APP_ENV !== "production" && process.env.NODE_ENV !== "production"
+const fakeAllowed = () => sandboxAllowed()
 
 /** Developer Panel §2 for payments (ADR-0007 P1, P2, P13): write-only keys, provider choice, mode change workflow, health. */
 @Injectable()
@@ -47,6 +47,7 @@ export class PaymentConfigService {
   /** Write-only: merged into the stored set, encrypted at rest, never returned. Audited by key name only. */
   async setCredentials(body: StripeCredentialsBody, actor: Actor) {
     const values = Object.fromEntries(Object.entries({ secretKey: body.secretKey, publishableKey: body.publishableKey, webhookSecret: body.webhookSecret }).filter((e): e is [string, string] => !!e[1]))
+    if (!sandboxAllowed()) throw new AppError("LIVE_MODE_BLOCKED", "No Stripe keys are accepted on a deployed host: test keys only run with APP_ENV=local and live mode is blocked (ADR-0007, ADR-0014)")
     if (body.mode === "live" || Object.values(values).some((v) => /_live_/.test(v))) {
       await this.audit.record(this.db, { actorUserId: actor.userId, actorKind: "STAFF", action: "payments.live_credentials_refused", entityType: "payment_config", entityId: "stripe", after: { keys: Object.keys(values) }, ip: actor.ip })
       throw new AppError("LIVE_MODE_BLOCKED", canEnterStripeMode("live").ok ? "Live credentials are not accepted" : "Live mode is blocked: Stripe's written approval and counsel's advice are outstanding (ADR-0007 P1)")
@@ -61,7 +62,7 @@ export class PaymentConfigService {
   }
 
   async setProvider(provider: PaymentProviderId, actor: Actor) {
-    if (provider === "FAKE" && !fakeAllowed()) throw new AppError("FORBIDDEN", "The FAKE payment adapter can never run in production")
+    if (provider === "FAKE" && !fakeAllowed()) throw new AppError("FORBIDDEN", "The FAKE payment adapter only runs with APP_ENV=local (ADR-0014)")
     const before = await this.payments.configRow()
     await this.uow.run(async (tx) => {
       await tx.insert(paymentConfig).values({ key: "stripe", provider, updatedBy: actor.userId }).onConflictDoUpdate({ target: paymentConfig.key, set: { provider, updatedBy: actor.userId, updatedAt: new Date() } })
@@ -73,7 +74,7 @@ export class PaymentConfigService {
 
   /** Step 1 of a mode change: refused outright for live; otherwise pending until an owner approves (P2). */
   async requestMode(mode: StripeMode, actor: Actor) {
-    const gate = canEnterStripeMode(mode)
+    const gate = canEnterStripeMode(mode, !sandboxAllowed())
     if (!gate.ok) {
       await this.audit.record(this.db, { actorUserId: actor.userId, actorKind: "STAFF", action: "payments.mode_change_refused", entityType: "payment_config", entityId: "stripe", after: { requested: mode }, ip: actor.ip })
       throw new AppError("LIVE_MODE_BLOCKED", gate.reason)
@@ -92,7 +93,7 @@ export class PaymentConfigService {
     const cfg = await this.payments.configRow()
     if (!cfg.pendingMode) throw new AppError("INVALID_TRANSITION", "There is no pending mode change")
     if (cfg.pendingBy === actor.userId) throw new AppError("FOUR_EYES_REQUIRED", "A different person must approve a mode change")
-    const gate = canEnterStripeMode(cfg.pendingMode)
+    const gate = canEnterStripeMode(cfg.pendingMode, !sandboxAllowed())
     if (!gate.ok) {
       await this.audit.record(this.db, { actorUserId: actor.userId, actorKind: "STAFF", action: "payments.mode_change_refused", entityType: "payment_config", entityId: "stripe", after: { requested: cfg.pendingMode }, ip: actor.ip })
       throw new AppError("LIVE_MODE_BLOCKED", gate.reason)

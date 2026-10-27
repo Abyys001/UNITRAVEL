@@ -7,7 +7,7 @@ import {
 } from "@unitravel/contracts"
 import {
   afterSalesCases, contactAttempts, creditOverrides, type Db, type DbOrTx, documents, flightRequests, offerSnapshots, paymentRecords, quoteOptions, quotes, requestMessages,
-  requestNotes, requestStatusHistory, requestTravellers, reservations, tickets, type Tx, userIdentities, users, customerProfiles, cargoRequests,
+  requestNotes, requestStatusHistory, requestTravellers, reservations, serviceRequests, tickets, type Tx, userIdentities, users, customerProfiles, cargoRequests,
 } from "@unitravel/db"
 import {
   allowedCommands, computePaymentStatus, evaluate, FLIGHT_TERMINAL, FLIGHT_TRANSITIONS, type FlightCommandName, type FlightFacts, generateReference,
@@ -30,6 +30,7 @@ import { addBusinessMinutes } from "../platform/business-hours"
 import { OutboxService } from "../platform/outbox.service"
 import { ReferenceService } from "../reference/reference.service"
 import { customerItinerary } from "../search/customer-projection"
+import { SERVICE_STATUS_LABELS } from "../services/service-labels"
 
 type Req = typeof flightRequests.$inferSelect
 export type Locale = "en" | "fa"
@@ -580,6 +581,10 @@ export class RequestsService {
     if (aggregateType === "cargo_request") {
       const [r] = await this.db.select({ ref: cargoRequests.ref, version: cargoRequests.version, status: cargoRequests.status }).from(cargoRequests).where(eq(cargoRequests.id, id))
       return r ? { requestType: "CARGO", ref: r.ref, version: r.version, status: r.status, statusLabel: this.config.get("WORKFLOW").statusLabels.cargo[r.status].en } : null
+    }
+    if (aggregateType === "service_request") {
+      const [r] = await this.db.select({ ref: serviceRequests.ref, version: serviceRequests.version, status: serviceRequests.status }).from(serviceRequests).where(eq(serviceRequests.id, id))
+      return r ? { requestType: "SERVICE", ref: r.ref, version: r.version, status: r.status, statusLabel: SERVICE_STATUS_LABELS[r.status].en } : null
     }
     return null
   }

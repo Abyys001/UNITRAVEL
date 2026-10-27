@@ -11,8 +11,10 @@ import { needsSecondVerifier } from "./payments"
  */
 export const ONLINE_PAYMENT_LIVE_ENABLED = false as boolean
 
-export function canEnterStripeMode(mode: StripeMode): { ok: true } | { ok: false; reason: string } {
+/** `deployed` is true on staging and production: there only live data exists, so test mode is refused (ADR-0014). */
+export function canEnterStripeMode(mode: StripeMode, deployed = false): { ok: true } | { ok: false; reason: string } {
   if (mode === "live" && !ONLINE_PAYMENT_LIVE_ENABLED) return { ok: false, reason: "Live mode is blocked: Stripe's written approval and counsel's advice are outstanding (ADR-0007 P1)" }
+  if (mode === "test" && deployed) return { ok: false, reason: "Stripe test mode only runs with APP_ENV=local; deployed hosts use live data only (ADR-0014)" }
   return { ok: true }
 }
 
@@ -28,7 +30,7 @@ export function checkoutExpiry(invoiceExpiresAt: Date, now: Date): Date | null {
 }
 
 export interface EligibilityFacts {
-  product: "FLIGHT" | "CARGO"
+  product: "FLIGHT" | "CARGO" | "SERVICE"
   currency: string
   totalMinor: number
   customerUserId: string

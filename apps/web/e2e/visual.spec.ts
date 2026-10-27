@@ -37,6 +37,9 @@ const SCREENS: Screen[] = [
   { name: "pay-paid", path: `/billing/${inv}/pay`, override: { [payment]: (b) => ({ ...(b as object), invoiceStatus: "PAID", paidAt: cassette.capturedAt }) }, settle: "[data-testid=pay-state]" },
   { name: "pay-return-failed", path: `/billing/${inv}/pay/return`, override: { [payment]: (b) => ({ ...(b as object), session: { status: "FAILED" } }) }, settle: "[data-state=failed]" },
   { name: "inbox", path: "/inbox" },
+  { name: "faq", path: "/faq", signedIn: false },
+  { name: "travel-rules", path: "/travel-rules", signedIn: false },
+  { name: "flight-guide", path: "/flights/guide", signedIn: false },
 ]
 
 test.use({ locale: "en-GB", timezoneId: "UTC", reducedMotion: "reduce", colorScheme: "light" })

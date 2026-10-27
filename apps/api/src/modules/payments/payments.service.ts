@@ -8,7 +8,7 @@ import { type Db, invoices, paymentConfig, paymentRecords, paymentSessions, refu
 import { canEnterStripeMode, checkoutExpiry, onlinePaymentEligibility, sessionNext, type SessionCommand, settlementCheck } from "@unitravel/domain"
 
 import { AppError, notFound } from "../../core/errors"
-import { env } from "../../core/env"
+import { env, sandboxAllowed } from "../../core/env"
 import type { Actor } from "../../core/http/decorators"
 import { DB, REDIS, UnitOfWork } from "../../core/infra.module"
 import { Queues } from "../../core/queues"
@@ -25,6 +25,7 @@ import { SYSTEM } from "../requests/requests.service"
 import { FakePaymentAdapter } from "./fake-payment.adapter"
 import type { PaymentProvider, ProviderSession } from "./payment-port"
 import { StripeAdapter } from "./stripe.adapter"
+import { productOf } from "../invoices/product"
 
 type Inv = typeof invoices.$inferSelect
 type SessionRow = typeof paymentSessions.$inferSelect
@@ -82,14 +83,14 @@ export class PaymentsService implements OnModuleInit {
     return row ?? { key: "stripe", provider: "STRIPE" as const, mode: "test" as const, pendingMode: null, pendingBy: null, pendingAt: null, updatedBy: null, updatedAt: new Date() }
   }
 
-  /** The configured provider, or null when it cannot be used (no keys, FAKE in production, live mode). */
+  /** The configured provider, or null when it cannot be used (no keys, FAKE or test mode outside local, live mode). */
   async provider(): Promise<{ id: PaymentProviderId; adapter: PaymentProvider | null }> {
     if (this.cached && Date.now() - this.cached.at < 10_000) return { id: this.cached.id, adapter: this.cached.provider }
     const cfg = await this.configRow()
     let adapter: PaymentProvider | null = null
-    if (canEnterStripeMode(cfg.mode).ok) {
+    if (canEnterStripeMode(cfg.mode, !sandboxAllowed()).ok) {
       if (cfg.provider === "FAKE") {
-        if (env().APP_ENV !== "production" && process.env.NODE_ENV !== "production") adapter = new FakePaymentAdapter(this.redis)
+        if (sandboxAllowed()) adapter = new FakePaymentAdapter(this.redis)
       } else {
         const c = await this.vendors.get(STRIPE_VENDOR)
         if (c?.secretKey && c.webhookSecret) adapter = new StripeAdapter({ secretKey: c.secretKey, publishableKey: c.publishableKey ?? null, webhookSecret: c.webhookSecret })
@@ -117,7 +118,7 @@ export class PaymentsService implements OnModuleInit {
     const reasons: OnlinePaymentEligibility["reasons"] = []
     if (!this.config.flag("payments.online.enabled")) reasons.push("FLAG_OFF")
     if (inv.status !== "ISSUED") reasons.push("NOT_ISSUED")
-    const policy = onlinePaymentEligibility(await this.compliance.onlinePaymentPolicies(), { product: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT", currency: inv.currency, totalMinor: inv.totalMinor, customerUserId: inv.customerUserId })
+    const policy = onlinePaymentEligibility(await this.compliance.onlinePaymentPolicies(), { product: productOf(inv.requestType), currency: inv.currency, totalMinor: inv.totalMinor, customerUserId: inv.customerUserId })
     reasons.push(...policy.reasons)
     if (inv.expiresAt && !checkoutExpiry(inv.expiresAt, now)) reasons.push("EXPIRES_TOO_SOON")
     if (!(await this.provider()).adapter) reasons.push("NOT_CONFIGURED")
@@ -291,7 +292,7 @@ export class PaymentsService implements OnModuleInit {
       await this.closeSession(tx, s, "mismatch", { paymentIntentId: paid.paymentIntentId })
       const why = mismatch ? `Paid ${fmt(paid.amountMinor, paid.currency)} but the invoice is ${fmt(inv.totalMinor, inv.currency)}` : `Payment arrived for an invoice that is ${inv.status}`
       const c = await this.compliance.openCase(tx, {
-        requestType: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT", requestId: inv.requestId, requestRef: inv.requestRef, trigger: "POLICY",
+        requestType: productOf(inv.requestType), requestId: inv.requestId, requestRef: inv.requestRef, trigger: "POLICY",
         summary: "Card payment does not match its invoice; ops decision needed (usually a refund)",
         evidence: [{ kind: "PAYMENT_MISMATCH", label: `Invoice ${inv.number}`, detail: `${why}. PaymentIntent ${paid.paymentIntentId}, provider ${s.provider}, ${source}.` }],
       })
@@ -304,7 +305,7 @@ export class PaymentsService implements OnModuleInit {
     // Screening a payer after the money moved cannot undo it; a hit opens a case and the payment is still recorded (ADR-0007 P9).
     const scr = await this.compliance.screen(tx, { subjectType: "PAYER", subjectRef: `${inv.requestId}:${payer}`, name: payer, contextRef: inv.requestRef })
     if (scr.result !== "CLEAR") {
-      await this.compliance.openCase(tx, { requestType: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT", requestId: inv.requestId, requestRef: inv.requestRef, trigger: "SCREENING", summary: "Card payer needs a compliance decision", evidence: scr.hits.map((h) => ({ kind: "PAYER_MATCH", label: `${payer} ↔ ${h.matchedName}`, detail: `${h.listId} ${h.externalId}`, score: h.score })), screeningIds: [scr.screeningId] })
+      await this.compliance.openCase(tx, { requestType: productOf(inv.requestType), requestId: inv.requestId, requestRef: inv.requestRef, trigger: "SCREENING", summary: "Card payer needs a compliance decision", evidence: scr.hits.map((h) => ({ kind: "PAYER_MATCH", label: `${payer} ↔ ${h.matchedName}`, detail: `${h.listId} ${h.externalId}`, score: h.score })), screeningIds: [scr.screeningId] })
     }
     const now = new Date()
     const [rec] = await tx.insert(paymentRecords).values({
@@ -354,7 +355,7 @@ export class PaymentsService implements OnModuleInit {
     await this.audit.record(tx, { actorKind: "SYSTEM", action: `payment.${type.replace("charge.", "").replace(".", "_")}`, entityType: "payment_record", entityId: p.id, contextRef: inv.requestRef, after: { dispute: d.id, reason: d.reason, status: d.status, amountMinor: d.amount } })
     if (type === "charge.dispute.created") {
       await this.compliance.openCase(tx, {
-        requestType: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT", requestId: inv.requestId, requestRef: inv.requestRef, trigger: "POLICY", summary: "Card dispute opened by the cardholder's bank",
+        requestType: productOf(inv.requestType), requestId: inv.requestId, requestRef: inv.requestRef, trigger: "POLICY", summary: "Card dispute opened by the cardholder's bank",
         evidence: [{ kind: "CARD_DISPUTE", label: `Invoice ${inv.number}`, detail: `Dispute ${d.id}, reason ${d.reason}, ${fmt(d.amount, d.currency.toUpperCase())}. Respond in the Stripe Dashboard before the deadline.` }],
       })
     }

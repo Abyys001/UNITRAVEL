@@ -41,6 +41,10 @@ export class DuffelAdapter implements FlightSupplierAdapter {
   private async call<T>(method: "GET" | "POST", path: string, ctx: CallContext, body?: unknown): Promise<T> {
     const token = ctx.credentials?.accessToken
     if (!token) throw new SupplierError("SUPPLIER_AUTH", "Duffel access token not configured")
+    // Prefix INFERRED from Duffel's token format (ADR-0014): a sandbox token must never serve a deployed host.
+    if (ctx.environment === "production" && token.startsWith("duffel_test_")) {
+      throw new SupplierError("SUPPLIER_AUTH", "A Duffel test token cannot serve live searches (ADR-0014)")
+    }
     let res: Response
     try {
       res = await fetch(`${BASE}${path}`, {

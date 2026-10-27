@@ -1,11 +1,12 @@
 import fc from "fast-check"
 import { describe, expect, it } from "vitest"
 
-import { BillingDocuments, CargoCustomerView, CustomerInvoice, StaffInvoice, CustomerSearchState, CustomerSeatMap, FlightRequestCustomerView, FlightRequestListItem, Itinerary, MyDetails, NormalisedOffer, SeatMap, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
+import { BillingDocuments, CargoCustomerView, CustomerInvoice, CustomerServiceRequestView, PublicTrackView, StaffServiceRequestView, ServiceQuoteView, StaffInvoice, CustomerSearchState, CustomerSeatMap, FlightRequestCustomerView, FlightRequestListItem, Itinerary, MyDetails, NormalisedOffer, SeatMap, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
 
 import { encryptField } from "./core/crypto"
 import { CustomersService } from "./modules/customers/customers.service"
 import { InvoicesService } from "./modules/invoices/invoices.service"
+import { ServicesService } from "./modules/services/services.service"
 
 import { customerItinerary, customerSeatMaps } from "./modules/search/customer-projection"
 
@@ -246,5 +247,75 @@ describe("billing customer views (ADR-0006, Phase C)", () => {
   it("staff views without pricing.read.internal carry null amounts and the schema accepts them", () => {
     const hidden = { id: row("DRAFT").id, number: null, status: "DRAFT", requestRef: ref, productType: "CARGO", currency: "GBP", lines: [{ description: "Freight", quantity: 1, unitAmount: null, amount: null }], total: null, issuedAt: null, expiresAt: null, paidAt: null, cancelledAt: null, cancelReason: null, documentId: null, createdAt: "2026-11-01T10:00:00.000Z", history: [], actions: [{ command: "issue", allowed: false, reason: "no" }] }
     expect(amountPaths(StaffInvoice.parse(hidden))).toEqual([])
+  })
+})
+
+describe("service request customer views (ADR-0015)", () => {
+  const svc = new ServicesService(...(Array(11).fill({}) as ConstructorParameters<typeof ServicesService>))
+  const internal = (svc as unknown as { quoteView(q: unknown): unknown; summary(r: unknown, l: string): unknown })
+  const STAFF_ONLY = ["version", "customer", "assignee", "slaDueAt", "submittedVia", "submittedLocale", "complianceCaseId", "travellers", "quotes", "allowedCommands", "assigneeUserId", "customerUserId", "contactPhoneSnapshot", "contactIdentityId", "reasonText", "internalNote", "createdBy", "serviceNote"]
+  const row = { id: "0b6a1f7e-3c1d-4f7a-9b2e-5d4c3b2a1f00", ref: "UT-S-7Q2K9M", type: "VISA", status: "COMPLIANCE_HOLD", submittedAt: new Date("2026-11-01T10:00:00Z"), updatedAt: new Date("2026-11-01T10:05:00Z") }
+  const sentQuote = (status: string) => ({
+    id: "1c7b2a8f-4d2e-4a8b-8c3f-6e5d4c3b2a10", status, currency: "GBP", validUntil: new Date("2026-11-05T10:00:00Z"), sentAt: new Date("2026-11-01T10:00:00Z"), documentNumber: "QT-2026-000007",
+    serviceNote: "Takes about 5 working days", serviceLines: [{ kind: "SERVICE_FEE", label: "Service fee", amount: money }, { kind: "CLUB_DISCOUNT", label: "Club", amount: { amountMinor: 1000, currency: "GBP" }, benefitId: "2d8c3b9a-5e3f-4b9c-9d4a-7f6e5d4c3b20" }],
+  })
+  const base = (quote: unknown) => ({
+    ...(internal.summary(row, "en") as object), details: { destinationCountry: "TR", purpose: "TOURISM" }, timeline: [{ at: "2026-11-01T10:00:00.000Z", kind: "STATUS", label: "Received", toStatus: "SUBMITTED" }],
+    messages: [], quote, canCancel: true, canAcceptQuote: false,
+  })
+  const picks = fc.array(fc.record({ key: fc.constantFrom(...INTERNAL, ...STAFF_ONLY), depthSeed: fc.nat() }), { minLength: 1, maxLength: 12 })
+  /** The customer's own details are validated when written and shown back verbatim, so contamination targets everything around them. */
+  const contaminateOutsideDetails = (v: Record<string, unknown>, p: { key: string; depthSeed: number }[]) => {
+    const { details, ...rest } = structuredClone(v)
+    return { ...(contaminate(rest, p) as object), details }
+  }
+
+  it("a compliance hold is shown as received, never as a hold", () => {
+    expect((internal.summary(row, "en") as { status: string }).status).toBe("SUBMITTED")
+  })
+
+  it("never emits staff fields, even when the record carries them (property)", () => {
+    fc.assert(fc.property(fc.constantFrom("SENT", "ACCEPTED", "EXPIRED"), picks, (status, p) => {
+      const out = CustomerServiceRequestView.parse(contaminateOutsideDetails(base(internal.quoteView(sentQuote(status))) as Record<string, unknown>, p))
+      expect(JSON.stringify(out)).not.toContain("SECRET-")
+      for (const k of STAFF_ONLY) expect(out).not.toHaveProperty(k)
+    }), { numRuns: 200 })
+  })
+
+  it("a draft or replaced quote cannot be represented to a customer, so no draft amount can reach one", () => {
+    for (const status of ["DRAFT", "SUPERSEDED"]) expect(CustomerServiceRequestView.safeParse(base(internal.quoteView(sentQuote(status)))).success).toBe(false)
+    expect(CustomerServiceRequestView.safeParse(base(null)).success).toBe(true)
+  })
+
+  it("amounts appear only inside the sent quote, and the club discount is a negative contribution to the total", () => {
+    const amountPicks = fc.array(fc.record({ key: fc.constantFrom(...AMOUNT_FIELDS), depthSeed: fc.nat() }), { minLength: 1, maxLength: 8 })
+    fc.assert(fc.property(amountPicks, (p) => {
+      const { quote: sent, ...rest } = base(internal.quoteView(sentQuote("SENT"))) as Record<string, unknown>
+      const out = CustomerServiceRequestView.parse({ ...contaminateOutsideDetails(rest, p), quote: sent })
+      const { quote, ...outside } = out
+      expect(amountPaths(outside)).toEqual([])
+      expect(quote?.total).toEqual({ amountMinor: 41000 - 1000, currency: "GBP" })
+    }), { numRuns: 100 })
+  })
+
+  it("the staff schema keeps the staff fields the customer schema drops", () => {
+    const staff = { ...base(internal.quoteView(sentQuote("SENT"))), status: "COMPLIANCE_HOLD", version: 3, customer: { userId: row.id, name: "Leila", phone: "+989121234567" }, assignee: null, slaDueAt: null, submittedVia: "WEB", submittedLocale: "en", complianceCaseId: null, travellers: [], quotes: [], allowedCommands: [] }
+    expect(StaffServiceRequestView.parse(staff)).toMatchObject({ version: 3, status: "COMPLIANCE_HOLD" })
+    expect(ServiceQuoteView.safeParse(internal.quoteView(sentQuote("DRAFT"))).success).toBe(true)
+  })
+})
+
+describe("public tracking view (spec 4.5)", () => {
+  const view = (extra: object = {}) => ({ ref: "UT-S-7Q2K9M", kind: "SERVICE", serviceType: "VISA", status: "QUOTED", timeline: [{ at: "2026-11-01T10:00:00.000Z", status: "SUBMITTED" }, { at: "2026-11-02T10:00:00.000Z", status: "QUOTED" }], ...extra })
+  const LEAKS = [...INTERNAL, ...AMOUNT_FIELDS, "name", "givenNames", "surname", "nameFa", "passportNumber", "dateOfBirth", "phone", "email", "details", "quote", "total", "customer", "messages", "reasonText", "note"]
+
+  it("carries only the reference, kind, type, status and a status timeline, whatever the record carries (property)", () => {
+    fc.assert(fc.property(fc.array(fc.record({ key: fc.constantFrom(...LEAKS), depthSeed: fc.nat() }), { minLength: 1, maxLength: 12 }), (p) => {
+      const out = PublicTrackView.parse(contaminate(structuredClone(view()), p))
+      expect(Object.keys(out).sort()).toEqual(["kind", "ref", "serviceType", "status", "timeline"])
+      for (const t of out.timeline) expect(Object.keys(t).sort()).toEqual(["at", "status"])
+      expect(JSON.stringify(out)).not.toContain("SECRET-")
+      expect(amountPaths(out)).toEqual([])
+    }), { numRuns: 200 })
   })
 })

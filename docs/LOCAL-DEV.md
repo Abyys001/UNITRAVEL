@@ -37,7 +37,7 @@ Use `scripts/svc.sh start|stop|restart <api|worker|web|console|mobile>...`. It k
 ## Signing in (local only)
 Sign-in is email-only (ADR-0010). On every sign-in screen a dashed **Test sign-in (local only)** box reads the code from the local email sink (`GET http://localhost:4100/v1/dev-sink/email`) and fills it in. For staff it also fills the current authenticator code (`GET /v1/auth/dev-sink/totp`). The box only appears when `APP_ENV=local`. Emails also arrive in Mailpit (http://localhost:8035). SMS (phone verification) still goes to `/v1/dev-sink/sms`, and push to `/v1/dev-sink/push`.
 
-**Test sign-in (ADR-0012).** With `TEST_SIGN_IN=on` (the local `.env.example` default; staging opts in; the API refuses to start with it on in production) every sign-in screen also shows a **Test sign-in (testing phase)** box: type or pick an email and sign in without any code. Staff skip the authenticator step. Every use is audited as `user.test_signed_in`.
+**Test sign-in (ADR-0012).** With `TEST_SIGN_IN=on` (the local `.env.example` default; staging opts in until real email (SMTP) is configured, owner 27 Oct 2026; the API refuses to start with it on in production) every sign-in screen also shows a **Test sign-in (testing phase)** box: type or pick an email and sign in without any code. Staff skip the authenticator step. Every use is audited as `user.test_signed_in`.
 
 New customers: sign in with any new email; you then get the profile form. Staff accounts are created through the Admin Panel.
 

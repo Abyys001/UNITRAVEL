@@ -605,6 +605,11 @@ T = {
  'cancelReasonCustomerRequest': ('Cancelled at your request. Do not pay it.', 'به درخواست شما لغو شد. آن را پرداخت نکنید.'),
  'cancelReasonDuplicate': ('Cancelled because it was a duplicate. Do not pay it.', 'چون تکراری بود لغو شد. آن را پرداخت نکنید.'),
  'cancelReasonOther': ('This invoice was cancelled. Do not pay it.', 'این فاکتور لغو شد. آن را پرداخت نکنید.'),
+ # account > help (opens the website pages in the browser)
+ 'helpTitle': ('Help', 'راهنما'),
+ 'helpFaq': ('FAQ', 'سوالات متداول'),
+ 'helpTravelRules': ('Travel rules', 'قوانین سفر'),
+ 'helpFlightGuide': ('Buying guide', 'راهنمای خرید بلیت'),
 }
 
 

@@ -3594,6 +3594,30 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Test sign-in failed. Check the email and try again.'**
   String get testSignInError;
+
+  /// No description provided for @helpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get helpTitle;
+
+  /// No description provided for @helpFaq.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQ'**
+  String get helpFaq;
+
+  /// No description provided for @helpTravelRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel rules'**
+  String get helpTravelRules;
+
+  /// No description provided for @helpFlightGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Buying guide'**
+  String get helpFlightGuide;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

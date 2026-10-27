@@ -13,7 +13,7 @@ import { NotificationsService } from "./notifications.service"
 interface RequestPayload {
   requestId: string; ref: string; customerUserId: string; assigneeUserId?: string | null; from?: string; to?: string; command?: string;
   actorUserId?: string | null; routeLabel?: string; message?: string; validUntil?: string; urgent?: boolean; deadline?: string; ticketNumbers?: string[];
-  productType?: "FLIGHT" | "CARGO"; documentNumber?: string; statusLabels?: { en: string; fa: string }; direction?: string; locale?: "en" | "fa"
+  productType?: "FLIGHT" | "CARGO"; service_en?: string; service_fa?: string; documentNumber?: string; statusLabels?: { en: string; fa: string }; direction?: string; locale?: "en" | "fa"
 }
 
 /** Maps domain events onto the event catalogue and its audiences (Table 17.1). */
@@ -27,7 +27,7 @@ export class NotificationRouter {
   ) {}
 
   private requestPath(ref: string) {
-    return ref.startsWith("UT-C") ? `/cargo/${ref}` : `/requests/${ref}`
+    return ref.startsWith("UT-C") ? `/cargo/${ref}` : ref.startsWith("UT-S") ? `/services/${ref}` : `/requests/${ref}`
   }
 
   /** New-request alerts go to on-duty admins only; outside business hours an hourly digest instead, unless urgent. */
@@ -65,6 +65,17 @@ export class NotificationRouter {
       case "cargo_request.submitted":
         await this.n.notify({ ...base, eventType: "cargo.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, route: p.routeLabel }, linkPath: this.requestPath(p.ref) })
         return this.alertAdmins(e, { ...p, productType: "CARGO" }, "cargo.submitted")
+      case "service_request.submitted": {
+        const vars = { ref: p.ref, route: p.routeLabel, service_en: p.service_en, service_fa: p.service_fa }
+        await this.n.notify({ ...base, eventType: "service_request.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars, linkPath: this.requestPath(p.ref) })
+        const onDuty = await this.access.usersWithPermission("service_request.read.any", { onDutyOnly: true })
+        return this.n.notify({ ...base, eventType: "service_request.submitted", audience: "ON_DUTY_ADMINS", userIds: onDuty, vars, linkPath: this.requestPath(p.ref) })
+      }
+      case "service_request.transitioned":
+        return this.serviceTransition(e, p)
+      case "service_request.quote_sent":
+        // Same numbered quotation as flights and cargo (ADR-0006 C1).
+        return this.n.notify({ ...base, eventType: "quotation.sent", audience: "CUSTOMER", userIds: [p.customerUserId], documentDelivery: true, vars: { ref: p.ref, number: p.documentNumber ?? p.ref, expires_at: p.validUntil }, linkPath: this.requestPath(p.ref), data: { ref: p.ref, number: p.documentNumber } })
       case "flight_request.transitioned":
         return this.flightTransition(e, p)
       case "cargo_request.transitioned": {
@@ -85,8 +96,9 @@ export class NotificationRouter {
       }
       case "flight_request.message":
       case "cargo_request.message":
+      case "service_request.message":
         if (p.direction === "FROM_CUSTOMER") {
-          if (p.assigneeUserId) return this.n.notify({ ...base, eventType: "request.message_from_customer", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref, message_preview: preview(p.message) }, linkPath: `/requests/${p.ref}` })
+          if (p.assigneeUserId) return this.n.notify({ ...base, eventType: "request.message_from_customer", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref, message_preview: preview(p.message) }, linkPath: p.ref.startsWith("UT-S") ? this.requestPath(p.ref) : `/requests/${p.ref}` })
           return
         }
         return this.n.notify({ ...base, eventType: "request.message_from_staff", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, message_preview: preview(p.message) }, linkPath: this.requestPath(p.ref) })
@@ -106,7 +118,7 @@ export class NotificationRouter {
         return this.n.notify({ ...base, eventType: "compliance.hold_created", audience: "COMPLIANCE", userIds: officers, vars: { ref: p.ref, trigger: String((e.payload as { trigger?: string }).trigger ?? "") }, linkPath: `/compliance` })
       }
       case "compliance.case_decided": {
-        const admins = await this.access.usersWithPermission(p.ref.startsWith("UT-C") ? "cargo_request.read.any" : "flight_request.read.any", { onDutyOnly: true })
+        const admins = await this.access.usersWithPermission(p.ref.startsWith("UT-C") ? "cargo_request.read.any" : p.ref.startsWith("UT-S") ? "service_request.read.any" : "flight_request.read.any", { onDutyOnly: true })
         return this.n.notify({ ...base, eventType: "compliance.case_decided", audience: "ON_DUTY_ADMINS", userIds: admins, vars: { ref: p.ref, decision: String((e.payload as { decision?: string }).decision ?? "") }, linkPath: `/requests/${p.ref}` })
       }
       case "security.new_sign_in": {
@@ -137,6 +149,25 @@ export class NotificationRouter {
         return this.n.notify({ ...base, eventType: "request.status_changed", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, status_label: "New document", status_label_fa: "سند جدید" }, linkPath: this.requestPath(p.ref) })
       default:
         return
+    }
+  }
+
+  /** Service request wording (ADR-0015): customer-facing notices for quoted, confirmed and closed; the machine's hold states stay internal. */
+  private async serviceTransition(e: DispatchedEvent, p: RequestPayload) {
+    if (p.to === "COMPLIANCE_HOLD" || p.to === "SUBMITTED") return
+    const base = { eventId: e.id, requestKey: p.ref, data: { ref: p.ref }, linkPath: this.requestPath(p.ref) }
+    const vars = { ref: p.ref, service_en: p.service_en, service_fa: p.service_fa }
+    const customer = { audience: "CUSTOMER" as const, userIds: [p.customerUserId] }
+    if (p.command === "claim" || p.command === "assign") {
+      if (p.assigneeUserId && p.assigneeUserId !== p.actorUserId) await this.n.notify({ ...base, eventType: "request.assigned", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref, route: p.service_en } })
+      return
+    }
+    switch (p.to) {
+      case "QUOTED": return this.n.notify({ ...base, ...customer, eventType: "service_request.quoted", vars })
+      case "CONFIRMED": return this.n.notify({ ...base, ...customer, eventType: "service_request.confirmed", vars })
+      case "CANCELLED": case "CLOSED_NO_RESPONSE": return this.n.notify({ ...base, ...customer, eventType: "service_request.cancelled", vars })
+      case "DECLINED": return this.n.notify({ ...base, ...customer, eventType: "request.declined", vars: { ref: p.ref, message_preview: preview(p.message) } })
+      default: return this.n.notify({ ...base, ...customer, eventType: "request.status_changed", vars: { ref: p.ref, status_label: p.statusLabels?.en ?? "", status_label_fa: p.statusLabels?.fa } })
     }
   }
 

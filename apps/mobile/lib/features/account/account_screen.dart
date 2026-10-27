@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kit_ui/kit_ui.dart' show XfamTone;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_error.dart';
+import '../../core/config.dart';
 import '../../core/errors_l10n.dart';
 import '../../core/providers.dart';
 import '../../core/repos.dart';
@@ -155,6 +157,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               SectionTitle(l.myTravellers),
               const _TravellerList(),
             ],
+            SectionTitle(l.helpTitle),
+            const HelpLinks(),
             const SizedBox(height: 24),
             OutlinedButton.icon(onPressed: _signOut, icon: const Icon(Icons.logout), label: Text(l.signOut)),
             const SizedBox(height: 12),
@@ -195,6 +199,42 @@ class _TravellerList extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A static content page on the website (FAQ, travel rules, buying guide), in the app's language.
+Uri helpPageUri(String lang, String path) => Uri.parse('${AppConfig.webUrl}/$lang$path');
+
+/// Account › Help: opens the website's content pages in the browser, like the invoice pay page.
+class HelpLinks extends StatelessWidget {
+  const HelpLinks({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    final lang = context.lang;
+    final entries = [
+      ('help-faq', Icons.help_outline, l.helpFaq, '/faq'),
+      ('help-travel-rules', Icons.rule_folder_outlined, l.helpTravelRules, '/travel-rules'),
+      ('help-flight-guide', Icons.menu_book_outlined, l.helpFlightGuide, '/flights/guide'),
+    ];
+    return Column(
+      children: [
+        for (final (key, icon, label, path) in entries)
+          ListTile(
+            key: Key(key),
+            contentPadding: EdgeInsets.zero,
+            minTileHeight: 56,
+            leading: Icon(icon),
+            title: Text(label),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () async {
+              final ok = await launchUrl(helpPageUri(lang, path), mode: LaunchMode.externalApplication);
+              if (!ok && context.mounted) showMessage(context, l.billingOpenFailed, error: true);
+            },
+          ),
+      ],
     );
   }
 }

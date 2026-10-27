@@ -1,6 +1,6 @@
 export const en = {
   brand: { name: "Uni Travel", tagline: "Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people." },
-  nav: { search: "Flights", cargo: "Send cargo", shipments: "Shipments", billing: "Documents & billing", requests: "My requests", inbox: "Inbox", account: "Account", signIn: "Sign in", signOut: "Sign out", language: "فارسی", help: "How it works" },
+  nav: { search: "Flights", cargo: "Send cargo", shipments: "Shipments", billing: "Documents & billing", requests: "My requests", inbox: "Inbox", account: "Account", signIn: "Sign in", signOut: "Sign out", language: "فارسی", help: "How it works", faq: "FAQ", travelRules: "Travel rules", flightGuide: "Buying guide" },
   home: {
     eyebrow: "Iran · Türkiye · Armenia · UK · Europe",
     title: "Real routes out of Iran, assembled with care.",
@@ -20,6 +20,7 @@ export const en = {
     trust4: "Persian and English", trust4Body: "Support in your language, day and night.",
     routesTitle: "Routes we arrange", routesBody: "Real starts and connections our team works with every week. Pick a city to search today's flights.", routesCta: "Search flights",
     appTitle: "Your journey in your pocket", appBody: "Track requests, receive quotes and keep tickets offline in the Uni Travel app.", appSoon: "Coming soon to the App Store and Google Play",
+    faqTitle: "Frequently asked questions", faqAll: "All questions and answers",
     cargoTitle: "Sending documents, parcels or freight?", cargoBody: "Request a quote through our vetted partners. Every shipment is checked and quoted by a person.", cargoCta: "Request a cargo quote",
   },
   search: {
@@ -168,5 +169,6 @@ export const en = {
   common: { loading: "Loading…", error: "Something went wrong.", retry: "Try again", save: "Save", cancel: "Cancel", close: "Close", back: "Back", next: "Next", required: "Required", yes: "Yes", no: "No", remove: "Remove", edit: "Edit", optional: "optional" },
   notFound: { title: "We could not find that page", body: "The link may be old or mistyped.", home: "Back to home" },
   footer: { draftNotice: "This is draft wording. It has not yet been reviewed by our legal counsel and may change.", explore: "Explore", help: "Help", legal: "Legal", credits: "Photo and video credits", company: "Uni Travel Ltd · London", notAtol: "Flights are arranged as an airline ticket agent; payment is taken when tickets are issued.", terms: "Terms", privacy: "Privacy", status: "Service status" },
+  content: { generalNotice: "This is general guidance; the airline's, airport's and destination country's rules always apply.", faqTitle: "Frequently asked questions", travelRulesTitle: "Important rules and tips for international flights", flightGuideTitle: "Buying a flight with Uni Travel", contents: "Contents" },
   credits: { title: "Photo and video credits", lead: "The photographs and video on this site are decorative stock media. They show places only; they are not offers, prices or availability.", item: "Title", creator: "Creator", source: "Source", licence: "Licence", usedOn: "Used on", none: "No credits listed yet." },
 } as const

@@ -27,7 +27,7 @@ export class CustomerBillingController {
   }
 }
 
-const READ = ["flight_request.read.any", "cargo_request.read.any", "commercial_document.issue"] as const
+const READ = ["flight_request.read.any", "cargo_request.read.any", "service_request.read.any", "commercial_document.issue"] as const
 
 @ApiTags("admin-invoices")
 @Controller("v1/admin")

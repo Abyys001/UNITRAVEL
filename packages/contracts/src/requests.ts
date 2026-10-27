@@ -266,7 +266,7 @@ export const StaffAfterSalesItem = z.object({
 export type StaffAfterSalesItem = z.infer<typeof StaffAfterSalesItem>
 /** Staff SSE `request-changed` push (/v1/admin/events): the new version plus the current status for Live activity. */
 export const StaffRequestChangedEvent = z.object({
-  requestType: z.enum(["FLIGHT", "CARGO"]), ref: Reference, version: z.number().int(), status: z.string(), statusLabel: z.string(),
+  requestType: z.enum(["FLIGHT", "CARGO", "SERVICE"]), ref: Reference, version: z.number().int(), status: z.string(), statusLabel: z.string(),
 })
 export type StaffRequestChangedEvent = z.infer<typeof StaffRequestChangedEvent>
 export const CreditOverrideView = z.object({

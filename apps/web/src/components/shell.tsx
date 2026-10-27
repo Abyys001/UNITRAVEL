@@ -119,7 +119,7 @@ export function Footer() {
           <p className="mt-5 max-w-sm border-s-2 border-orange ps-3 text-xs leading-relaxed text-white/65">{t("footer.notAtol")}</p>
         </div>
         <FooterCol title={t("footer.explore")} links={[[href("/"), t("nav.search")], [href("/cargo"), t("nav.cargo")], [href("/shipments"), t("nav.shipments")]]} />
-        <FooterCol title={t("footer.help")} links={[[href("/requests"), t("nav.requests")], [href("/billing"), t("nav.billing")], [href("/inbox"), t("nav.inbox")]]} />
+        <FooterCol title={t("footer.help")} links={[[href("/requests"), t("nav.requests")], [href("/billing"), t("nav.billing")], [href("/inbox"), t("nav.inbox")], [href("/faq"), t("nav.faq")], [href("/travel-rules"), t("nav.travelRules")], [href("/flights/guide"), t("nav.flightGuide")]]} />
         <FooterCol title={t("footer.legal")} links={[[href("/terms"), t("footer.terms")], [href("/privacy"), t("footer.privacy")], [href("/credits"), t("footer.credits")]]} />
       </div>
       <div className="relative border-t border-white/10">

@@ -41,6 +41,12 @@ Spec and owner decisions: `docs/ADDITIONAL-REQUIREMENTS.md`. Sequential; each en
 - [x] Phase D — Stripe Embedded Checkout, test mode only; live BLOCKED (STAGE-11)
 - [x] Phase F — design and UX (STAGE-12)
 
+## Content, menu and live data (27 Oct 2026) — status
+Spec and owner decisions: `docs/CONTENT-MENU-LIVE-DATA.md`.
+- [ ] Phase G — live data only on deployed hosts (STAGE-14)
+- [ ] Phase H — FAQ, travel rules, flight-buying guide (STAGE-15)
+- [ ] Phase I — menu, service requests, tracking, support, customer club, vertical ports (STAGE-16)
+
 ## Progress log
 (append one line per completed unit of work)
 - 2026-10-22 contracts (Zod schemas, permissions, errors, defaults) · domain (state machines, formats, payments; 17 tests incl. properties) · engine (plan/filter/join/validate/score/diversify; worked example + 5 property tests green)

@@ -5,7 +5,7 @@ import { newRedis } from "../../core/infra.module"
 
 /** Pub/sub channel the outbox dispatcher publishes request-affecting events to, for the console stream (ch. 29.2). */
 export const STAFF_EVENTS_CHANNEL = "staff:events"
-export const STAFF_EVENT_AGGREGATES = new Set(["flight_request", "cargo_request", "compliance_case"])
+export const STAFF_EVENT_AGGREGATES = new Set(["flight_request", "cargo_request", "service_request", "compliance_case"])
 
 export interface StaffSignal {
   type: string

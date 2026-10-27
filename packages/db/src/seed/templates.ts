@@ -128,6 +128,31 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     en: { title: "{ref} · {status_label}", body: "Your shipment {ref} is now: {status_label}." }, fa: { title: "{ref} · {status_label}", body: "وضعیت محمولهٔ {ref}: {status_label}" },
     smsEn: "Uni Travel: {ref} {status_label}. {link}", smsFa: "یونی‌تراول: {ref} {status_label} {link}",
   },
+  // ADR-0015: service requests. Wording never promises a booking, an outcome or a price before a quote is sent.
+  "service_request.submitted": {
+    vars: ["ref", "service", "link"],
+    en: { title: "Request received · {ref}", body: "We received your {service} request {ref}. Nothing is booked or charged until we send a quote and you accept it." },
+    fa: { title: "درخواست دریافت شد · {ref}", body: "درخواست {service} با شمارهٔ {ref} دریافت شد. تا ارسال پیشنهاد قیمت و تأیید شما چیزی رزرو یا دریافت نمی‌شود." },
+    smsEn: "Uni Travel: request {ref} received. {link}", smsFa: "یونی‌تراول: درخواست {ref} دریافت شد. {link}",
+  },
+  "service_request.quoted": {
+    vars: ["ref", "service", "link"],
+    en: { title: "Your quote is ready · {ref}", body: "The quote for your {service} request {ref} is ready. Review it and accept it to go ahead." },
+    fa: { title: "پیشنهاد قیمت آماده است · {ref}", body: "پیشنهاد قیمت درخواست {service} با شمارهٔ {ref} آماده است. آن را بررسی کنید و برای ادامه تأیید کنید." },
+    smsEn: "Uni Travel: quote for {ref} is ready. {link}", smsFa: "یونی‌تراول: پیشنهاد قیمت {ref} آماده است. {link}",
+  },
+  "service_request.confirmed": {
+    vars: ["ref", "service", "link"],
+    en: { title: "Confirmed · {ref}", body: "Your {service} request {ref} is confirmed. Our team will be in touch about the next steps." },
+    fa: { title: "تأیید شد · {ref}", body: "درخواست {service} با شمارهٔ {ref} تأیید شد. تیم ما دربارهٔ مراحل بعد با شما تماس می‌گیرد." },
+    smsEn: "Uni Travel: {ref} is confirmed. {link}", smsFa: "یونی‌تراول: {ref} تأیید شد. {link}",
+  },
+  "service_request.cancelled": {
+    vars: ["ref", "service", "link"],
+    en: { title: "Closed · {ref}", body: "Your {service} request {ref} has been closed. You can send a new request at any time." },
+    fa: { title: "بسته شد · {ref}", body: "درخواست {service} با شمارهٔ {ref} بسته شد. هر زمان می‌توانید درخواست جدیدی ثبت کنید." },
+    smsEn: "Uni Travel: {ref} is closed. {link}", smsFa: "یونی‌تراول: {ref} بسته شد. {link}",
+  },
   "compliance.hold_created": {
     vars: ["ref", "trigger"],
     en: { title: "Compliance hold · {ref}", body: "A {trigger} check needs a decision." }, fa: { title: "توقف انطباق · {ref}", body: "بررسی {trigger} نیاز به تصمیم دارد." },

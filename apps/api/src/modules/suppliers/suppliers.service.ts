@@ -7,7 +7,7 @@ import type { NormalisedOffer, ProviderId, SeatMap } from "@unitravel/contracts"
 import { type Db, providerCalls, providerCredentials, providers } from "@unitravel/db"
 
 import { decryptField, encryptField } from "../../core/crypto"
-import { env } from "../../core/env"
+import { sandboxAllowed } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { DB, newRedis, REDIS } from "../../core/infra.module"
 import { ObjectStorage } from "../../core/storage"
@@ -38,11 +38,7 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
 
   constructor(@Inject(DB) private readonly db: Db, @Inject(REDIS) private readonly redis: Redis, private readonly reference: ReferenceService, private readonly outbox: OutboxService, private readonly storage: ObjectStorage) {
     const list: FlightSupplierAdapter[] = [new DuffelAdapter(), new AmadeusEnterpriseAdapter(), new ManualAdapter()]
-    try {
-      list.push(new FakeAdapter())
-    } catch (err) {
-      this.log.warn(String(err))
-    }
+    if (sandboxAllowed()) list.push(new FakeAdapter())
     for (const a of list) this.adapters.set(a.id, a)
   }
 
@@ -59,7 +55,8 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
   }
 
   async reload() {
-    this.rows = await this.db.select().from(providers)
+    // ADR-0015: this gateway serves flights; stay, rail and bus providers (none exist yet) are never searched here.
+    this.rows = (await this.db.select().from(providers)).filter((p) => p.vertical === "FLIGHT")
     this.loadedAt = Date.now()
   }
 
@@ -69,7 +66,8 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
   }
 
   private envName(): "test" | "production" {
-    return env().APP_ENV === "production" ? "production" : "test"
+    // ADR-0014: only local development reads sandbox credentials; staging and production are live.
+    return sandboxAllowed() ? "test" : "production"
   }
 
   adapter(id: ProviderId) {
@@ -104,6 +102,9 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
   }
 
   async setCredentials(id: string, values: Record<string, string>, actorId: string) {
+    if (!sandboxAllowed() && id === "duffel" && values.accessToken?.startsWith("duffel_test_")) {
+      throw new AppError("VALIDATION_FAILED", "A Duffel test token cannot be used outside APP_ENV=local (ADR-0014)")
+    }
     const enc = encryptField(JSON.stringify(values))
     await this.db.insert(providerCredentials).values({ providerId: id, environment: this.envName(), ciphertext: enc.ciphertext, keyId: enc.keyId, rotatedBy: actorId, rotatedAt: new Date() })
       .onConflictDoUpdate({ target: [providerCredentials.providerId, providerCredentials.environment], set: { ciphertext: enc.ciphertext, keyId: enc.keyId, rotatedBy: actorId, rotatedAt: new Date() } })

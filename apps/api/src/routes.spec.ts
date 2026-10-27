@@ -54,7 +54,7 @@ describe("fail-closed route declarations", () => {
     const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
     for (const p of ["/v1/billing/documents", "/v1/billing/invoices/:number"]) expect({ p, perms: find("GET", p)?.permissions, staff: find("GET", p)?.staff }).toEqual({ p, perms: ["flight_request.read.own", "cargo_request.read.own"], staff: false })
     for (const [m, p] of [["POST", "/v1/admin/requests/:ref/invoices"], ["POST", "/v1/admin/invoices/:id/issue"], ["POST", "/v1/admin/invoices/:id/cancel"]] as const) expect({ p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, perms: ["commercial_document.issue"], staff: true })
-    for (const p of ["/v1/admin/invoices", "/v1/admin/invoices/:id", "/v1/admin/requests/:ref/invoices"]) expect({ p, perms: find("GET", p)?.permissions }).toEqual({ p, perms: ["flight_request.read.any", "cargo_request.read.any", "commercial_document.issue"] })
+    for (const p of ["/v1/admin/invoices", "/v1/admin/invoices/:id", "/v1/admin/requests/:ref/invoices"]) expect({ p, perms: find("GET", p)?.permissions }).toEqual({ p, perms: ["flight_request.read.any", "cargo_request.read.any", "service_request.read.any", "commercial_document.issue"] })
   })
 
   it("online payment (ADR-0007): the webhook is public, everything else declares a permission, live mode and refunds are gated", () => {
@@ -72,6 +72,20 @@ describe("fail-closed route declarations", () => {
     expect(find("GET", "/v1/dev/payments")).toMatchObject({ permissions: ["provider.config.read"], dev: true })
     // The only other public payment routes are the local-only FAKE simulator, which answers 404 outside APP_ENV=local.
     expect(routes.filter((r) => r.path.includes("payments") && r.isPublic).map((r) => r.path).sort()).toEqual(["/v1/dev-sink/payments/:sessionId/deliver", "/v1/dev-sink/payments/:sessionId/sign"])
+  })
+
+  it("service requests (ADR-0015): customer routes are own-scoped, admin routes need service_request.read.any / write, site and track lookups are public", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("POST", "/v1/service-requests")).toMatchObject({ permissions: ["service_request.create.own"], staff: false })
+    for (const [m, p] of [["GET", "/v1/service-requests"], ["GET", "/v1/service-requests/:ref"], ["POST", "/v1/service-requests/:ref/cancel"], ["POST", "/v1/service-requests/:ref/messages"], ["POST", "/v1/service-requests/:ref/quote/accept"]] as const) {
+      expect({ m, p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ m, p, perms: ["service_request.read.own"], staff: false })
+    }
+    for (const [m, p] of [["GET", "/v1/admin/service-requests"], ["GET", "/v1/admin/service-requests/:ref"]] as const) expect(find(m, p)).toMatchObject({ permissions: ["service_request.read.any"], staff: true })
+    expect(find("POST", "/v1/admin/service-requests/:ref/transition")).toMatchObject({ permissions: ["service_request.write", "compliance.case.decide"], staff: true })
+    expect(find("POST", "/v1/admin/service-requests/:ref/messages")).toMatchObject({ permissions: ["service_request.write"], staff: true })
+    expect(find("GET", "/v1/site")).toMatchObject({ isPublic: true, staff: false })
+    expect(find("GET", "/v1/track")).toMatchObject({ permissions: ["flight_request.read.own"], staff: false })
+    for (const p of ["/v1/track/lookup", "/v1/track/verify"]) expect(find("POST", p)).toMatchObject({ isPublic: true, staff: false })
   })
 
   it("flags a route that lacks a declaration (the check fails the build)", () => {

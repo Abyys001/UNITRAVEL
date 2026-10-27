@@ -135,7 +135,8 @@ export class NotificationsService {
   async notify(input: NotifyInput): Promise<void> {
     const matrix = this.config.get("NOTIFICATION_MATRIX")
     const find = (rules: NotificationRule[]) => rules.find((r) => r.event === input.eventType && r.audience === input.audience)
-    const stored: NotificationRule = find(matrix.rules) ?? (input.documentDelivery ? find(DEFAULT_NOTIFICATION_MATRIX.rules) : undefined)
+    // An event added after the matrix was stored (service_request.* in ADR-0015) falls back to the shipped default rule.
+    const stored: NotificationRule = find(matrix.rules) ?? find(DEFAULT_NOTIFICATION_MATRIX.rules)
       ?? { event: input.eventType, audience: input.audience, channels: ["INBOX"], sms: "NONE", critical: false, locked: false }
     const rule: NotificationRule = input.documentDelivery ? { ...stored, channels: [...new Set([...stored.channels, "INBOX" as const, "EMAIL" as const])] } : stored
     const link = input.linkPath ? await this.shortLink(input.linkPath) : undefined

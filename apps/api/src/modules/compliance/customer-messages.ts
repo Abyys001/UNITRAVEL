@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm"
 
-import { cargoRequests, type DbOrTx, flightRequests, users } from "@unitravel/db"
+import { cargoRequests, type DbOrTx, flightRequests, serviceRequests, users } from "@unitravel/db"
 
 /**
  * The neutral decline text a customer sees for compliance and policy declines (ch. 14.4, 27.5). It names no reason, and it does not
@@ -20,6 +20,10 @@ export async function customerLocale(db: DbOrTx, userId: string): Promise<"en" |
 export async function neutralDeclineFor(db: DbOrTx, requestType: string, requestId: string): Promise<string> {
   if (requestType === "FLIGHT") {
     const [r] = await db.select({ locale: flightRequests.submittedLocale }).from(flightRequests).where(eq(flightRequests.id, requestId))
+    return NEUTRAL_DECLINE[r?.locale ?? "en"]
+  }
+  if (requestType === "SERVICE") {
+    const [r] = await db.select({ locale: serviceRequests.submittedLocale }).from(serviceRequests).where(eq(serviceRequests.id, requestId))
     return NEUTRAL_DECLINE[r?.locale ?? "en"]
   }
   if (requestType !== "CARGO") return NEUTRAL_DECLINE.en

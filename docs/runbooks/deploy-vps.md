@@ -59,11 +59,11 @@ Application only: `git checkout <previous-tag-or-sha>` and run the same `up -d -
 
 Postgres (`pg` volume) and object storage (`storage` volume) are the state; Valkey holds BullMQ jobs (AOF on). Procedure and restore test: [backup-restore](backup-restore.md).
 
-## Test sign-in (staging only)
+## Test sign-in (staging only, until real email exists)
 
-**`TEST_SIGN_IN=on` lets anyone sign in with an email address alone, with no OTP and no second factor.** Use it only on a throwaway staging stack with demo data. It must be `off` (the default) before production: the API refuses to start with `APP_ENV=production` and `TEST_SIGN_IN=on` (ADR-0012). Do not point real customers or real supplier credentials at a stack where it is on.
+**`TEST_SIGN_IN=on` lets anyone sign in with an email address alone, with no OTP and no second factor.** It stays available on staging until real email (SMTP) is configured (owner, 27 Oct 2026; removal tracked in ADR-0014), because testers cannot receive codes otherwise. It is never allowed in production: the API refuses to start with `APP_ENV=production` and `TEST_SIGN_IN=on` (ADR-0012). Do not point real customers or real supplier credentials at a stack where it is on. Demo users are seeded only locally (ADR-0013): keep `SEED_DEMO=0` on every deployed host.
 
 ## Known limits
 
-- `APP_ENV=staging` seeds the demo users (`owner@unitravel.example` and the others in `docs/LOCAL-DEV.md`) unless `SEED_DEMO=0`. Outside local they get no TOTP factor (the known demo secret is local only); testers sign in with the test sign-in, and a step-up prompt enrols a fresh factor. Set `SEED_DEMO=0` for a stack that will hold real data.
+- Demo users (`owner@unitravel.example` and the others in `docs/LOCAL-DEV.md`) exist only on local stacks (ADR-0013). Keep `SEED_DEMO=0` on every deployed host; if an older deploy already seeded them, deactivate them in Developer Panel > Users.
 - Pre-signed uploads go to `https://$STORAGE_HOST`, which Caddy routes to the bundled `storage` service. With managed S3, set `OBJECT_STORAGE_ENDPOINT` and `OBJECT_STORAGE_PUBLIC_ENDPOINT` instead.

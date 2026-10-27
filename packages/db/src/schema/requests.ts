@@ -12,7 +12,7 @@ export const flightRequestStatus = pgEnum("flight_request_status", [
   "SUBMITTED", "COMPLIANCE_HOLD", "NEW", "IN_REVIEW", "AWAITING_CUSTOMER", "QUOTED", "ACCEPTED", "RESERVED", "TICKETED", "COMPLETED", "DECLINED", "CANCELLED", "EXPIRED",
 ])
 export const paymentStatus = pgEnum("payment_status", ["NONE", "PARTIAL", "PAID", "REFUND_PENDING", "REFUNDED"])
-export const requestType = pgEnum("request_type", ["FLIGHT", "CARGO", "AFTER_SALES"])
+export const requestType = pgEnum("request_type", ["FLIGHT", "CARGO", "AFTER_SALES", "SERVICE"])
 
 // Chapter 23.7 / 23.11 — requests, quotes and bookings.
 export const flightRequests = pgTable("flight_requests", {
@@ -126,6 +126,9 @@ export const quotes = pgTable("quotes", {
   /** Cargo quote lines (freight, surcharges…); flight quotes use quote_options. */
   cargoLines: jsonb(),
   cargoPartnerId: uuid(),
+  /** ADR-0015: service quote lines (SERVICE_FEE, THIRD_PARTY_FEE, CLUB_DISCOUNT) and the staff note shown with the quote. */
+  serviceLines: jsonb(),
+  serviceNote: text(),
   transitNote: text(),
   partnerCostMinor: bigint({ mode: "number" }),
   /** ADR-0006: the quotation number, allocated when the quote is sent. */

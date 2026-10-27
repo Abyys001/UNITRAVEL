@@ -1054,5 +1054,9 @@
   "testSignInHint": "Signs in with the email only — no code. Disabled in production.",
   "testSignInEmail": "Email to sign in as",
   "testSignInSubmit": "Sign in without a code",
-  "testSignInError": "Test sign-in failed. Check the email and try again."
+  "testSignInError": "Test sign-in failed. Check the email and try again.",
+  "helpTitle": "Help",
+  "helpFaq": "FAQ",
+  "helpTravelRules": "Travel rules",
+  "helpFlightGuide": "Buying guide"
 }

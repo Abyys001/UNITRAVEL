@@ -1,7 +1,7 @@
-// Chapter 13.4 — references: UT-{F|C|A}-{6 × Crockford Base32}. Random, not sequential; I, L, O, U never appear.
+// Chapter 13.4 — references: UT-{F|C|A|S}-{6 × Crockford Base32} (S: service requests, ADR-0015). Random, not sequential; I, L, O, U never appear.
 export const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
-export type RefType = "F" | "C" | "A"
+export type RefType = "F" | "C" | "A" | "S"
 
 export function generateReference(type: RefType, randomBytes: (n: number) => Uint8Array = defaultRandom): string {
   const bytes = randomBytes(6)
@@ -19,7 +19,7 @@ function defaultRandom(n: number): Uint8Array {
 /** Console search is case-insensitive and tolerant of the characters people mishear on the phone. */
 export function normaliseReference(input: string): string | null {
   const s = input.trim().toUpperCase().replace(/\s+/g, "").replace(/O/g, "0").replace(/[IL]/g, "1")
-  const m = /^UT-?([FCA])-?([0-9A-HJKMNP-TV-Z]{6})$/.exec(s)
+  const m = /^UT-?([FCAS])-?([0-9A-HJKMNP-TV-Z]{6})$/.exec(s)
   return m ? `UT-${m[1]}-${m[2]}` : null
 }
 

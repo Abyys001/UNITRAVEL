@@ -9,7 +9,7 @@ export type InvoiceCommand = "issue" | "cancel" | "expire" | "mark_paid" | "mark
 
 export interface InvoiceFacts {
   status: InvoiceStatus
-  productType: "FLIGHT" | "CARGO"
+  productType: "FLIGHT" | "CARGO" | "SERVICE"
   atolMode: AtolMode
   now: Date
   /** Flight: when the tickets were recorded; null while the request is not ticketed. */
@@ -59,7 +59,7 @@ export function formatDocumentNumber(prefix: string, year: number, sequence: num
 }
 
 /** When a freshly issued invoice stops being payable (ADR-0006 C5). */
-export function invoiceExpiry(f: { productType: "FLIGHT" | "CARGO"; atolMode: AtolMode; now: Date; validityDays: number }): Date {
+export function invoiceExpiry(f: { productType: "FLIGHT" | "CARGO" | "SERVICE"; atolMode: AtolMode; now: Date; validityDays: number }): Date {
   if (f.productType === "FLIGHT" && f.atolMode === "PAY_ON_TICKETING") return endOfLondonDay(f.now)
   return new Date(f.now.getTime() + f.validityDays * DAY_MS)
 }

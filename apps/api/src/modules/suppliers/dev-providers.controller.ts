@@ -7,6 +7,7 @@ import { z } from "zod"
 import { CredentialsBody, ProviderId, ProviderPatchBody } from "@unitravel/contracts"
 import { type Db, providers } from "@unitravel/db"
 
+import { sandboxAllowed } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { DB, REDIS, UnitOfWork } from "../../core/infra.module"
 import { type Actor, Ctx, CurrentActor, DevSurface, RequirePermission, type RequestContext, StaffOnly, StepUp } from "../../core/http/decorators"
@@ -46,7 +47,7 @@ export class DevProvidersController {
       const fresh = actor.mfaVerifiedAt && Date.now() - actor.mfaVerifiedAt.getTime() < 10 * 60_000
       if (!fresh) throw new AppError("STEP_UP_REQUIRED", "Disabling a provider needs a fresh second-factor check")
     }
-    if (id === "fake" && body.environment === "production") throw new AppError("VALIDATION_FAILED", "The FAKE adapter can never be a production provider")
+    if (id === "fake" && !sandboxAllowed()) throw new AppError("VALIDATION_FAILED", "The FAKE adapter only exists with APP_ENV=local (ADR-0014)")
     await this.uow.run(async (tx) => {
       await tx.update(providers).set({ ...body, version: sql`${providers.version} + 1` }).where(eq(providers.id, id))
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "provider.updated", entityType: "provider", entityId: id, before, after: body, ip: actor.ip, requestId: ctx.id })

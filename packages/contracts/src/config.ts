@@ -178,6 +178,9 @@ export const CONFIG_SCHEMAS = {
 export const FEATURE_FLAGS = [
   "cargo.enabled", "search.gateways.enabled", "seatmaps.enabled", "payments.online.enabled", "search.self_transfer.enabled",
   "sms.free_text.enabled", "push.pushy_pilot.enabled", "maintenance.enabled",
+  // Spec docs/CONTENT-MENU-LIVE-DATA.md §4.1: off until a provider is contracted (O8) or counsel confirms (O6, O7, O9, O10).
+  "hotels.enabled", "stays.enabled", "trains.enabled", "buses.enabled", "services.visa.enabled", "services.tours.enabled",
+  "services.cip.enabled", "services.insurance.enabled", "loyalty.enabled",
 ] as const
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number]
 export const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
@@ -189,6 +192,15 @@ export const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
   "sms.free_text.enabled": false,
   "push.pushy_pilot.enabled": false,
   "maintenance.enabled": false,
+  "hotels.enabled": false,
+  "stays.enabled": false,
+  "trains.enabled": false,
+  "buses.enabled": false,
+  "services.visa.enabled": false,
+  "services.tours.enabled": false,
+  "services.cip.enabled": false,
+  "services.insurance.enabled": false,
+  "loyalty.enabled": false,
 }
 
 export const AppSettings = z.object({
@@ -203,5 +215,7 @@ export const AppSettings = z.object({
   identityScanRetentionDays: z.number().int().min(1).max(3650).nullable().default(null),
   /** ADR-0006: numbering and the company particulars printed on quotations and invoices (UNKNOWN = null). */
   commercialDocuments: CommercialDocumentSettings.default(CommercialDocumentSettings.parse({})),
+  /** Support hours shown on /support; null until the client confirms staffing (O15). Phone and email come from `company`. */
+  support: z.object({ hours: LocalisedText.nullable() }).default({ hours: null }),
 })
 export type AppSettings = z.infer<typeof AppSettings>

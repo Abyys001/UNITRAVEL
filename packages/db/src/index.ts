@@ -6,6 +6,7 @@ import * as schema from "./schema"
 export * as schema from "./schema"
 export * from "./schema"
 export { uuidv7 } from "./schema/columns"
+export { providerSeedRows, shouldSeedDemo } from "./seed/providers"
 
 export type Db = NodePgDatabase<typeof schema>
 export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]

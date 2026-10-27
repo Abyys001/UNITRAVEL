@@ -3,9 +3,11 @@
 import { ArrowRight, BadgeCheck, HandCoins, Headset, Languages, Package, ShieldCheck, Smartphone } from "lucide-react"
 import Link from "next/link"
 
+import { faq } from "@unitravel/i18n"
 import { FlightPath, GlobeLines, IconBadge, Ribbon } from "@unitravel/ui/brand/art"
 import { Reveal } from "@unitravel/ui/brand/reveal"
 
+import { FaqAccordion } from "@/components/content-blocks"
 import { HeroVideo } from "@/components/hero-video"
 import { SearchForm, type SearchParamsShape } from "@/components/search-form"
 import { useI18n } from "@/lib/i18n"
@@ -157,7 +159,16 @@ export default function Home() {
         </Reveal>
       </section>
 
-      {/* 6 · App promo with a real screenshot from the Flutter build. */}
+      {/* 6 · Frequently asked questions: the same five items as /faq, native details. */}
+      <section aria-labelledby="faq" className="mx-auto max-w-3xl px-4 pt-20 md:px-6 md:pt-28">
+        <Reveal>
+          <h2 id="faq" className="font-display text-3xl md:text-4xl">{t("home.faqTitle")}</h2>
+          <div className="mt-8"><FaqAccordion items={faq[locale]} locale={locale} /></div>
+          <Link href={href("/faq")} className="mt-6 inline-flex items-center gap-2 font-semibold text-royal underline-offset-4 hover:underline pointer-coarse:min-h-11">{t("home.faqAll")}<ArrowRight className="arrow-nudge size-4 rtl:rotate-180" aria-hidden /></Link>
+        </Reveal>
+      </section>
+
+      {/* 7 · App promo with a real screenshot from the Flutter build. */}
       <section className="mx-auto max-w-7xl px-4 pt-20 md:px-6 md:pt-28">
         <Reveal className="relative overflow-hidden rounded-[28px] bg-brand px-6 pt-10 text-white md:px-14 md:pt-0">
           <div aria-hidden className="bg-dots absolute inset-0 opacity-50" />

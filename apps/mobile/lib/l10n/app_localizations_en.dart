@@ -2116,4 +2116,16 @@ class AppL10nEn extends AppL10n {
   @override
   String get testSignInError =>
       'Test sign-in failed. Check the email and try again.';
+
+  @override
+  String get helpTitle => 'Help';
+
+  @override
+  String get helpFaq => 'FAQ';
+
+  @override
+  String get helpTravelRules => 'Travel rules';
+
+  @override
+  String get helpFlightGuide => 'Buying guide';
 }

@@ -4,7 +4,7 @@ import type { Redis } from "ioredis"
 import Stripe from "stripe"
 
 import { AppError } from "../../core/errors"
-import { env } from "../../core/env"
+import { sandboxAllowed } from "../../core/env"
 import type { CreateSessionInput, PaymentProvider, ProviderSession, RefundInput } from "./payment-port"
 import { verifyStripeSignature } from "./stripe.adapter"
 
@@ -18,8 +18,8 @@ export type FakeEventKind = "paid" | "async_pending" | "async_succeeded" | "asyn
 interface FakeState { status: "open" | "complete" | "expired"; paymentStatus: "paid" | "unpaid"; amountMinor: number; currency: string; pi: string; expiresAt: string; clientSecret: string; invoiceId: string; refundedMinor: number }
 
 /**
- * FAKE payment adapter for local development and end-to-end tests (ADR-0007 P12). It refuses to run when
- * APP_ENV or NODE_ENV is production, like the FAKE flight adapter. Sessions live in Valkey; a "payment" is only a
+ * FAKE payment adapter for local development and end-to-end tests (ADR-0007 P12). It refuses to run unless
+ * APP_ENV=local, like the FAKE flight adapter (ADR-0014). Sessions live in Valkey; a "payment" is only a
  * signed Stripe-shaped event delivered to the same webhook code as the real thing.
  */
 export class FakePaymentAdapter implements PaymentProvider {
@@ -27,7 +27,7 @@ export class FakePaymentAdapter implements PaymentProvider {
   readonly publishableKey = null
 
   constructor(private readonly redis: Redis) {
-    if (env().APP_ENV === "production" || process.env.NODE_ENV === "production") throw new Error("The FAKE payment adapter is blocked in production (ADR-0007 P12)")
+    if (!sandboxAllowed()) throw new Error("The FAKE payment adapter only runs with APP_ENV=local (ADR-0007 P12, ADR-0014)")
     secret ??= `whsec_fake_${randomBytes(24).toString("hex")}`
   }
 

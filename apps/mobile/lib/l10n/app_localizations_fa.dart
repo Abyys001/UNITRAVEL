@@ -2052,4 +2052,16 @@ class AppL10nFa extends AppL10n {
   @override
   String get testSignInError =>
       'ورود آزمایشی انجام نشد. ایمیل را بررسی کنید و دوباره تلاش کنید.';
+
+  @override
+  String get helpTitle => 'راهنما';
+
+  @override
+  String get helpFaq => 'سوالات متداول';
+
+  @override
+  String get helpTravelRules => 'قوانین سفر';
+
+  @override
+  String get helpFlightGuide => 'راهنمای خرید بلیت';
 }

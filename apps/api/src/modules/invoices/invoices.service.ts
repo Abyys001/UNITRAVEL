@@ -2,10 +2,10 @@ import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { and, asc, desc, eq, inArray, ne } from "drizzle-orm"
 
 import {
-  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type InvoiceCancelCode, type InvoiceStatus, type StaffInvoice, type StaffInvoiceListItem,
+  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type InvoiceCancelCode, type InvoiceStatus, type ServiceQuoteLine, serviceQuoteTotal, type StaffInvoice, type StaffInvoiceListItem,
 } from "@unitravel/contracts"
 import {
-  cargoRequests, customerProfiles, type Db, type DbOrTx, flightRequests, invoiceLines, invoices, invoiceStatusHistory, paymentRecords, quoteOptions, quotes, tickets, type Tx, users,
+  cargoRequests, customerProfiles, type Db, type DbOrTx, flightRequests, invoiceLines, invoices, invoiceStatusHistory, paymentRecords, quoteOptions, quotes, serviceRequests, tickets, type Tx, users,
 } from "@unitravel/db"
 import { evaluate, INVOICE_TRANSITIONS, type InvoiceCommand, type InvoiceFacts, invoiceExpiry, type MachineActor, normaliseReference } from "@unitravel/domain"
 
@@ -22,9 +22,10 @@ import { TimersService } from "../platform/timers.service"
 import { staffActor, SYSTEM } from "../requests/requests.service"
 import { renderInvoicePdf } from "./commercial-pdf"
 import { DocumentNumbersService } from "./document-numbers.service"
+import { productOf } from "./product"
 
 type Inv = typeof invoices.$inferSelect
-type ReqType = "FLIGHT" | "CARGO"
+type ReqType = "FLIGHT" | "CARGO" | "SERVICE"
 interface Draft { currency: string; lines: { description: string; quantity: number; unitAmountMinor: number; amountMinor: number }[]; totalMinor: number }
 
 const TIMER = "invoice.expire"
@@ -65,6 +66,10 @@ export class InvoicesService implements OnModuleInit {
       const [r] = await tx.select().from(flightRequests).where(eq(flightRequests.id, id))
       return r ? { ref: r.ref, customerUserId: r.customerUserId, status: r.status as string } : null
     }
+    if (type === "SERVICE") {
+      const [r] = await tx.select().from(serviceRequests).where(eq(serviceRequests.id, id))
+      return r ? { ref: r.ref, customerUserId: r.customerUserId, status: r.status as string } : null
+    }
     const [r] = await tx.select().from(cargoRequests).where(eq(cargoRequests.id, id))
     return r ? { ref: r.ref, customerUserId: r.customerUserId, status: r.status as string } : null
   }
@@ -78,7 +83,7 @@ export class InvoicesService implements OnModuleInit {
   }
 
   private facts(inv: Inv, ticketedAt: Date | null, now = new Date()): InvoiceFacts {
-    return { status: inv.status, productType: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT", atolMode: this.config.get("WORKFLOW").atolMode, now, ticketedAt, expiresAt: inv.expiresAt }
+    return { status: inv.status, productType: productOf(inv.requestType), atolMode: this.config.get("WORKFLOW").atolMode, now, ticketedAt, expiresAt: inv.expiresAt }
   }
 
   // ---------------- drafts ----------------
@@ -94,6 +99,11 @@ export class InvoicesService implements OnModuleInit {
       const pb = o.priceBreakdown as { fare: { amountMinor: number }; taxes: { amountMinor: number }; serviceFee: { amountMinor: number }; total: { amountMinor: number } }
       lines = [line(`Airfare - ${o.label}`, pb.fare.amountMinor), ...(pb.taxes.amountMinor > 0 ? [line("Taxes, fees and carrier charges", pb.taxes.amountMinor)] : []), ...(pb.serviceFee.amountMinor > 0 ? [line("Uni Travel service fee", pb.serviceFee.amountMinor)] : [])]
       totalMinor = pb.total.amountMinor
+    } else if (type === "SERVICE") {
+      // ADR-0015: the lines staff sent, with a club discount as its own negative line.
+      const sl = (q.serviceLines ?? []) as ServiceQuoteLine[]
+      lines = sl.map((l) => line(l.label, l.kind === "CLUB_DISCOUNT" ? -l.amount.amountMinor : l.amount.amountMinor))
+      totalMinor = serviceQuoteTotal(sl).amountMinor
     } else {
       const c = CargoQuoteLines.parse(q.cargoLines)
       const named: [string, number][] = [
@@ -111,11 +121,13 @@ export class InvoicesService implements OnModuleInit {
   async createDraft(ref: string, actor: Actor) {
     const norm = normaliseReference(ref)
     if (!norm || norm.startsWith("UT-A-")) throw notFound("Request")
-    const type: ReqType = norm.startsWith("UT-C-") ? "CARGO" : "FLIGHT"
+    const type: ReqType = norm.startsWith("UT-C-") ? "CARGO" : norm.startsWith("UT-S-") ? "SERVICE" : "FLIGHT"
     const id = await this.uow.run(async (tx) => {
-      const [r] = type === "FLIGHT" ? await tx.select().from(flightRequests).where(eq(flightRequests.ref, norm)).for("update") : await tx.select().from(cargoRequests).where(eq(cargoRequests.ref, norm)).for("update")
+      const [r] = type === "FLIGHT" ? await tx.select().from(flightRequests).where(eq(flightRequests.ref, norm)).for("update")
+        : type === "SERVICE" ? await tx.select().from(serviceRequests).where(eq(serviceRequests.ref, norm)).for("update")
+        : await tx.select().from(cargoRequests).where(eq(cargoRequests.ref, norm)).for("update")
       if (!r) throw notFound("Request")
-      if (["CANCELLED", "DECLINED", "EXPIRED"].includes(r.status)) throw new AppError("INVALID_TRANSITION", `No invoice for a ${r.status} request`)
+      if (["CANCELLED", "DECLINED", "EXPIRED", "CLOSED_NO_RESPONSE"].includes(r.status)) throw new AppError("INVALID_TRANSITION", `No invoice for a ${r.status} request`)
       const [q] = await tx.select().from(quotes).where(and(eq(quotes.requestType, type), eq(quotes.requestId, r.id), eq(quotes.status, "ACCEPTED"))).orderBy(desc(quotes.version)).limit(1)
       if (!q) throw new AppError("INVALID_TRANSITION", "An invoice is created from an accepted quote")
       const [open] = await tx.select({ id: invoices.id }).from(invoices).where(and(eq(invoices.quoteId, q.id), inArray(invoices.status, ["DRAFT", "ISSUED", "PAID"])))
@@ -162,7 +174,7 @@ export class InvoicesService implements OnModuleInit {
       this.run(inv, "issue", await this.ticketedAt(tx, inv), staffActor(actor))
       const cfg = this.config.settings()
       const number = await this.numbers.allocate(tx, "INVOICE", now)
-      const expiresAt = invoiceExpiry({ productType: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT", atolMode: this.config.get("WORKFLOW").atolMode, now, validityDays: cfg.commercialDocuments.invoiceValidityDays })
+      const expiresAt = invoiceExpiry({ productType: productOf(inv.requestType), atolMode: this.config.get("WORKFLOW").atolMode, now, validityDays: cfg.commercialDocuments.invoiceValidityDays })
       const paid = (await this.unallocatedPaymentMinor(tx, inv)) >= inv.totalMinor
       const lines = await tx.select().from(invoiceLines).where(eq(invoiceLines.invoiceId, inv.id)).orderBy(asc(invoiceLines.position))
       const pdf = await renderInvoicePdf({
@@ -171,7 +183,7 @@ export class InvoicesService implements OnModuleInit {
         billTo: await this.billTo(tx, inv.customerUserId), company: cfg.company, cfg: cfg.commercialDocuments,
         notes: this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" && inv.requestType === "FLIGHT" ? ["Flights are sold as an airline ticket agent; payment is taken when tickets are issued (ATOL wording pending counsel review)."] : [],
       })
-      const doc = await this.docs.storeGenerated(tx, { ownerUserId: inv.customerUserId, requestType: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT", requestId: inv.requestId, type: "INVOICE", filename: `invoice-${number}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
+      const doc = await this.docs.storeGenerated(tx, { ownerUserId: inv.customerUserId, requestType: productOf(inv.requestType), requestId: inv.requestId, type: "INVOICE", filename: `invoice-${number}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
       await tx.update(invoices).set({ status: "ISSUED", number, issuedAt: now, expiresAt, documentId: doc.id, rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
       await this.history(tx, inv.id, "DRAFT", "ISSUED", "issue", actor.userId, "STAFF")
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "invoice.issued", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number, totalMinor: inv.totalMinor, currency: inv.currency, expiresAt: expiresAt.toISOString() } })
@@ -280,7 +292,7 @@ export class InvoicesService implements OnModuleInit {
   private customerView(inv: Inv, lines: (typeof invoiceLines.$inferSelect)[]): CustomerInvoice {
     const m = (amountMinor: number) => ({ amountMinor, currency: inv.currency })
     return {
-      number: inv.number!, status: inv.status as CustomerInvoice["status"], requestRef: inv.requestRef as CustomerInvoice["requestRef"], productType: inv.requestType === "CARGO" ? "CARGO" : "FLIGHT",
+      number: inv.number!, status: inv.status as CustomerInvoice["status"], requestRef: inv.requestRef as CustomerInvoice["requestRef"], productType: productOf(inv.requestType),
       lines: lines.map((l) => ({ description: l.description, quantity: l.quantity, unitAmount: m(l.unitAmountMinor), amount: m(l.amountMinor) })), total: m(inv.totalMinor),
       issuedAt: iso(inv.issuedAt)!, expiresAt: iso(inv.expiresAt)!, paidAt: iso(inv.paidAt), cancelledAt: iso(inv.cancelledAt), cancelReason: (inv.cancelReason as InvoiceCancelCode | null) ?? null, documentId: inv.documentId,
     }
@@ -294,7 +306,8 @@ export class InvoicesService implements OnModuleInit {
     const sent = ne(quotes.status, "DRAFT")
     const f = await this.db.select({ q: quotes, ref: flightRequests.ref }).from(quotes).innerJoin(flightRequests, eq(flightRequests.id, quotes.requestId)).where(and(eq(quotes.requestType, "FLIGHT"), eq(flightRequests.customerUserId, userId), sent))
     const c = await this.db.select({ q: quotes, ref: cargoRequests.ref }).from(quotes).innerJoin(cargoRequests, eq(cargoRequests.id, quotes.requestId)).where(and(eq(quotes.requestType, "CARGO"), eq(cargoRequests.customerUserId, userId), sent))
-    const quotations = [...f.map((x) => ({ ...x, t: "FLIGHT" as const })), ...c.map((x) => ({ ...x, t: "CARGO" as const }))]
+    const sv = await this.db.select({ q: quotes, ref: serviceRequests.ref }).from(quotes).innerJoin(serviceRequests, eq(serviceRequests.id, quotes.requestId)).where(and(eq(quotes.requestType, "SERVICE"), eq(serviceRequests.customerUserId, userId), sent))
+    const quotations = [...f.map((x) => ({ ...x, t: "FLIGHT" as const })), ...c.map((x) => ({ ...x, t: "CARGO" as const })), ...sv.map((x) => ({ ...x, t: "SERVICE" as const }))]
       .filter((x) => x.q.documentNumber && x.q.sentAt).sort((a, b) => b.q.sentAt!.getTime() - a.q.sentAt!.getTime()).map((x) => quotation(x.q, x.ref, x.t))
     return { quotations, invoices: mine.map((i) => this.customerView(i, lines.get(i.id) ?? [])) }
   }
@@ -307,7 +320,7 @@ export class InvoicesService implements OnModuleInit {
 
   /** Staff who issue documents see all; others see the product line they can already read. */
   private readable(inv: Inv, actor: Actor): boolean {
-    return actor.permissions.has("commercial_document.issue") || actor.permissions.has(inv.requestType === "CARGO" ? "cargo_request.read.any" : "flight_request.read.any")
+    return actor.permissions.has("commercial_document.issue") || actor.permissions.has(inv.requestType === "CARGO" ? "cargo_request.read.any" : inv.requestType === "SERVICE" ? "service_request.read.any" : "flight_request.read.any")
   }
 
   private async staffItems(all: Inv[], actor: Actor, detail: boolean): Promise<StaffInvoice[]> {
@@ -324,7 +337,7 @@ export class InvoicesService implements OnModuleInit {
         return [ev.ok ? { command, allowed: true } : { command, allowed: false, reason: ev.reason }]
       }) : []
       return {
-        id: inv.id, number: inv.number, status: inv.status, requestRef: inv.requestRef as StaffInvoice["requestRef"], productType: inv.requestType === "CARGO" ? "CARGO" as const : "FLIGHT" as const, currency: inv.currency,
+        id: inv.id, number: inv.number, status: inv.status, requestRef: inv.requestRef as StaffInvoice["requestRef"], productType: productOf(inv.requestType), currency: inv.currency,
         lines: (lines.get(inv.id) ?? []).map((l) => ({ description: l.description, quantity: l.quantity, unitAmount: m(l.unitAmountMinor), amount: m(l.amountMinor) })), total: m(inv.totalMinor),
         issuedAt: iso(inv.issuedAt), expiresAt: iso(inv.expiresAt), paidAt: iso(inv.paidAt), cancelledAt: iso(inv.cancelledAt), cancelReason: (inv.cancelReason as InvoiceCancelCode | null) ?? null, documentId: inv.documentId, createdAt: inv.createdAt.toISOString(),
         history: hist.filter((x) => x.h.invoiceId === inv.id).map(({ h, name }) => ({ fromStatus: h.fromStatus, toStatus: h.toStatus, command: h.command, reasonCode: h.reasonCode, reasonText: h.reasonText, actorKind: h.actorKind, actorName: name ?? null, createdAt: h.createdAt.toISOString() })),
