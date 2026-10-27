@@ -97,6 +97,20 @@ export const requestMessages = pgTable("request_messages", {
   createdAt: createdAt(),
 }, (t) => [index("request_messages_idx").on(t.requestType, t.requestId, t.createdAt)])
 
+/** Insert-only (trigger plus no UPDATE/DELETE for app_rw): staff amendments of the trip and travellers (ADR-0013). */
+export const requestAmendments = pgTable("request_amendments", {
+  id: id(),
+  requestType: text({ enum: ["FLIGHT"] }).notNull(),
+  requestId: uuid().notNull().references(() => flightRequests.id),
+  versionBefore: integer().notNull(),
+  actorUserId: uuid().notNull().references(() => users.id),
+  reason: text().notNull(),
+  before: jsonb().$type<AmendmentSide>().notNull(),
+  after: jsonb().$type<AmendmentSide>().notNull(),
+  createdAt: createdAt(),
+}, (t) => [index("request_amendments_request_idx").on(t.requestId, t.createdAt)])
+export interface AmendmentSide { query?: SearchQuery; travellers?: { travellerId: string; passengerType: string; name: string }[] }
+
 export const contactAttempts = pgTable("contact_attempts", {
   id: id(),
   requestType: requestType().notNull(),

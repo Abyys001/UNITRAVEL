@@ -4,6 +4,7 @@ import type { Request, Response } from "express"
 import { z } from "zod"
 
 import {
+  AmendFlightRequestBody,
   AfterSalesBody, CommandBodies, ContactAttemptBody, CreateFlightRequestBody, FLIGHT_COMMANDS, MessageBody, NoteBody, PaymentBody, QuoteDraftBody, ReservationBody, TicketsBody,
 } from "@unitravel/contracts"
 
@@ -189,6 +190,14 @@ export class AdminFlightRequestsController {
   @RequirePermission("flight_request.transition")
   message(@Param("ref") ref: string, @Body(zbody(MessageBody)) body: z.infer<typeof MessageBody>, @CurrentActor() actor: Actor) {
     return this.requests.staffMessage(ref, actor, body.body, body.documentIds)
+  }
+
+  @Post("flight-requests/:ref/amend")
+  @HttpCode(200)
+  @RequirePermission("flight_request.transition")
+  @ApiOperation({ summary: "Amend the trip and/or travellers with a reason (ADR-0013); not a status change" })
+  amend(@Param("ref") ref: string, @Body(zbody(AmendFlightRequestBody)) body: AmendFlightRequestBody, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.requests.amend(ref, body, actor, ctx.id)
   }
 
   @Post("flight-requests/:ref/contact-attempts")

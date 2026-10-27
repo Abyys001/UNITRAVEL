@@ -17,14 +17,14 @@ export interface QuotationTraveller { passengerType: string; nameSnapshot: { tit
 const LABELS = {
   en: {
     quotation: "quotation", validUntil: "Valid until", option: "Option", traveller: "Traveller", baggage: "Baggage", ticketing: "Ticketing", single: "Single ticket (protected connections)", separate: "Separate tickets (self-transfer)",
-    fareTaxes: "Fare + taxes", serviceFee: "Service fee", total: "Total", local: "local", unknown: "UNKNOWN", issuedBy: "Issued by", flightTitle: "Your travel options", cargoTitle: "Your shipment quotation",
+    fareTaxes: "Fare + taxes", serviceFee: "Service fee", discount: "Discount", total: "Total", local: "local", unknown: "UNKNOWN", issuedBy: "Issued by", flightTitle: "Your travel options", cargoTitle: "Your shipment quotation",
     pax: { ADT: "Adult", CHD: "Child", INF: "Infant", INS: "Infant (seat)", YTH: "Youth", STU: "Student" } as Record<string, string>,
     charges: "Charges", transit: "Transit", pieces: "Pieces", piece: "Piece", actual: "Actual weight", chargeable: "Chargeable weight (estimate)", estimate: "estimate", payableBy: "Payable by recipient", duties: "Duties and taxes",
     flightFooter: "This is a quotation, not a booking: seats are reserved only after you accept and our team confirms the reservation.", cargoFooter: "This is a quotation, not a booking: your shipment is booked only after you accept and our team confirms it. Uni Travel arranges shipments through partners and does not operate transport itself.",
   },
   fa: {
     quotation: "پیشنهاد قیمت", validUntil: "اعتبار تا", option: "گزینه", traveller: "مسافر", baggage: "بار", ticketing: "نوع بلیت", single: "بلیت واحد (پرواز متصل با پوشش کامل)", separate: "بلیت‌های جداگانه (انتقال شخصی)",
-    fareTaxes: "نرخ + مالیات", serviceFee: "کارمزد خدمات", total: "جمع", local: "به وقت محلی", unknown: "نامشخص", issuedBy: "صادرکننده", flightTitle: "گزینه‌های سفر شما", cargoTitle: "پیشنهاد قیمت محموله شما",
+    fareTaxes: "نرخ + مالیات", serviceFee: "کارمزد خدمات", discount: "تخفیف", total: "جمع", local: "به وقت محلی", unknown: "نامشخص", issuedBy: "صادرکننده", flightTitle: "گزینه‌های سفر شما", cargoTitle: "پیشنهاد قیمت محموله شما",
     pax: { ADT: "بزرگسال", CHD: "کودک", INF: "نوزاد", INS: "نوزاد (با صندلی)", YTH: "جوان", STU: "دانشجو" } as Record<string, string>,
     charges: "هزینه‌ها", transit: "زمان حمل", pieces: "بسته‌ها", piece: "بسته", actual: "وزن واقعی", chargeable: "وزن قابل محاسبه (برآورد)", estimate: "برآورد", payableBy: "پرداخت با گیرنده", duties: "حقوق و عوارض",
     flightFooter: "این یک پیشنهاد قیمت است، نه رزرو: صندلی فقط پس از پذیرش شما و تأیید رزرو توسط تیم ما رزرو می‌شود.", cargoFooter: "این یک پیشنهاد قیمت است، نه رزرو: محموله شما فقط پس از پذیرش شما و تأیید تیم ما رزرو می‌شود. یونی تراول محموله‌ها را از طریق شرکای خود ترتیب می‌دهد و خودش حمل نمی‌کند.",
@@ -78,7 +78,7 @@ export function flightOptionSections(opts: QuotationOptionRow[], travellers: Quo
     const segs = (o.itinerary as { slices: Slice[] }).slices.flatMap((s) => s.segments)
     const bags = o.baggage as SegmentBaggage[]
     const cond = o.conditions as { change?: Cond; refund?: Cond }
-    const pb = o.priceBreakdown as { fare: Money; taxes: Money; serviceFee: Money; total: Money }
+    const pb = o.priceBreakdown as { fare: Money; taxes: Money; serviceFee: Money; extras?: { label: string; amount: Money }[]; discount?: { label: string; amount: Money }; total: Money }
     const rows: Row[] = [
       ...travellers.map((t, n): Row => [`${L.traveller} ${ord(n + 1, z)}`, travellerName(t, z)]),
       ...segs.flatMap((g, si): Row[] => [
@@ -88,7 +88,10 @@ export function flightOptionSections(opts: QuotationOptionRow[], travellers: Quo
       [translate(z.locale, "itinerary.change"), conditionText(cond.change, z)],
       [translate(z.locale, "itinerary.refund"), conditionText(cond.refund, z)],
       [L.ticketing, o.ticketingModel === "SINGLE_TICKET" ? L.single : L.separate],
-      [L.fareTaxes, `${money(pb.fare)} + ${money(pb.taxes)}`], [L.serviceFee, money(pb.serviceFee)], [L.total, money(pb.total)],
+      [L.fareTaxes, `${money(pb.fare)} + ${money(pb.taxes)}`], [L.serviceFee, money(pb.serviceFee)],
+      ...(pb.extras ?? []).map((e): Row => [e.label, money(e.amount)]),
+      ...(pb.discount ? [[`${L.discount} · ${pb.discount.label}`, `- ${money(pb.discount.amount)}`] as Row] : []),
+      [L.total, money(pb.total)],
     ]
     return { heading: `${L.option} ${ord(i + 1, z)} · ${o.label}`, rows }
   })

@@ -1,14 +1,13 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Copy, Phone } from "lucide-react"
+import { Phone } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { Button, buttonVariants } from "@unitravel/ui/components/button"
-import { VerificationBadge } from "@unitravel/ui/product/verification-badge"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
@@ -18,6 +17,8 @@ import { CommandDialog, DIALOG_COMMANDS } from "@/components/flight/commands"
 import { RecordPaymentTrigger } from "@/components/payment-panel"
 import { ItineraryView } from "@/components/flight/itinerary"
 import { InvoicesPanel } from "@/components/invoices-panel"
+import { AmendDialog } from "@/components/flight/amend-dialog"
+import { CustomerCard, TravellerCard, TripSummary } from "@/components/flight/request-panels"
 import { AfterSalesDialog, CreditOverrideDialog, PaymentDialog, ReservationDialog, TicketsDialog } from "@/components/flight/records"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
 import { Composer, MessagesList, NotesList } from "@/components/thread"
@@ -34,7 +35,7 @@ import type { FlightDetail } from "@/lib/types"
 const DESKTOP_ONLY = new Set(["send_quote", "record_acceptance", "record_reservation", "record_tickets"])
 type Money2 = { amountMinor: number; currency: string }
 type PriceCheck = { outcome: string; previousTotal: Money2; currentTotal?: Money2; checkedAt: string }
-type Dlg = "contact" | "sms" | "reservation" | "tickets" | "payment" | "override" | "aftersales"
+type Dlg = "contact" | "sms" | "reservation" | "tickets" | "payment" | "override" | "aftersales" | "amend"
 
 export default function FlightRequestPage() {
   const { ref } = useParams<{ ref: string }>()
@@ -94,7 +95,6 @@ export default function FlightRequestPage() {
   // Versions only grow; ">" keeps your own command's event from flashing the banner before the reload lands.
   const changed = poll.data !== undefined && poll.data > d.version
   const pax = d.query.passengers.reduce<Record<string, number>>((m, p) => ({ ...m, [p.type]: (m[p.type] ?? 0) + 1 }), {})
-  const prefs = d.query.preferences
   const visibleActions = d.actions.filter((a) => !(mobile && DESKTOP_ONLY.has(a.command)))
   const draft = d.quotes.find((x) => x.status === "DRAFT")
   const latestQuote = [...d.quotes].sort((a, b) => b.version - a.version)[0]
@@ -145,36 +145,11 @@ export default function FlightRequestPage() {
         {/* LEFT — customer */}
         <div {...paneProps("customer")} className={paneClass(tab, "customer")}>
           <Panel title="Customer" aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className="font-medium text-link hover:underline">Context →</Link>}>
-            <p className="text-lead font-medium" dir="auto" data-testid="customer-name">{d.customer.nameLatin || d.customer.displayName}</p>
-            {d.customer.nameFa && <p className="w-fit font-fa text-lead" dir="rtl" lang="fa" data-testid="customer-name-fa">{d.customer.nameFa}</p>}
-            <p className="text-steel">Prefers {d.customer.preferredLocale === "fa" ? "Persian" : "English"}{d.customer.contactTimePref && <> · best time {d.customer.contactTimePref}</>}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="num text-lead" dir="ltr">{d.customer.phone}</span>
-              {d.customer.phoneVerified ? <Tag value="VERIFIED" className="border-success text-success" title={fmtDateTime(d.customer.phoneVerifiedAt)} /> : <Tag value="UNVERIFIED" className="border-danger text-danger" />}
-              {d.customer.phoneVerifiedAt && <span className="text-caption text-steel" suppressHydrationWarning>{fmtDateTime(d.customer.phoneVerifiedAt)}</span>}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {!mobile && <Button size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success("Number copied") }}><Copy /> Copy number</Button>}
-              {can("flight_request.transition") && <Button size="sm" variant="outline" onClick={() => dlg.open("contact")}>Log call</Button>}
-              {can("flight_request.transition") && <Button size="sm" variant="ghost" onClick={() => dlg.open("sms")}>SMS template</Button>}
-            </div>
-            {d.customer.alternativeContact && <p className="mt-2 text-steel">Alternative: <span dir="auto">{d.customer.alternativeContact.name}</span> ({d.customer.alternativeContact.relationship}) <span className="num" dir="ltr">{d.customer.alternativeContact.phone}</span></p>}
+            <CustomerCard d={d} mobile={mobile} canAct={can("flight_request.transition")} onCopy={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success("Number copied") }} onCall={() => dlg.open("contact")} onSms={() => dlg.open("sms")} />
           </Panel>
-          <Panel title={`Travellers · ${d.travellers.length}`}>
-            <ul className="ledger-rows">
-              {d.travellers.map((t, i) => (
-                <li key={t.travellerId} className="py-1.5">
-                  <p className="flex items-center justify-between gap-2"><span><span className="text-steel">{i + 1} · {t.passengerType}</span> {t.name.title} {t.name.givenNames} {t.name.surname}</span>{t.documentComplete ? <Tag value="COMPLETE" className="border-success text-success" /> : <Tag value="DOCS MISSING" className="border-danger text-danger" />}</p>
-                  {t.name.nameFa && <p className="w-fit font-fa" dir="rtl">{t.name.nameFa}</p>}
-                  {t.verificationStatus && <p className="mt-0.5"><VerificationBadge status={t.verificationStatus} label={tt(`vstatus.${t.verificationStatus}` as MsgKey)} /></p>}
-                  {t.document ? (
-                    <p className="mt-0.5 flex items-center gap-2 text-meta text-steel">
-                      <span>{human(t.document.type)} <span className="num" data-testid="doc-number">{revealed[t.travellerId] ?? `•••••${t.document.last4}`}</span> · {t.document.issuingCountry} · expires {fmtDate(t.document.expiryDate)}</span>
-                      {can("customer.read.documents") && !revealed[t.travellerId] && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => reveal.mutate(t.travellerId)} title="Logged as customer.read.documents">Reveal</button>}
-                    </p>
-                  ) : <p className="text-meta text-danger">No passport on file</p>}
-                </li>
-              ))}
+          <Panel title={<>Travellers <span className="num text-steel">{d.travellers.length}</span></>}>
+            <ul className="space-y-2">
+              {d.travellers.map((t, i) => <TravellerCard key={t.travellerId} t={t} index={i} revealed={revealed[t.travellerId]} canReveal={can("customer.read.documents")} onReveal={() => reveal.mutate(t.travellerId)} verificationLabel={tt(`vstatus.${t.verificationStatus}` as MsgKey)} />)}
             </ul>
             {Object.keys(revealed).length > 0 && <p className="text-caption text-steel">Revealed numbers hide again after a minute. Each reveal is in the audit log.</p>}
           </Panel>
@@ -190,14 +165,10 @@ export default function FlightRequestPage() {
 
         {/* CENTRE — request, conversation, activity */}
         <div {...paneProps("case")} className={cn("min-w-0", paneClass(tab, "case"))}>
-          <Panel title="Request">
-            <dl className="grid grid-cols-[8rem_1fr] gap-x-3 gap-y-1">
-              <dt className="text-steel">Trip</dt><dd>{human(d.tripType)} · {human(d.query.cabin)} · {d.query.slices.map((s) => `${"city" in s.from ? s.from.city : s.from.airport}→${"city" in s.to ? s.to.city : s.to.airport} ${s.date}${s.flexDays ? ` ±${s.flexDays}` : ""}`).join(", ")}</dd>
-              <dt className="text-steel">Preferences</dt><dd>{[prefs.allowSelfTransfer ? "self-transfer allowed" : "no self-transfer", prefs.allowAirportChange ? "airport change OK" : null, prefs.allowOvernight ? "overnight OK" : "no overnight", `max ${prefs.maxStops} stops`, prefs.preferredLayoverMin ? `layover ${prefs.preferredLayoverMin[0] / 60}–${prefs.preferredLayoverMin[1] / 60} h` : null, prefs.includeGateways ? "gateway departures accepted" : null, prefs.studentFare ? "student fare" : null].filter(Boolean).join(" · ")}</dd>
-              {d.manual && <><dt className="text-steel">Manual</dt><dd>{[d.manual.flexibility, d.manual.budget ? `budget ${money(d.manual.budget)}` : null, d.manual.overlandAcceptable ? "overland OK" : null, d.manual.airlinesPrefer?.length ? `prefer ${d.manual.airlinesPrefer.join(", ")}` : null, d.manual.airlinesAvoid?.length ? `avoid ${d.manual.airlinesAvoid.join(", ")}` : null].filter(Boolean).join(" · ")}</dd></>}
-              {(d.preferences as { seatPreference?: string }).seatPreference && <><dt className="text-steel">Seats</dt><dd>{human(String((d.preferences as { seatPreference?: string }).seatPreference))}</dd></>}
-            </dl>
-            {d.customerNote && <p className="mt-2 rounded-sm border border-rule bg-surface-raised px-2 py-1.5" dir="auto">“{d.customerNote}”</p>}
+          <Panel title="Request" aside={can("flight_request.transition") && !mobile ? (d.amendment?.allowed
+            ? <Button size="xs" variant="outline" onClick={() => dlg.open("amend")} data-testid="amend-open">Amend trip</Button>
+            : <span className="text-caption text-steel" title={d.amendment?.reason}>Amend: {d.amendment?.reason ?? "not available"}</span>) : undefined}>
+            <TripSummary d={d} />
           </Panel>
           {d.snapshot && (
             <Panel title="Offer snapshot (immutable)" aside={can("pricing.read.internal") && <Button size="xs" variant="outline" onClick={() => recheck.mutate()} loading={recheck.isPending}>Re-check price</Button>}>
@@ -301,6 +272,7 @@ export default function FlightRequestPage() {
       <PaymentDialog {...dlg.bind("payment")} d={d} done={refresh} />
       <CreditOverrideDialog {...dlg.bind("override")} d={d} done={refresh} />
       <AfterSalesDialog {...dlg.bind("aftersales")} d={d} done={refresh} />
+      <AmendDialog {...dlg.bind("amend")} d={d} done={refresh} />
       <FormDialog {...dlg.bind("contact")} title="Log call…" description="Outcomes feed SLA reporting (ch. 15.4)." submitLabel="Log call" onSubmit={async () => { await api(`/v1/admin/flight-requests/${ref}/contact-attempts`, { body: { channel: "PHONE", outcome: contact.outcome, note: contact.note || undefined, callBackAt: contact.outcome === "CALL_BACK_REQUESTED" && contact.callBackAt ? new Date(contact.callBackAt).toISOString() : undefined } }); setContact({ outcome: "REACHED", note: "", callBackAt: "" }); await refresh() }}>
         <Field label="Outcome"><NativeSelect className="field-input" value={contact.outcome} onChange={(e) => setContact({ ...contact, outcome: e.target.value })}>{["REACHED", "NO_ANSWER", "BUSY", "WRONG_NUMBER", "CALL_BACK_REQUESTED"].map((o) => <option key={o}>{o}</option>)}</NativeSelect></Field>
         {contact.outcome === "CALL_BACK_REQUESTED" && <Field label="Call back at"><input type="datetime-local" className="field-input" value={contact.callBackAt} onChange={(e) => setContact({ ...contact, callBackAt: e.target.value })} required /></Field>}

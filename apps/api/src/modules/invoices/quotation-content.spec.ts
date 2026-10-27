@@ -44,6 +44,17 @@ describe("quotation content", () => {
     expect(rows.find(([k]) => k === "Baggage BA456")![1]).toMatch(/^UNKNOWN/)
     expect(rows.find(([k]) => k === "Refund before departure")![1]).toMatch(/^UNKNOWN/)
   })
+
+  it("prints extra services and the discount before the total (ADR-0013 A6)", () => {
+    const GBP = (amountMinor: number) => ({ amountMinor, currency: "GBP" })
+    const priced = { ...option, priceBreakdown: { fare: GBP(35000), taxes: GBP(0), serviceFee: GBP(1000), extras: [{ label: "Extra bag", amount: GBP(2500) }], discount: { label: "Loyalty", amount: GBP(1500) }, total: GBP(37000) } }
+    const rows = flightOptionSections([priced], [traveller], en)[0]!.rows!
+    const keys = rows.map(([k]) => k)
+    expect(rows).toContainEqual(["Extra bag", "GBP 25.00"])
+    expect(rows).toContainEqual(["Discount · Loyalty", "- GBP 15.00"])
+    expect(keys.indexOf("Discount · Loyalty")).toBeLessThan(keys.indexOf("Total"))
+    expect(flightOptionSections([priced], [traveller], fa)[0]!.rows!.some(([k]) => k.startsWith("تخفیف"))).toBe(true)
+  })
 })
 
 describe("quotation PDF", () => {

@@ -49,7 +49,7 @@ export const fa: DeepString<typeof en> = {
     protectedConn: "اتصال تضمین‌شده با یک بلیت", selfTransfer: "ترانزیت شخصی: بار خود را تحویل بگیرید، از کنترل گذرنامه عبور کنید و دوباره پذیرش شوید.",
     notProtected: "اگر پرواز {n} تأخیر داشته باشد تضمینی نیست", entryRules: "قوانین ترانزیت و ورود به گذرنامهٔ شما بستگی دارد؛ تیم ما پیش از ارسال پیشنهاد آن را تأیید می‌کند.",
     gatewayAccess: "رسیدن به {gateway}: {access} — توسط یونی‌تراول انجام نمی‌شود.", dayOffset: "پرواز از {gateway} {n} روز پس از خروج از ایران", dayOffsetMany: "پرواز از {gateway} {n} روز پس از خروج از ایران",
-    fareConditions: "شرایط نرخ", change: "تغییر پیش از پرواز", refund: "استرداد پیش از پرواز", allowed: "مجاز", allowedFee: "مجاز، جریمه {fee}", notAllowed: "مجاز نیست",
+    fareConditions: "شرایط نرخ", change: "تغییر پیش از پرواز", refund: "استرداد پیش از پرواز", allowed: "مجاز", allowedFee: "مجاز، جریمه {fee}", notAllowed: "مجاز نیست", discount: "تخفیف",
     freshness: "موجودی در {time} بررسی شد. تیم ما نرخ را تأیید می‌کند و پیش از هر رزرو برایتان پیشنهاد می‌فرستد.", priceInQuote: "قیمت در پیشنهاد شما تأیید می‌شود",
     request: "درخواست این مسیر", requestNote: "ثبت درخواست به معنای رزرو صندلی نیست",
     seatMap: "مشاهدهٔ صندلی‌ها", seatPreference: "ترجیح صندلی", seatMapNote: "نقشهٔ صندلی از {provider}، دریافت‌شده در {time}. فقط برای مشاهده — انتخاب شما به‌عنوان ترجیح ثبت می‌شود.",

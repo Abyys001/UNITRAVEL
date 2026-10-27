@@ -36,6 +36,8 @@ export interface FlightDetail {
   manual: { flexibility?: string; budget?: Money; airlinesAvoid?: string[]; airlinesPrefer?: string[]; overlandAcceptable?: boolean } | null
   preferences: Record<string, unknown>; customerNote: string | null; urgent: boolean; firstTravelDate: string; submittedAt: string; submittedVia: string; submittedLocale: string
   routeLabel: string; statusLabel: string
+  /** Code → display name for every place in `query` (staff detail). */
+  places?: Record<string, string>
   sla: { dueAt: string | null; firstContactAt: string | null; assignedAt: string | null }
   assignee: { id: string; name: string | null } | null
   customer: {
@@ -59,6 +61,8 @@ export interface FlightDetail {
   compliance: CaseView[]
   actions: AllowedCommand[]
   paymentRecording: PaymentRecordingState
+  /** Whether staff may amend the trip now, and whether a quote is out (ADR-0013). */
+  amendment: { allowed: boolean; needsAcknowledge: boolean; reason?: string }
   atolMode: string
 }
 

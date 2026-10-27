@@ -52,6 +52,11 @@ export class ReferenceService implements OnModuleInit {
     return this.countryNames.get(code)?.[locale] ?? code
   }
 
+  /** Country of a city or airport code as used in a search query slice. */
+  countryOfPlace(code: string): string | undefined {
+    return this.cityByCode.get(code)?.country ?? this.airportsByIata.get(code)?.country
+  }
+
   placeName(code: string, locale: "en" | "fa"): string {
     const city = this.cityByCode.get(code)
     if (city) return locale === "fa" ? city.nameFa : city.nameEn

@@ -7,8 +7,9 @@ import { Channel, DeliveryStatus, Locale } from "./enums"
 export const NOTIFICATION_EVENTS = [
   "auth.otp",
   "request.submitted", "request.assigned", "request.info_requested", "request.message_from_staff", "request.message_from_customer",
-  "request.declined", "request.cancelled", "request.status_changed",
-  "quote.sent", "quotation.sent", "invoice.issued", "invoice.cancelled", "invoice.expired", "quote.expiring", "quote.accepted", "quote.expired",
+  "request.declined", "request.cancelled", "request.status_changed", "request.amended",
+  "quote.sent", "quotation.sent", "invoice.issued", "invoice.cancelled", "invoice.expired", "invoice.paid",
+  "payment.requested", "payment.failed", "payment.refunded", "quote.expiring", "quote.accepted", "quote.expired",
   "reservation.recorded", "reservation.deadline_approaching",
   "ticket.issued",
   "identity.verification_verified", "identity.verification_rejected", "identity.verification_correction",

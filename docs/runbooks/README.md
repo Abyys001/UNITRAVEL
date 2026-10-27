@@ -16,6 +16,7 @@ Source: booklet ch. 30.7 (trigger table) and ch. 30.6 (backup). Targets: ch. 30.
 | [identity-verification](identity-verification.md) | Staff procedure for passport verification (ADR-0005); not an incident trigger |
 | [stripe-webhook-failure](stripe-webhook-failure.md) | Failed Stripe events, or a customer paid by card but the invoice is unpaid (ADR-0007, test mode) |
 | [deploy-vps](deploy-vps.md) | Standing up or updating a staging/production stack on one VPS; not an incident trigger |
+| [deploy-vps-nginx](deploy-vps-nginx.md) | Same, on a shared VPS whose host nginx owns 80/443 (`scripts/vps-deploy.sh`); the live unitravels.co.uk setup |
 | [refunds](refunds.md) | Staff procedure for refunding an online card payment (ADR-0007); not an incident trigger |
 
 ## Conventions

@@ -45,7 +45,7 @@ export const en = {
     protectedConn: "Protected connection on one ticket", selfTransfer: "Self-transfer: collect your bags, clear passport control and check in again.",
     notProtected: "Not protected if flight {n} is late", entryRules: "Transit and entry rules depend on your passport; our team confirms them before quoting.",
     gatewayAccess: "Getting to {gateway}: {access} — not arranged by Uni Travel.", dayOffset: "Depart {gateway} {n} day after leaving Iran", dayOffsetMany: "Depart {gateway} {n} days after leaving Iran",
-    fareConditions: "Fare conditions", change: "Changes before departure", refund: "Refund before departure", allowed: "Allowed", allowedFee: "Allowed · fee {fee}", notAllowed: "Not allowed",
+    fareConditions: "Fare conditions", change: "Changes before departure", refund: "Refund before departure", allowed: "Allowed", allowedFee: "Allowed · fee {fee}", notAllowed: "Not allowed", discount: "Discount",
     freshness: "Availability checked at {time}. Our team confirms the fare and sends you a quote before anything is reserved.", priceInQuote: "Price confirmed in your quote",
     request: "Request this itinerary", requestNote: "Requesting does not book a seat",
     seatMap: "View seats", seatPreference: "Seat preference", seatMapNote: "Seat map from {provider}, fetched {time}. View only — your choice is saved as a preference.",

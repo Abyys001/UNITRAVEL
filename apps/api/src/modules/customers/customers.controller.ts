@@ -3,7 +3,7 @@ import { ApiTags } from "@nestjs/swagger"
 import type { Response } from "express"
 import { z } from "zod"
 
-import { AttachScanBody, ConfirmIdentityBody, DecideVerificationBody, TravellerInput, UpdateDetailsBody } from "@unitravel/contracts"
+import { AttachScanBody, ConfirmIdentityBody, DecideVerificationBody, TravellerInput, TravellerPatch, UpdateDetailsBody } from "@unitravel/contracts"
 
 import { type Actor, Authenticated, Ctx, CurrentActor, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
 import { zbody } from "../../core/http/zod"
@@ -29,7 +29,7 @@ export class TravellersController {
 
   @Patch(":id")
   @Authenticated()
-  update(@Param("id", zbody(z.uuid())) id: string, @Body(zbody(TravellerInput.partial())) body: Partial<z.infer<typeof TravellerInput>>, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+  update(@Param("id", zbody(z.uuid())) id: string, @Body(zbody(TravellerPatch)) body: TravellerPatch, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     return this.customers.update(actor.userId, id, body, { requestId: ctx.id, ip: actor.ip })
   }
 

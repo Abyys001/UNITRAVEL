@@ -183,14 +183,14 @@ export class PaymentsService implements OnModuleInit {
     return { provider: adapter.id, clientSecret: out.secret, publishableKey: adapter.publishableKey, expiresAt: out.row.expiresAt.toISOString(), invoiceNumber: number }
   }
 
-  /** Staff resend the payment link: the customer gets the invoice message again, whose link opens the page with the Pay button (ADR-0007 P18). */
+  /** Staff resend the payment link: a "payment required" message whose link opens the page with the Pay button (ADR-0007 P18, ADR-0013 A7). */
   async resendLink(invoiceId: string, actor: Actor) {
     await this.uow.run(async (tx) => {
       const [inv] = await tx.select().from(invoices).where(eq(invoices.id, invoiceId)).for("update")
       if (!inv) throw notFound("Invoice")
       if (inv.status !== "ISSUED") throw new AppError("INVALID_TRANSITION", `Only an ISSUED invoice can be paid (this one is ${inv.status})`)
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.link_resent", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number: inv.number }, ip: actor.ip })
-      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: inv.expiresAt!.toISOString(), productType: inv.requestType } })
+      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "payment.requested", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: inv.expiresAt!.toISOString(), productType: inv.requestType } })
     })
     return { ok: true }
   }
@@ -273,8 +273,10 @@ export class PaymentsService implements OnModuleInit {
     const s = await this.sessionByProviderId(tx, obj.id)
     if (!s) return "IGNORED"
     if (await this.closeSession(tx, s, command)) {
-      const [inv] = await tx.select({ ref: invoices.requestRef }).from(invoices).where(eq(invoices.id, s.invoiceId))
-      await this.audit.record(tx, { actorKind: "SYSTEM", action: command === "fail" ? "payment.session_failed" : "payment.session_expired", entityType: "invoice", entityId: s.invoiceId, contextRef: inv?.ref, after: { provider: s.provider } })
+      const [inv] = await tx.select().from(invoices).where(eq(invoices.id, s.invoiceId))
+      await this.audit.record(tx, { actorKind: "SYSTEM", action: command === "fail" ? "payment.session_failed" : "payment.session_expired", entityType: "invoice", entityId: s.invoiceId, contextRef: inv?.requestRef, after: { provider: s.provider } })
+      // A failed asynchronous payment is worth telling the customer; an abandoned session expiring is not (ADR-0013 A8).
+      if (command === "fail" && inv?.status === "ISSUED") await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "payment.failed", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: inv.expiresAt?.toISOString(), productType: inv.requestType }, dedupeKey: `payment-failed:${s.id}` })
     }
     return "PROCESSED"
   }
@@ -338,6 +340,8 @@ export class PaymentsService implements OnModuleInit {
     }
     const [inv] = p.invoiceId ? await tx.select().from(invoices).where(eq(invoices.id, p.invoiceId)) : []
     await this.audit.record(tx, { actorKind: "SYSTEM", action: "payment.refunded", entityType: "payment_record", entityId: p.id, contextRef: inv?.requestRef, after: { refundedMinor: refunded, full } })
+    // Once per increase of the provider's refunded amount (a replayed event stops at the check above).
+    if (inv) await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "payment.refunded", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, productType: inv.requestType }, dedupeKey: `payment-refunded:${p.id}:${refunded}` })
     if (full && inv) {
       await this.invoices.markRefunded(tx, inv.id, `Card payment refunded (${p.provider})`)
       if (inv.requestType === "FLIGHT") await this.bookings.afterOnlinePayment(tx, inv.requestId)

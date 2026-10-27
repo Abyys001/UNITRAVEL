@@ -1,0 +1,36 @@
+# Overlay for a VPS where the host's nginx already owns ports 80/443 (docs/runbooks/deploy-vps-nginx.md).
+# Use together with compose.prod.yml:
+#   docker compose --env-file infra/.env.prod -f infra/compose.prod.yml -f infra/compose.vps.yml up -d --build
+# The bundled Caddy edge is disabled; every service is published on 127.0.0.1 only and nginx (infra/nginx/) routes
+# the public hosts to them. Ports default to 3080-3085 and can be moved with the *_PORT variables in .env.prod.
+services:
+  caddy:
+    profiles: [caddy]
+
+  web:
+    ports: ["127.0.0.1:${WEB_PORT:-3080}:4000"]
+
+  console:
+    ports: ["127.0.0.1:${CONSOLE_PORT:-3081}:4200"]
+
+  # Requests reach the containers from the Docker bridge (nginx -> 127.0.0.1 -> docker-proxy), so trust private
+  # ranges for X-Forwarded-For; nginx overwrites that header with the real client address.
+  api:
+    ports: ["127.0.0.1:${API_PORT:-3082}:4100"]
+    environment: { TRUST_PROXY: "loopback, uniquelocal" }
+
+  worker:
+    environment: { TRUST_PROXY: "loopback, uniquelocal" }
+
+  mobile:
+    build:
+      # The Flutter app is served under /app/; the device-frame shell (infra/mobile-shell) is the page at /.
+      args: { BASE_HREF: /app/ }
+      additional_contexts: { shell: ./mobile-shell }
+    ports: ["127.0.0.1:${MOBILE_PORT:-3083}:80"]
+
+  storage:
+    ports: ["127.0.0.1:${STORAGE_PORT:-3084}:9000"]
+
+  mailpit:
+    ports: !override ["127.0.0.1:${MAILPIT_PORT:-3085}:8025"]

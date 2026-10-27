@@ -49,7 +49,8 @@ export class NotificationRouter {
       const eventType = v.decision === "VERIFIED" ? "identity.verification_verified" : v.decision === "REJECTED" ? "identity.verification_rejected" : "identity.verification_correction"
       return this.n.notify({ eventId: e.id, eventType, audience: "CUSTOMER", userIds: [v.customerUserId], vars: { name: v.travellerName, message: v.message }, linkPath: "/account/details", data: { decision: v.decision } })
     }
-    if (e.type === "invoice.issued" || e.type === "invoice.cancelled" || e.type === "invoice.expired") {
+    // Payment documents (ADR-0013 A7): same delivery as invoices, no amounts in the message.
+    if (e.type === "invoice.issued" || e.type === "invoice.cancelled" || e.type === "invoice.expired" || e.type === "invoice.paid" || e.type === "payment.requested" || e.type === "payment.failed" || e.type === "payment.refunded") {
       const v = e.payload as unknown as { number: string; ref: string; customerUserId: string; expiresAt?: string }
       return this.n.notify({
         eventId: e.id, eventType: e.type, audience: "CUSTOMER", userIds: [v.customerUserId], documentDelivery: true, requestKey: v.ref,
@@ -93,6 +94,8 @@ export class NotificationRouter {
       case "quote.sent":
         // The sent quote is the quotation (ADR-0006 C1): numbered, delivered by email with a sign-in-protected link, SMS when no email is verified.
         return this.n.notify({ ...base, eventType: "quotation.sent", audience: "CUSTOMER", userIds: [p.customerUserId], documentDelivery: true, vars: { ref: p.ref, number: p.documentNumber ?? p.ref, expires_at: p.validUntil }, linkPath: this.requestPath(p.ref), data: { ref: p.ref, number: p.documentNumber } })
+      case "flight_request.amended":
+        return this.n.notify({ ...base, eventType: "request.amended", audience: "CUSTOMER", userIds: [p.customerUserId], documentDelivery: true, vars: { ref: p.ref, route: p.routeLabel }, linkPath: this.requestPath(p.ref) })
       case "quote.accepted":
         await this.n.notify({ ...base, eventType: "quote.accepted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref } })
         if (p.assigneeUserId) await this.n.notify({ ...base, eventType: "quote.accepted", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref } })
