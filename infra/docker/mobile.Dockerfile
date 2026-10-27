@@ -5,6 +5,7 @@ FROM debian:bookworm-slim AS build
 ARG FLUTTER_VERSION=3.47.1
 ARG API_URL
 ARG WEB_URL
+ARG BASE_HREF=/
 RUN apt-get update && apt-get install -y --no-install-recommends git curl unzip xz-utils ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 ENV FLUTTER_ROOT=/opt/flutter PATH=/opt/flutter/bin:$PATH CI=true
@@ -16,10 +17,15 @@ COPY pubspec.yaml pubspec.lock ./
 COPY packages ./packages
 RUN flutter pub get
 COPY . .
-RUN flutter pub get && flutter build web --release --no-web-resources-cdn \
+RUN flutter pub get && flutter build web --release --no-web-resources-cdn --base-href ${BASE_HREF} \
     --dart-define=API_URL=${API_URL:?build arg API_URL} --dart-define=WEB_URL=${WEB_URL:?build arg WEB_URL}
 
+# Optional device-frame shell (compose.vps.yml passes it as the "shell" build context). Without it the stage is empty.
+FROM scratch AS shell
+
 FROM caddy:2.10-alpine
-RUN printf '{\n\tadmin off\n\tauto_https off\n}\n:80 {\n\troot * /srv\n\tencode zstd gzip\n\ttry_files {path} /index.html\n\tfile_server\n}\n' > /etc/caddy/Caddyfile
-COPY --from=build /app/build/web /srv
+ARG BASE_HREF=/
+RUN printf '{\n\tadmin off\n\tauto_https off\n}\n:80 {\n\troot * /srv\n\tencode zstd gzip\n\theader /flutter_service_worker.js Cache-Control no-cache\n\theader /app/flutter_service_worker.js Cache-Control no-cache\n\ttry_files {path} {path}/ %sindex.html\n\tfile_server\n}\n' "${BASE_HREF}" > /etc/caddy/Caddyfile
+COPY --from=build /app/build/web /srv${BASE_HREF}
+COPY --from=shell / /srv/
 EXPOSE 80

@@ -43,6 +43,8 @@ CMD ["node", "dist/seed/index.js"]
 FROM runtime-base AS web
 COPY --from=build --chown=app /repo/apps/web/.next/standalone ./
 COPY --from=build --chown=app /repo/apps/web/.next/static ./apps/web/.next/static
+# Standalone output leaves out public/ (hero video, destination photos, app badges).
+COPY --from=build --chown=app /repo/apps/web/public ./apps/web/public
 USER app
 ENV PORT=4000 HOSTNAME=0.0.0.0
 EXPOSE 4000

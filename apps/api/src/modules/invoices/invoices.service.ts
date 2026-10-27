@@ -2,7 +2,7 @@ import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { and, asc, desc, eq, inArray, ne } from "drizzle-orm"
 
 import {
-  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type InvoiceCancelCode, type InvoiceStatus, type ServiceQuoteLine, serviceQuoteTotal, type StaffInvoice, type StaffInvoiceListItem,
+  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type InvoiceCancelCode, type InvoiceStatus, type PriceBreakdown, type ServiceQuoteLine, serviceQuoteTotal, type StaffInvoice, type StaffInvoiceListItem,
 } from "@unitravel/contracts"
 import {
   cargoRequests, customerProfiles, type Db, type DbOrTx, flightRequests, invoiceLines, invoices, invoiceStatusHistory, paymentRecords, quoteOptions, quotes, serviceRequests, tickets, type Tx, users,
@@ -96,8 +96,10 @@ export class InvoicesService implements OnModuleInit {
     if (type === "FLIGHT") {
       const [o] = q.acceptedOptionId ? await tx.select().from(quoteOptions).where(eq(quoteOptions.id, q.acceptedOptionId)) : []
       if (!o) throw new AppError("INVALID_TRANSITION", "The accepted quote has no accepted option")
-      const pb = o.priceBreakdown as { fare: { amountMinor: number }; taxes: { amountMinor: number }; serviceFee: { amountMinor: number }; total: { amountMinor: number } }
-      lines = [line(`Airfare - ${o.label}`, pb.fare.amountMinor), ...(pb.taxes.amountMinor > 0 ? [line("Taxes, fees and carrier charges", pb.taxes.amountMinor)] : []), ...(pb.serviceFee.amountMinor > 0 ? [line("Uni Travel service fee", pb.serviceFee.amountMinor)] : [])]
+      const pb = o.priceBreakdown as PriceBreakdown
+      // Extras are their own lines; a discount is a negative line, so the lines still add up to the total (ADR-0013 A6).
+      lines = [line(`Airfare - ${o.label}`, pb.fare.amountMinor), ...(pb.taxes.amountMinor > 0 ? [line("Taxes, fees and carrier charges", pb.taxes.amountMinor)] : []), ...(pb.serviceFee.amountMinor > 0 ? [line("Uni Travel service fee", pb.serviceFee.amountMinor)] : []),
+        ...(pb.extras ?? []).map((e) => line(e.label, e.amount.amountMinor)), ...(pb.discount ? [line(`Discount - ${pb.discount.label}`, -pb.discount.amount.amountMinor)] : [])]
       totalMinor = pb.total.amountMinor
     } else if (type === "SERVICE") {
       // ADR-0015: the lines staff sent, with a club discount as its own negative line.
@@ -231,6 +233,8 @@ export class InvoicesService implements OnModuleInit {
     await tx.update(invoices).set({ status: "PAID", paidAt: new Date(), rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
     await this.history(tx, inv.id, "ISSUED", "PAID", "mark_paid", null, "SYSTEM", { text: via })
     await this.audit.record(tx, { actorUserId: null, actorKind: "SYSTEM", action: "invoice.paid", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, before: { status: "ISSUED" }, after: { number: inv.number, via } })
+    // Card and verified offline payments alike; the machine allows ISSUED -> PAID once, so the receipt is sent once (ADR-0013 A7).
+    await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.paid", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, productType: inv.requestType }, dedupeKey: `invoice-paid:${inv.id}` })
     return true
   }
 

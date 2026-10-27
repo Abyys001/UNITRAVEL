@@ -50,7 +50,7 @@ export type CreateFlightRequestBody = z.infer<typeof CreateFlightRequestBody>
 
 export const TimelineEntry = z.object({
   at: IsoDateTime,
-  kind: z.enum(["STATUS", "MESSAGE", "CONTACT", "RECORD", "NOTE", "QUOTE", "DOCUMENT"]),
+  kind: z.enum(["STATUS", "MESSAGE", "CONTACT", "RECORD", "NOTE", "QUOTE", "DOCUMENT", "AMENDMENT"]),
   label: z.string(),
   detail: z.string().optional(),
   actor: z.string().optional(),
@@ -72,12 +72,20 @@ export const MessageView = z.object({
 /** A quoted condition that is allowed with a fee must state the fee: a blank amount would otherwise be sent as 0 (ADR-0008 W7). */
 export const QuotedCondition = Condition.refine((c) => !c.penalty || c.penalty.amountMinor > 0, { message: "A fee must be greater than zero; use 'Allowed, no fee' if there is none", path: ["penalty", "amountMinor"] })
 
+/** A priced line staff add on top of fare, taxes and service fee (ADR-0013 A5). */
+export const PriceLine = z.object({ label: z.string().trim().min(1).max(80), amount: Money.refine((m) => m.amountMinor > 0, { message: "Must be greater than zero", path: ["amountMinor"] }) })
+export type PriceLine = z.infer<typeof PriceLine>
+
+/** The total is fare + taxes + service fee + extras − discount; the server recomputes it (`priceBreakdownTotal`) and refuses a different one. */
+export const PriceBreakdown = z.object({ fare: Money, taxes: Money, serviceFee: Money, extras: z.array(PriceLine).max(10).optional(), discount: PriceLine.optional(), total: Money })
+export type PriceBreakdown = z.infer<typeof PriceBreakdown>
+
 export const QuoteOptionInput = z.object({
   label: z.string().min(1).max(80),
   source: QuoteOptionSource,
   slices: z.array(Slice).min(1),
   components: z.array(z.object({ provider: z.string(), offerId: z.string().optional(), rung: z.string(), fetchedAt: IsoDateTime.optional() })).default([]),
-  priceBreakdown: z.object({ fare: Money, taxes: Money, serviceFee: Money, total: Money }),
+  priceBreakdown: PriceBreakdown,
   baggage: z.array(SegmentBaggage),
   conditions: z.object({ change: tri(QuotedCondition), refund: tri(QuotedCondition) }),
   ticketingModel: TicketingModel,
@@ -87,6 +95,19 @@ export const QuoteOptionInput = z.object({
   supplierExpiresAt: IsoDateTime.optional(),
 })
 export type QuoteOptionInput = z.infer<typeof QuoteOptionInput>
+
+/**
+ * Staff amendment of the trip a customer asked for (ADR-0013 A1-A4): a new query and/or travellers, with a reason.
+ * Not a state transition. In QUOTED/ACCEPTED the open quote is not changed, so staff confirm `acknowledgeOpenQuote`.
+ */
+export const AmendFlightRequestBody = z.object({
+  expectedVersion: z.number().int().nonnegative(),
+  reason: z.string().trim().min(5).max(500),
+  query: SearchQuery.optional(),
+  travellers: z.array(z.object({ travellerId: Uuid, passengerType: PassengerType })).min(1).max(9).optional(),
+  acknowledgeOpenQuote: z.boolean().optional(),
+}).refine((b) => b.query || b.travellers, { message: "Change the trip, the travellers or both", path: ["query"] })
+export type AmendFlightRequestBody = z.infer<typeof AmendFlightRequestBody>
 
 export const QuoteDraftBody = z.object({
   currency: z.string().regex(/^[A-Z]{3}$/).default("GBP"),

@@ -2599,6 +2599,30 @@
         ]
       }
     },
+    "/v1/admin/flight-requests/{ref}/amend": {
+      "post": {
+        "operationId": "AdminFlightRequestsController_amend",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Amend the trip and/or travellers with a reason (ADR-0013); not a status change",
+        "tags": [
+          "admin-flight-requests"
+        ]
+      }
+    },
     "/v1/admin/flight-requests/{ref}/contact-attempts": {
       "post": {
         "operationId": "AdminFlightRequestsController_contact",

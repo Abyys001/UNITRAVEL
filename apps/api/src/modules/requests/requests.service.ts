@@ -2,15 +2,15 @@ import { Inject, Injectable, Logger } from "@nestjs/common"
 import { and, asc, desc, eq, ilike, inArray, isNull, lt, ne, or, sql } from "drizzle-orm"
 
 import {
-  type CreateFlightRequestBody, FlightRequestCustomerView, FlightRequestListItem, type FlightRequestStatus, type Itinerary, type PaymentStatus, RESERVED_AWAITING_PAYMENT, RESERVED_ISSUING, type SearchQuery,
+  type AmendFlightRequestBody, type CreateFlightRequestBody, FlightRequestCustomerView, FlightRequestListItem, type FlightRequestStatus, type Itinerary, type PaymentStatus, RESERVED_AWAITING_PAYMENT, RESERVED_ISSUING, type SearchQuery,
   type StaffRequestChangedEvent,
 } from "@unitravel/contracts"
 import {
-  afterSalesCases, contactAttempts, creditOverrides, type Db, type DbOrTx, documents, flightRequests, offerSnapshots, paymentRecords, quoteOptions, quotes, requestMessages,
-  requestNotes, requestStatusHistory, requestTravellers, reservations, serviceRequests, tickets, type Tx, userIdentities, users, customerProfiles, cargoRequests,
+  type AmendmentSide, afterSalesCases, contactAttempts, creditOverrides, type Db, type DbOrTx, documents, flightRequests, offerSnapshots, paymentRecords, quoteOptions, quotes, requestMessages,
+  requestAmendments, requestNotes, requestStatusHistory, requestTravellers, reservations, serviceRequests, tickets, type Tx, userIdentities, users, customerProfiles, cargoRequests,
 } from "@unitravel/db"
 import {
-  allowedCommands, computePaymentStatus, evaluate, FLIGHT_TERMINAL, FLIGHT_TRANSITIONS, type FlightCommandName, type FlightFacts, generateReference,
+  allowedCommands, amendState, computePaymentStatus, evaluate, FLIGHT_TERMINAL, FLIGHT_TRANSITIONS, type FlightCommandName, type FlightFacts, generateReference,
   type MachineActor, normaliseReference, passengerMixMismatch, paymentRecordingState, TRAVELLERS_NOT_VERIFIED, unknownQuoteFields,
 } from "@unitravel/domain"
 
@@ -235,6 +235,71 @@ export class RequestsService {
     return updated
   }
 
+  /**
+   * Staff amendment of the trip and/or travellers (ADR-0013 A1-A4). Not a state transition: the status stays. Same checks as
+   * submission; new travellers are screened and the new route goes through the route policy, and any hit refuses the change and
+   * opens a compliance case (rule 5). The open quote, if any, is not touched.
+   */
+  async amend(ref: string, body: AmendFlightRequestBody, actor: Actor, requestId: string) {
+    const out = await this.uow.run(async (tx) => {
+      const r = await this.byRef(ref, tx, true)
+      if (body.expectedVersion !== r.version) throw new AppError("VERSION_CONFLICT", `Request changed (version ${r.version}); reload`)
+      const st = amendState(r.status)
+      if (!st.allowed) throw new AppError("INVALID_TRANSITION", st.reason ?? "This request cannot be amended")
+      if (st.needsAcknowledge && !body.acknowledgeOpenQuote) throw new AppError("VALIDATION_FAILED", "A quote is out: it will not change. Confirm, then send a new quote", [{ path: "acknowledgeOpenQuote", code: "REQUIRED" }])
+      const current = await tx.select().from(requestTravellers).where(eq(requestTravellers.requestId, r.id)).orderBy(asc(requestTravellers.createdAt))
+      const query = body.query ?? r.query
+      const nextTrav = body.travellers ?? current.map((t) => ({ travellerId: t.travellerId, passengerType: t.passengerType }))
+      if (new Set(nextTrav.map((t) => t.travellerId)).size !== nextTrav.length) throw new AppError("VALIDATION_FAILED", "A traveller is listed twice", [{ path: "travellers", code: "DUPLICATE" }])
+      const mix = passengerMixMismatch(query.passengers.map((p) => p.type), nextTrav.map((t) => t.passengerType))
+      if (mix) throw new AppError("VALIDATION_FAILED", mix, [{ path: "travellers", code: "PASSENGER_MIX_MISMATCH" }])
+      const trav = await Promise.all(nextTrav.map((t) => this.customers.owned(r.customerUserId, t.travellerId, tx)))
+
+      // Compliance before any change: new travellers and the new route (ch. 27.1).
+      const known = new Set(current.map((t) => t.travellerId))
+      const evidence: { kind: string; label: string; detail: string; score?: number }[] = []
+      const screeningIds: string[] = []
+      for (const t of trav.filter((x) => !known.has(x.id))) {
+        const res = await this.compliance.screen(tx, { subjectType: "TRAVELLER", subjectRef: t.id, name: `${t.givenNames} ${t.surname}`, nameFa: t.nameFa, dateOfBirth: t.dateOfBirth, nationality: t.nationality, contextRef: r.ref })
+        if (res.result !== "CLEAR") {
+          screeningIds.push(res.screeningId)
+          for (const h of res.hits) evidence.push({ kind: "PARTY_MATCH", label: `Traveller ${t.givenNames} ${t.surname} ↔ ${h.matchedName}`, detail: `${h.listId} ${h.externalId} · ${h.programmes.join(", ")} · ${h.reasons.join("; ")}`, score: h.score })
+        }
+      }
+      if (body.query) {
+        const code = (p: SearchQuery["slices"][number]["from"]) => ("airport" in p ? p.airport : p.city)
+        const countries = [...new Set(query.slices.flatMap((x) => [this.reference.countryOfPlace(code(x.from)), this.reference.countryOfPlace(code(x.to))]).filter(Boolean) as string[])]
+        for (const k of await this.compliance.routeReview(countries)) evidence.push({ kind: "ROUTE_POLICY", label: `Amended route touches ${k}`, detail: "Country route policy requires review" })
+      }
+      if (evidence.length) {
+        const c = await this.compliance.openCase(tx, { requestType: "FLIGHT", requestId: r.id, requestRef: r.ref, trigger: screeningIds.length ? "SCREENING" : "POLICY", summary: `Staff amendment refused: ${evidence.length} item(s) need a compliance decision`, evidence, screeningIds })
+        await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "flight_request.amend_refused", entityType: "flight_request", entityId: r.id, contextRef: r.ref, after: { caseId: c.id, reason: body.reason }, ip: actor.ip, requestId })
+        return { refused: c.id }
+      }
+
+      const side = (q: SearchQuery | undefined, ts: { travellerId: string; passengerType: string; name: string }[] | undefined) => ({ ...(q ? { query: q } : {}), ...(ts ? { travellers: ts } : {}) })
+      const before = side(body.query ? r.query : undefined, body.travellers ? current.map((t) => ({ travellerId: t.travellerId, passengerType: t.passengerType, name: `${t.nameSnapshot.givenNames} ${t.nameSnapshot.surname}` })) : undefined)
+      const after = side(body.query, body.travellers ? nextTrav.map((t, i) => ({ ...t, name: `${trav[i]!.givenNames} ${trav[i]!.surname}` })) : undefined)
+      const firstDate = query.slices[0]!.date
+      // Special-service requests follow their traveller; a removed traveller's requests go with them.
+      const keep = new Set(nextTrav.map((t) => t.travellerId))
+      const preferences = { ...r.preferences, ssrs: r.preferences.ssrs.filter((x) => keep.has(x.travellerId)) }
+      const [updated] = await tx.update(flightRequests).set({ query, tripType: query.tripType, firstTravelDate: firstDate, preferences, version: r.version + 1 })
+        .where(and(eq(flightRequests.id, r.id), eq(flightRequests.version, r.version))).returning()
+      if (!updated) throw new AppError("VERSION_CONFLICT", "Request changed; reload")
+      if (body.travellers) {
+        await tx.delete(requestTravellers).where(eq(requestTravellers.requestId, r.id))
+        await tx.insert(requestTravellers).values(trav.map((t, i) => ({ requestId: r.id, travellerId: t.id, passengerType: nextTrav[i]!.passengerType, nameSnapshot: { title: t.title, givenNames: t.givenNames, surname: t.surname, nameFa: t.nameFa, dateOfBirth: t.dateOfBirth } })))
+      }
+      await tx.insert(requestAmendments).values({ requestType: "FLIGHT", requestId: r.id, versionBefore: r.version, actorUserId: actor.userId, reason: body.reason, before, after })
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "flight_request.amended", entityType: "flight_request", entityId: r.id, contextRef: r.ref, before: { version: r.version, ...before }, after: { version: updated.version, reason: body.reason, ...after }, ip: actor.ip, requestId })
+      await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: r.id, eventType: "flight_request.amended", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, routeLabel: this.routeLabel(query) }, dedupeKey: `fr-amended:${r.id}:${updated.version}` })
+      return { refused: null }
+    })
+    if (out.refused) throw new AppError("COMPLIANCE_REVIEW_REQUIRED", "The change needs a compliance decision first; a case was opened and the request is unchanged", [{ path: "caseId", code: out.refused }])
+    return this.staffDetail(ref, actor)
+  }
+
   /** Recomputed from verified payment records against the accepted quote total; never set by hand (ch. 13.2). */
   async recomputePaymentStatus(tx: Tx, r: Req): Promise<PaymentStatus> {
     const recs = await tx.select().from(paymentRecords).where(and(eq(paymentRecords.requestType, "FLIGHT"), eq(paymentRecords.requestId, r.id)))
@@ -405,9 +470,15 @@ export class RequestsService {
       label: customer ? this.statusLabel(h.toStatus as FlightRequestStatus, r.paymentStatus, locale) : `${this.statusLabel(h.toStatus as FlightRequestStatus, r.paymentStatus, "en")} · ${h.command.replace(/_/g, " ")}`,
       detail: customer ? undefined : h.reasonText ?? h.reasonCode ?? undefined, actor: customer ? undefined : h.actorKind,
     }))
-    if (customer) return items.filter((x, i) => i === 0 || x.label !== items[i - 1]!.label)
+    const amends = await this.db.select().from(requestAmendments).where(eq(requestAmendments.requestId, r.id)).orderBy(asc(requestAmendments.createdAt))
+    if (customer) {
+      const shown = items.filter((x, i) => i === 0 || x.label !== items[i - 1]!.label)
+      const label = locale === "fa" ? "جزئیات توسط یونی‌تراول به‌روز شد" : "Details updated by Uni Travel"
+      return [...shown, ...amends.map((a) => ({ at: a.createdAt.toISOString(), kind: "AMENDMENT" as const, label }))].sort((a, b) => a.at.localeCompare(b.at))
+    }
+    const amendItems = amends.map((a) => ({ at: a.createdAt.toISOString(), kind: "AMENDMENT" as const, label: `Amended: ${[a.after.query ? "trip" : "", a.after.travellers ? "travellers" : ""].filter(Boolean).join(" and ")}`, detail: `${a.reason}${describeAmendment(a.before, a.after, (q) => this.routeLabel(q))}`, actor: "STAFF" }))
     const contacts = await this.db.select().from(contactAttempts).where(and(eq(contactAttempts.requestType, "FLIGHT"), eq(contactAttempts.requestId, r.id)))
-    return [...items, ...contacts.map((c) => ({ at: c.createdAt.toISOString(), kind: "CONTACT" as const, label: `${c.channel === "PHONE" ? "Call" : "SMS"}: ${c.outcome}`, detail: c.note ?? undefined }))].sort((a, b) => a.at.localeCompare(b.at))
+    return [...items, ...amendItems, ...contacts.map((c) => ({ at: c.createdAt.toISOString(), kind: "CONTACT" as const, label: `${c.channel === "PHONE" ? "Call" : "SMS"}: ${c.outcome}`, detail: c.note ?? undefined }))].sort((a, b) => a.at.localeCompare(b.at))
   }
 
   private async quoteViews(requestId: string, includeInternal: boolean, includeCost = includeInternal) {
@@ -507,6 +578,8 @@ export class RequestsService {
       ref: r.ref, id: r.id, kind: r.kind, status: r.status, paymentStatus: r.paymentStatus, version: r.version, tripType: r.tripType, query: r.query, manual: r.manual, preferences: r.preferences,
       customerNote: r.customerNote, urgent: r.urgent, firstTravelDate: r.firstTravelDate, submittedAt: r.submittedAt.toISOString(), submittedVia: r.submittedVia, submittedLocale: r.submittedLocale,
       routeLabel: this.routeLabel(r.query), statusLabel: this.statusLabel(r.status, r.paymentStatus, "en"),
+      // Display names for the city/airport codes in the query, so the console can show "London (LON)" per flight.
+      places: Object.fromEntries(r.query.slices.flatMap((x) => [x.from, x.to]).map((p) => ("city" in p ? p.city : p.airport)).map((c) => [c, this.reference.placeName(c, "en")])),
       sla: { dueAt: r.slaDueAt?.toISOString() ?? null, firstContactAt: r.firstContactAt?.toISOString() ?? null, assignedAt: r.assignedAt?.toISOString() ?? null },
       assignee: r.assigneeUserId ? { id: r.assigneeUserId, name: assignee } : null,
       customer: {
@@ -532,6 +605,7 @@ export class RequestsService {
       compliance: await this.compliance.casesForRequest("FLIGHT", r.id),
       actions,
       paymentRecording,
+      amendment: amendState(r.status),
       atolMode: this.config.get("WORKFLOW").atolMode,
     }
   }
@@ -598,4 +672,13 @@ export function optionUnknowns(o: { itinerary: unknown; baggage: unknown; condit
   const slices = (o.itinerary as { slices?: { segments: unknown[] }[] }).slices ?? []
   const segmentCount = slices.reduce((n, s) => n + s.segments.length, 0)
   return unknownQuoteFields({ segmentCount, baggage: o.baggage as never, conditions: o.conditions as never })
+}
+
+/** Staff timeline detail: the previous and updated values of an amendment (ADR-0013 A3). */
+function describeAmendment(before: AmendmentSide, after: AmendmentSide, route: (q: SearchQuery) => string): string {
+  const parts: string[] = []
+  const trip = (q: SearchQuery) => `${route(q)} ${q.slices.map((x) => x.date).join(", ")} ${q.cabin} ${q.passengers.length} pax`
+  if (before.query && after.query) parts.push(`trip: ${trip(before.query)} -> ${trip(after.query)}`)
+  if (before.travellers && after.travellers) parts.push(`travellers: ${before.travellers.map((t) => `${t.name} (${t.passengerType})`).join(", ")} -> ${after.travellers.map((t) => `${t.name} (${t.passengerType})`).join(", ")}`)
+  return parts.length ? ` · ${parts.join(" · ")}` : ""
 }

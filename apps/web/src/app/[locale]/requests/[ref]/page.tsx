@@ -52,7 +52,7 @@ function QuoteCard({ q, ref, canAccept, onDone }: { q: QuoteView; ref: string; c
               <div><dt className="inline text-steel">{t("flow.ticketType")}: </dt><dd className="inline">{o.source === "MANUAL" ? t("truth.MANUAL") : o.ticketingModel === "SEPARATE_TICKETS" ? t("truth.SEPARATE_TICKETS") : t("truth.SINGLE_TICKET")}</dd></div>
               {(["change", "refund"] as const).map((k) => <div key={k}><dt className="inline text-steel">{t(k === "change" ? "itinerary.change" : "itinerary.refund")}: </dt><dd className="inline">{o.conditions[k].status === "KNOWN" ? (o.conditions[k].value.allowed ? (o.conditions[k].value.penalty ? t("itinerary.allowedFee", { fee: money(o.conditions[k].value.penalty!) }) : t("itinerary.allowed")) : t("itinerary.notAllowed")) : "—"}</dd></div>)}
             </dl>
-            <p className="mt-2 text-xs text-steel"><Ltr>{money(o.priceBreakdown.fare)} + {money(o.priceBreakdown.taxes)} + {money(o.priceBreakdown.serviceFee)}</Ltr></p>
+            <p className="mt-2 text-xs text-steel"><Ltr>{money(o.priceBreakdown.fare)} + {money(o.priceBreakdown.taxes)} + {money(o.priceBreakdown.serviceFee)}{(o.priceBreakdown.extras ?? []).map((e, i) => <span key={i}> + {money(e.amount)} <span dir="auto">({e.label})</span></span>)}</Ltr>{o.priceBreakdown.discount && <> · {t("itinerary.discount")} <Ltr>−{money(o.priceBreakdown.discount.amount)}</Ltr> <span dir="auto">({o.priceBreakdown.discount.label})</span></>}</p>
             {q.status === "SENT" && canAccept && <ConfirmAccept label={o.label} total={money(o.priceBreakdown.total)} pending={accept.isPending} onConfirm={() => accept.mutate(o.id)} />}
           </article>
         )

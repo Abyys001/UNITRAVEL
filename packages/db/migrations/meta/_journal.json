@@ -66,9 +66,15 @@
       "breakpoints": true
     },
     {
-      "idx": 10,
+      "idx": 9,
       "version": "7",
       "when": 1792784000000,
+      "tag": "0009_request_amendments","breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792787000000,
       "tag": "0010_service_requests",
       "breakpoints": true
     }

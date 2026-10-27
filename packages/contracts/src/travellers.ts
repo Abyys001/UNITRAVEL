@@ -25,6 +25,10 @@ export const TravellerInput = z.object({
 })
 export type TravellerInput = z.infer<typeof TravellerInput>
 
+/** PATCH body: every field optional and no defaults. `TravellerInput.partial()` keeps `.default("SELF")` in Zod 4 and would rewrite the relationship (ADR-0013 A9). */
+export const TravellerPatch = TravellerInput.extend({ relationship: TravellerRelationship }).partial()
+export type TravellerPatch = z.infer<typeof TravellerPatch>
+
 /**
  * What a customer may see of a verification (ADR-0005): the state, when they confirmed, and the reason the
  * reviewer wrote for them. Never the reviewer, never an internal note.

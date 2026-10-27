@@ -1,5 +1,5 @@
 import type { Itinerary, Money, QuoteOptionInput, Segment, Slice } from "@unitravel/contracts"
-import { unknownQuoteFields } from "@unitravel/domain"
+import { priceBreakdownTotal, unknownQuoteFields } from "@unitravel/domain"
 
 /** Builder working copy: amounts as typed strings so half-typed numbers do not jump around. */
 export interface DraftOption {
@@ -10,6 +10,9 @@ export interface DraftOption {
   components: QuoteOptionInput["components"]
   ticketingModel: QuoteOptionInput["ticketingModel"]
   fare: string; taxes: string; serviceFee: string
+  /** Extra services and an optional discount (ADR-0013 A5); the server recomputes the total. */
+  extras: { label: string; amount: string }[]
+  discountLabel: string; discount: string
   baggage: QuoteOptionInput["baggage"]
   conditions: QuoteOptionInput["conditions"]
   internalCost: string
@@ -29,6 +32,8 @@ export function fromInput(o: QuoteOptionInput, key = crypto.randomUUID()): Draft
   return {
     key, label: o.label, source: o.source, slices: o.slices, components: o.components ?? [], ticketingModel: o.ticketingModel,
     fare: major(o.priceBreakdown.fare.amountMinor), taxes: major(o.priceBreakdown.taxes.amountMinor), serviceFee: major(o.priceBreakdown.serviceFee.amountMinor),
+    extras: (o.priceBreakdown.extras ?? []).map((e) => ({ label: e.label, amount: major(e.amount.amountMinor) })),
+    discountLabel: o.priceBreakdown.discount?.label ?? "", discount: o.priceBreakdown.discount ? major(o.priceBreakdown.discount.amount.amountMinor) : "",
     baggage: normaliseBaggage(o.slices, o.baggage), conditions: o.conditions, internalCost: o.internalCostMinor != null ? major(o.internalCostMinor) : "",
     supplierPrice: o.supplierPrice ?? undefined, supplierFetchedAt: o.supplierFetchedAt ?? undefined, supplierExpiresAt: o.supplierExpiresAt ?? undefined,
   }
@@ -55,12 +60,25 @@ export function fromItinerary(it: Itinerary): QuoteOptionInput {
   }
 }
 
-export function toInput(o: DraftOption, currency: string): QuoteOptionInput {
-  const fare = minor(o.fare), taxes = minor(o.taxes), fee = minor(o.serviceFee)
+/** The breakdown without its total, in minor units; blank extra rows are dropped. */
+function breakdown(o: DraftOption, currency: string): Omit<QuoteOptionInput["priceBreakdown"], "total"> {
   const m = (n: number) => ({ amountMinor: n, currency })
+  const extras = o.extras.filter((e) => e.label.trim() || e.amount.trim()).map((e) => ({ label: e.label.trim(), amount: m(minor(e.amount)) }))
+  return {
+    fare: m(minor(o.fare)), taxes: m(minor(o.taxes)), serviceFee: m(minor(o.serviceFee)),
+    ...(extras.length ? { extras } : {}),
+    ...(o.discount.trim() && minor(o.discount) > 0 ? { discount: { label: o.discountLabel.trim() || "Discount", amount: m(minor(o.discount)) } } : {}),
+  }
+}
+
+/** Preview only: the same domain function the server uses (ADR-0013 A5). */
+export const draftTotal = (o: DraftOption, currency: string) => priceBreakdownTotal(breakdown(o, currency))
+
+export function toInput(o: DraftOption, currency: string): QuoteOptionInput {
+  const pb = breakdown(o, currency)
   return {
     label: o.label, source: o.source, slices: o.slices, components: o.components, ticketingModel: o.ticketingModel,
-    priceBreakdown: { fare: m(fare), taxes: m(taxes), serviceFee: m(fee), total: m(fare + taxes + fee) },
+    priceBreakdown: { ...pb, total: { amountMinor: priceBreakdownTotal(pb), currency } },
     baggage: normaliseBaggage(o.slices, o.baggage), conditions: { change: sendableCondition(o.conditions.change), refund: sendableCondition(o.conditions.refund) },
     internalCostMinor: o.internalCost ? minor(o.internalCost) : undefined,
     supplierPrice: o.supplierPrice, supplierFetchedAt: o.supplierFetchedAt, supplierExpiresAt: o.supplierExpiresAt,
@@ -69,7 +87,11 @@ export function toInput(o: DraftOption, currency: string): QuoteOptionInput {
 
 /** Price inputs that are not a plain amount (e.g. "0.0025.00"); they block sending instead of becoming NaN. */
 const AMOUNT = /^\s*\d+(\.\d{1,2})?\s*$/
-export const badAmounts = (o: DraftOption) => (["fare", "taxes", "serviceFee", "internalCost"] as const).filter((k) => (o[k] ?? "").trim() !== "" && !AMOUNT.test(o[k] ?? ""))
+export const badAmounts = (o: DraftOption): string[] => [
+  ...(["fare", "taxes", "serviceFee", "internalCost", "discount"] as const).filter((k) => (o[k] ?? "").trim() !== "" && !AMOUNT.test(o[k] ?? "")),
+  // An extra needs a label and an amount above zero.
+  ...o.extras.flatMap((e, i) => ((e.label.trim() || e.amount.trim()) && (!e.label.trim() || !AMOUNT.test(e.amount) || minor(e.amount) <= 0) ? [`extras.${i}`] : [])),
+]
 
 /** A fee-type condition with no amount is saved as UNKNOWN, never as a zero fee (ADR-0008 W7); the send guard then blocks it. */
 const sendableCondition = (c: DraftOption["conditions"]["change"]): DraftOption["conditions"]["change"] => (c.status === "KNOWN" && c.value.allowed && c.value.penalty && !(c.value.penalty.amountMinor > 0) ? { status: "UNKNOWN" } : c)

@@ -13,7 +13,7 @@ import { Field, Tag } from "@/components/ui"
 import { fmtDateTime, money } from "@/lib/format"
 import { useSession } from "@/lib/session"
 
-import { type DraftOption, emptySeg, type ManualSeg, manualSlice, badAmounts, normaliseBaggage, segCount, unknowns, ZONES } from "./model"
+import { type DraftOption, draftTotal, emptySeg, type ManualSeg, manualSlice, badAmounts, normaliseBaggage, segCount, unknowns, ZONES } from "./model"
 
 type Baggage = DraftOption["baggage"][number]
 
@@ -92,8 +92,9 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
   const { can } = useSession()
   const unk = unknowns(o)
   const bad = new Set(badAmounts(o))
-  const amt = (k: "fare" | "taxes" | "serviceFee" | "internalCost") => ({ "aria-invalid": bad.has(k) || undefined, className: `field-input num${bad.has(k) ? " border-danger" : ""}` })
-  const total = Math.round(Number(o.fare || 0) * 100) + Math.round(Number(o.taxes || 0) * 100) + Math.round(Number(o.serviceFee || 0) * 100)
+  const amt = (k: string) => ({ "aria-invalid": bad.has(k) || undefined, className: `field-input num${bad.has(k) ? " border-danger" : ""}` })
+  const total = draftTotal(o, currency)
+  const setExtra = (i: number, e: DraftOption["extras"][number]) => onChange({ ...o, extras: o.extras.map((x, j) => (j === i ? e : x)) })
   const segLabels = o.slices.flatMap((s) => s.segments.map((g) => `${g.marketing.carrier}${g.marketing.flightNumber} ${g.origin.iata}–${g.destination.iata}`))
   const diff = o.supplierPrice && !bad.size ? total - o.supplierPrice.amountMinor : null
   return (
@@ -125,6 +126,19 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
               <Field label="Service fee"><input {...amt("serviceFee")} inputMode="decimal" value={o.serviceFee} onChange={(e) => onChange({ ...o, serviceFee: e.target.value })} /></Field>
               <Field label="Total"><output className="field-input num flex items-center bg-ledger font-medium" data-testid="option-total">{bad.size ? "—" : money({ amountMinor: total, currency })}</output></Field>
             </div>
+            {o.extras.map((e, i) => (
+              <div key={i} className="mt-1.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] items-end gap-1.5" data-testid={`extra-${i}`}>
+                <Field label={`Extra service ${i + 1}`}><input className="field-input" aria-invalid={bad.has(`extras.${i}`) || undefined} maxLength={80} placeholder="e.g. Extra checked bag" value={e.label} onChange={(ev) => setExtra(i, { ...e, label: ev.target.value })} /></Field>
+                <Field label="Amount"><input {...amt(`extras.${i}`)} inputMode="decimal" value={e.amount} onChange={(ev) => setExtra(i, { ...e, amount: ev.target.value })} /></Field>
+                <Button type="button" size="icon-xs" variant="ghost" aria-label={`Remove extra service ${i + 1}`} onClick={() => onChange({ ...o, extras: o.extras.filter((_, j) => j !== i) })}><Trash2 /></Button>
+              </div>
+            ))}
+            <div className="mt-1.5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto] items-end gap-1.5">
+              <Field label="Discount reason"><input className="field-input" maxLength={80} placeholder="e.g. Returning customer" value={o.discountLabel} onChange={(e) => onChange({ ...o, discountLabel: e.target.value })} /></Field>
+              <Field label="Discount"><input {...amt("discount")} inputMode="decimal" value={o.discount} onChange={(e) => onChange({ ...o, discount: e.target.value })} /></Field>
+              <Button type="button" size="xs" variant="outline" disabled={o.extras.length >= 10} onClick={() => onChange({ ...o, extras: [...o.extras, { label: "", amount: "" }] })}>Add extra service</Button>
+            </div>
+            {!bad.size && total <= 0 && <p className="mt-1 text-caption text-danger" role="alert">The total must be greater than zero.</p>}
             {o.supplierExpiresAt && Date.parse(o.supplierExpiresAt) < Date.now() && <p className="mt-1 rounded-sm bg-danger-subtle px-1.5 py-1 text-caption text-danger" role="alert">The supplier offer expired {fmtDateTime(o.supplierExpiresAt)}. Validity cannot exceed it — re-check the price or add a fresh option from staff search.</p>}
             {o.supplierPrice && <p className="mt-1 text-caption text-steel">Supplier {money(o.supplierPrice)}{o.supplierFetchedAt && ` fetched ${fmtDateTime(o.supplierFetchedAt)}`}{diff !== null && <> · difference <span className={diff < 0 ? "text-danger" : ""}>{diff >= 0 ? "+" : ""}{money({ amountMinor: diff, currency })}</span></>}{o.supplierExpiresAt && ` · offer expires ${fmtDateTime(o.supplierExpiresAt)}`}</p>}
             {can("pricing.read.internal") && <Field label="Internal cost (never shown to the customer)" className="mt-1.5 max-w-48"><input {...amt("internalCost")} inputMode="decimal" value={o.internalCost} onChange={(e) => onChange({ ...o, internalCost: e.target.value })} /></Field>}

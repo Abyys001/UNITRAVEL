@@ -3,7 +3,7 @@ import { and, asc, desc, eq, isNotNull, max } from "drizzle-orm"
 
 import type { QuoteOptionInput } from "@unitravel/contracts"
 import { type Db, offerSnapshots, quoteOptions, quotes } from "@unitravel/db"
-import { formatMoney } from "@unitravel/domain"
+import { formatMoney, priceBreakdownIssue } from "@unitravel/domain"
 
 import { AppError, notFound } from "../../core/errors"
 import { DB, UnitOfWork } from "../../core/infra.module"
@@ -28,9 +28,9 @@ export class QuotesService {
     if (options.length > wf.quoteMaxOptions) throw new AppError("VALIDATION_FAILED", `At most ${wf.quoteMaxOptions} options`)
     const policy = await this.compliance.carrierPolicy()
     options.forEach((o, i) => {
-      const p = o.priceBreakdown
-      for (const m of [p.fare, p.taxes, p.serviceFee, p.total]) if (m.currency !== currency) throw new AppError("VALIDATION_FAILED", "All prices must be in the quote currency", [{ path: `options[${i}].priceBreakdown`, code: "CURRENCY" }])
-      if (p.fare.amountMinor + p.taxes.amountMinor + p.serviceFee.amountMinor !== p.total.amountMinor) throw new AppError("VALIDATION_FAILED", "Fare + taxes + service fee must equal the total", [{ path: `options[${i}].priceBreakdown.total`, code: "SUM" }])
+      // The domain computes the total (fare + taxes + fee + extras - discount); a client total that differs is refused (ADR-0013 A5).
+      const issue = priceBreakdownIssue(o.priceBreakdown, currency)
+      if (issue) throw new AppError("VALIDATION_FAILED", issue.message, [{ path: `options[${i}].priceBreakdown.${issue.path}`, code: issue.code }])
       // Carrier policy also validates every quote option (ch. 27.1), including manually typed segments.
       const carriers = o.slices.flatMap((s) => s.segments.flatMap((g) => [g.marketing.carrier, g.operating.carrier]))
       const blocked = carriers.filter((c) => policy.blockedCarriers.has(c))

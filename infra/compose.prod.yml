@@ -59,6 +59,8 @@ services:
   worker:
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: api }
     command: ["node", "dist/main.worker.js"]
+    # The image's HTTP healthcheck belongs to the API role; the worker serves no HTTP.
+    healthcheck: { disable: true }
     environment: { <<: *app-env }
     depends_on: { seed: { condition: service_completed_successfully }, valkey: { condition: service_healthy }, storage: { condition: service_healthy } }
     restart: unless-stopped
