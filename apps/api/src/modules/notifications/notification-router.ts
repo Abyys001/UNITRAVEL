@@ -63,6 +63,11 @@ export class NotificationRouter {
       case "flight_request.submitted":
         await this.n.notify({ ...base, eventType: "request.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, route: p.routeLabel }, linkPath: this.requestPath(p.ref) })
         return this.alertAdmins(e, p, "request.submitted")
+      case "loyalty.member_added": {
+        // ADR-0016: welcome notice; the tier name is localised through the "_fa" variable convention.
+        const c = e.payload as { customerUserId: string; tier: string; tier_fa: string }
+        return this.n.notify({ eventId: e.id, requestKey: `club:${c.customerUserId}`, data: {}, eventType: "loyalty.member_added", audience: "CUSTOMER", userIds: [c.customerUserId], vars: { tier: c.tier, tier_fa: c.tier_fa }, linkPath: "/club" })
+      }
       case "cargo_request.submitted":
         await this.n.notify({ ...base, eventType: "cargo.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, route: p.routeLabel }, linkPath: this.requestPath(p.ref) })
         return this.alertAdmins(e, { ...p, productType: "CARGO" }, "cargo.submitted")

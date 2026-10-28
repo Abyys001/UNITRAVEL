@@ -16,6 +16,7 @@ export const NOTIFICATION_EVENTS = [
   "sla.unassigned", "sla.first_contact_due", "sla.awaiting_customer_reminder",
   "cargo.submitted", "cargo.status_changed",
   "service_request.submitted", "service_request.quoted", "service_request.confirmed", "service_request.cancelled",
+  "loyalty.member_added",
   "compliance.hold_created", "compliance.case_decided",
   "security.new_sign_in", "security.role_changed",
   "provider.degraded", "notification.route_degraded",

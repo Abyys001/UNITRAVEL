@@ -276,8 +276,10 @@ describe("Phase D — Stripe Embedded Checkout, test mode (ADR-0007; booklet ch.
     expect((await inv.c.post(`/v1/admin/invoices/${inv.id}/payment-link/resend`)).status).toBe(403)
     expect((await admin.post(`/v1/admin/invoices/${inv.id}/payment-link/resend`)).status).toBe(200)
     expect(await auditCount("payment.link_resent", inv.id)).toBe(1)
-    const outbox = await dbQuery("select 1 from outbox_events where aggregate_id = $1 and event_type = 'invoice.issued'", [inv.id])
-    expect(outbox.length).toBe(2) // issue and resend
+    // ADR-0013: the resend sends the payment-requested notice (with the pay link), not a second "invoice issued".
+    const issued = await dbQuery("select 1 from outbox_events where aggregate_id = $1 and event_type = 'invoice.issued'", [inv.id])
+    const requested = await dbQuery("select 1 from outbox_events where aggregate_id = $1 and event_type = 'payment.requested'", [inv.id])
+    expect({ issued: issued.length, requested: requested.length }).toEqual({ issued: 1, requested: 1 })
   })
 
   it("eligibility is compliance data: a BLOCK policy on a customer removes the offer, and policy changes need an owner", async () => {

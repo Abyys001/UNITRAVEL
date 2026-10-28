@@ -586,5 +586,17 @@
   "helpTitle": "راهنما",
   "helpFaq": "سوالات متداول",
   "helpTravelRules": "قوانین سفر",
-  "helpFlightGuide": "راهنمای خرید بلیت"
+  "helpFlightGuide": "راهنمای خرید بلیت",
+  "servicesTitle": "خدمات",
+  "menuHotels": "هتل",
+  "menuStays": "ویلا و اقامتگاه",
+  "menuTrains": "قطار",
+  "menuBuses": "اتوبوس",
+  "menuVisa": "ویزا",
+  "menuTours": "تورهای مسافرتی",
+  "menuCip": "خدمات CIP فرودگاهی",
+  "menuInsurance": "بیمهٔ مسافرتی",
+  "menuClub": "باشگاه مشتریان",
+  "menuTrack": "پیگیری خرید",
+  "menuSupport": "پشتیبانی"
 }

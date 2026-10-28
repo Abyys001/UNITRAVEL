@@ -3618,6 +3618,78 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Buying guide'**
   String get helpFlightGuide;
+
+  /// No description provided for @servicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get servicesTitle;
+
+  /// No description provided for @menuHotels.
+  ///
+  /// In en, this message translates to:
+  /// **'Hotels'**
+  String get menuHotels;
+
+  /// No description provided for @menuStays.
+  ///
+  /// In en, this message translates to:
+  /// **'Villas & stays'**
+  String get menuStays;
+
+  /// No description provided for @menuTrains.
+  ///
+  /// In en, this message translates to:
+  /// **'Trains'**
+  String get menuTrains;
+
+  /// No description provided for @menuBuses.
+  ///
+  /// In en, this message translates to:
+  /// **'Buses'**
+  String get menuBuses;
+
+  /// No description provided for @menuVisa.
+  ///
+  /// In en, this message translates to:
+  /// **'Visa'**
+  String get menuVisa;
+
+  /// No description provided for @menuTours.
+  ///
+  /// In en, this message translates to:
+  /// **'Tours'**
+  String get menuTours;
+
+  /// No description provided for @menuCip.
+  ///
+  /// In en, this message translates to:
+  /// **'Airport CIP'**
+  String get menuCip;
+
+  /// No description provided for @menuInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel insurance'**
+  String get menuInsurance;
+
+  /// No description provided for @menuClub.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer club'**
+  String get menuClub;
+
+  /// No description provided for @menuTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Track a purchase'**
+  String get menuTrack;
+
+  /// No description provided for @menuSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get menuSupport;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

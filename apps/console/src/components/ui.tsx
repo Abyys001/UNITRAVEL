@@ -26,7 +26,7 @@ export const COMMAND_LABEL: Record<string, string> = {
   record_reservation: "Record reservation…", record_tickets: "Record tickets…", close: "Close", reopen: "Reopen", cancel: "Cancel…", decline: "Decline…",
   record_booking: "Record partner booking…", schedule_handover: "Schedule handover…", receive: "Receive & re-weigh…", depart: "Departed…",
   arrive_customs: "At customs…", clear_customs: "Cleared customs…", out_for_delivery: "Out for delivery…", deliver: "Delivered…",
-  raise_exception: "Raise exception…", resolve_exception: "Resolve exception…", mark_reservation_lapsed: "Mark reservation lapsed…", release_hold: "Release hold…",
+  raise_exception: "Raise exception…", resolve_exception: "Resolve exception…", mark_reservation_lapsed: "Mark reservation lapsed…", release_hold: "Release hold…", complete: "Complete…",
 }
 
 /** Mutation helper: toast on success/failure, then refresh the given queries. */

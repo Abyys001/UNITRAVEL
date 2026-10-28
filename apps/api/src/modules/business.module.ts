@@ -17,6 +17,8 @@ import { PaymentConfigService } from "./payments/payment-config.service"
 import { AdminPaymentsController, CustomerPaymentsController, DevPaymentSinkController, DevPaymentsController, StripeWebhookController } from "./payments/payments.controller"
 import { PaymentsService } from "./payments/payments.service"
 import { RefundsService } from "./payments/refunds.service"
+import { AdminClubController, CustomerClubController } from "./loyalty/loyalty.controller"
+import { LoyaltyService } from "./loyalty/loyalty.service"
 import { NotificationsModule } from "./notifications/notifications.module"
 import { AdminServiceRequestsController, CustomerServiceRequestsController } from "./services/services.controller"
 import { ServicesService } from "./services/services.service"
@@ -39,10 +41,10 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   DocumentsController, TravellersController, MyDetailsController, AdminCustomersController, AdminVerificationsController, ComplianceController, CustomerFlightRequestsController, AdminFlightRequestsController, SearchController, StaffSearchController,
   CustomerCargoController, AdminCargoController, DevCargoController, CustomerBillingController, AdminInvoicesController,
   CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
-  CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController,
+  CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

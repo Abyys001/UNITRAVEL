@@ -104,7 +104,7 @@ function Popover({ label, trigger, children, testId, className, width = "w-[min(
 const crumbText = (s: string) => { try { return decodeURIComponent(s) } catch { return s } }
 
 /** Segments with no page of their own (only /<seg>/<id> exists), so they are labelled but never linked. */
-const CRUMB_SEG: Record<string, MsgKey> = { requests: "crumb.requests", customers: "crumb.customers", cargo: "crumb.cargo", quote: "crumb.quote" }
+const CRUMB_SEG: Record<string, MsgKey> = { requests: "crumb.requests", customers: "crumb.customers", cargo: "crumb.cargo", quote: "crumb.quote", services: "crumb.services" }
 const NO_INDEX = new Set(["requests", "customers", "cargo"])
 
 function useCrumbs(pathname: string, items: NavItem[], homeLabel: string, t: T) {

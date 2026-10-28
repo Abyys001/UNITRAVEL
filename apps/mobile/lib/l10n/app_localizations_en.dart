@@ -2128,4 +2128,40 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get helpFlightGuide => 'Buying guide';
+
+  @override
+  String get servicesTitle => 'Services';
+
+  @override
+  String get menuHotels => 'Hotels';
+
+  @override
+  String get menuStays => 'Villas & stays';
+
+  @override
+  String get menuTrains => 'Trains';
+
+  @override
+  String get menuBuses => 'Buses';
+
+  @override
+  String get menuVisa => 'Visa';
+
+  @override
+  String get menuTours => 'Tours';
+
+  @override
+  String get menuCip => 'Airport CIP';
+
+  @override
+  String get menuInsurance => 'Travel insurance';
+
+  @override
+  String get menuClub => 'Customer club';
+
+  @override
+  String get menuTrack => 'Track a purchase';
+
+  @override
+  String get menuSupport => 'Support';
 }

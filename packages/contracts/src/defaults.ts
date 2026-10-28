@@ -191,6 +191,7 @@ export const DEFAULT_NOTIFICATION_MATRIX: NotificationMatrix = {
     { event: "service_request.quoted", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS", "EMAIL"], sms: "IMMEDIATE", critical: true, locked: false },
     { event: "service_request.confirmed", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: false, locked: false },
     { event: "service_request.cancelled", audience: "CUSTOMER", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
+    { event: "loyalty.member_added", audience: "CUSTOMER", channels: ["INBOX", "EMAIL"], sms: "NONE", critical: false, locked: false },
     { event: "compliance.hold_created", audience: "COMPLIANCE", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "compliance.case_decided", audience: "ON_DUTY_ADMINS", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
     { event: "security.new_sign_in", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: true },

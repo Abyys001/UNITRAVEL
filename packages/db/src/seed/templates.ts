@@ -194,6 +194,12 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     fa: { title: "بسته شد · {ref}", body: "درخواست {service} با شمارهٔ {ref} بسته شد. هر زمان می‌توانید درخواست جدیدی ثبت کنید." },
     smsEn: "Uni Travel: {ref} is closed. {link}", smsFa: "یونی‌تراول: {ref} بسته شد. {link}",
   },
+  // ADR-0016: club membership. Membership is not marketing consent and promises no discount on a specific booking.
+  "loyalty.member_added": {
+    vars: ["tier", "link"],
+    en: { title: "Welcome to the Uni Travel customer club", body: "You are now a {tier} member of the Uni Travel customer club. Your benefits are listed on your club page; our team applies them when they prepare your quote." },
+    fa: { title: "به باشگاه مشتریان یونی‌تراول خوش آمدید", body: "شما اکنون عضو سطح {tier} باشگاه مشتریان یونی‌تراول هستید. مزایای شما در صفحهٔ باشگاه آمده است و تیم ما هنگام آماده‌کردن پیشنهاد قیمت آن‌ها را اعمال می‌کند." },
+  },
   "compliance.hold_created": {
     vars: ["ref", "trigger"],
     en: { title: "Compliance hold · {ref}", body: "A {trigger} check needs a decision." }, fa: { title: "توقف انطباق · {ref}", body: "بررسی {trigger} نیاز به تصمیم دارد." },

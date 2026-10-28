@@ -88,10 +88,35 @@ export const LoyaltyLedgerEntry = z.object({
 export type LoyaltyLedgerEntry = z.infer<typeof LoyaltyLedgerEntry>
 export const LedgerEntryBody = z.object({ userId: Uuid, kind: z.enum(["GRANTED", "USED", "REVERSED"]), amount: Money, reason: z.string().trim().min(5).max(500), invoiceId: Uuid.optional() })
 
-/** Customer view of their own membership; non-members get `member: null` and see the explanation. */
+/**
+ * Customer view of their own membership; non-members get `member: null` and see the explanation. `enabled: false` while
+ * loyalty.enabled is off (a feature state, not a permission refusal, so the route stays 200 for holders of loyalty.read.own).
+ */
 export const CustomerClubView = z.object({
+  enabled: z.boolean(),
   member: z.object({ tier: z.object({ code: z.string(), nameEn: z.string(), nameFa: z.string() }), status: LoyaltyMemberStatus, joinedAt: IsoDateTime }).nullable(),
   benefits: z.array(LoyaltyBenefitView.pick({ id: true, kind: true, value: true, currency: true, appliesTo: true, description: true, validFrom: true, validTo: true })),
   creditBalance: z.array(Money),
 })
 export type CustomerClubView = z.infer<typeof CustomerClubView>
+
+// ---- staff queries and commands (console club pages) ----
+export const MemberListQuery = z.object({
+  status: LoyaltyMemberStatus.optional(),
+  tierId: Uuid.optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(100),
+})
+export const BenefitListQuery = z.object({
+  userId: Uuid.optional(),
+  tierId: Uuid.optional(),
+  status: LoyaltyBenefitStatus.optional(),
+  /** For the quote builder: benefits the customer can use now (theirs or their tier's, ACTIVE, inside the window). */
+  usableBy: Uuid.optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(100),
+})
+export const LedgerQuery = z.object({ userId: Uuid, limit: z.coerce.number().int().min(1).max(200).default(100) })
+export const RevokeBenefitBody = z.object({ reason: z.string().trim().min(5).max(500) })
+/** A staff member picking a customer to enrol: matches email, phone or name. */
+export const ClubCandidateQuery = z.object({ q: z.string().trim().min(2).max(80) })
+export const ClubCandidate = z.object({ userId: Uuid, name: z.string(), email: z.string().nullable(), phone: z.string().nullable(), member: z.boolean() })
+export type ClubCandidate = z.infer<typeof ClubCandidate>

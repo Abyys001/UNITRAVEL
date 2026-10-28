@@ -80,7 +80,7 @@ export async function staffSignIn(page: Page, base: string, phone: string) {
   if (!email) throw new Error(`no seeded email for ${phone}`)
   await page.goto(`${base}/sign-in`)
   const started = Date.now() - 1500
-  await page.locator("input[name=email]").fill(email)
+  await page.locator("input[name=email]").first().fill(email) // the test sign-in box (ADR-0012) has a second email field
   await page.getByRole("button", { name: /send code/i }).click()
   await expect(page.locator("input[name=otp]")).toBeVisible({ timeout: 60_000 })
   const code = await latestEmailOtp(page, email, started)

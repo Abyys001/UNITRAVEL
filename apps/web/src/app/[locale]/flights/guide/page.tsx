@@ -1,13 +1,11 @@
 import type { Metadata } from "next"
 
-import { type ContentFlags, flightGuide, type Locale, translate, visibleItems } from "@unitravel/i18n"
+import { flightGuide, type Locale, translate, visibleItems } from "@unitravel/i18n"
 
 import { Blocks, ContentPage } from "@/components/content-blocks"
+import { contentFlags } from "@/lib/site-server"
 
 type Props = { params: Promise<{ locale: string }> }
-
-// No flag source yet: visa, insurance and online card payment stay hidden until their settings are wired (later phase).
-const FLAGS: ContentFlags = {}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = (await params).locale as Locale
@@ -16,7 +14,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const locale = (await params).locale as Locale
-  const items = visibleItems(flightGuide[locale], FLAGS)
+  // Visa, insurance and online-card blocks follow their flags from GET /v1/site (spec §3.4, §4.1).
+  const items = visibleItems(flightGuide[locale], await contentFlags())
   return (
     <ContentPage title={translate(locale, "content.flightGuideTitle")} notice={translate(locale, "content.generalNotice")}>
       <nav aria-label={translate(locale, "content.contents")} className="rounded-2xl bg-cloud p-5">

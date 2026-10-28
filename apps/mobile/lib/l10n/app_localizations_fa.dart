@@ -2064,4 +2064,40 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get helpFlightGuide => 'راهنمای خرید بلیت';
+
+  @override
+  String get servicesTitle => 'خدمات';
+
+  @override
+  String get menuHotels => 'هتل';
+
+  @override
+  String get menuStays => 'ویلا و اقامتگاه';
+
+  @override
+  String get menuTrains => 'قطار';
+
+  @override
+  String get menuBuses => 'اتوبوس';
+
+  @override
+  String get menuVisa => 'ویزا';
+
+  @override
+  String get menuTours => 'تورهای مسافرتی';
+
+  @override
+  String get menuCip => 'خدمات CIP فرودگاهی';
+
+  @override
+  String get menuInsurance => 'بیمهٔ مسافرتی';
+
+  @override
+  String get menuClub => 'باشگاه مشتریان';
+
+  @override
+  String get menuTrack => 'پیگیری خرید';
+
+  @override
+  String get menuSupport => 'پشتیبانی';
 }

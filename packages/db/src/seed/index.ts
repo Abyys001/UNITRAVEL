@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 
 import {
   BUILT_IN_ROLES, DEFAULT_AUTH, DEFAULT_ENGINE_RULES, DEFAULT_FLAGS, DEFAULT_HUBS, DEFAULT_NOTIFICATION_MATRIX, DEFAULT_ROLE_PERMISSIONS,
@@ -196,8 +196,11 @@ async function main() {
   await seedReference(db)
   await seedAccess(db)
   await seedConfig(db)
-  const policies = await db.select().from(s.compliancePolicies).limit(1)
-  if (policies.length === 0) await seedCompliance(db)
+  // Keyed on the D-01 carrier policy, not on "any policy": migration 0007 inserts ONLINE_PAYMENT policies, so on a fresh
+  // database an "any row" check skipped the carrier, goods, keyword and lane seed entirely (fixed in STAGE-16). A retired
+  // D-01 row still counts as present, so an approved change is never undone by a re-seed.
+  const d01 = await db.select({ id: s.compliancePolicies.id }).from(s.compliancePolicies).where(and(eq(s.compliancePolicies.type, "CARRIER"), eq(s.compliancePolicies.key, "country:IR"))).limit(1)
+  if (d01.length === 0) await seedCompliance(db)
   await seedServicePolicies(db)
   const lanes = await db.select().from(s.cargoLanes).limit(1)
   if (lanes.length === 0) await seedCargo(db)

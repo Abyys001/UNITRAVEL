@@ -1058,5 +1058,17 @@
   "helpTitle": "Help",
   "helpFaq": "FAQ",
   "helpTravelRules": "Travel rules",
-  "helpFlightGuide": "Buying guide"
+  "helpFlightGuide": "Buying guide",
+  "servicesTitle": "Services",
+  "menuHotels": "Hotels",
+  "menuStays": "Villas & stays",
+  "menuTrains": "Trains",
+  "menuBuses": "Buses",
+  "menuVisa": "Visa",
+  "menuTours": "Tours",
+  "menuCip": "Airport CIP",
+  "menuInsurance": "Travel insurance",
+  "menuClub": "Customer club",
+  "menuTrack": "Track a purchase",
+  "menuSupport": "Support"
 }

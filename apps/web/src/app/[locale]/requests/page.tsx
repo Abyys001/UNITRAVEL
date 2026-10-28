@@ -1,9 +1,10 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { Package, Plane, Ticket } from "lucide-react"
+import { ConciergeBell, Package, Plane, Ticket } from "lucide-react"
 import Link from "next/link"
 
+import type { ServiceRequestSummary } from "@unitravel/contracts"
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Ltr, RouteLabel } from "@/components/badges"
@@ -19,12 +20,14 @@ export default function RequestsPage() {
   const q = useQuery({ queryKey: ["requests"], queryFn: async () => { const r = await api<Item[]>("/v1/requests"); cacheSet("requests", r); return r }, enabled: !!me, refetchInterval: 30_000 })
   const cached = !q.data && q.isError ? cacheGet<Item[]>("requests") : null
   const items = q.data ?? cached?.data ?? []
+  // Service requests (ADR-0015) live in their own list; it is empty until a service flag is switched on and used.
+  const services = useQuery({ queryKey: ["service-requests"], queryFn: () => api<ServiceRequestSummary[]>("/v1/service-requests"), enabled: !!me, refetchInterval: 30_000 })
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:py-10">
       <h1 className="font-display text-3xl md:text-4xl">{t("requests.title")}</h1>
       {cached && <p className="mt-4 rounded-xl bg-warning-subtle px-4 py-2.5 text-sm text-warning-subtle-fg">{t("requests.offline")} {t("requests.lastUpdated", { time: date(cached.at, { withTime: true }) })}</p>}
       {q.isLoading && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
-      {!q.isLoading && !items.length && <EmptyState className="mt-6" icon={<Ticket />} title={t("requests.empty")} />}
+      {!q.isLoading && !items.length && !services.data?.length && <EmptyState className="mt-6" icon={<Ticket />} title={t("requests.empty")} />}
       <ul className="card-brand mt-6 divide-y divide-line overflow-hidden">
         {items.map((r) => (
           <li key={r.ref}>
@@ -38,6 +41,23 @@ export default function RequestsPage() {
           </li>
         ))}
       </ul>
+      {!!services.data?.length && (
+        <section className="mt-10" data-testid="service-requests">
+          <h2 className="font-display text-2xl">{t("services.listTitle")}</h2>
+          <ul className="card-brand mt-4 divide-y divide-line overflow-hidden">
+            {services.data.map((r) => (
+              <li key={r.ref}>
+                <Link href={href(`/services/${r.ref}`)} className="flex items-center justify-between gap-4 px-4 py-4 transition-colors hover:bg-cloud focus-visible:outline-2 focus-visible:outline-orange sm:px-5">
+                  <span className="flex items-center gap-4"><ConciergeBell className="size-4 text-navy-900" aria-hidden />
+                    <span><span className="block font-display text-lg">{t(`services.types.${r.type}`)}</span><span className="text-xs text-steel"><Ltr className="font-mono">{r.ref}</Ltr>{sep}{date(r.createdAt, { dateOnly: true })}</span></span>
+                  </span>
+                  <span className="rounded-full border border-navy-900/30 bg-cloud px-3 py-1 text-xs font-semibold text-navy-900">{t(`services.status.${r.status}`)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

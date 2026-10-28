@@ -10,6 +10,7 @@ import '../../core/errors_l10n.dart';
 import '../../core/providers.dart';
 import '../../core/repos.dart';
 import '../../core/session.dart';
+import '../../core/site.dart';
 import '../../ui/bento.dart';
 import '../../ui/theme.dart';
 import '../admin/settings_sheet.dart';
@@ -157,6 +158,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               SectionTitle(l.myTravellers),
               const _TravellerList(),
             ],
+            const SiteServiceLinks(),
             SectionTitle(l.helpTitle),
             const HelpLinks(),
             const SizedBox(height: 24),
@@ -224,6 +226,52 @@ class HelpLinks extends StatelessWidget {
         for (final (key, icon, label, path) in entries)
           ListTile(
             key: Key(key),
+            contentPadding: EdgeInsets.zero,
+            minTileHeight: 56,
+            leading: Icon(icon),
+            title: Text(label),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () async {
+              final ok = await launchUrl(helpPageUri(lang, path), mode: LaunchMode.externalApplication);
+              if (!ok && context.mounted) showMessage(context, l.billingOpenFailed, error: true);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+/// Account › Services: the website's service pages that are switched on (`GET /v1/site`, spec §4.1), opened in the
+/// browser like Help. Flights and cargo stay native screens; the Safar card is not built (O14).
+class SiteServiceLinks extends ConsumerWidget {
+  const SiteServiceLinks({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l;
+    final lang = context.lang;
+    final menu = ref.watch(siteMenuProvider).value ?? const <String, bool>{};
+    final entries = <(String, IconData, String, String)>[
+      ('hotels', Icons.hotel_outlined, l.menuHotels, '/hotels'),
+      ('stays', Icons.house_outlined, l.menuStays, '/stays'),
+      ('trains', Icons.train_outlined, l.menuTrains, '/trains'),
+      ('buses', Icons.directions_bus_outlined, l.menuBuses, '/buses'),
+      ('visa', Icons.approval_outlined, l.menuVisa, '/visa'),
+      ('tours', Icons.public, l.menuTours, '/tours'),
+      ('cip', Icons.chair_outlined, l.menuCip, '/cip'),
+      ('insurance', Icons.health_and_safety_outlined, l.menuInsurance, '/insurance'),
+      ('club', Icons.star_outline, l.menuClub, '/club'),
+      ('track', Icons.manage_search, l.menuTrack, '/track'),
+      ('support', Icons.support_agent, l.menuSupport, '/support'),
+    ].where((e) => menu[e.$1] == true).toList();
+    if (entries.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionTitle(l.servicesTitle),
+        for (final (key, icon, label, path) in entries)
+          ListTile(
+            key: Key('site-$key'),
             contentPadding: EdgeInsets.zero,
             minTileHeight: 56,
             leading: Icon(icon),

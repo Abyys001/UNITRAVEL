@@ -57,6 +57,14 @@ describe("fail-closed route declarations", () => {
     for (const p of ["/v1/admin/invoices", "/v1/admin/invoices/:id", "/v1/admin/requests/:ref/invoices"]) expect({ p, perms: find("GET", p)?.permissions }).toEqual({ p, perms: ["flight_request.read.any", "cargo_request.read.any", "service_request.read.any", "commercial_document.issue"] })
   })
 
+  it("customer club (ADR-0016): the customer reads only their own club; staff reads, changes and four-eyes approval are separate permissions", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("GET", "/v1/me/club")).toMatchObject({ permissions: ["loyalty.read.own"], staff: false })
+    for (const p of ["/v1/admin/club/tiers", "/v1/admin/club/members", "/v1/admin/club/members/:userId", "/v1/admin/club/benefits", "/v1/admin/club/ledger"]) expect({ p, perms: find("GET", p)?.permissions, staff: find("GET", p)?.staff }).toEqual({ p, perms: ["loyalty.read"], staff: true })
+    for (const [m, p] of [["POST", "/v1/admin/club/tiers"], ["PATCH", "/v1/admin/club/tiers/:id"], ["GET", "/v1/admin/club/candidates"], ["POST", "/v1/admin/club/members"], ["PATCH", "/v1/admin/club/members/:userId"], ["POST", "/v1/admin/club/benefits"], ["POST", "/v1/admin/club/benefits/:id/revoke"], ["POST", "/v1/admin/club/ledger"]] as const) expect({ p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, perms: ["loyalty.manage"], staff: true })
+    expect(find("POST", "/v1/admin/club/benefits/:id/approve")).toMatchObject({ permissions: ["loyalty.benefit.approve"], staff: true })
+  })
+
   it("online payment (ADR-0007): the webhook is public, everything else declares a permission, live mode and refunds are gated", () => {
     const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
     expect(find("POST", "/v1/webhooks/stripe")).toMatchObject({ isPublic: true, staff: false, dev: false })
