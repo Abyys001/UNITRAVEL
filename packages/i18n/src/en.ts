@@ -126,7 +126,7 @@ export const en = {
     notifications: "Notifications", notifPush: "Push notifications", notifSms: "SMS for non-essential updates", notifEmail: "Email copies", essential: "Security and booking-critical messages cannot be switched off.",
     export: "Download my data", delete: "Delete my account", deleteNote: "Booking, payment and compliance records are kept for 6 years as the law requires; everything else is erased.",
     passport: "Passport", passportNumber: "Passport number", issuing: "Issuing country", expiry: "Expiry date", dob: "Date of birth", gender: "Gender on passport", nationality: "Nationality", honorific: "Title",
-    relationship: "Relationship", self: "Me", family: "Family", other: "Other", documentComplete: "Passport on file", documentMissing: "Passport needed when you accept a quote", revoke: "Sign out", selfExists: "You already have a traveller marked as you. Choose Family or Other for this one.", thisDevice: "This device", unknownDevice: "Unknown device", showAllDevices: "Show all {n} devices", showFewerDevices: "Show fewer", lastSeen: "Last active {time}",
+    relationship: "Relationship", self: "Me", family: "Family", other: "Other", documentComplete: "Passport on file", documentMissing: "Passport needed when you accept a quote", revoke: "Sign out", selfExists: "You already have a traveller marked as you. Choose Family or Other for this one.", thisDevice: "This device", unknownDevice: "Unknown device", showAllDevices: "Show all {n} devices", showFewerDevices: "Show fewer", lastSeen: "Last active {time}", revokeOthers: "Sign out all other devices", revokedOthers: "Other devices signed out: {n}",
     addPhone: "Add another phone", verified: "Verified", unverified: "Not verified",
   },
   identity: {

@@ -7,6 +7,7 @@ import { type Db, outboxEvents } from "@unitravel/db"
 import { env } from "../../core/env"
 import { DB, REDIS } from "../../core/infra.module"
 import { type QueueName, Queues } from "../../core/queues"
+import { safeError } from "../../core/safe-error"
 import { STAFF_EVENT_AGGREGATES, STAFF_EVENTS_CHANNEL } from "./staff-events"
 
 /** Which consumers react to which domain events (ch. 26.3). */
@@ -84,7 +85,7 @@ export class OutboxDispatcher implements OnApplicationBootstrap, OnApplicationSh
       await this.redis.pexpire("outbox:leader", 5000)
       return await this.dispatchBatch()
     } catch (err) {
-      this.log.error({ err }, "outbox tick failed")
+      this.log.error({ err: safeError(err) }, "outbox tick failed")
       return 0
     } finally {
       this.running = false

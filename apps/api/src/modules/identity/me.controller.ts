@@ -10,7 +10,7 @@ import {
 
 import { AppError } from "../../core/errors"
 import { DB, UnitOfWork } from "../../core/infra.module"
-import { type Actor, Authenticated, Ctx, CurrentActor, type RequestContext } from "../../core/http/decorators"
+import { type Actor, Authenticated, Ctx, CurrentActor, RateLimit, type RequestContext } from "../../core/http/decorators"
 import { ApiZodResponse, serialise, zbody } from "../../core/http/zod"
 import { AccessService } from "../access/access.service"
 import { AuditService } from "../audit/audit.service"
@@ -102,6 +102,17 @@ export class MeController {
   async listSessions(@CurrentActor() actor: Actor) {
     const rows = await this.sessions.list(actor.userId)
     return rows.map((s) => ({ id: s.id, client: s.client, ip: s.ip, userAgent: s.userAgent, createdAt: s.createdAt.toISOString(), lastSeenAt: s.lastSeenAt.toISOString(), current: s.id === actor.sessionId, mfaLevel: s.mfaLevel }))
+  }
+
+  /** Sign out all other devices (keeps this session). Rate-limited: it touches every session row of the account. */
+  @Post("sessions/revoke-others")
+  @Authenticated()
+  @HttpCode(200)
+  @RateLimit({ name: "sessions-revoke-others", limit: 10, windowSeconds: 600, key: "user" })
+  async revokeOtherSessions(@CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    const revoked = await this.sessions.revokeAll(actor.userId, "USER_REVOKED_ALL", actor.sessionId)
+    await this.uow.run((tx) => this.audit.record(tx, { actorUserId: actor.userId, actorKind: actor.isStaff ? "STAFF" : "CUSTOMER", action: "session.revoked_others", entityType: "user", entityId: actor.userId, after: { revoked }, ip: actor.ip, requestId: ctx.id }))
+    return { revoked }
   }
 
   @Delete("sessions/:id")

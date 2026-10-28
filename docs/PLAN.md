@@ -47,6 +47,10 @@ Spec and owner decisions: `docs/CONTENT-MENU-LIVE-DATA.md`.
 - [x] Phase H — FAQ, travel rules, flight-buying guide (STAGE-15)
 - [x] Phase I — menu, service requests, tracking, support, customer club, vertical ports (STAGE-16; visual re-baseline and Flutter analyze still to run, see the record)
 
+## Security hardening and operability (28 Oct 2026) — status
+Owner request: "make it really good locking and secure backend and also ready to use". ADR-0017.
+- [x] Stage 17 — security review fixes, deployment hardening, one-command local set-up, first-owner bootstrap (STAGE-17)
+
 ## Progress log
 (append one line per completed unit of work)
 - 2026-10-22 contracts (Zod schemas, permissions, errors, defaults) · domain (state machines, formats, payments; 17 tests incl. properties) · engine (plan/filter/join/validate/score/diversify; worked example + 5 property tests green)
@@ -75,3 +79,4 @@ Spec and owner decisions: `docs/CONTENT-MENU-LIVE-DATA.md`.
 - 2026-10-27 ADR-0013 (owner brief: Stripe/booking/invoice/email audit, then fix traveller PATCH, payment emails, discounts and extras, staff amendments): migration 0009, 5 notification events with en/fa templates, amend endpoint with compliance re-screening, extras/discount lines in quotes, invoices and PDF, console amend dialog and builder rows, web breakdown. Domain 88/89 (known name-matcher), api unit 60, stage13 e2e 5/5; full e2e run stopped by host memory before dashboard/platform/stage11; console Playwright not run. Record: docs/stages/STAGE-13.md.
 - 2026-10-27 console request page: Customer, Travellers and Request panels redesigned (components/flight/request-panels.tsx: contact card with actions, traveller cards with pill badges, per-flight trip rows with place names from the new staff-detail `places` map, preference chips, customer's brief, customer note). tsc 0; deployed to staging (api, console); checked by screenshot only, console Playwright not run.
 - 2026-10-28 Phase I completed (STAGE-16): customer club backend (migration 0011, ADR-0016 ledger and four-eyes rules, real club-discount check on service quotes, `GET /v1/me/club` 200 with `enabled`), web menu from `/v1/site`, service request pages and detail, track, support, club pages, console service queue/detail and club pages, Flutter Account › Services. Checks in docs/stages/STAGE-16.md.
+- 2026-10-28 Stage 17 security hardening (ADR-0017, STAGE-17): staff second factor can no longer be bypassed by enrolling a new factor; staff permissions gated on website and pre-MFA sessions; atomic OTP/tracking attempts and single-use codes; OTP lockout-by-others closed; request-scoped document and quote ids; cumulative four-eyes; signed upload size + magic bytes; append-only tables refuse DELETE/TRUNCATE (migration 0012); log scrubbing; start-up preflight (secrets, DB role); prod compose (TRUST_PROXY, Valkey password, no-new-privileges, db-maintenance backups/partitions), Caddy edge fixes; sign out other devices; Developer Panel second-factor reset; `scripts/setup-local.sh`; `create-owner`. API unit 85/85; security e2e 11/11; every API e2e file green on its own (see record); web Playwright 10/10 for the touched specs.

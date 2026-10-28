@@ -236,6 +236,12 @@ describe("Phase D — Stripe Embedded Checkout, test mode (ADR-0007; booklet ch.
       expect((await admin.get(`/v1/admin/invoices/${inv.id}/payments`)).body.refunds.find((r: { id: string }) => r.id === small.body.id).status).toBe("COMPLETED")
       expect(await invoiceRow(inv.id)).toEqual({ status: "PAID" }) // partial refund
 
+      // Splitting does not avoid the second person (ADR-0017): £15 alone is within £20, but with the £10 the requester
+      // already sent alone it is £25, so it waits for approval.
+      const split = await admin.post(`/v1/admin/invoices/${inv.id}/refunds`, { amountMinor: 1500, reasonCode: "CUSTOMER_REQUEST" })
+      expect(split.body).toMatchObject({ status: "PENDING_APPROVAL", needsSecondApprover: true })
+      expect((await ownerAdmin.post(`/v1/admin/refunds/${split.body.id}/reject`, { note: "Split refund, raise it as one" })).body.status).toBe("REJECTED")
+
       // £30 is above it: pending, the author cannot approve, a different person can reject or approve.
       const big = await admin.post(`/v1/admin/invoices/${inv.id}/refunds`, { amountMinor: 3000, reasonCode: "SERVICE_NOT_DELIVERED" })
       expect(big.body).toMatchObject({ status: "PENDING_APPROVAL", needsSecondApprover: true })

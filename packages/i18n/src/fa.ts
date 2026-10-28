@@ -130,7 +130,7 @@ export const fa: DeepString<typeof en> = {
     notifications: "اعلان‌ها", notifPush: "اعلان‌های برنامه", notifSms: "پیامک برای به‌روزرسانی‌های غیرضروری", notifEmail: "رونوشت ایمیل", essential: "پیام‌های امنیتی و حیاتی رزرو قابل خاموش کردن نیستند.",
     export: "دانلود اطلاعات من", delete: "حذف حساب", deleteNote: "سوابق رزرو، پرداخت و انطباق طبق قانون ۶ سال نگهداری می‌شوند؛ بقیه پاک می‌شود.",
     passport: "گذرنامه", passportNumber: "شمارهٔ گذرنامه", issuing: "کشور صادرکننده", expiry: "تاریخ انقضا", dob: "تاریخ تولد", gender: "جنسیت در گذرنامه", nationality: "تابعیت", honorific: "عنوان",
-    relationship: "نسبت", self: "خودم", family: "خانواده", other: "دیگر", documentComplete: "گذرنامه ثبت شده", documentMissing: "هنگام تأیید پیشنهاد، گذرنامه لازم است", revoke: "خروج", selfExists: "قبلاً یک مسافر به‌عنوان «خودم» ثبت کرده‌اید. برای این مسافر «خانواده» یا «سایر» را انتخاب کنید.", thisDevice: "این دستگاه", unknownDevice: "دستگاه ناشناس", showAllDevices: "نمایش هر {n} دستگاه", showFewerDevices: "نمایش کمتر", lastSeen: "آخرین فعالیت {time}",
+    relationship: "نسبت", self: "خودم", family: "خانواده", other: "دیگر", documentComplete: "گذرنامه ثبت شده", documentMissing: "هنگام تأیید پیشنهاد، گذرنامه لازم است", revoke: "خروج", selfExists: "قبلاً یک مسافر به‌عنوان «خودم» ثبت کرده‌اید. برای این مسافر «خانواده» یا «سایر» را انتخاب کنید.", thisDevice: "این دستگاه", unknownDevice: "دستگاه ناشناس", showAllDevices: "نمایش هر {n} دستگاه", showFewerDevices: "نمایش کمتر", lastSeen: "آخرین فعالیت {time}", revokeOthers: "خروج از همهٔ دستگاه‌های دیگر", revokedOthers: "خروج از دستگاه‌های دیگر: {n}",
     addPhone: "افزودن تلفن دیگر", verified: "تأییدشده", unverified: "تأییدنشده",
   },
   identity: {

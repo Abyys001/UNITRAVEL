@@ -28,6 +28,11 @@ export class RateLimiter {
     return this.redis.zcard(k)
   }
 
+  /** Throws when the window is already full, without recording a hit. */
+  async check(name: string, key: string, limit: number, windowSeconds: number): Promise<void> {
+    if ((await this.count(name, key, windowSeconds)) >= limit) throw new AppError("RATE_LIMITED", `Limit ${limit} per ${windowSeconds}s`, undefined, { retryAfter: windowSeconds })
+  }
+
   async enforce(name: string, key: string, limit: number, windowSeconds: number): Promise<void> {
     const n = await this.hit(name, key, windowSeconds)
     if (n > limit) throw new AppError("RATE_LIMITED", `Limit ${limit} per ${windowSeconds}s`, undefined, { retryAfter: windowSeconds })
@@ -39,4 +44,18 @@ export function ipPrefix(ip: string): string {
   const v4 = ip.replace(/^::ffff:/, "")
   if (/^\d+\.\d+\.\d+\.\d+$/.test(v4)) return v4.split(".").slice(0, 3).join(".") + ".0/24"
   return ip.split(":").slice(0, 3).join(":") + "::/48"
+}
+
+/**
+ * Key for per-client limits: the address itself for IPv4, the /64 for IPv6 (one subscriber usually holds a whole /64,
+ * so keying on the full address would hand an attacker 2^64 separate budgets).
+ */
+export function ipKey(ip: string): string {
+  const v4 = ip.replace(/^::ffff:/, "")
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(v4) || !ip.includes(":")) return v4
+  const [head = "", tail = ""] = ip.split("::")
+  const left = head ? head.split(":") : []
+  const right = tail ? tail.split(":") : []
+  const full = ip.includes("::") ? [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill("0"), ...right] : left
+  return full.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, "").toLowerCase()).join(":") + "::/64"
 }

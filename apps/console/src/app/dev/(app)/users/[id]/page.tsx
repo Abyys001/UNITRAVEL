@@ -48,6 +48,7 @@ export default function UserPage() {
   const reactivate = useAct(() => api(`/v1/dev/users/${id}/reactivate`, { body: {} }), { ...inv, success: t("ud.reactivated") })
   const revokeAll = useAct(() => api<{ revoked: number }>(`/v1/dev/users/${id}/sessions/revoke`, { body: {} }), { ...inv, onDone: (r) => toast.success(t("ud.revoked", { n: r.revoked })) })
   const reverify = useAct(() => api(`/v1/dev/users/${id}/force-reverify`, { body: {} }), { ...inv, success: t("ud.reverified") })
+  const mfaReset = useAct(() => api<{ sessionsRevoked: number }>(`/v1/dev/users/${id}/mfa/reset`, { body: {} }), { ...inv, onDone: (r) => toast.success(t("ud.mfaResetDone", { n: r.sessionsRevoked })) })
   const unlink = useAct((identityId: string) => api(`/v1/dev/users/${id}/identities/${identityId}/unlink`, { body: {} }), { ...inv, success: t("ud.unlinked") })
   if (q.error) return <div className="p-4 md:p-6"><ErrorLine error={q.error} /></div>
   if (!q.data) return <Loading />
@@ -64,6 +65,7 @@ export default function UserPage() {
         {can("user.role.assign") && u.id !== me?.id && (u.status === "SUSPENDED" ? <Button size="sm" variant="outline" onClick={() => reactivate.mutate()}>{t("ud.reactivate")}</Button> : <Button size="sm" variant="destructive" onClick={() => setSuspend(true)}>{t("ud.suspend")}</Button>)}
         {can("user.role.assign") && <Button size="sm" variant="outline" onClick={() => ask({ title: t("confirm.revoke.title"), description: t("confirm.revoke.body"), label: t("confirm.revoke.label"), destructive: true, run: () => revokeAll.mutateAsync() })}>{t("ud.revokeAll")}</Button>}
         {can("user.role.assign") && <Button size="sm" variant="ghost" onClick={() => ask({ title: t("confirm.reverify.title"), description: t("confirm.reverify.body"), label: t("confirm.reverify.label"), run: () => reverify.mutateAsync() })}>{t("ud.reverify")}</Button>}
+        {can("user.role.assign.privileged") && u.id !== me?.id && <Button size="sm" variant="ghost" onClick={() => ask({ title: t("confirm.mfaReset.title"), description: t("confirm.mfaReset.body"), label: t("confirm.mfaReset.label"), destructive: true, run: () => mfaReset.mutateAsync() })}>{t("ud.mfaReset")}</Button>}
       </PageHead>
       <DevPage>
         <div className="grid gap-4 lg:grid-cols-2">

@@ -33,28 +33,69 @@ const Env = z.object({
   TRUST_PROXY: z.string().default("loopback"),
   LOG_LEVEL: z.string().default("info"),
   OUTBOX_POLL_MS: z.coerce.number().default(500),
-  /** ADR-0012: email-only sign-in for the testing phase. Never allowed with APP_ENV=production. */
-  TEST_SIGN_IN: z.enum(["off", "on"]).default("off"),
+  /**
+   * ADR-0012: email-only sign-in for the testing phase. Never allowed with APP_ENV=production. "customers" (ADR-0017)
+   * limits it to customer accounts: staff still need a code and their second factor.
+   */
+  TEST_SIGN_IN: z.enum(["off", "customers", "on"]).default("off"),
 })
 
 export type Env = z.infer<typeof Env>
 
+const PLACEHOLDER = /CHANGE_?ME|changeme|placeholder|not-for-production|app_rw_dev|app_ro_dev|unitravel-secret/i
+
+function urlPassword(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).password)
+  } catch {
+    return ""
+  }
+}
+
+/**
+ * Everything that makes a deployed host (staging or production) unsafe to start: placeholder or short secrets, the
+ * local development credentials, and in production an unauthenticated Valkey. Empty for APP_ENV=local.
+ */
+export function deploymentProblems(e: Env, raw: NodeJS.ProcessEnv = process.env): string[] {
+  const out: string[] = []
+  // A production image (NODE_ENV=production) that forgot APP_ENV would otherwise fall back to "local" and its dev keys.
+  if (raw.NODE_ENV === "production" && !raw.APP_ENV) out.push("APP_ENV must be set explicitly when NODE_ENV=production")
+  if (e.APP_ENV === "local") return out
+  const secret = (name: string, value: string | undefined, min: number) => {
+    if (!value) out.push(`${name} is required outside local development`)
+    else if (PLACEHOLDER.test(value)) out.push(`${name} still holds a placeholder value`)
+    else if (value.length < min) out.push(`${name} must be at least ${min} characters`)
+  }
+  secret("JWT_PRIVATE_KEY", e.JWT_PRIVATE_KEY, 40)
+  secret("JWT_PUBLIC_KEYS", e.JWT_PUBLIC_KEYS, 20)
+  secret("MASTER_ENCRYPTION_KEY", e.MASTER_ENCRYPTION_KEY, 32)
+  secret("OTP_PEPPER", e.OTP_PEPPER, 32)
+  secret("OBJECT_STORAGE_SECRET_KEY", e.OBJECT_STORAGE_SECRET_KEY, 16)
+  secret("DATABASE_URL password", urlPassword(e.DATABASE_URL), 16)
+  if (PLACEHOLDER.test(urlPassword(e.REDIS_URL))) out.push("REDIS_URL password still holds a placeholder value")
+  if (e.APP_ENV === "production") {
+    if (e.TEST_SIGN_IN !== "off") out.push(`TEST_SIGN_IN=${e.TEST_SIGN_IN} is refused in production (ADR-0012)`)
+    if (!urlPassword(e.REDIS_URL)) out.push("REDIS_URL must carry a password in production (redis://:<password>@host:port)")
+    if (!e.PUBLIC_WEB_URL.startsWith("https://") || !e.PUBLIC_API_URL.startsWith("https://")) out.push("Public URLs must be https in production")
+  }
+  return out
+}
+
 let cached: Env | undefined
 export function env(): Env {
   if (!cached) {
-    cached = Env.parse(process.env)
-    if (cached.APP_ENV === "production") {
-      if (cached.TEST_SIGN_IN === "on") throw new Error("TEST_SIGN_IN=on is refused in production (ADR-0012)")
-      for (const k of ["JWT_PRIVATE_KEY", "JWT_PUBLIC_KEYS", "MASTER_ENCRYPTION_KEY", "OTP_PEPPER"] as const) {
-        if (!cached[k]) throw new Error(`${k} is required in production`)
-      }
-    }
+    const parsed = Env.parse(process.env)
+    const problems = deploymentProblems(parsed)
+    if (problems.length) throw new Error(`Refusing to start (${parsed.APP_ENV}):\n- ${problems.join("\n- ")}`)
+    cached = parsed
   }
   return cached
 }
 
 export const isLocal = () => env().APP_ENV === "local"
-export const testSignInEnabled = () => env().TEST_SIGN_IN === "on"
+export const testSignInEnabled = () => env().TEST_SIGN_IN !== "off"
+/** Test sign-in also covers staff accounts and skips their second factor (TEST_SIGN_IN=on only). */
+export const testSignInForStaff = () => env().TEST_SIGN_IN === "on"
 /**
  * ADR-0014: FAKE adapters, sandbox credentials and Stripe test mode exist only on a developer machine or CI. NODE_ENV is
  * a second net: a production image with APP_ENV unset would otherwise default to "local".

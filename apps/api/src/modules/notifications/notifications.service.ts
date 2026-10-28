@@ -16,6 +16,7 @@ import { OutboxService } from "../platform/outbox.service"
 import { ChannelError, EmailSender, PushProviders, SmsProviders } from "./channels"
 import { eventUuid, localDateVars, quietHoursDelay, renderTemplate } from "./format"
 import { localisedVars, type NamePair } from "./localise"
+import { safeError } from "../../core/safe-error"
 import { degradedRoutes, ROUTE_HEALTH } from "./route-health"
 
 export type Audience = NotificationRule["audience"]
@@ -274,7 +275,7 @@ export class NotificationsService {
         sent++; provider = r.provider
         await this.db.update(devices).set({ lastSuccessAt: new Date() }).where(eq(devices.id, dev.id))
       } catch (err) {
-        this.log.warn({ err: String(err) }, "push failed")
+        this.log.warn({ err: safeError(err) }, "push failed")
       }
     }
     await this.markDelivery(deliveryId, sent > 0 ? "SENT" : "FAILED", provider, sent > 0 ? null : "No device accepted the push")

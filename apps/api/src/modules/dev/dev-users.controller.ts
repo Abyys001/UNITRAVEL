@@ -5,7 +5,7 @@ import { z } from "zod"
 
 import { DevUsersQuery, hasPrivilegedPermission, PERMISSIONS, PRIVILEGED_PERMISSIONS, PRIVILEGED_ROLES, ReplaceRolesBody, RoleBody } from "@unitravel/contracts"
 import {
-  auditLog, cargoRequests, type Db, devices, flightRequests, rolePermissions, roles, sessions, userIdentities, userRoles, users,
+  auditLog, cargoRequests, type Db, devices, flightRequests, mfaFactors, rolePermissions, roles, sessions, userIdentities, userRoles, users,
 } from "@unitravel/db"
 import { normaliseReference } from "@unitravel/domain"
 
@@ -121,10 +121,38 @@ export class DevUsersController {
   @RequirePermission("user.role.assign")
   @HttpCode(200)
   async reactivate(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    if (id === actor.userId) throw new AppError("FORBIDDEN", "You cannot reactivate yourself")
     return this.uow.run(async (tx) => {
+      const [target] = await tx.select({ id: users.id }).from(users).where(eq(users.id, id))
+      if (!target) throw new AppError("NOT_FOUND")
+      // Bringing back a privileged account needs the same authority as suspending one.
+      const acc = await this.access.load(id, tx)
+      if (acc.roles.some((r) => PRIVILEGED_ROLES.includes(r as never)) && !actor.permissions.has("user.role.assign.privileged")) throw new AppError("FORBIDDEN")
       await tx.update(users).set({ status: "ACTIVE" }).where(eq(users.id, id))
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "user.reactivated", entityType: "user", entityId: id, ip: actor.ip, requestId: ctx.id })
       return { status: "ACTIVE" }
+    })
+  }
+
+  /**
+   * Removes every second factor of a staff member who lost their authenticator (ADR-0017: a factor can no longer be
+   * re-enrolled from a sign-in code alone). Owner-level: privileged permission and a fresh step-up; all of the user's
+   * sessions end, and their next console sign-in starts a new enrolment. Never on yourself.
+   */
+  @Post("users/:id/mfa/reset")
+  @RequirePermission("user.role.assign.privileged")
+  @StepUp()
+  @HttpCode(200)
+  async resetMfa(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    if (id === actor.userId) throw new AppError("FORBIDDEN", "Ask another owner to reset your second factor")
+    return this.uow.run(async (tx) => {
+      const [target] = await tx.select({ id: users.id }).from(users).where(eq(users.id, id))
+      if (!target) throw new AppError("NOT_FOUND")
+      const removed = await tx.delete(mfaFactors).where(eq(mfaFactors.userId, id)).returning({ type: mfaFactors.type })
+      const revoked = await this.access.revokeAllSessions(tx, id, "MFA_RESET")
+      await this.access.bumpPermVersion(tx, id)
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "user.mfa_reset", entityType: "user", entityId: id, after: { factorsRemoved: removed.map((f) => f.type), sessionsRevoked: revoked }, ip: actor.ip, requestId: ctx.id })
+      return { factorsRemoved: removed.length, sessionsRevoked: revoked }
     })
   }
 

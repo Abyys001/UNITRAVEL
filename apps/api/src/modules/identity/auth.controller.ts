@@ -4,7 +4,7 @@ import type { Request, Response } from "express"
 
 import { MfaVerifyBody, OtpRequestBody, OtpRequestResult, OtpVerifyBody, RefreshBody, TestSignInBody, TestSignInStatus, VerifyResult, WebAuthnVerifyBody } from "@unitravel/contracts"
 
-import { isLocal, testSignInEnabled } from "../../core/env"
+import { isLocal, testSignInEnabled, testSignInForStaff } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { COOKIE_REFRESH } from "../../core/http/auth.guard"
 import { type Actor, Authenticated, Ctx, CurrentActor, OptionalActor, Public, RateLimit, type RequestContext } from "../../core/http/decorators"
@@ -52,10 +52,10 @@ export class AuthController {
   @Public()
   @ApiZodResponse(200, TestSignInStatus)
   testSignInStatus() {
-    return { enabled: testSignInEnabled() }
+    return { enabled: testSignInEnabled(), staff: testSignInForStaff() }
   }
 
-  /** ADR-0012: email-only sign-in for the testing phase; 404 unless TEST_SIGN_IN=on, which production refuses at boot. */
+  /** ADR-0012: email-only sign-in for the testing phase; 404 when TEST_SIGN_IN=off; production refuses any other value at boot. */
   @Post("test-sign-in")
   @Public()
   @HttpCode(200)
@@ -104,14 +104,14 @@ export class AuthController {
   @Post("mfa/totp/enrol")
   @Authenticated()
   enrolTotp(@CurrentActor() actor: Actor) {
-    return this.mfa.enrolTotp(actor.userId)
+    return this.mfa.enrolTotp(actor.userId, actor.sessionId)
   }
 
   /** Local only: the current authenticator code for the signed-in user, so test sessions skip the authenticator app. */
   @Get("dev-sink/totp")
   @Authenticated()
   async devTotp(@CurrentActor() actor: Actor) {
-    if (!isLocal() && !testSignInEnabled()) throw new AppError("NOT_FOUND")
+    if (!isLocal() && !testSignInForStaff()) throw new AppError("NOT_FOUND")
     return (await this.mfa.currentTotp(actor.userId)) ?? { code: null }
   }
 
@@ -127,7 +127,7 @@ export class AuthController {
   @Post("mfa/webauthn/registration-options")
   @Authenticated()
   webauthnRegOptions(@CurrentActor() actor: Actor) {
-    return this.mfa.webauthnRegistrationOptions(actor.userId)
+    return this.mfa.webauthnRegistrationOptions(actor.userId, actor.sessionId)
   }
 
   @Post("mfa/webauthn/register")
@@ -139,7 +139,7 @@ export class AuthController {
   @Post("mfa/webauthn/authentication-options")
   @Authenticated()
   webauthnAuthOptions(@CurrentActor() actor: Actor) {
-    return this.mfa.webauthnAuthOptions(actor.userId)
+    return this.mfa.webauthnAuthOptions(actor.userId, actor.sessionId)
   }
 
   @Post("mfa/webauthn/authenticate")

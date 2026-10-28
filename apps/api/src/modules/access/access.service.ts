@@ -17,6 +17,13 @@ export interface UserAccess {
   status: string
 }
 
+const PERM_CACHE_SECONDS = 300
+const PERM_VERSION_MAX_LUA = `
+local cur = redis.call("GET", KEYS[1])
+if (not cur) or tonumber(cur) < tonumber(ARGV[1]) then redis.call("SET", KEYS[1], ARGV[1], "EX", tonumber(ARGV[2])) end
+return 1
+`
+
 /** Roles are bundles of permissions; the backend only ever checks permissions (ch. 10.2). */
 @Injectable()
 export class AccessService {
@@ -38,8 +45,16 @@ export class AccessService {
     if (cached) return Number(cached)
     const [u] = await this.db.select({ v: users.permVersion }).from(users).where(eq(users.id, userId))
     if (!u) return -1
-    await this.redis.set(`perm:${userId}`, String(u.v))
+    await this.cachePermVersion(userId, u.v)
     return u.v
+  }
+
+  /**
+   * The cached version only ever moves up, so a slow writer holding a version read before a demotion cannot put the old
+   * value back and revive the old tokens. A short lifetime heals a value left too high by a rolled-back transaction.
+   */
+  async cachePermVersion(userId: string, version: number) {
+    await this.redis.eval(PERM_VERSION_MAX_LUA, 1, `perm:${userId}`, String(version), String(PERM_CACHE_SECONDS))
   }
 
   isStaff(perms: Iterable<Permission>): boolean {
@@ -68,7 +83,7 @@ export class AccessService {
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "user.roles_replaced", entityType: "user", entityId: targetUserId, before: { roles: before.roles }, after: { roles: roleKeys, permVersion: u!.v }, ip: actor.ip, requestId: actor.requestId })
       await this.outbox.add(tx, { aggregateType: "user", aggregateId: targetUserId, eventType: "user.permissions_changed", payload: { userId: targetUserId, permVersion: u!.v, roles: roleKeys, actorUserId: actor.userId, privileged: touchesPrivileged } })
       // Write-through after commit would be ideal; writing now is safe because a stale-high value only forces a refresh.
-      await this.redis.set(`perm:${targetUserId}`, String(u!.v))
+      await this.cachePermVersion(targetUserId, u!.v)
       return { roles: roleKeys, permVersion: u!.v, privileged: touchesPrivileged }
     })
   }
@@ -81,7 +96,7 @@ export class AccessService {
 
   async bumpPermVersion(tx: Tx, userId: string): Promise<number> {
     const [u] = await tx.update(users).set({ permVersion: sql`${users.permVersion} + 1` }).where(eq(users.id, userId)).returning({ v: users.permVersion })
-    await this.redis.set(`perm:${userId}`, String(u!.v))
+    await this.cachePermVersion(userId, u!.v)
     return u!.v
   }
 

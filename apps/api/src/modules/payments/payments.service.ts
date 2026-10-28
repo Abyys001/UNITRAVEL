@@ -25,6 +25,7 @@ import { SYSTEM } from "../requests/requests.service"
 import { FakePaymentAdapter } from "./fake-payment.adapter"
 import type { PaymentProvider, ProviderSession } from "./payment-port"
 import { StripeAdapter } from "./stripe.adapter"
+import { safeError } from "../../core/safe-error"
 import { productOf } from "../invoices/product"
 
 type Inv = typeof invoices.$inferSelect
@@ -403,7 +404,7 @@ export class PaymentsService implements OnModuleInit {
     const rows = await this.db.select({ id: paymentSessions.id }).from(paymentSessions).where(and(eq(paymentSessions.status, "OPEN"), lt(paymentSessions.createdAt, new Date(Date.now() - OVERDUE_MS))))
     let settled = 0
     for (const r of rows) {
-      try { if ((await this.reconcileSession(r.id)) === "settled") settled++ } catch (err) { this.log.warn({ session: r.id, err: String(err) }, "reconcile failed") }
+      try { if ((await this.reconcileSession(r.id)) === "settled") settled++ } catch (err) { this.log.warn({ session: r.id, err: safeError(err) }, "reconcile failed") }
     }
     return { checked: rows.length, settled }
   }

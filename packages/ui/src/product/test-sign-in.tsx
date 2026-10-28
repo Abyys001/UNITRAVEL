@@ -32,7 +32,8 @@ export function TestSignIn<R>({ client, deviceId, suggestions, labels, api, onSi
   useEffect(() => {
     let stop = false
     setEmail(read() || suggestions[0] || "")
-    latest.current.api<{ enabled: boolean }>("/v1/auth/test-sign-in").then((r) => { if (!stop) setEnabled(r.enabled === true) }, () => undefined)
+    // The console only offers it when staff may use it (TEST_SIGN_IN=on, not "customers").
+    latest.current.api<{ enabled: boolean; staff?: boolean }>("/v1/auth/test-sign-in").then((r) => { if (!stop) setEnabled(r.enabled === true && (client !== "CONSOLE" || r.staff !== false)) }, () => undefined)
     return () => { stop = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

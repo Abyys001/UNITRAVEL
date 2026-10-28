@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import { and, desc, eq, inArray } from "drizzle-orm"
+import { and, desc, eq, inArray, ne } from "drizzle-orm"
 
 import type { PaymentBody, ReservationBody } from "@unitravel/contracts"
 import {
@@ -25,8 +25,8 @@ import { ReferenceService } from "../reference/reference.service"
 import { RequestsService, staffActor, SYSTEM } from "../requests/requests.service"
 
 type Req = typeof flightRequests.$inferSelect
-type Target = { type: "FLIGHT" | "CARGO"; id: string; ref: string }
-const flightTarget = (r: Req): Target => ({ type: "FLIGHT", id: r.id, ref: r.ref })
+type Target = { type: "FLIGHT" | "CARGO"; id: string; ref: string; customerUserId: string }
+const flightTarget = (r: Req): Target => ({ type: "FLIGHT", id: r.id, ref: r.ref, customerUserId: r.customerUserId })
 
 /**
  * Version 1 records what staff did in the agency terminal (ch. 13.7): reservations, tickets and offline payments,
@@ -98,11 +98,14 @@ export class BookingsService {
     const s = await this.screenPayer(tx, r, p.payerName)
     if (s.result !== "CLEAR") return { blocked: true as const, screeningId: s.screeningId }
     const threshold = this.config.get("WORKFLOW").paymentFourEyesThresholdMinor
-    const four = needsSecondVerifier(p.amount.amountMinor, threshold)
+    // Counted against everything already recorded on this request without a second person, so splitting a payment
+    // into amounts under the threshold cannot skip the four-eyes check (ch. 13.7).
+    const selfVerified = await tx.select({ amountMinor: paymentRecords.amountMinor, recordedBy: paymentRecords.recordedBy, verifiedBy: paymentRecords.verifiedBy }).from(paymentRecords)
+      .where(and(eq(paymentRecords.requestType, r.type), eq(paymentRecords.requestId, r.id), eq(paymentRecords.status, "VERIFIED"), ne(paymentRecords.method, "CARD_ONLINE")))
+    const unchecked = selfVerified.filter((x) => x.recordedBy && x.recordedBy === x.verifiedBy).reduce((s, x) => s + x.amountMinor, 0)
+    const four = needsSecondVerifier(p.amount.amountMinor + unchecked, threshold)
     if (p.evidenceDocumentId) {
-      const [d] = await tx.select().from(documents).where(eq(documents.id, p.evidenceDocumentId))
-      if (!d) throw notFound("Evidence document")
-      await tx.update(documents).set({ requestType: r.type, requestId: r.id }).where(eq(documents.id, d.id))
+      await this.docs.claimForRequest(tx, p.evidenceDocumentId, { requestType: r.type, requestId: r.id, customerUserId: r.customerUserId, staffUserId: actor.userId }).catch(() => { throw notFound("Evidence document") })
     }
     const [row] = await tx.insert(paymentRecords).values({
       requestType: r.type, requestId: r.id, amountMinor: p.amount.amountMinor, currency: p.amount.currency, method: p.method, receivedAt: new Date(p.receivedAt), externalReference: p.externalReference,
@@ -196,7 +199,7 @@ export class BookingsService {
     return this.uow.run(async (tx) => {
       const r = await this.cargoByRef(tx, ref)
       if (!CARGO_PAYABLE.includes(r.status)) throw new AppError("INVALID_TRANSITION", "Payments are recorded after the customer has accepted the quote")
-      const res = await this.insertPayment(tx, { type: "CARGO", id: r.id, ref: r.ref }, body, actor)
+      const res = await this.insertPayment(tx, { type: "CARGO", id: r.id, ref: r.ref, customerUserId: r.customerUserId }, body, actor)
       if (res.blocked) throw new AppError("FORBIDDEN", "The payer needs a compliance decision before this payment can be recorded", undefined, { screeningId: res.screeningId })
       await this.recomputeCargoPaymentStatus(tx, r)
       await this.invoices.settleFromPayments(tx, "CARGO", r.id)
@@ -261,7 +264,7 @@ export class BookingsService {
         if (!approved.some((o) => o.approvedBy)) throw new AppError("FOUR_EYES_REQUIRED", "A credit override needs an owner's approval first")
       }
       for (const t of body.tickets) {
-        if (t.receiptDocumentId) await this.docs.publish(tx, t.receiptDocumentId)
+        if (t.receiptDocumentId) await this.docs.publish(tx, t.receiptDocumentId, { requestType: "FLIGHT", requestId: r.id, customerUserId: r.customerUserId, staffUserId: actor.userId })
         await tx.insert(tickets).values({ requestId: r.id, reservationId: res.id, travellerId: t.travellerId, ticketNumber: t.ticketNumber, validatingCarrier: t.validatingCarrier, issueDate: t.issueDate, coupons: t.coupons, documentId: t.receiptDocumentId ?? null, recordedBy: actor.userId })
         if (t.receiptDocumentId) await tx.update(documents).set({ requestType: "FLIGHT", requestId: r.id, ownerUserId: r.customerUserId, type: "E_TICKET_RECEIPT" }).where(eq(documents.id, t.receiptDocumentId))
       }

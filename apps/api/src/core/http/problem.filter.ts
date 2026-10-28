@@ -5,6 +5,7 @@ import { ZodError } from "zod"
 import { type ErrorCode, type Problem, problemType } from "@unitravel/contracts"
 
 import { AppError } from "../errors"
+import { safeError } from "../safe-error"
 
 const TITLES: Partial<Record<ErrorCode, string>> = {
   VALIDATION_FAILED: "The request is not valid",
@@ -69,7 +70,7 @@ export class ProblemFilter implements ExceptionFilter {
     const res = ctx.getResponse<Response>()
     const locale = req.headers["accept-language"]?.toString().startsWith("fa") ? "fa" : "en"
     const problem = toProblem(error, req.id, locale)
-    if (problem.status >= 500) this.log.error({ err: error, requestId: req.id }, "unhandled error")
+    if (problem.status >= 500) this.log.error({ err: safeError(error), requestId: req.id }, "unhandled error")
     if (res.headersSent) return
     if (problem.code === "RATE_LIMITED" && typeof problem.retryAfter === "number") res.setHeader("Retry-After", String(problem.retryAfter))
     res.status(problem.status).type("application/problem+json").json(problem)

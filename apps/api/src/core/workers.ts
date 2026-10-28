@@ -5,6 +5,7 @@ import { type Db, jobRuns } from "@unitravel/db"
 
 import { DB } from "./infra.module"
 import { type QueueName, redisConnection } from "./queues"
+import { scrubMessage } from "./safe-error"
 
 export const PROCESS_ROLE = Symbol("PROCESS_ROLE")
 export type ProcessRole = "api" | "worker"
@@ -52,11 +53,14 @@ export class WorkerRegistry implements OnApplicationBootstrap, OnApplicationShut
           if (queue === "maintenance" || queue === "compliance.lists-sync" || queue === "reference.sync") await this.db.insert(jobRuns).values({ queue, name: job.name, status: "OK", durationMs: Date.now() - started, detail: (r ?? null) as never })
           return r
         } catch (err) {
+          // BullMQ keeps err.message as the job's failedReason (shown in the Developer Panel): scrub it in place so the
+          // error class (and with it retry behaviour) is kept.
+          if (err instanceof Error) err.message = scrubMessage(err.message)
           if (queue === "maintenance" || queue === "compliance.lists-sync" || queue === "reference.sync") await this.db.insert(jobRuns).values({ queue, name: job.name, status: "FAILED", durationMs: Date.now() - started, detail: { error: String(err) } })
           throw err
         }
       }, { connection: redisConnection(), concurrency })
-      w.on("failed", (job, err) => this.log.warn({ queue, job: job?.name, attempts: job?.attemptsMade, err: err.message }, "job failed"))
+      w.on("failed", (job, err) => this.log.warn({ queue, job: job?.name, attempts: job?.attemptsMade, err: scrubMessage(err.message) }, "job failed"))
       this.workers.push(w)
     }
     this.log.log({ queues: [...this.handlers.keys()] }, "workers started")

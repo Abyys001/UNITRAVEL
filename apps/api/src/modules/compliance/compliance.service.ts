@@ -20,6 +20,7 @@ import type { DispatchedEvent } from "../platform/outbox.dispatcher"
 import { OutboxService } from "../platform/outbox.service"
 import { ReferenceService } from "../reference/reference.service"
 import { neutralDeclineFor } from "./customer-messages"
+import { safeError } from "../../core/safe-error"
 import { type ParsedEntry, parseEu, parseOfac, parseUkList, TEST_LIST } from "./list-parsers"
 
 type ListId = "UK" | "OFAC_SDN" | "OFAC_NON_SDN" | "EU" | "TEST"
@@ -121,7 +122,7 @@ export class ComplianceService implements OnModuleInit {
         out[id] = await this.syncList(id)
       } catch (err) {
         // A failed download alerts developers; screening continues on the last good version (ch. 27.2).
-        this.log.error({ list: id, err: String(err) }, "list sync failed")
+        this.log.error({ list: id, err: safeError(err) }, "list sync failed")
         await this.db.insert(sanctionLists).values({ listId: id === "TEST" ? "UK" : id, sourceUrl: "sync", versionHash: "failed", entryCount: 0, status: "FAILED", error: String(err).slice(0, 500) })
         await this.outbox.add(this.db, { aggregateType: "provider", aggregateId: `sanctions-${id}`, eventType: "provider.health_changed", payload: { provider: `sanctions list ${id}`, circuit: "FAILED", detail: String(err).slice(0, 200) } })
         out[id] = { error: String(err) }

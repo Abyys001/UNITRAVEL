@@ -24,6 +24,7 @@ import { sampleVars } from "../notifications/sample-vars"
 import { isVendorId, VENDOR_CREDENTIAL_SCHEMAS, VENDOR_IDS } from "../notifications/vendor-schemas"
 import { VendorCredentialsService } from "../notifications/vendor-credentials.service"
 import { HealthService } from "../platform/health.service"
+import { scrubMessage } from "../../core/safe-error"
 import { SuppliersService } from "../suppliers/suppliers.service"
 
 const DOMAIN_PERMISSION: Record<z.infer<typeof ConfigDomain>, "engine.rules.publish" | "settings.write" | "notification.template.write"> = {
@@ -160,13 +161,14 @@ export class DevSystemController {
     const out = []
     for (const name of QUEUES) {
       const failed = await this.queues.get(name).getJobs(["failed"], 0, 50)
-      for (const j of failed) out.push({ id: j.id, queue: name, name: j.name, failedReason: j.failedReason, attemptsMade: j.attemptsMade, timestamp: new Date(j.timestamp).toISOString(), data: redact(j.data) })
+      for (const j of failed) out.push({ id: j.id, queue: name, name: j.name, failedReason: scrubMessage(j.failedReason ?? ""), attemptsMade: j.attemptsMade, timestamp: new Date(j.timestamp).toISOString(), data: redact(j.data) })
     }
     return out
   }
 
   @Post("jobs/:queue/:id/retry")
-  @RequirePermission("diagnostics.read")
+  // Re-running or deleting work changes the system, so reading diagnostics is not enough.
+  @RequirePermission("settings.write")
   @HttpCode(200)
   async retry(@Param("queue") queue: string, @Param("id") id: string, @CurrentActor() actor: Actor) {
     if (!QUEUES.includes(queue as never)) throw new AppError("NOT_FOUND")
@@ -178,7 +180,8 @@ export class DevSystemController {
   }
 
   @Post("jobs/:queue/:id/discard")
-  @RequirePermission("diagnostics.read")
+  // Re-running or deleting work changes the system, so reading diagnostics is not enough.
+  @RequirePermission("settings.write")
   @HttpCode(200)
   async discard(@Param("queue") queue: string, @Param("id") id: string, @CurrentActor() actor: Actor) {
     if (!QUEUES.includes(queue as never)) throw new AppError("NOT_FOUND")

@@ -12,7 +12,7 @@ export type QueueName = (typeof QUEUES)[number]
 
 export function redisConnection() {
   const u = new URL(env().REDIS_URL)
-  return { host: u.hostname, port: Number(u.port || 6379), password: u.password || undefined, maxRetriesPerRequest: null as null }
+  return { host: u.hostname, port: Number(u.port || 6379), username: u.username ? decodeURIComponent(u.username) : undefined, password: u.password ? decodeURIComponent(u.password) : undefined, maxRetriesPerRequest: null as null }
 }
 
 /** Retries per queue (Table 26.2): notifications 5 with exponential back-off, then the dead-letter set. */

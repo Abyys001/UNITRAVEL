@@ -16,6 +16,7 @@ import { WorkerRegistry } from "../../core/workers"
 import { AuditService } from "../audit/audit.service"
 import { ConfigService } from "../config/config.service"
 import { stripImageMetadata, UnsupportedImageError } from "./image-sanitise"
+import { safeError } from "../../core/safe-error"
 import { OutboxService } from "../platform/outbox.service"
 
 export const UPLOAD_TYPES: Record<string, string[]> = {
@@ -23,6 +24,14 @@ export const UPLOAD_TYPES: Record<string, string[]> = {
 }
 /** Identity scans are images only: a PDF can carry metadata and active content a lossless stripper cannot vouch for (ADR-0005 V6). */
 export const IDENTITY_UPLOAD_TYPES: Record<string, string[]> = { "image/jpeg": [".jpg", ".jpeg"], "image/png": [".png"] }
+/** Magic bytes for the accepted upload types. */
+export function matchesDeclaredType(body: Buffer, mime: string): boolean {
+  if (mime === "application/pdf") return body.subarray(0, 1024).includes("%PDF-")
+  if (mime === "image/png") return body.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  if (mime === "image/jpeg") return body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff
+  return false
+}
+
 export const isIdentityType = (type: string) => (IDENTITY_DOCUMENT_TYPES as readonly string[]).includes(type)
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 const EICAR = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
@@ -80,13 +89,20 @@ export class DocumentsService implements OnModuleInit {
     const storageKey = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}${ext}`
     const storageBucket = identity ? this.storage.identityBucket : null
     const [doc] = await this.db.insert(documents).values({ ownerUserId: input.ownerUserId, requestType: input.requestType, requestId: input.requestId, type: input.type, filename: input.filename.slice(0, 200), mime: input.mime, size: input.size, storageKey, storageBucket, visibility: identity ? "INTERNAL" : input.visibility ?? "INTERNAL", createdBy: input.createdBy }).returning()
-    const { url } = await this.storage.presignPut(storageKey, input.mime, MAX_UPLOAD_BYTES, 300, storageBucket ?? this.storage.bucket)
+    const { url } = await this.storage.presignPut(storageKey, input.mime, input.size, 300, storageBucket ?? this.storage.bucket)
     return { documentId: doc!.id, uploadUrl: url, method: "PUT", headers: { "content-type": input.mime, ...(identity ? { "x-amz-server-side-encryption": "AES256" } : {}) }, expiresInSeconds: 300 }
   }
 
   async complete(documentId: string, userId: string) {
     const [doc] = await this.db.select().from(documents).where(eq(documents.id, documentId))
     if (!doc || (doc.createdBy !== userId)) throw new AppError("NOT_FOUND")
+    // The stored object must be the one announced: present, and exactly the declared size (never above the limit).
+    const stored = await this.storage.sizeOf(doc.storageKey, this.bucketOf(doc))
+    if (stored === undefined) throw new AppError("VALIDATION_FAILED", "Upload the file before completing", [{ path: "documentId", code: "NOT_UPLOADED" }])
+    if (stored !== doc.size || stored > MAX_UPLOAD_BYTES) {
+      await this.storage.delete(doc.storageKey, this.bucketOf(doc)).catch(() => undefined)
+      throw new AppError("VALIDATION_FAILED", "Files must be 10 MB or smaller", [{ path: "size", code: "TOO_LARGE" }])
+    }
     await this.db.update(documents).set({ uploadCompletedAt: new Date() }).where(eq(documents.id, documentId))
     await this.outbox.add(this.db, { aggregateType: "document", aggregateId: documentId, eventType: "document.uploaded", payload: { documentId } })
     return { documentId, scanStatus: "PENDING" }
@@ -117,6 +133,11 @@ export class DocumentsService implements OnModuleInit {
       if (env().APP_ENV === "production") throw new Error("CLAMAV_HOST is required in production")
       clean = !body.toString("latin1").includes(EICAR)
       engine = "dev-signature-check"
+    }
+    // The bytes must be what the declared type says (a renamed executable or HTML page is refused, ch. 28.1).
+    if (clean && !matchesDeclaredType(body, doc.mime)) {
+      clean = false
+      engine += "; content does not match the declared file type"
     }
     let finalSha = sha256
     if (clean && isIdentityType(doc.type)) {
@@ -157,14 +178,30 @@ export class DocumentsService implements OnModuleInit {
     await tx.update(documents).set({ requestType, requestId }).where(inArray(documents.id, ids))
   }
 
-  async publish(tx: DbOrTx, id: string) {
+  /**
+   * A document staff hand to a request (message attachment, ticket receipt, payment evidence) must already belong to
+   * that request, to its customer, or be an unattached upload by the same staff member. Identity scans never move.
+   * Anything else answers 404, so an id copied from another customer's file cannot be re-owned or published.
+   */
+  async claimForRequest(tx: DbOrTx, id: string, scope: { requestType: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE"; requestId: string; customerUserId: string; staffUserId: string }) {
+    const [d] = await tx.select().from(documents).where(eq(documents.id, id))
+    const onRequest = !!d && d.requestType === scope.requestType && d.requestId === scope.requestId
+    const ownUpload = !!d && d.createdBy === scope.staffUserId && !d.requestId
+    const customers = !!d && d.ownerUserId === scope.customerUserId
+    if (!d || d.erasedAt || isIdentityType(d.type) || !(onRequest || ownUpload || customers)) throw new AppError("NOT_FOUND", "Document not found")
+    if (!d.requestId) await tx.update(documents).set({ requestType: scope.requestType, requestId: scope.requestId }).where(eq(documents.id, id))
+    return d
+  }
+
+  async publish(tx: DbOrTx, id: string, scope: Parameters<DocumentsService["claimForRequest"]>[2]) {
+    await this.claimForRequest(tx, id, scope)
     await tx.update(documents).set({ visibility: "CUSTOMER" }).where(eq(documents.id, id))
   }
 
   /** Deletes the stored object and keeps the row (and its audit trail) marked as erased. */
   async erase(tx: DbOrTx, d: typeof documents.$inferSelect) {
     await tx.update(documents).set({ erasedAt: new Date() }).where(eq(documents.id, d.id))
-    await this.storage.delete(d.storageKey, this.bucketOf(d)).catch((err) => this.log.warn({ err: String(err), documentId: d.id }, "object delete failed"))
+    await this.storage.delete(d.storageKey, this.bucketOf(d)).catch((err) => this.log.warn({ err: safeError(err), documentId: d.id }, "object delete failed"))
   }
 
   /** ADR-0005 V9: only when the retention setting is configured; unset (UNKNOWN) keeps scans until the customer or an account deletion erases them. */

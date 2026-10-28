@@ -57,8 +57,21 @@ export class ObjectStorage implements OnModuleInit {
     return (await this.client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }))).ServerSideEncryption
   }
 
-  presignPut(key: string, contentType: string, maxBytes: number, expiresIn = 300, bucket = this.bucket) {
-    return getSignedUrl(this.publicClient, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: undefined, ...this.sse(bucket) }), { expiresIn, signableHeaders: new Set(["content-type"]) }).then((url) => ({ url, maxBytes }))
+  /**
+   * Upload URL for exactly `size` bytes of `contentType`: both headers are signed, so the store refuses a different type
+   * or a larger body (the 10 MB limit is enforced by the signature, not by the client's honesty).
+   */
+  presignPut(key: string, contentType: string, size: number, expiresIn = 300, bucket = this.bucket) {
+    return getSignedUrl(this.publicClient, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size, ...this.sse(bucket) }), { expiresIn, signableHeaders: new Set(["content-type", "content-length"]) }).then((url) => ({ url, size }))
+  }
+
+  /** Stored size in bytes, or undefined when the object does not exist. */
+  async sizeOf(key: string, bucket = this.bucket): Promise<number | undefined> {
+    try {
+      return (await this.client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }))).ContentLength
+    } catch {
+      return undefined
+    }
   }
 
   /** 5-minute download URLs with Content-Disposition: attachment (ch. 28.3, 28.1 malicious uploads). */

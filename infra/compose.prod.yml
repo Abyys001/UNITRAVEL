@@ -1,11 +1,20 @@
 # Single-host production/staging topology (booklet ch. 30.2). Managed PostgreSQL/object storage can replace the
 # local services by pointing the URLs elsewhere. Secrets come from the environment / a secrets file, never this file.
 name: unitravel
+# Hardening shared by every long-running service (ADR-0017): no privilege escalation, no Linux capabilities the
+# process does not need, bounded logs.
+x-hardened: &hardened
+  security_opt: ["no-new-privileges:true"]
+  logging: { driver: json-file, options: { max-size: "20m", max-file: "5" } }
 x-app-env: &app-env
   APP_ENV: ${APP_ENV:?set APP_ENV=staging|production}
   DATABASE_URL: ${DATABASE_URL:?}
   DATABASE_RO_URL: ${DATABASE_RO_URL:?}
-  REDIS_URL: redis://valkey:6379
+  # Valkey requires a password (it holds OTP state, sessions flags and supplier tokens).
+  REDIS_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD (openssl rand -hex 32)}@valkey:6379
+  # Requests arrive from the edge (Caddy or the host nginx) over the private Docker network; only that hop is trusted
+  # to state the client address in X-Forwarded-For, which the edge overwrites with the address it sees.
+  TRUST_PROXY: ${TRUST_PROXY:-loopback, uniquelocal}
   JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?}
   JWT_PUBLIC_KEYS: ${JWT_PUBLIC_KEYS:?}
   MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY:?}
@@ -27,9 +36,10 @@ x-app-env: &app-env
 
 services:
   caddy:
+    <<: *hardened
     image: caddy:2.10-alpine
     ports: ["80:80", "443:443", "443:443/udp"]
-    environment: { WEB_HOST: "${WEB_HOST}", API_HOST: "${API_HOST}", ADMIN_HOST: "${ADMIN_HOST}", DEV_HOST: "${DEV_HOST}", MOBILE_HOST: "${MOBILE_HOST}", STORAGE_HOST: "${STORAGE_HOST}", ACME_EMAIL: "${ACME_EMAIL:?}" }
+    environment: { WEB_HOST: "${WEB_HOST}", API_HOST: "${API_HOST}", ADMIN_HOST: "${ADMIN_HOST}", DEV_HOST: "${DEV_HOST}", MOBILE_HOST: "${MOBILE_HOST}", STORAGE_HOST: "${STORAGE_HOST}", ACME_EMAIL: "${ACME_EMAIL:?}", OBJECT_STORAGE_BUCKET: "${OBJECT_STORAGE_BUCKET:-unitravel-documents}" }
     volumes: [./caddy/Caddyfile:/etc/caddy/Caddyfile:ro, caddy-data:/data, caddy-config:/config]
     depends_on: [web, api, console, mobile]
     restart: unless-stopped
@@ -49,6 +59,8 @@ services:
     restart: "no"
 
   api:
+    <<: *hardened
+    cap_drop: [ALL]
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: api }
     environment: { <<: *app-env }
     depends_on: { seed: { condition: service_completed_successfully }, valkey: { condition: service_healthy }, storage: { condition: service_healthy } }
@@ -57,6 +69,8 @@ services:
     tmpfs: [/tmp]
 
   worker:
+    <<: *hardened
+    cap_drop: [ALL]
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: api }
     command: ["node", "dist/main.worker.js"]
     # The image's HTTP healthcheck belongs to the API role; the worker serves no HTTP.
@@ -68,18 +82,23 @@ services:
     tmpfs: [/tmp]
 
   web:
+    <<: *hardened
+    cap_drop: [ALL]
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: web }
     # The CSP and canonical links are built from these at request time.
     environment: { API_INTERNAL_URL: "http://api:4100", PUBLIC_WEB_URL: "https://${WEB_HOST}", OBJECT_STORAGE_PUBLIC_ENDPOINT: "${OBJECT_STORAGE_PUBLIC_ENDPOINT:-https://${STORAGE_HOST}}" }
     restart: unless-stopped
 
   console:
+    <<: *hardened
+    cap_drop: [ALL]
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: console }
     # The host split between the Admin Panel and the Developer Panel reads these.
     environment: { API_INTERNAL_URL: "http://api:4100", PUBLIC_CONSOLE_ADMIN_URL: "https://${ADMIN_HOST}", PUBLIC_CONSOLE_DEV_URL: "https://${DEV_HOST}" }
     restart: unless-stopped
 
   mobile:
+    <<: *hardened
     build:
       context: ../apps/mobile
       dockerfile: ../../infra/docker/mobile.Dockerfile
@@ -87,6 +106,7 @@ services:
     restart: unless-stopped
 
   postgres:
+    <<: *hardened
     image: postgres:18-alpine
     environment: { POSTGRES_USER: "${POSTGRES_USER:-unitravel}", POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?}", POSTGRES_DB: unitravel }
     volumes: [pg:/var/lib/postgresql]
@@ -94,24 +114,41 @@ services:
     restart: unless-stopped
 
   valkey:
+    <<: *hardened
     image: valkey/valkey:8.1-alpine
-    command: ["valkey-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    environment: { REDISCLI_AUTH: "${REDIS_PASSWORD:?}" }
+    command: ["valkey-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction", "--requirepass", "${REDIS_PASSWORD:?}"]
     volumes: [valkey:/data]
     healthcheck: { test: ["CMD", "valkey-cli", "ping"], interval: 5s, retries: 20 }
     restart: unless-stopped
 
   clamav:
+    <<: *hardened
     image: clamav/clamav:1.4
     restart: unless-stopped
 
   # S3-compatible store (ADR-0005). The API creates the buckets and their CORS/SSE at start-up (core/storage.ts).
   # Set OBJECT_STORAGE_ENDPOINT to a managed EU S3 endpoint to stop using this service.
   storage:
+    <<: *hardened
     image: rustfs/rustfs:1.0.1
     environment: { RUSTFS_ACCESS_KEY: "${OBJECT_STORAGE_ACCESS_KEY:?}", RUSTFS_SECRET_KEY: "${OBJECT_STORAGE_SECRET_KEY:?}", RUSTFS_SSE_S3_MASTER_KEY: "${RUSTFS_SSE_S3_MASTER_KEY:?}" }
     command: ["/data"]
     volumes: [storage:/data]
     healthcheck: { test: ["CMD-SHELL", "nc -z 127.0.0.1 9000"], interval: 5s, retries: 30 }
+    restart: unless-stopped
+
+  # Nightly database care (ADR-0017), as the owner role: creates the next months' audit/provider-call partitions (rows
+  # would otherwise pile into the default partition and block the next migration) and writes a compressed
+  # pg_dump to the `backups` volume, keeping BACKUP_KEEP_DAYS days. Copy that volume off the host as well
+  # (docs/runbooks/backup-restore.md); a backup on the same disk is not a backup.
+  db-maintenance:
+    <<: *hardened
+    image: postgres:18-alpine
+    environment: { DATABASE_MIGRATE_URL: "${DATABASE_MIGRATE_URL:?}", BACKUP_KEEP_DAYS: "${BACKUP_KEEP_DAYS:-14}" }
+    volumes: [backups:/backups, ./scripts/db-maintenance.sh:/usr/local/bin/db-maintenance.sh:ro]
+    entrypoint: ["/bin/sh", "/usr/local/bin/db-maintenance.sh"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
     restart: unless-stopped
 
   # Staging only: catches all outgoing mail (UI on 127.0.0.1:8025). Use with SMTP_URL=smtp://mailpit:1025.
@@ -121,4 +158,4 @@ services:
     ports: ["127.0.0.1:8025:8025"]
     restart: unless-stopped
 
-volumes: { pg: {}, valkey: {}, storage: {}, caddy-data: {}, caddy-config: {} }
+volumes: { pg: {}, valkey: {}, storage: {}, caddy-data: {}, caddy-config: {}, backups: {} }

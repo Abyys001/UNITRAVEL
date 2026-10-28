@@ -16,6 +16,7 @@ import { ReferenceService } from "../reference/reference.service"
 import { type CallContext, type FlightSupplierAdapter, type OfferRef, type SliceQuery, SupplierError, type SupplierResult } from "./adapter"
 import { AmadeusEnterpriseAdapter, ManualAdapter } from "./adapters/amadeus.adapter"
 import { DuffelAdapter } from "./adapters/duffel.adapter"
+import { safeError } from "../../core/safe-error"
 import { FakeAdapter } from "./adapters/fake.adapter"
 
 type ProviderRow = typeof providers.$inferSelect
@@ -221,7 +222,7 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     await this.db.insert(providerCalls).values({
       id, providerId: row.id, operation: op, searchId: opts.searchId, requestId: opts.requestId.slice(0, 128), status: r.ok ? "OK" : "ERROR", errorCode: r.ok ? null : r.error.code,
       durationMs: duration, offers: r.ok && Array.isArray(r.value) ? (r.value as unknown[]).length : null, payloadKey,
-    }).catch((err) => this.log.warn({ err: String(err) }, "call record failed"))
+    }).catch((err) => this.log.warn({ err: safeError(err) }, "call record failed"))
     if (!r.ok && r.error.code === "SUPPLIER_AUTH") await this.healthChanged(row.id, "AUTH", "Credentials invalid or expired")
     return r
   }

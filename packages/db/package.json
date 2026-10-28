@@ -8,8 +8,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "generate": "drizzle-kit generate",
-    "migrate": "tsc -p tsconfig.json && node dist/migrate.js",
-    "seed": "node dist/seed/index.js",
+    "migrate": "tsc -p tsconfig.json && node --env-file-if-exists=../../.env dist/migrate.js",
+    "seed": "node --env-file-if-exists=../../.env dist/seed/index.js",
+    "create-owner": "node --env-file-if-exists=../../.env dist/create-owner.js",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {

@@ -340,7 +340,7 @@ export class ServicesService implements OnModuleInit {
   async staffMessage(ref: string, actor: Actor, body: string, documentIds: string[]) {
     return this.uow.run(async (tx) => {
       const r = await this.byRef(ref, tx)
-      for (const d of documentIds) await this.docs.publish(tx, d)
+      for (const d of documentIds) await this.docs.publish(tx, d, { requestType: "SERVICE", requestId: r.id, customerUserId: r.customerUserId, staffUserId: actor.userId })
       await tx.insert(requestMessages).values({ requestType: "SERVICE", requestId: r.id, authorId: actor.userId, direction: "TO_CUSTOMER", body, documentIds })
       await this.outbox.add(tx, { aggregateType: "service_request", aggregateId: r.id, eventType: "service_request.message", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, direction: "TO_CUSTOMER", message: body } })
       return { ok: true }

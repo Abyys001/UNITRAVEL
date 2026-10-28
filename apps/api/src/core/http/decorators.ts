@@ -44,6 +44,11 @@ export interface Actor {
   mfaLevel: number
   mfaVerifiedAt: Date | null
   isStaff: boolean
+  /**
+   * Set when the account holds staff permissions this session may not use: a website session ("web"), or a console or
+   * app session that has not passed the staff second factor yet ("mfa"). Only customer permissions remain.
+   */
+  staffGated?: "web" | "mfa"
   ip: string
   userAgent: string
   locale: "en" | "fa"

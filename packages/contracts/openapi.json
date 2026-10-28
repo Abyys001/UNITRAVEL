@@ -279,10 +279,14 @@
                   "properties": {
                     "enabled": {
                       "type": "boolean"
+                    },
+                    "staff": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "enabled"
+                    "enabled",
+                    "staff"
                   ],
                   "additionalProperties": false
                 }
@@ -865,6 +869,20 @@
         ]
       }
     },
+    "/v1/me/sessions/revoke-others": {
+      "post": {
+        "operationId": "MeController_revokeOtherSessions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/v1/me/sessions/{id}": {
       "delete": {
         "operationId": "MeController_revokeSession",
@@ -1053,6 +1071,29 @@
     "/v1/dev/users/{id}/reactivate": {
       "post": {
         "operationId": "DevUsersController_reactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/users/{id}/mfa/reset": {
+      "post": {
+        "operationId": "DevUsersController_resetMfa",
         "parameters": [
           {
             "name": "id",

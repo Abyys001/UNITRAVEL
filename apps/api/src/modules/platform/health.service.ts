@@ -46,6 +46,13 @@ export class HealthService {
     return { status: "ok", version: env().APP_VERSION }
   }
 
+  /** Readiness for load balancers: one round trip each to PostgreSQL and Valkey, nothing more (it is public). */
+  async readiness() {
+    const db = await this.db.execute(sql`select 1`).then(() => true, () => false)
+    const redis = (await this.redis.ping().catch(() => "ERR")) === "PONG"
+    return { ready: db && redis, database: db, redis }
+  }
+
   async diagnostics(extraDependencies: { name: string; kind: string; ok: boolean | null; successRate: number | null; p50: number | null; p95: number | null; lastError: string | null; circuit: string | null }[] = []) {
     const t0 = Date.now()
     let dbOk = true

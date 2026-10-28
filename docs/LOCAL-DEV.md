@@ -3,6 +3,9 @@
 Everything runs on one machine. Secrets in `.env.example` are local placeholders; production refuses defaults.
 
 ## Set-up
+One command (Docker running, Node 22+, pnpm): `scripts/setup-local.sh` (or `pnpm setup`) creates `.env` once, starts the infrastructure, installs, builds, migrates, seeds, starts `api` and `worker` and waits for `/ready`. Add `--all` to also build and start the website and the console. It is safe to re-run.
+
+The same steps by hand:
 ```bash
 cp .env.example .env
 docker compose --env-file .env -f infra/compose.dev.yml up -d      # postgres, valkey, rustfs (S3), mailpit
@@ -12,7 +15,7 @@ pnpm db:migrate && pnpm db:seed
 (cd apps/api && npx tsc -p tsconfig.build.json)     # builds apps/api/dist
 scripts/svc.sh start api worker web console mobile
 ```
-`pnpm db:seed` is idempotent. Demo users and the demo staff TOTP secret are seeded only when `APP_ENV=local`.
+`pnpm db:migrate`, `pnpm db:seed` and `pnpm db:create-owner` read `.env` themselves (without it, a new database's `app_rw` role would get no password and the API could not connect). `pnpm db:seed` is idempotent. Demo users and the demo staff TOTP secret are seeded only when `APP_ENV=local`.
 
 The `web` and `console` services use `next start`: build them first (`pnpm --filter @unitravel/web build`, same for console). `mobile` serves `apps/mobile/build/web`: build it per `apps/mobile/README.md`.
 
@@ -37,7 +40,7 @@ Use `scripts/svc.sh start|stop|restart <api|worker|web|console|mobile>...`. It k
 ## Signing in (local only)
 Sign-in is email-only (ADR-0010). On every sign-in screen a dashed **Test sign-in (local only)** box reads the code from the local email sink (`GET http://localhost:4100/v1/dev-sink/email`) and fills it in. For staff it also fills the current authenticator code (`GET /v1/auth/dev-sink/totp`). The box only appears when `APP_ENV=local`. Emails also arrive in Mailpit (http://localhost:8035). SMS (phone verification) still goes to `/v1/dev-sink/sms`, and push to `/v1/dev-sink/push`.
 
-**Test sign-in (ADR-0012).** With `TEST_SIGN_IN=on` (the local `.env.example` default; staging opts in until real email (SMTP) is configured, owner 27 Oct 2026; the API refuses to start with it on in production) every sign-in screen also shows a **Test sign-in (testing phase)** box: type or pick an email and sign in without any code. Staff skip the authenticator step. Every use is audited as `user.test_signed_in`.
+**Test sign-in (ADR-0012, ADR-0017).** `TEST_SIGN_IN` is `off`, `customers` (customer accounts only; staff need a code and their second factor) or `on`. With `TEST_SIGN_IN=on` (the local `.env.example` default; staging opts in until real email (SMTP) is configured, owner 27 Oct 2026; the API refuses to start with it on in production) every sign-in screen also shows a **Test sign-in (testing phase)** box: type or pick an email and sign in without any code. Staff skip the authenticator step. Every use is audited as `user.test_signed_in`.
 
 New customers: sign in with any new email; you then get the profile form. Staff accounts are created through the Admin Panel.
 

@@ -4,7 +4,7 @@ import { type CanActivate, type ExecutionContext, Injectable } from "@nestjs/com
 import { Reflector } from "@nestjs/core"
 import type { Request, Response } from "express"
 
-import type { Permission } from "@unitravel/contracts"
+import { DEFAULT_ROLE_PERMISSIONS, type Permission } from "@unitravel/contracts"
 
 import { AccessService } from "../../modules/access/access.service"
 import { ConfigService } from "../../modules/config/config.service"
@@ -15,7 +15,7 @@ import { AppError } from "../errors"
 import {
   type Actor, AUTHENTICATED_KEY, DEV_SURFACE_KEY, PERMISSIONS_KEY, PUBLIC_KEY, RATE_LIMIT_KEY, type RateLimitSpec, type RequestContext, STAFF_KEY, STEP_UP_KEY,
 } from "./decorators"
-import { RateLimiter } from "./rate-limit"
+import { ipKey, RateLimiter } from "./rate-limit"
 
 export const COOKIE_ACCESS = "ut_at"
 export const COOKIE_REFRESH = "ut_rt"
@@ -23,6 +23,7 @@ export const COOKIE_CSRF = "ut_csrf"
 export const COOKIE_ANON = "ut_anon"
 
 const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"])
+const CUSTOMER_PERMISSIONS: ReadonlySet<Permission> = new Set(DEFAULT_ROLE_PERMISSIONS.customer)
 
 function hostOf(url: string) {
   return new URL(url).host
@@ -81,19 +82,24 @@ export class AuthGuard implements CanActivate {
       if (host !== hostOf(env().PUBLIC_CONSOLE_DEV_URL) || (actor && actor.audience !== "console")) throw new AppError("NOT_FOUND")
       if (auth.ipAllowlistDev.length > 0 && !auth.ipAllowlistDev.includes(req.ip ?? "")) throw new AppError("NOT_FOUND")
     }
-    if (perms && actor && !perms.some((p) => actor.permissions.has(p))) throw new AppError("FORBIDDEN", `Requires ${perms.join(" or ")}`)
+    if (perms && actor && !perms.some((p) => actor.permissions.has(p))) {
+      if (actor.staffGated === "mfa") throw new AppError("MFA_REQUIRED", "Verify your second factor")
+      if (actor.staffGated === "web") throw new AppError("FORBIDDEN", "Staff endpoints are not available to website sessions")
+      throw new AppError("FORBIDDEN", `Requires ${perms.join(" or ")}`)
+    }
     if (perms && !actor && !isPublic) throw new AppError("UNAUTHENTICATED")
 
     if (this.meta<boolean>(STAFF_KEY, ctx) && actor) {
-      if (actor.audience === "web") throw new AppError("FORBIDDEN", "Staff endpoints are not available to website sessions")
-      if (auth.staffSecondFactor && actor.mfaLevel < 1) throw new AppError("MFA_REQUIRED", "Verify your second factor")
+      if (actor.audience === "web" || actor.staffGated === "web") throw new AppError("FORBIDDEN", "Staff endpoints are not available to website sessions")
+      if ((auth.staffSecondFactor && actor.mfaLevel < 1) || actor.staffGated === "mfa") throw new AppError("MFA_REQUIRED", "Verify your second factor")
     }
     if (this.meta<boolean>(STEP_UP_KEY, ctx) && actor) {
       const window = auth.stepUpWindowMinutes * 60_000
       if (!actor.mfaVerifiedAt || Date.now() - actor.mfaVerifiedAt.getTime() > window) throw new AppError("STEP_UP_REQUIRED", `Re-verify within the last ${auth.stepUpWindowMinutes} minutes`)
     }
     for (const spec of this.meta<RateLimitSpec[]>(RATE_LIMIT_KEY, ctx) ?? []) {
-      const key = spec.key === "ip" ? req.ip ?? "?" : spec.key === "user" ? actor?.userId ?? req.ip ?? "?" : actor ? `u:${actor.userId}` : `ip:${req.ip}`
+      const ip = ipKey(req.ip ?? "?")
+      const key = spec.key === "ip" ? ip : spec.key === "user" ? actor?.userId ?? ip : actor ? `u:${actor.userId}` : `ip:${ip}`
       await this.limiter.enforce(spec.name, key, spec.limit, spec.windowSeconds)
     }
     if (actor && cookieToken && !bearer && UNSAFE.has(req.method)) {
@@ -120,10 +126,19 @@ export class AuthGuard implements CanActivate {
     const current = await this.access.currentPermVersion(claims.sub)
     if (current !== claims.pv) throw new AppError("PERMISSIONS_CHANGED", "Refresh your session")
     await this.sessions.touch(claims.sid)
-    const permissions = new Set(claims.perms)
+    let permissions = new Set(claims.perms)
+    const mfaLevel = Math.max(claims.mfa, st.mfaLevel)
+    // Staff permissions are only usable from a staff surface after the second factor: a staff member signed in on the
+    // website, or a console session still at the first factor, acts with customer permissions only (ch. 16.1, 25.5).
+    let staffGated: Actor["staffGated"]
+    if (this.access.isStaff(permissions)) {
+      if (claims.aud === "web") staffGated = "web"
+      else if (auth.staffSecondFactor && mfaLevel < 1) staffGated = "mfa"
+      if (staffGated) permissions = new Set([...permissions].filter((p) => CUSTOMER_PERMISSIONS.has(p)))
+    }
     return {
       userId: claims.sub, sessionId: claims.sid, audience: claims.aud, permissions, roles: [], permVersion: claims.pv,
-      mfaLevel: Math.max(claims.mfa, st.mfaLevel), mfaVerifiedAt: st.mfaVerifiedAt, isStaff: this.access.isStaff(permissions),
+      mfaLevel, mfaVerifiedAt: st.mfaVerifiedAt, isStaff: this.access.isStaff(permissions), staffGated,
       ip: req.ip ?? "", userAgent: req.header("user-agent") ?? "", locale: req.headers["accept-language"]?.toString().startsWith("fa") ? "fa" : "en",
     }
   }

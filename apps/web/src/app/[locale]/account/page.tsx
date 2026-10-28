@@ -28,6 +28,7 @@ export default function AccountPage() {
   const [deleting, setDeleting] = useState(false)
   const [allDevices, setAllDevices] = useState(false)
   const travellers = useQuery({ queryKey: ["travellers"], queryFn: () => api<TravellerView[]>("/v1/me/travellers"), enabled: !!me })
+  const [signedOut, setSignedOut] = useState<number | null>(null)
   const sessions = useQuery({ queryKey: ["sessions"], queryFn: () => api<{ id: string; client: string; userAgent: string | null; lastSeenAt: string; current: boolean }[]>("/v1/me/sessions"), enabled: !!me })
   const patch = useMutation({ mutationFn: (body: Record<string, unknown>) => api("/v1/me", { method: "PATCH", body }), onSuccess: () => { void qc.invalidateQueries({ queryKey: ["me"] }); toast.success("✓") } })
   if (!me) return null
@@ -85,7 +86,11 @@ export default function AccountPage() {
             </li>
           )
         })}</ul>
-        {devices.length > DEVICE_CAP && <Button variant="ghost" size="sm" className="mt-2" onClick={() => setAllDevices((v) => !v)}>{allDevices ? t("account.showFewerDevices") : t("account.showAllDevices", { n: devices.length })}</Button>}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {devices.length > DEVICE_CAP && <Button variant="ghost" size="sm" onClick={() => setAllDevices((v) => !v)}>{allDevices ? t("account.showFewerDevices") : t("account.showAllDevices", { n: devices.length })}</Button>}
+          {devices.length > 1 && <Button variant="outline" size="sm" className="rounded-xl border-navy-900 text-navy-900" onClick={async () => { const r = await api<{ revoked: number }>("/v1/me/sessions/revoke-others", { body: {} }); setSignedOut(r.revoked); void sessions.refetch() }}>{t("account.revokeOthers")}</Button>}
+          {signedOut !== null && <span role="status" className="text-sm text-steel">{t("account.revokedOthers", { n: signedOut })}</span>}
+        </div>
       </section>
       <section><h2 className="font-display mb-3 text-xl">{t("account.privacy")}</h2>
         <div className="flex flex-wrap gap-3"><Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => void exportData()}>{t("account.export")}</Button>

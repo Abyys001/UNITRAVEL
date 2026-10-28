@@ -1,6 +1,6 @@
 # ADR-0012 · Staging test sign-in (email only, no code)
 
-Status: accepted; kept on staging until real email exists (owner, 27 Oct 2026); removal tracked in ADR-0014.
+Status: accepted; kept on staging until real email exists (owner, 27 Oct 2026); removal tracked in ADR-0014. Amended by ADR-0017: a third value `customers` limits it to customer accounts.
 
 ## Context
 

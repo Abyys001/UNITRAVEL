@@ -14,7 +14,9 @@ async function forward(req: NextRequest, ctx: { params: Promise<{ path: string[]
   req.headers.forEach((v, k) => { if (!HOP.has(k.toLowerCase())) headers.set(k, v) })
   headers.set("x-forwarded-host", req.headers.get("host") ?? "")
   headers.set("x-forwarded-proto", req.nextUrl.protocol.replace(":", ""))
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+  // The edge (Caddy or nginx) sets X-Real-IP / appends the address it saw as the last X-Forwarded-For entry; earlier
+  // entries come from the client and are not trusted.
+  const ip = req.headers.get("x-real-ip")?.trim() || req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim()
   if (ip) headers.set("x-forwarded-for", ip)
   const res = await fetch(url, {
     method: req.method, headers, redirect: "manual",

@@ -14,9 +14,13 @@ Topology: `infra/compose.prod.yml` (caddy, migrate, seed, api, worker, web, cons
 ```sh
 git clone <repo-url> unitravel && cd unitravel
 cp infra/.env.prod.example infra/.env.prod && chmod 600 infra/.env.prod
-$EDITOR infra/.env.prod        # hosts, APP_ENV, every CHANGE_ME; generation commands are in the file
+$EDITOR infra/.env.prod        # hosts, APP_ENV, every CHANGE_ME (incl. REDIS_PASSWORD); generation commands are in the file
 docker compose --env-file infra/.env.prod -f infra/compose.prod.yml up -d --build
+# Once, on a new database: the first owner (later staff are added in the Developer Panel).
+docker compose --env-file infra/.env.prod -f infra/compose.prod.yml run --rm seed node dist/create-owner.js --email you@yourdomain --name "First Last"
 ```
+
+The API and worker refuse to start (and `docker compose logs api` lists why) while any secret is still a `CHANGE_ME` placeholder or too short, while `DATABASE_URL` points at a superuser or the schema owner, and in production while Valkey has no password or a public URL is not https (ADR-0017). The first owner signs in on the Admin Panel with an email code and sets up an authenticator on that first sign-in; if they later lose it, another owner uses Developer Panel > Users > Reset second factor.
 
 Order is enforced by compose: postgres, migrate (owner role; creates `app_rw`/`app_ro` and sets their passwords from `DATABASE_URL`/`DATABASE_RO_URL`), seed (idempotent), then api and worker (they create the storage buckets, CORS and encryption on start). With a mail sink for staging add `--profile mail-sink` to every compose command and set `SMTP_URL=smtp://mailpit:1025`; the UI is on `127.0.0.1:8025` (tunnel with `ssh -L 8025:127.0.0.1:8025`).
 
@@ -57,11 +61,11 @@ Application only: `git checkout <previous-tag-or-sha>` and run the same `up -d -
 
 ## Backups
 
-Postgres (`pg` volume) and object storage (`storage` volume) are the state; Valkey holds BullMQ jobs (AOF on). Procedure and restore test: [backup-restore](backup-restore.md).
+Postgres (`pg` volume) and object storage (`storage` volume) are the state; Valkey holds BullMQ jobs (AOF on). The `db-maintenance` service writes a nightly `pg_dump` to the `backups` volume (keeps `BACKUP_KEEP_DAYS`, default 14) and creates the coming months' audit and provider-call partitions; check it with `docker compose ... logs --tail 5 db-maintenance`. Copy the `backups` volume and the `storage` volume off the server on a schedule of your own. Procedure and restore test: [backup-restore](backup-restore.md).
 
 ## Test sign-in (staging only, until real email exists)
 
-**`TEST_SIGN_IN=on` lets anyone sign in with an email address alone, with no OTP and no second factor.** It stays available on staging until real email (SMTP) is configured (owner, 27 Oct 2026; removal tracked in ADR-0014), because testers cannot receive codes otherwise. It is never allowed in production: the API refuses to start with `APP_ENV=production` and `TEST_SIGN_IN=on` (ADR-0012). Do not point real customers or real supplier credentials at a stack where it is on. Demo users are seeded only locally (ADR-0013): keep `SEED_DEMO=0` on every deployed host.
+Prefer **`TEST_SIGN_IN=customers`** (ADR-0017): customer accounts sign in with an email alone, staff still need a code and their second factor. **`TEST_SIGN_IN=on` lets anyone sign in to any account, staff included, with an email address alone, with no OTP and no second factor.** It stays available on staging until real email (SMTP) is configured (owner, 27 Oct 2026; removal tracked in ADR-0014), because testers cannot receive codes otherwise. It is never allowed in production: the API refuses to start with `APP_ENV=production` and `TEST_SIGN_IN=on` (ADR-0012). Do not point real customers or real supplier credentials at a stack where it is on. Demo users are seeded only locally (ADR-0013): keep `SEED_DEMO=0` on every deployed host.
 
 ## Known limits
 

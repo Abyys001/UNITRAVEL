@@ -48,9 +48,12 @@ docker compose --env-file infra/.env.prod -f infra/compose.prod.yml -f infra/com
 
 ## Current configuration (staging)
 
-- `APP_ENV=staging`: demo users are seeded (`owner@unitravel.example` and the rest of the list in [LOCAL-DEV](../LOCAL-DEV.md)).
+- `APP_ENV=staging`: demo users are not seeded (ADR-0014). Create the first owner once with `docker compose --env-file infra/.env.prod -f infra/compose.prod.yml -f infra/compose.vps.yml run --rm seed node dist/create-owner.js --email you@yourdomain`.
+- `REDIS_PASSWORD` is generated on the first run and appended to older `infra/.env.prod` files on the next deploy (ADR-0017).
 - `TEST_SIGN_IN=on` (ADR-0012): anyone who can reach a host can sign in as any account, staff included, with an
-  email address alone. Test data only. Set `TEST_SIGN_IN=off` and run `scripts/vps-deploy.sh` before any real data.
+  email address alone. Test data only. `TEST_SIGN_IN=customers` (ADR-0017) keeps it for customer accounts but makes
+  staff use a code and their second factor; `scripts/vps-deploy.sh status` warns while it is `on`. Set
+  `TEST_SIGN_IN=off` and run `scripts/vps-deploy.sh` before any real data.
 - Mail goes to Mailpit, not to real inboxes: `ssh -L 3085:127.0.0.1:3085 <server>`, then open http://localhost:3085.
   Set `SMTP_URL` to a real relay for real email OTPs.
 - The FAKE flight supplier is refused outside `local` (CLAUDE.md rule 2), so flight searches return results only

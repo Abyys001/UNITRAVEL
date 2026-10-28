@@ -178,7 +178,9 @@ export class SearchService implements OnModuleInit, SearchPort {
   private async owned(id: string, owner: SearchOwner) {
     const [row] = await this.db.select().from(searches).where(eq(searches.id, id))
     if (!row) throw notFound("Search")
-    const ok = owner.staff || (row.userId && row.userId === owner.userId) || (!row.userId && ((row.anonKey && row.anonKey === owner.anonKey) || owner.userId))
+    // An anonymous search stays with the browser or device that started it, also after that visitor signs in; being
+    // signed in is not enough to open someone else's anonymous search.
+    const ok = owner.staff || (row.userId && row.userId === owner.userId) || (!row.userId && !!row.anonKey && row.anonKey === owner.anonKey)
     if (!ok) throw notFound("Search")
     return row
   }

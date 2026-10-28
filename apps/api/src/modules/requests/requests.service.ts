@@ -351,6 +351,10 @@ export class RequestsService {
           return updated
         }
         case "mark_reservation_lapsed": {
+          // This command changes a reservation, so it needs the reservation permission itself (the route also admits
+          // quote and compliance roles for other commands) and the caller's view of the request must be current.
+          if (!actor.permissions.has("reservation.record") && !actor.permissions.has("flight_request.transition")) throw new AppError("FORBIDDEN", "Requires reservation.record or flight_request.transition")
+          if (expectedVersion !== undefined && expectedVersion !== r.version) throw new AppError("VERSION_CONFLICT", `Request changed (version ${r.version}); reload`)
           const [res] = await tx.select().from(reservations).where(and(eq(reservations.requestId, r.id), inArray(reservations.status, ["HELD", "CONFIRMED"])))
           if (!res) throw new AppError("INVALID_TRANSITION", "No active reservation")
           await tx.update(reservations).set({ status: "LAPSED" }).where(eq(reservations.id, res.id))
@@ -428,7 +432,7 @@ export class RequestsService {
   async staffMessage(ref: string, actor: Actor, body: string, documentIds: string[]) {
     return this.uow.run(async (tx) => {
       const r = await this.byRef(ref, tx)
-      for (const d of documentIds) await this.documents.publish(tx, d)
+      for (const d of documentIds) await this.documents.publish(tx, d, { requestType: "FLIGHT", requestId: r.id, customerUserId: r.customerUserId, staffUserId: actor.userId })
       return this.addMessage(tx, r, actor.userId, "TO_CUSTOMER", body, documentIds, true)
     })
   }
