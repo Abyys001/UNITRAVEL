@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api_error.dart';
 import '../../core/errors_l10n.dart';
@@ -154,6 +155,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         onSubmitted: (_) => _sendCode(),
                       ),
                       const _TestSignInBox(),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: TextButton.icon(key: const Key('signin-track'), onPressed: () => context.go('/track'), icon: const Icon(Icons.manage_search), label: Text(l.tkSignInLink)),
+                      ),
                     ] else ...[
                       Text(l.codeSentTo(ltr(_challenge!.normalised))),
                       const SizedBox(height: 12),

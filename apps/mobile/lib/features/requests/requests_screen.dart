@@ -18,7 +18,10 @@ class RequestsScreen extends ConsumerWidget {
     final l = context.l;
     final async = ref.watch(requestsProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l.requestsTitle)),
+      appBar: AppBar(
+        title: Text(l.requestsTitle),
+        actions: [IconButton(key: const Key('requests-track'), tooltip: l.menuTrack, icon: const Icon(Icons.manage_search), onPressed: () => context.push('/track'))],
+      ),
       body: PageBody(
         child: async.when(
           loading: () => const LoadingList(),

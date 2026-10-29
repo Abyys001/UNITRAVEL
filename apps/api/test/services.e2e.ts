@@ -104,11 +104,11 @@ describe("Service requests (ADR-0015)", () => {
     expect(d.status).toBe(200)
     expect(d.body.status).toBe("IN_PROGRESS")
     expect((await cmd(ref, "claim", 1)).body.code).toBe("VERSION_CONFLICT")
-    // The club hook: a discount line is refused while the club is off (loyalty.enabled).
+    // The club hook: a discount line is refused for a customer who is not a member.
     const club = await cmd(ref, "send_quote", d.body.version, quoteInput([{ kind: "CLUB_DISCOUNT", label: "Customer club discount", amount: GBP(500), benefitId: "019a0000-0000-7000-8000-000000000001" }]))
     expect(club.status).toBe(400)
     expect(club.body.code).toBe("VALIDATION_FAILED")
-    expect(JSON.stringify(club.body)).toContain("Customer club is not enabled")
+    expect(JSON.stringify(club.body)).toContain("NOT_A_MEMBER")
     // A quote with a past validity is refused by the machine.
     expect((await cmd(ref, "send_quote", d.body.version, { ...quoteInput(), validUntil: new Date(Date.now() - 1000).toISOString() })).status).toBe(409)
 
@@ -208,13 +208,15 @@ describe("Site configuration (spec 4.1, 4.6)", () => {
   it("is public, lists the menu from the flags, hides placeholder contacts and never claims 24-hour support", async () => {
     const r = await anon.get("/v1/site")
     expect(r.status).toBe(200)
-    expect(r.body.menu).toMatchObject({ flights: true, track: true, support: true, hotels: false, club: false })
-    expect(Object.keys(r.body.menu).sort()).toEqual(["buses", "cargo", "cip", "club", "flights", "hotels", "insurance", "stays", "support", "tours", "track", "trains", "visa"])
+    expect(r.body.menu).toMatchObject({ flights: true, track: true, support: true })
+    expect(Object.keys(r.body.menu).sort()).toEqual(["buses", "card", "cargo", "cip", "club", "flights", "hotels", "insurance", "stays", "support", "tours", "track", "trains", "visa"])
     expect(r.body.support).toEqual({ phone: null, email: null, hours: null })
     expect(r.body.payments).toEqual({ online: false })
     await setFlag("services.insurance.enabled", true)
     expect((await anon.get("/v1/site")).body.menu.insurance).toBe(true)
     await setFlag("services.insurance.enabled", false)
+    await setFlag("hotels.enabled", true)
+    expect((await anon.get("/v1/site")).body.menu.hotels).toBe(true)
   })
 })
 

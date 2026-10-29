@@ -463,8 +463,9 @@ class _ServiceRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _ServiceIcon(icon: Icons.flight_takeoff, label: l.navSearch, selected: true),
-        _ServiceIcon(icon: Icons.inventory_2_outlined, label: l.navCargo, onTap: () => context.go('/cargo')),
-        _ServiceIcon(icon: Icons.receipt_long_outlined, label: l.navRequests, onTap: () => context.go('/requests')),
+        _ServiceIcon(icon: Icons.inventory_2_outlined, label: l.navCargo, onTap: () => context.push('/cargo')),
+        _ServiceIcon(icon: Icons.manage_search, label: l.menuTrack, onTap: () => context.push('/track')),
+        _ServiceIcon(icon: Icons.apps, label: l.servicesTitle, onTap: () => context.go('/services')),
       ],
     );
   }

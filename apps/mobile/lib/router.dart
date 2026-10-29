@@ -16,6 +16,13 @@ import 'features/admin/queue_screen.dart';
 import 'features/auth/profile_screen.dart';
 import 'features/auth/sign_in_screen.dart';
 import 'features/cargo/cargo_screens.dart';
+import 'features/club/club_screen.dart';
+import 'features/services/service_detail_screen.dart';
+import 'features/services/service_explorer.dart';
+import 'features/services/service_form_screen.dart';
+import 'features/support/support_screen.dart';
+import 'features/track/track_screen.dart';
+import 'models/services.dart';
 import 'features/billing/billing_screen.dart';
 import 'features/cargo/shipments_screen.dart';
 import 'features/inbox/inbox_screen.dart';
@@ -26,6 +33,7 @@ import 'features/search/itinerary_screen.dart';
 import 'features/search/results_screen.dart';
 import 'features/search/search_screen.dart';
 import 'ui/brand_logo.dart';
+import 'features/content/content_screens.dart';
 import 'ui/theme.dart';
 import 'ui/widgets.dart';
 
@@ -42,7 +50,8 @@ String? redirectFor(SessionState s, Uri uri) {
     case AuthStatus.booting:
       return loc == '/splash' ? null : '/splash?from=${Uri.encodeComponent(full)}';
     case AuthStatus.signedOut:
-      if (loc == '/signin') return null;
+      // Reference + phone tracking is public (spec §4.5): no account needed.
+      if (loc == '/signin' || loc == '/track') return null;
       return loc == '/' || loc == '/splash' ? '/signin' : '/signin?from=${Uri.encodeComponent(full)}';
     case AuthStatus.signedIn:
       final me = s.me!;
@@ -87,6 +96,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (_, _) => const _Splash()),
       GoRoute(path: '/signin', builder: (_, _) => const SignInScreen()),
       GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
+      GoRoute(
+        path: '/learn',
+        builder: (c, _) => GuidesScreen(onOpen: (k, s) => c.push('/learn/${k.toLowerCase()}/$s')),
+      ),
+      GoRoute(path: '/learn/:kind/:slug', builder: (_, s) => GuideScreen(kind: s.pathParameters['kind']!.toUpperCase(), slug: s.pathParameters['slug']!)),
+      GoRoute(path: '/glossary', builder: (_, _) => const GlossaryScreen()),
+      GoRoute(path: '/track', builder: (_, _) => const TrackScreen()),
+      GoRoute(path: '/club', builder: (_, _) => const ClubScreen()),
+      GoRoute(path: '/support', builder: (_, _) => const SupportScreen()),
+      GoRoute(
+        path: '/cargo',
+        builder: (_, _) => const CargoScreen(),
+        routes: [
+          GoRoute(path: 'shipments', builder: (_, _) => const ShipmentsScreen()),
+          GoRoute(path: 'new', builder: (_, s) => CargoRequestScreen(laneId: s.uri.queryParameters['lane'] ?? '')),
+        ],
+      ),
       // --- customer mode ---
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _Shell(shell: shell, admin: false),
@@ -147,18 +173,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/cargo',
-                builder: (_, _) => const CargoScreen(),
+                path: '/services',
+                builder: (_, _) => const ServicesScreen(),
                 routes: [
                   GoRoute(
-                    path: 'shipments',
+                    path: 'new/:type',
                     parentNavigatorKey: _rootKey,
-                    builder: (_, _) => const ShipmentsScreen(),
+                    redirect: (_, s) => ServiceType.fromPath(s.pathParameters['type']) == null ? '/services' : null,
+                    builder: (_, s) => ServiceFormScreen(type: ServiceType.fromPath(s.pathParameters['type'])!),
                   ),
                   GoRoute(
-                    path: 'new',
+                    path: ':ref',
                     parentNavigatorKey: _rootKey,
-                    builder: (_, s) => CargoRequestScreen(laneId: s.uri.queryParameters['lane'] ?? ''),
+                    builder: (_, s) => ServiceDetailScreen(requestRef: s.pathParameters['ref']!.toUpperCase(), justSent: s.uri.queryParameters['sent'] == '1'),
                   ),
                 ],
               ),
@@ -290,16 +317,20 @@ class _ShellState extends ConsumerState<_Shell> {
         : [
             NavigationDestination(icon: const Icon(Icons.flight_takeoff_outlined), selectedIcon: const Icon(Icons.flight_takeoff), label: l.navSearch),
             NavigationDestination(icon: const Icon(Icons.assignment_outlined), selectedIcon: const Icon(Icons.assignment), label: l.navRequests),
-            NavigationDestination(icon: const Icon(Icons.inventory_2_outlined), selectedIcon: const Icon(Icons.inventory_2), label: l.navCargo),
+            NavigationDestination(icon: const Icon(Icons.apps_outlined), selectedIcon: const Icon(Icons.apps), label: l.servicesTitle),
             NavigationDestination(icon: inboxIcon, label: l.navInbox),
             NavigationDestination(icon: const Icon(Icons.account_circle_outlined), selectedIcon: const Icon(Icons.account_circle), label: l.navAccount),
           ];
     return Scaffold(
-      body: shell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: shell.currentIndex,
-        destinations: destinations,
-        onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
+      body: GlassBackdrop(child: shell),
+      bottomNavigationBar: GlassPanel(
+        radius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: NavigationBar(
+          backgroundColor: Colors.transparent,
+          selectedIndex: shell.currentIndex,
+          destinations: destinations,
+          onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
+        ),
       ),
     );
   }

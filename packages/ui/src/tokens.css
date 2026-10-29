@@ -58,6 +58,11 @@
   --rule-strong: #c7d6ea;
   --hover: #e8f0fb;
   --chrome: #061f4c;
+  --glass-blur: 22px;
+  --glass-saturate: 1.8;
+  --glass-fill-light: rgb(255 255 255 / 0.6);
+  --glass-fill-dark: rgb(6 31 76 / 0.5);
+  --glass-edge: rgb(255 255 255 / 0.55);
 }
 
 /* Console light theme: only the console's <html> carries data-surface, so the customer site keeps :root. Scoped to html so

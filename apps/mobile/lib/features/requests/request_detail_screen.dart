@@ -220,7 +220,7 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen> {
         if (cargo) _cargoExtras(context, raw),
         SectionTitle(l.messages),
         if (messages.isEmpty) Text(l.noMessages, style: theme.textTheme.bodySmall),
-        for (final m in messages) _MessageBubble(m: m),
+        for (final m in messages) MessageBubble(m: m),
         if (canMessage && !offline) ...[
           const SizedBox(height: 8),
           TextField(
@@ -317,8 +317,8 @@ class _QuoteCard extends ConsumerWidget {
   }
 }
 
-class _MessageBubble extends ConsumerWidget {
-  const _MessageBubble({required this.m});
+class MessageBubble extends ConsumerWidget {
+  const MessageBubble({super.key, required this.m});
   final MessageItem m;
 
   @override

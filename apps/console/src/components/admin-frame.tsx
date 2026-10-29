@@ -1,6 +1,6 @@
 "use client"
 
-import { ConciergeBell, Gem, Home, IdCard, Inbox, Receipt, Search, ShieldAlert } from "lucide-react"
+import { ConciergeBell, FileText, Gem, Home, IdCard, Inbox, Receipt, Search, ShieldAlert } from "lucide-react"
 
 import { normaliseReference } from "@unitravel/domain"
 
@@ -37,6 +37,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     ...(can("loyalty.read") && clubOn ? [{
       href: "/club", label: t("nav.club"), group: "records", icon: <Gem className="size-[18px]" />,
       tabs: [{ href: "/club", label: t("nav.clubMembers") }, { href: "/club/benefits", label: t("nav.clubBenefits") }, { href: "/club/tiers", label: t("nav.clubTiers") }],
+    }] : []),
+    ...(can("cms.read") ? [{
+      href: "/content", label: t("nav.content"), group: "records", icon: <FileText className="size-[18px]" />,
+      tabs: [{ href: "/content", label: t("nav.contentEntries") }, { href: "/content/glossary", label: t("nav.contentGlossary") }],
     }] : []),
     ...(can("flight_search.run") ? [{ href: "/search", label: t("nav.flightSearch"), group: "tools", icon: <Search className="size-[18px]" /> }] : []),
   ]

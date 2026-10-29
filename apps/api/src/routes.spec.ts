@@ -65,6 +65,14 @@ describe("fail-closed route declarations", () => {
     expect(find("POST", "/v1/admin/club/benefits/:id/approve")).toMatchObject({ permissions: ["loyalty.benefit.approve"], staff: true })
   })
 
+  it("content system (ADR-0017): public reads are public; staff read, write and publish are separate permissions", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    for (const p of ["/v1/cms/entries", "/v1/cms/entries/:kind/:slug", "/v1/cms/resolve/:kind/:slug", "/v1/cms/glossary", "/v1/cms/sitemap"]) expect({ p, pub: find("GET", p)?.isPublic, staff: find("GET", p)?.staff }).toEqual({ p, pub: true, staff: false })
+    for (const p of ["/v1/admin/cms/entries", "/v1/admin/cms/entries/:id", "/v1/admin/cms/entries/:id/revisions", "/v1/admin/cms/glossary"]) expect({ p, perms: find("GET", p)?.permissions, staff: find("GET", p)?.staff }).toEqual({ p, perms: ["cms.read"], staff: true })
+    for (const [m, p] of [["POST", "/v1/admin/cms/entries"], ["PATCH", "/v1/admin/cms/entries/:id"], ["POST", "/v1/admin/cms/glossary"], ["PATCH", "/v1/admin/cms/glossary/:slug"]] as const) expect({ p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, perms: ["cms.write"], staff: true })
+    for (const p of ["/v1/admin/cms/entries/:id/transition", "/v1/admin/cms/glossary/:slug/transition"]) expect({ p, perms: find("POST", p)?.permissions, staff: find("POST", p)?.staff }).toEqual({ p, perms: ["cms.write", "cms.publish"], staff: true })
+  })
+
   it("online payment (ADR-0007): the webhook is public, everything else declares a permission, live mode and refunds are gated", () => {
     const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
     expect(find("POST", "/v1/webhooks/stripe")).toMatchObject({ isPublic: true, staff: false, dev: false })

@@ -2164,4 +2164,525 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get menuSupport => 'Support';
+
+  @override
+  String get learnTitle => 'Travel guides';
+
+  @override
+  String get glossaryTitle => 'Travel glossary';
+
+  @override
+  String get learnEmpty => 'Nothing published yet.';
+
+  @override
+  String get glossarySearch => 'Search terms';
+
+  @override
+  String get menuFlights => 'Flights';
+
+  @override
+  String get menuCargo => 'Cargo & shipping';
+
+  @override
+  String get menuCard => 'Travel card';
+
+  @override
+  String get exploreLead =>
+      'Pick a service. We show what is live, what we arrange by request and what is still coming.';
+
+  @override
+  String get stateAvailable => 'Available';
+
+  @override
+  String get stateRequestOnly => 'Request only';
+
+  @override
+  String get stateComingSoon => 'Coming soon';
+
+  @override
+  String get exFlights => 'Search real routes; our team arranges the ticket.';
+
+  @override
+  String get exHotels => 'Tell us where and when; we send a quote.';
+
+  @override
+  String get exTrains => 'Ask for a train ticket; we send a quote.';
+
+  @override
+  String get exBuses => 'Ask for a bus ticket; we send a quote.';
+
+  @override
+  String get exStays => 'Villas and stays, found by our team on request.';
+
+  @override
+  String get exVisa => 'We check what is needed and quote for our help.';
+
+  @override
+  String get exTours => 'Leave your details; we call to talk through options.';
+
+  @override
+  String get exCip => 'Lounge and fast-track at Tehran Imam Khomeini.';
+
+  @override
+  String get exCargo => 'Quotes and tracking for parcels and cargo.';
+
+  @override
+  String get exInsurance => 'Ask for cover; we check what is available.';
+
+  @override
+  String get exCard => 'Not available yet.';
+
+  @override
+  String get exClub => 'Your membership, benefits and credit.';
+
+  @override
+  String get exTrack => 'Follow your requests, shipments and invoices.';
+
+  @override
+  String get exSupport => 'Contact details and help.';
+
+  @override
+  String get svUnavailableTitle => 'This service is not available yet';
+
+  @override
+  String get svUnavailableBody =>
+      'We are preparing it. For help now, contact our support team.';
+
+  @override
+  String get svVisaLead =>
+      'Tell us where you are going and who is travelling. Our team checks what is needed and sends you a quote for our help. Sending this form is not a visa application.';
+
+  @override
+  String get svToursLead =>
+      'Leave your details and our team will call you to talk through tour options. Nothing is booked on this call.';
+
+  @override
+  String get svCipLead =>
+      'Ask for CIP (lounge and fast-track) service for an arrival or departure at Tehran Imam Khomeini Airport. Our team checks availability and sends you a quote.';
+
+  @override
+  String get svInsuranceLead =>
+      'Ask for travel insurance for your trip. Our team checks which cover is available for your travellers and destination and sends you a quote. This form is not an insurance policy.';
+
+  @override
+  String get svListingLead =>
+      'We do not show live listings for this service yet. Tell us what you need and our team will find options and send you a quote.';
+
+  @override
+  String get svTourName => 'Tour call-back';
+
+  @override
+  String get svDestinationCountry =>
+      'Destination country (2-letter code, e.g. GB)';
+
+  @override
+  String get svPurpose => 'Purpose of travel';
+
+  @override
+  String get svPurposeTourism => 'Tourism';
+
+  @override
+  String get svPurposeBusiness => 'Business';
+
+  @override
+  String get svPurposeStudy => 'Study';
+
+  @override
+  String get svPurposeFamily => 'Visiting family';
+
+  @override
+  String get svPurposeTransit => 'Transit';
+
+  @override
+  String get svTravelDate => 'Planned travel date';
+
+  @override
+  String get svLinkedFlight => 'Your flight request reference';
+
+  @override
+  String get svNote => 'Anything else we should know';
+
+  @override
+  String get svDestination => 'Destination';
+
+  @override
+  String get svApproxDates => 'Approximate dates';
+
+  @override
+  String get svTravellersCount => 'Number of travellers';
+
+  @override
+  String get svBestTimeToCall => 'Best time to call';
+
+  @override
+  String get svDirection => 'Arrival or departure';
+
+  @override
+  String get svArrival => 'Arrival';
+
+  @override
+  String get svDeparture => 'Departure';
+
+  @override
+  String get svFlightNumber => 'Flight number';
+
+  @override
+  String get svDate => 'Date';
+
+  @override
+  String get svPassengersCount => 'Number of passengers';
+
+  @override
+  String get svAirportIka => 'Airport: Tehran Imam Khomeini (IKA)';
+
+  @override
+  String get svRegion => 'Cover area';
+
+  @override
+  String get svRegionUk => 'United Kingdom';
+
+  @override
+  String get svRegionSchengen => 'Schengen area';
+
+  @override
+  String get svRegionEurope => 'Europe';
+
+  @override
+  String get svRegionWorldExAmericas => 'Worldwide except the Americas';
+
+  @override
+  String get svRegionWorldwide => 'Worldwide';
+
+  @override
+  String get svStartDate => 'Start date';
+
+  @override
+  String get svEndDate => 'End date';
+
+  @override
+  String get svLocation => 'City or area';
+
+  @override
+  String get svCheckIn => 'Check-in';
+
+  @override
+  String get svCheckOut => 'Check-out';
+
+  @override
+  String get svGuests => 'Guests';
+
+  @override
+  String get svRooms => 'Rooms';
+
+  @override
+  String get svFrom => 'From';
+
+  @override
+  String get svTo => 'To';
+
+  @override
+  String get svPassengers => 'Passengers';
+
+  @override
+  String get svWhoTravelling => 'Who is travelling';
+
+  @override
+  String get svNoTravellers => 'Add the travellers in your account first.';
+
+  @override
+  String get svAddTravellers => 'Add travellers';
+
+  @override
+  String get svContactPhone => 'Phone number we will call';
+
+  @override
+  String get svNoPhone =>
+      'Add and verify a phone number in your account first.';
+
+  @override
+  String get svAckNotBooking =>
+      'I understand that sending this request does not book or buy anything.';
+
+  @override
+  String get svAckPrivacy =>
+      'I agree to Uni Travel using these details to handle my request, as described in the privacy notice.';
+
+  @override
+  String get svSubmit => 'Send request';
+
+  @override
+  String get svSentTitle => 'Request sent';
+
+  @override
+  String svSentBody(String ref) {
+    return 'Your reference is $ref. Our team will contact you on your phone.';
+  }
+
+  @override
+  String get svDetails => 'Your request';
+
+  @override
+  String get svQuote => 'Your quote';
+
+  @override
+  String get svLineServiceFee => 'Service fee';
+
+  @override
+  String get svLineThirdParty => 'Third-party fee';
+
+  @override
+  String get svLineClubDiscount => 'Customer club discount';
+
+  @override
+  String get svTotal => 'Total';
+
+  @override
+  String svValidUntil(String time) {
+    return 'Valid until $time';
+  }
+
+  @override
+  String get svAccept => 'Accept quote';
+
+  @override
+  String get svAcceptHint =>
+      'Accepting confirms you want us to go ahead. We will then send you an invoice.';
+
+  @override
+  String get svQuoteSent => 'Waiting for you';
+
+  @override
+  String get svQuoteAccepted => 'Accepted';
+
+  @override
+  String get svQuoteDeclined => 'Declined';
+
+  @override
+  String get svQuoteExpired => 'Expired';
+
+  @override
+  String get svCancel => 'Cancel request';
+
+  @override
+  String get svCancelConfirm =>
+      'Cancel this request? Nothing has been charged.';
+
+  @override
+  String get svMessages => 'Messages';
+
+  @override
+  String get svMessageHint => 'Write to our team';
+
+  @override
+  String get svNoMessages => 'No messages yet.';
+
+  @override
+  String get svTimeline => 'Progress';
+
+  @override
+  String get svStatusReceived => 'Received';
+
+  @override
+  String get svStatusInProgress => 'Being handled';
+
+  @override
+  String get svStatusQuoted => 'Quote ready';
+
+  @override
+  String get svStatusConfirmed => 'Confirmed';
+
+  @override
+  String get svStatusCompleted => 'Completed';
+
+  @override
+  String get svStatusCancelled => 'Cancelled';
+
+  @override
+  String get svStatusNoReply => 'Closed (no reply)';
+
+  @override
+  String get svStatusClosed => 'Closed';
+
+  @override
+  String get svNotFound => 'We could not find this request.';
+
+  @override
+  String get svRequired => 'Required';
+
+  @override
+  String get tkTitle => 'Track a purchase';
+
+  @override
+  String get tkMine => 'Your requests and invoices';
+
+  @override
+  String get tkAll => 'All';
+
+  @override
+  String get tkFlights => 'Flights';
+
+  @override
+  String get tkCargo => 'Cargo';
+
+  @override
+  String get tkServices => 'Services';
+
+  @override
+  String get tkInvoices => 'Invoices';
+
+  @override
+  String get tkEmpty => 'Nothing to track yet.';
+
+  @override
+  String get tkLookupTitle => 'Track with a reference';
+
+  @override
+  String get tkLookupLead =>
+      'No account at hand? Enter the reference and the phone number on the request. We send a code to that phone.';
+
+  @override
+  String get tkRef => 'Reference';
+
+  @override
+  String get tkRefHint => 'For example UT-…';
+
+  @override
+  String get tkPhone => 'Phone number on the request';
+
+  @override
+  String get tkSendCode => 'Send code';
+
+  @override
+  String get tkChecking => 'Checking your device…';
+
+  @override
+  String get tkSent =>
+      'If the reference and phone number match, we have sent a 6-digit code to that phone.';
+
+  @override
+  String get tkCode => '6-digit code';
+
+  @override
+  String get tkVerify => 'Show status';
+
+  @override
+  String tkResult(String ref) {
+    return 'Status of $ref';
+  }
+
+  @override
+  String get tkRateLimited =>
+      'Please wait a minute before asking for another code.';
+
+  @override
+  String get tkOtpInvalid => 'That code is not right.';
+
+  @override
+  String get tkOtpExpired => 'That code has expired. Ask for a new one.';
+
+  @override
+  String get tkOtpLocked => 'Too many tries. Ask for a new code later.';
+
+  @override
+  String get tkAgain => 'Track another';
+
+  @override
+  String get tkSignInLink => 'Track with a reference';
+
+  @override
+  String get clUnavailable => 'The customer club is not available yet.';
+
+  @override
+  String get clNotMember =>
+      'You are not a club member yet. Our team invites customers to the club; members receive benefits that we apply when we prepare a quote.';
+
+  @override
+  String get clLevel => 'Your level';
+
+  @override
+  String clSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String get clSuspended =>
+      'Your membership is paused. Contact support if you have questions.';
+
+  @override
+  String get clBenefits => 'Your benefits';
+
+  @override
+  String get clNoBenefits => 'No benefits right now.';
+
+  @override
+  String clPercent(int value) {
+    final intl.NumberFormat valueNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String valueString = valueNumberFormat.format(value);
+
+    return '$valueString% off';
+  }
+
+  @override
+  String clFixed(String amount) {
+    return '$amount off';
+  }
+
+  @override
+  String get clPerk => 'Perk';
+
+  @override
+  String get clCredit => 'Club credit';
+
+  @override
+  String get clApFlight => 'Flights';
+
+  @override
+  String get clApCargo => 'Cargo';
+
+  @override
+  String get clApService => 'Services';
+
+  @override
+  String get clApAny => 'Any purchase';
+
+  @override
+  String clValidUntil(String date) {
+    return 'Until $date';
+  }
+
+  @override
+  String get clCreditNote =>
+      'Club credit has no cash value. Our team uses it on an invoice when you ask.';
+
+  @override
+  String get clHow =>
+      'Benefits are applied by our team when they prepare your quote; they appear on it as their own line.';
+
+  @override
+  String get spTitle => 'Support';
+
+  @override
+  String get spLead => 'Our team answers in Persian and English.';
+
+  @override
+  String get spPhone => 'Phone';
+
+  @override
+  String get spEmail => 'Email';
+
+  @override
+  String get spHours => 'Hours';
+
+  @override
+  String get spSoon => 'Our contact details will appear here soon.';
+
+  @override
+  String get spMessage => 'Write to us on your request page';
+
+  @override
+  String get spMyRequests => 'Open my requests';
+
+  @override
+  String get svSignInFirst => 'Sign in to send a request.';
 }

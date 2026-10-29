@@ -1,0 +1,582 @@
+[
+  {
+    "slug": "airline",
+    "termFa": "ایرلاین",
+    "termEn": "Airline",
+    "explanationFa": "شرکت هواپیمایی مسئول پرواز شما",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "short-haul-flight",
+    "termFa": "شرت هال فلایت",
+    "termEn": "Short-haul Flight",
+    "explanationFa": "پروازهای کوتاه که معمولاً کمتر از ۳ ساعت طول می‌کشند",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Medium-haul Flight",
+      "Long-haul Flight"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "medium-haul-flight",
+    "termFa": "مدیوم هال فلایت",
+    "termEn": "Medium-haul Flight",
+    "explanationFa": "پروازهایی با مدت زمان بین ۳ تا ۶ ساعت",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Short-haul Flight",
+      "Long-haul Flight"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "long-haul-flight",
+    "termFa": "لانگ هال فلایت",
+    "termEn": "Long-haul Flight",
+    "explanationFa": "پروازهای طولانی و دوربرد که معمولاً بیش از ۶ ساعت زمان می‌برند",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Short-haul Flight",
+      "Medium-haul Flight"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "boarding-pass",
+    "termFa": "بردینگ پس",
+    "termEn": "Boarding Pass",
+    "explanationFa": "کارت پرواز شما که مجوز ورود به هواپیما است و اطلاعاتی مانند شماره پرواز، شماره گیت، زمان سوار شدن و شماره صندلی شما را دارد",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Check-in",
+      "Boarding Time",
+      "Gate"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "boarding-time",
+    "termFa": "بردینگ تایم",
+    "termEn": "Boarding Time",
+    "explanationFa": "زمانی که مسافران اجازه ورود به هواپیما را پیدا می‌کنند؛ حتماً به این زمان توجه کنید!",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Boarding Pass",
+      "Gate"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "on-time",
+    "termFa": "آن تایم",
+    "termEn": "On Time",
+    "explanationFa": "به موقع بودن و طبق برنامه انجام شدن پرواز",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Delay",
+      "Cancelled"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "delay",
+    "termFa": "دیلی",
+    "termEn": "Delay",
+    "explanationFa": "تأخیر در زمان انجام پرواز",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "On Time",
+      "Cancelled"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "cancelled",
+    "termFa": "کنسلد",
+    "termEn": "Cancelled",
+    "explanationFa": "لغو شدن پرواز",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Delay",
+      "On Time"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "one-way",
+    "termFa": "وان وی",
+    "termEn": "One-Way",
+    "explanationFa": "بلیط یک‌طرفه از مبدأ به مقصد",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Return",
+      "Round-Trip"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "return",
+    "termFa": "ریترن",
+    "termEn": "Return",
+    "explanationFa": "بلیط برگشت از مقصد به مبدأ",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "One-Way",
+      "Round-Trip"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "round-trip",
+    "termFa": "راند تریپ",
+    "termEn": "Round-Trip",
+    "explanationFa": "بلیط دوطرفه که شامل پرواز رفت و برگشت است",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "One-Way",
+      "Return"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "stopover-layover",
+    "termFa": "استاپ اوور / لی اوور",
+    "termEn": "Stopover / Layover",
+    "explanationFa": "توقف در یک شهر یا کشور میانی در پروازهای طولانی قبل از رسیدن به مقصد نهایی؛ استاپ اوور معمولاً بیش از ۲۴ ساعت و لی اوور کوتاه‌تر از ۲۴ ساعت است",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Airport Hotel"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "customs",
+    "termFa": "کاستمز",
+    "termEn": "Customs",
+    "explanationFa": "بخش گمرک فرودگاه که برای بازرسی بارها و اطمینان از عدم حمل وسایل غیرقانونی است",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Security",
+      "Arrival"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "security",
+    "termFa": "سکیوریتی",
+    "termEn": "Security",
+    "explanationFa": "ایستگاه بازرسی امنیتی مسافر و بار دستی",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Customs",
+      "Departure"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "departure",
+    "termFa": "دیپارچر",
+    "termEn": "Departure",
+    "explanationFa": "بخش مربوط به پروازهای خروجی و عزیمت از مبدأ",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Arrival",
+      "Terminal"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "arrival",
+    "termFa": "ارایول",
+    "termEn": "Arrival",
+    "explanationFa": "بخش مربوط به پروازهای ورودی و رسیدن به مقصد",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Departure",
+      "Customs"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "flight",
+    "termFa": "فلایت",
+    "termEn": "Flight",
+    "explanationFa": "پرواز شما که با یک شماره مشخص (مثلاً FL123) شناخته می‌شود",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Airline",
+      "Gate"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "booking",
+    "termFa": "بوکینگ",
+    "termEn": "Booking",
+    "explanationFa": "—",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Check-in"
+    ],
+    "service": "flights",
+    "status": "IN_REVIEW"
+  },
+  {
+    "slug": "check-in",
+    "termFa": "چک‌این",
+    "termEn": "Check-in",
+    "explanationFa": "فرآیند تأیید حضور شما در فرودگاه، تحویل بار و دریافت کارت پرواز (Boarding Pass)",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Boarding Pass",
+      "Checked Baggage",
+      "Gate"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "gate",
+    "termFa": "گیت",
+    "termEn": "Gate",
+    "explanationFa": "درهای خروجی مشخص در سالن‌های فرودگاه که شما را به سمت هواپیما راهنمایی می‌کنند",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Terminal",
+      "Boarding Time"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "terminal",
+    "termFa": "ترمینال",
+    "termEn": "Terminal",
+    "explanationFa": "ساختمان اصلی فرودگاه که شامل بخش‌های ورود، خروج، کانترها و گیت‌ها است",
+    "explanationEn": "",
+    "category": "FLIGHT",
+    "related": [
+      "Gate",
+      "Departure",
+      "Arrival"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "carry-on-luggage",
+    "termFa": "کری آن لاگیج",
+    "termEn": "Carry-on Luggage",
+    "explanationFa": "همان بار دستی شماست؛ کیف کوچکی که می‌توانید با خود به داخل کابین هواپیما ببرید. هر ایرلاین محدودیت ابعاد و وزن (معمولاً حداکثر ۸ کیلوگرم) برای آن دارد. مایعات در بار دستی معمولاً محدودیت حجمی دارند (حداکثر ۱۰۰ میلی‌لیتر برای هر ظرف) و باید در کیسه پلاستیکی شفاف قرار گیرند",
+    "explanationEn": "",
+    "category": "BAGGAGE",
+    "related": [
+      "Checked Baggage",
+      "Security"
+    ],
+    "service": "flights",
+    "status": "IN_REVIEW"
+  },
+  {
+    "slug": "checked-baggage",
+    "termFa": "چکد بگیج",
+    "termEn": "Checked Baggage",
+    "explanationFa": "باری که در زمان چک‌این تحویل ایرلاین می‌دهید تا وارد قسمت بار هواپیما شود. وزن و تعداد مجاز این بار بر اساس کلاس پروازی (اکونومی، بیزینس، فرست کلاس) و قوانین ایرلاین متفاوت است",
+    "explanationEn": "",
+    "category": "BAGGAGE",
+    "related": [
+      "Carry-on Luggage",
+      "Overweight Baggage",
+      "Check-in"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "fragile",
+    "termFa": "فراجایل",
+    "termEn": "Fragile",
+    "explanationFa": "برچسبی برای وسایل شکستنی یا آسیب‌پذیر که نشان می‌دهد نیاز به دقت بیشتری در حمل دارند. در صورت داشتن این نوع وسایل حتماً در زمان تحویل بار اطلاع دهید",
+    "explanationEn": "",
+    "category": "BAGGAGE",
+    "related": [
+      "Checked Baggage"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "baggage-storage",
+    "termFa": "بگیج استوریج",
+    "termEn": "Baggage Storage",
+    "explanationFa": "بخشی در فرودگاه برای امانت گذاشتن و نگهداری موقت بارها",
+    "explanationEn": "",
+    "category": "BAGGAGE",
+    "related": [
+      "Lost and Found"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "carousel",
+    "termFa": "کاروسل",
+    "termEn": "Carousel",
+    "explanationFa": "نوار نقاله‌ای که پس از رسیدن هواپیما، چمدان‌ها و بارها روی آن برای دریافت توسط مسافران به گردش درمی‌آیند. از اصطلاحات کانوِیر بلت (Conveyor Belt) و بگیج کلیم (Baggage Claim) هم می‌توانید استفاده کنید",
+    "explanationEn": "",
+    "category": "BAGGAGE",
+    "related": [
+      "Conveyor Belt",
+      "Baggage Claim",
+      "Checked Baggage"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "overweight-baggage",
+    "termFa": "اورویت بگیج",
+    "termEn": "Overweight Baggage",
+    "explanationFa": "باری که از نظر اندازه و وزن از میزان مجاز تعیین‌شده توسط ایرلاین بیشتر باشد؛ در این صورت باید هزینه اضافه‌بار (Xbag) پرداخت کنید",
+    "explanationEn": "",
+    "category": "BAGGAGE",
+    "related": [
+      "Checked Baggage",
+      "Carry-on Luggage"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "lost-and-found",
+    "termFa": "لاست اند فاند",
+    "termEn": "Lost and Found",
+    "explanationFa": "بخشی در فرودگاه برای گزارش گم شدن وسایل و یافتن اشیای گمشده. توصیه می‌شود قبل از تحویل بار، از محتویات و ظاهر چمدان خود عکس بگیرید. در صورت عدم بازگشت بار پس از یک هفته می‌توانید از ایرلاین خسارت دریافت کنید",
+    "explanationEn": "",
+    "category": "BAGGAGE",
+    "related": [
+      "Baggage Storage",
+      "Carousel"
+    ],
+    "service": "flights",
+    "status": "IN_REVIEW"
+  },
+  {
+    "slug": "economy-class",
+    "termFa": "اکونومی کلاس",
+    "termEn": "Economy Class",
+    "explanationFa": "متداول‌ترین کلاس پروازی با خدمات استاندارد و قیمت مناسب",
+    "explanationEn": "",
+    "category": "CLASS",
+    "related": [
+      "Business Class",
+      "First Class"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "business-class",
+    "termFa": "بیزینس کلاس",
+    "termEn": "Business Class",
+    "explanationFa": "کلاس تجاری با خدمات و صندلی راحت‌تر نسبت به اکونومی",
+    "explanationEn": "",
+    "category": "CLASS",
+    "related": [
+      "Economy Class",
+      "First Class"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "first-class",
+    "termFa": "فرست کلاس",
+    "termEn": "First Class",
+    "explanationFa": "لوکس‌ترین کلاس پروازی با بالاترین سطح خدمات و امکانات",
+    "explanationEn": "",
+    "category": "CLASS",
+    "related": [
+      "Economy Class",
+      "Business Class"
+    ],
+    "service": "flights",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "motel",
+    "termFa": "متل",
+    "termEn": "Motel",
+    "explanationFa": "در مسیرهای بین‌شهری قرار گرفته و معماری ساده یک یا دو طبقه دارد. متل‌ها معمولاً دارای فضای پارکینگ روبروی اتاق هستند",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "Apartment Hotel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "apartment-hotel",
+    "termFa": "هتل آپارتمان",
+    "termEn": "Apartment Hotel",
+    "explanationFa": "با واحدهای مبله و امکانات کامل، انتخابی ایده‌آل برای سفرهای خانوادگی یا اقامت‌های طولانی‌مدت محسوب می‌شود",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "Boutique Hotel",
+      "Motel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "boutique-hotel",
+    "termFa": "بوتیک هتل",
+    "termEn": "Boutique Hotel",
+    "explanationFa": "با طراحی خاص، معماری منحصربه‌فرد و خدمات ویژه شناخته می‌شود و تجربه‌ای متفاوت از اقامت ارائه می‌دهد",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "Apartment Hotel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "hostel",
+    "termFa": "هاستل",
+    "termEn": "Hostel",
+    "explanationFa": "فضایی دوستانه با اتاق‌های مشترک دارد و برای سفرهای اقتصادی مناسب است",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "Motel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "airport-hotel",
+    "termFa": "هتل فرودگاهی",
+    "termEn": "Airport Hotel",
+    "explanationFa": "در نزدیکی فرودگاه قرار دارد و با دسترسی آسان و خدمات ۲۴ ساعته، بهترین انتخاب برای توقف‌های کوتاه یا پروازهای کانکشن محسوب می‌شود",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "Stopover / Layover"
+    ],
+    "service": "hotels",
+    "status": "IN_REVIEW"
+  },
+  {
+    "slug": "1-star-hotel",
+    "termFa": "هتل یک ستاره",
+    "termEn": "1-Star Hotel",
+    "explanationFa": "امکانات پایه مانند تخت، سرویس بهداشتی و خدمات محدود دارد و مناسب اقامت‌های کوتاه‌مدت و سفرهای کم‌هزینه است",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "2-Star Hotel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "2-star-hotel",
+    "termFa": "هتل دو ستاره",
+    "termEn": "2-Star Hotel",
+    "explanationFa": "خدمات بیشتری از هتل‌های یک ستاره، با اتاق‌های ساده و امکانات رفاهی محدود ارائه می‌دهد و گزینه‌ای اقتصادی برای سفر محسوب می‌شود",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "1-Star Hotel",
+      "3-Star Hotel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "3-star-hotel",
+    "termFa": "هتل سه ستاره",
+    "termEn": "3-Star Hotel",
+    "explanationFa": "سطح نسبتاً قابل قبول خدمات با اتاق‌های راحت؛ امکاناتی مانند رستوران، اینترنت و خدمات پذیرش ۲۴ ساعته را در اختیار مسافران قرار می‌دهد",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "2-Star Hotel",
+      "4-Star Hotel"
+    ],
+    "service": "hotels",
+    "status": "IN_REVIEW"
+  },
+  {
+    "slug": "4-star-hotel",
+    "termFa": "هتل چهار ستاره",
+    "termEn": "4-Star Hotel",
+    "explanationFa": "امکانات گسترده شامل سالن ورزشی، استخر، خدمات متنوع غذایی و اتاق‌های مجهز دارد",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "3-Star Hotel",
+      "5-Star Hotel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  },
+  {
+    "slug": "5-star-hotel",
+    "termFa": "هتل پنج ستاره",
+    "termEn": "5-Star Hotel",
+    "explanationFa": "بالاترین سطح استانداردها با خدمات لوکس، امکانات کامل تفریحی و رفاهی، طراحی منحصربه‌فرد و پرسنل حرفه‌ای دارد",
+    "explanationEn": "",
+    "category": "HOTEL",
+    "related": [
+      "4-Star Hotel"
+    ],
+    "service": "hotels",
+    "status": "DRAFT"
+  }
+]

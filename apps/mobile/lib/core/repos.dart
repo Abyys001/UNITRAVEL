@@ -6,6 +6,7 @@ import '../models/json.dart';
 import '../models/my_details.dart';
 import '../models/requests.dart';
 import '../models/billing.dart';
+import '../models/services.dart';
 import '../models/shipments.dart';
 import '../models/search.dart';
 import 'api_client.dart';
@@ -236,4 +237,21 @@ final invoicePaymentProvider = FutureProvider.autoDispose.family<InvoicePayment,
 final invoiceProvider = FutureProvider.autoDispose.family<Cached<Invoice>, String>((ref, number) {
   final api = ref.watch(apiClientProvider);
   return readThrough(ref, 'billing.$number', () => api.get('/v1/billing/invoices/$number'), (raw) => Invoice.fromJson(raw as Json));
+});
+
+// ---- services, tracking, club (ADR-0015, ADR-0016) ----
+
+final serviceRequestProvider = FutureProvider.autoDispose.family<Cached<ServiceDetail>, String>((ref, id) {
+  final api = ref.watch(apiClientProvider);
+  return readThrough(ref, 'service.$id', () => api.get('/v1/service-requests/$id'), (raw) => ServiceDetail.fromJson(raw as Json));
+});
+
+final trackProvider = FutureProvider.autoDispose<Cached<List<TrackItem>>>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return readThrough(ref, 'track', () => api.get('/v1/track'), (raw) => (raw as List).whereType<Json>().map(TrackItem.fromJson).toList());
+});
+
+final clubProvider = FutureProvider.autoDispose<ClubView>((ref) async {
+  final raw = await ref.watch(apiClientProvider).get('/v1/me/club');
+  return ClubView.fromJson(raw as Json);
 });

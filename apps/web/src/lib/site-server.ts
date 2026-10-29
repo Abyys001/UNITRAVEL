@@ -17,3 +17,13 @@ export async function contentFlags(): Promise<ContentFlags> {
     return {}
   }
 }
+
+/** Menu flags for server pages; empty when the API cannot be reached, so only always-on links are offered. */
+export async function siteMenu(): Promise<Partial<Record<string, boolean>>> {
+  try {
+    const res = await fetch(`${API}/v1/site`, { next: { revalidate: 60 }, headers: { accept: "application/json" } })
+    return res.ok ? ((await res.json()) as SiteConfig).menu : {}
+  } catch {
+    return {}
+  }
+}

@@ -1,0 +1,8 @@
+import { EntryPage, entryMetadata } from "@/components/cms-article"
+
+type Props = { params: Promise<{ locale: string; slug: string }> }
+
+export const generateMetadata = ({ params }: Props) => entryMetadata("PAGE", params)
+export default function Page({ params }: Props) {
+  return <EntryPage kind="PAGE" params={params} />
+}

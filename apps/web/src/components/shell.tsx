@@ -1,6 +1,6 @@
 "use client"
 
-import { Armchair, BedDouble, Bus, ChevronDown, ClipboardList, Globe, House, Inbox, LifeBuoy, Menu, Package, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
+import { Armchair, BedDouble, BookA, BookOpen, Bus, ChevronDown, ClipboardList, CreditCard, Globe, House, Inbox, LifeBuoy, Menu, Package, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useRef, useState } from "react"
@@ -8,6 +8,9 @@ import { Suspense, useEffect, useRef, useState } from "react"
 import { Ribbon } from "@unitravel/ui/brand/art"
 import { Logo as BrandLogo } from "@unitravel/ui/brand/logo"
 
+import { useQuery } from "@tanstack/react-query"
+
+import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 import { useSite } from "@/lib/site"
@@ -70,6 +73,7 @@ export function Header() {
     ...(on("cip") ? [{ href: href("/cip"), label: t("nav.cip"), icon: Armchair }] : []),
     ...(on("cargo") ? [{ href: href("/cargo"), label: t("nav.cargo"), icon: Package }, { href: href("/shipments"), label: t("nav.shipments"), icon: Truck }] : []),
     ...(on("insurance") ? [{ href: href("/insurance"), label: t("nav.insurance"), icon: ShieldCheck }] : []),
+    ...(on("card") ? [{ href: href("/card"), label: t("nav.card"), icon: CreditCard }] : []),
   ]
   const help: NavLink[] = [
     { href: href("/track"), label: t("nav.track"), icon: SearchCheck },
@@ -77,19 +81,21 @@ export function Header() {
     ...(me ? [{ href: href("/billing"), label: t("nav.billing"), icon: ReceiptText }] : []),
     ...(on("club") ? [{ href: href("/club"), label: t("nav.club"), icon: Star }] : []),
     { href: href("/support"), label: t("nav.support"), icon: LifeBuoy },
+    { href: href("/blog"), label: t("nav.blog"), icon: BookOpen },
+    { href: href("/glossary"), label: t("nav.glossary"), icon: BookA },
   ]
   const links: NavLink[] = [...book, { href: href("/track"), label: t("nav.track"), icon: SearchCheck }, { href: href("/requests"), label: t("nav.requests"), icon: ClipboardList }]
   // Over the home hero the bar starts transparent; everywhere else (and once scrolled) it is solid navy glass.
   const solid = !home || scrolled || open
   return (
     <>
-      <header className={`${home ? "fixed inset-x-0" : "sticky"} top-0 z-40 text-white transition-[background-color,box-shadow] duration-300 ${solid ? "bg-navy-950/92 shadow-[0_10px_30px_-18px_rgb(0_0_0/0.6)] backdrop-blur-md" : "bg-transparent"}`}>
+      <header className={`${home ? "fixed inset-x-0" : "sticky"} top-0 z-40 text-white transition-[background-color,box-shadow] duration-300 ${solid ? "liquid-dark !rounded-none !border-x-0 !border-t-0 shadow-[0_10px_30px_-18px_rgb(0_0_0/0.6)]" : "bg-transparent"}`}>
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-2 px-4 min-[400px]:gap-4 md:px-6">
           <Link href={href("/")} aria-label="Uni Travel home" className="shrink-0 rounded-lg">
             <BrandLogo variant="mark" tone="onDark" size={38} className="min-[400px]:hidden" />
             <Logo className="hidden min-[400px]:inline-flex" />
           </Link>
-          <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1 text-sm font-semibold lg:flex" aria-label="Main">
+          <nav className="glass hidden items-center gap-1 rounded-full p-1 text-sm font-semibold lg:flex" aria-label="Main">
             {book.map((l) => <NavPill key={l.href} l={l} active={path === l.href} />)}
             {services.length > 0 && <ServicesMenu label={t("nav.services")} items={services} path={path} />}
             {links.slice(book.length).map((l) => <NavPill key={l.href} l={l} active={path === l.href} />)}
@@ -109,7 +115,7 @@ export function Header() {
           </div>
         </div>
         {open && (
-          <nav ref={menuRef} className="max-h-[calc(100dvh-72px)] overflow-y-auto border-t border-white/10 px-4 pb-4 pt-2 lg:hidden" aria-label="Mobile">
+          <nav ref={menuRef} className="max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Mobile">
             {([[t("nav.groupBook"), book], [t("nav.groupServices"), services], [t("nav.groupHelp"), [...help, ...(me ? [{ href: href("/inbox"), label: t("nav.inbox"), icon: Inbox }, { href: href("/account"), label: t("nav.account"), icon: UserRound }] : [])]]] as [string, NavLink[]][]).filter(([, items]) => items.length > 0).map(([title, items]) => (
               <div key={title} className="pt-2">
                 <p className="px-2 pb-1 pt-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-300">{title}</p>
@@ -165,12 +171,24 @@ function ServicesMenu({ label, items, path }: { label: string; items: NavLink[];
   )
 }
 
+/** Published LEGAL and PAGE entries for the footer; drafts never reach this endpoint, so a link exists only for live text. */
+function useCmsLinks(kind: "LEGAL" | "PAGE") {
+  const { locale } = useI18n()
+  const q = useQuery({
+    queryKey: ["cms-links", kind, locale], staleTime: 5 * 60_000,
+    queryFn: () => api<{ items: { slug: string; title: string }[] }>(`/v1/cms/entries?kind=${kind}&locale=${locale}&pageSize=20`),
+  })
+  return q.data?.items ?? []
+}
+
 export function Footer() {
   const { t, href } = useI18n()
   const { on } = useSite()
+  const legalEntries = useCmsLinks("LEGAL")
+  const infoEntries = useCmsLinks("PAGE")
   const explore: [string, string][] = [
     [href("/"), t("nav.flights")],
-    ...(([["hotels", "/hotels"], ["trains", "/trains"], ["buses", "/buses"], ["stays", "/stays"], ["visa", "/visa"], ["tours", "/tours"], ["cip", "/cip"], ["insurance", "/insurance"]] as const).filter(([k]) => on(k)).map(([k, p]) => [href(p), t(`nav.${k}`)] as [string, string])),
+    ...(([["hotels", "/hotels"], ["trains", "/trains"], ["buses", "/buses"], ["stays", "/stays"], ["visa", "/visa"], ["tours", "/tours"], ["cip", "/cip"], ["insurance", "/insurance"], ["card", "/card"]] as const).filter(([k]) => on(k)).map(([k, p]) => [href(p), t(`nav.${k}`)] as [string, string])),
     ...(on("cargo") ? [[href("/cargo"), t("nav.cargo")], [href("/shipments"), t("nav.shipments")]] as [string, string][] : []),
   ]
   return (
@@ -184,8 +202,8 @@ export function Footer() {
           <p className="mt-5 max-w-sm border-s-2 border-orange ps-3 text-xs leading-relaxed text-white/65">{t("footer.notAtol")}</p>
         </div>
         <FooterCol title={t("footer.explore")} links={explore} />
-        <FooterCol title={t("footer.help")} links={[[href("/requests"), t("nav.requests")], [href("/billing"), t("nav.billing")], [href("/inbox"), t("nav.inbox")], [href("/track"), t("nav.track")], ...(on("club") ? [[href("/club"), t("nav.club")] as [string, string]] : []), [href("/support"), t("nav.support")], [href("/faq"), t("nav.faq")], [href("/travel-rules"), t("nav.travelRules")], [href("/flights/guide"), t("nav.flightGuide")]]} />
-        <FooterCol title={t("footer.legal")} links={[[href("/terms"), t("footer.terms")], [href("/privacy"), t("footer.privacy")], [href("/credits"), t("footer.credits")]]} />
+        <FooterCol title={t("footer.help")} links={[[href("/requests"), t("nav.requests")], [href("/billing"), t("nav.billing")], [href("/inbox"), t("nav.inbox")], [href("/track"), t("nav.track")], ...(on("club") ? [[href("/club"), t("nav.club")] as [string, string]] : []), [href("/support"), t("nav.support")], [href("/faq"), t("nav.faq")], [href("/travel-rules"), t("nav.travelRules")], [href("/flights/guide"), t("nav.flightGuide")], [href("/blog"), t("nav.blog")], [href("/destinations"), t("nav.destinations")], [href("/glossary"), t("nav.glossary")], ...infoEntries.map((e) => [href(`/info/${e.slug}`), e.title] as [string, string])]} />
+        <FooterCol title={t("footer.legal")} links={[[href("/terms"), t("footer.terms")], [href("/privacy"), t("footer.privacy")], ...legalEntries.map((e) => [href(`/legal/${e.slug}`), e.title] as [string, string]), [href("/credits"), t("footer.credits")]]} />
       </div>
       <div className="relative border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-2 px-4 py-5 text-xs text-white/60 md:flex-row md:items-center md:px-6">

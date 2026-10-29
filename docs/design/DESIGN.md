@@ -32,6 +32,12 @@ inner-page header band, footer, sign-in media panel, console rail. Content (form
 sits on white cards with hairline borders and a soft navy shadow. No gradients on content, no blobs.
 **Update 2026-10-24:** dark mode exists on the console only (Admin and Developer panels, see "Control deck"). Customer web
 and mobile stay light: their brand surfaces are already dark and the booking flow is a trust moment tuned on white.
+**Update 2026-10-29 (owner request, liquid glass):** customer web and Flutter now use liquid glass on content too: header,
+menus, cards, popovers, dialogs, sheets, mobile bottom bar. Tokens in `tokens.json` `glass` (blur, saturation, fill, edge);
+web utilities `liquid`, `liquid-dark`, `glass`, scoped to the customer site (`html:not([data-surface])`, console unchanged);
+Flutter `GlassPanel` / `GlassBackdrop` (`widgets.dart`). Text stays on >= 0.6 white or >= 0.78 navy panes (AA). Fallbacks:
+no backdrop-filter, `prefers-reduced-transparency`, forced colours (web) and high contrast (Flutter) give opaque panes;
+blur drops to 14 px under 640 px. Form fields and booking totals stay on solid fields.
 
 ## Tokens pipeline (Phase F, 2026-10-24)
 One source: `packages/ui/tokens/tokens.json` (palette, status tints, radii, shadows, light and dark semantic variables, Flutter night

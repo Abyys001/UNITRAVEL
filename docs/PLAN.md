@@ -47,6 +47,11 @@ Spec and owner decisions: `docs/CONTENT-MENU-LIVE-DATA.md`.
 - [x] Phase H — FAQ, travel rules, flight-buying guide (STAGE-15)
 - [x] Phase I — menu, service requests, tracking, support, customer club, vertical ports (STAGE-16; visual re-baseline and Flutter analyze still to run, see the record)
 
+## Content system (29 Oct 2026) — status
+Spec: owner brief of 29 Oct 2026 + `UniTravel-Content.docx`; ADR-0017. Owner instruction: liquid glass and responsive on web and Flutter.
+- [x] Liquid glass tokens, web utilities, Flutter `GlassPanel` (DESIGN.md update 2026-10-29); web overflow check at 360/768/1280 clean
+- [x] Phase J — CMS, blog, guides, glossary, SEO, content import (ADR-0017, STAGE-17); real-API web/console e2e and re-baselining still open
+
 ## Progress log
 (append one line per completed unit of work)
 - 2026-10-22 contracts (Zod schemas, permissions, errors, defaults) · domain (state machines, formats, payments; 17 tests incl. properties) · engine (plan/filter/join/validate/score/diversify; worked example + 5 property tests green)

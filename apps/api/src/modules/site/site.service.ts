@@ -26,7 +26,7 @@ export class SiteService {
       flights: true, track: true, support: true,
       cargo: f("cargo.enabled"), club: f("loyalty.enabled"),
       hotels: f("hotels.enabled"), stays: f("stays.enabled"), trains: f("trains.enabled"), buses: f("buses.enabled"),
-      visa: f("services.visa.enabled"), tours: f("services.tours.enabled"), cip: f("services.cip.enabled"), insurance: f("services.insurance.enabled"),
+      visa: f("services.visa.enabled"), tours: f("services.tours.enabled"), cip: f("services.cip.enabled"), insurance: f("services.insurance.enabled"), card: f("services.card.enabled"),
     }
     const value: SiteConfig = {
       menu: Object.fromEntries(MENU_KEYS.map((k) => [k, on[k]])) as Record<MenuKey, boolean>,

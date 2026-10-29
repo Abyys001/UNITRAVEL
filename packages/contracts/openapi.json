@@ -652,6 +652,9 @@
                           "loyalty.read",
                           "loyalty.manage",
                           "loyalty.benefit.approve",
+                          "cms.read",
+                          "cms.write",
+                          "cms.publish",
                           "customer.read.pii",
                           "customer.read.documents",
                           "identity.verify",
@@ -7733,6 +7736,7 @@
                           "cip",
                           "cargo",
                           "insurance",
+                          "card",
                           "club",
                           "track",
                           "support"
@@ -7752,6 +7756,7 @@
                         "cip",
                         "cargo",
                         "insurance",
+                        "card",
                         "club",
                         "track",
                         "support"
@@ -10061,6 +10066,2456 @@
         },
         "tags": [
           "admin-club"
+        ]
+      }
+    },
+    "/v1/cms/entries": {
+      "get": {
+        "operationId": "PublicCmsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "ARTICLE",
+                              "GUIDE",
+                              "LEGAL",
+                              "PAGE"
+                            ]
+                          },
+                          "locale": {
+                            "type": "string",
+                            "enum": [
+                              "en",
+                              "fa"
+                            ]
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "featuredImage": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "imageAlt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "publishedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "locale",
+                          "slug",
+                          "title",
+                          "summary",
+                          "category",
+                          "tags",
+                          "featuredImage",
+                          "imageAlt",
+                          "publishedAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "page",
+                    "pageSize"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "content"
+        ]
+      }
+    },
+    "/v1/cms/entries/{kind}/{slug}": {
+      "get": {
+        "operationId": "PublicCmsController_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "ARTICLE",
+                        "GUIDE",
+                        "LEGAL",
+                        "PAGE"
+                      ]
+                    },
+                    "locale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fa"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "featuredImage": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "imageAlt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "publishedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "bodyMd": {
+                      "type": "string"
+                    },
+                    "seoTitle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "seoDescription": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "relatedServices": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "flights",
+                          "hotels",
+                          "trains",
+                          "buses",
+                          "stays",
+                          "visa",
+                          "tours",
+                          "cip",
+                          "cargo",
+                          "insurance",
+                          "track",
+                          "support",
+                          "club"
+                        ]
+                      }
+                    },
+                    "alternateLocale": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "en",
+                            "fa"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "locale",
+                    "slug",
+                    "title",
+                    "summary",
+                    "category",
+                    "tags",
+                    "featuredImage",
+                    "imageAlt",
+                    "publishedAt",
+                    "updatedAt",
+                    "bodyMd",
+                    "seoTitle",
+                    "seoDescription",
+                    "relatedServices",
+                    "alternateLocale"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "content"
+        ]
+      }
+    },
+    "/v1/cms/resolve/{kind}/{slug}": {
+      "get": {
+        "operationId": "PublicCmsController_resolve",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "redirectTo": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "redirectTo"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "content"
+        ]
+      }
+    },
+    "/v1/cms/glossary": {
+      "get": {
+        "operationId": "PublicCmsController_glossary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "termFa": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "termEn": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "explanationFa": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1500
+                      },
+                      "explanationEn": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 1500
+                      },
+                      "category": {
+                        "type": "string",
+                        "enum": [
+                          "FLIGHT",
+                          "BAGGAGE",
+                          "CLASS",
+                          "HOTEL",
+                          "ROOM",
+                          "MEAL"
+                        ]
+                      },
+                      "related": {
+                        "default": [],
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 120
+                        }
+                      },
+                      "service": {
+                        "type": "string",
+                        "enum": [
+                          "flights",
+                          "hotels",
+                          "trains",
+                          "buses",
+                          "stays",
+                          "visa",
+                          "tours",
+                          "cip",
+                          "cargo",
+                          "insurance",
+                          "track",
+                          "support",
+                          "club"
+                        ]
+                      },
+                      "slug": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "DRAFT",
+                          "IN_REVIEW",
+                          "PUBLISHED",
+                          "ARCHIVED"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "termFa",
+                      "termEn",
+                      "explanationFa",
+                      "explanationEn",
+                      "category",
+                      "related",
+                      "slug",
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "content"
+        ]
+      }
+    },
+    "/v1/cms/sitemap": {
+      "get": {
+        "operationId": "PublicCmsController_sitemap",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "ARTICLE",
+                              "GUIDE",
+                              "LEGAL",
+                              "PAGE"
+                            ]
+                          },
+                          "locale": {
+                            "type": "string",
+                            "enum": [
+                              "en",
+                              "fa"
+                            ]
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "locale",
+                          "slug",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "entries"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "content"
+        ]
+      }
+    },
+    "/v1/admin/cms/entries": {
+      "get": {
+        "operationId": "AdminCmsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "ARTICLE",
+                              "GUIDE",
+                              "LEGAL",
+                              "PAGE"
+                            ]
+                          },
+                          "locale": {
+                            "type": "string",
+                            "enum": [
+                              "en",
+                              "fa"
+                            ]
+                          },
+                          "slug": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 80,
+                            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 2,
+                            "maxLength": 160
+                          },
+                          "summary": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 400
+                          },
+                          "bodyMd": {
+                            "type": "string",
+                            "maxLength": 120000
+                          },
+                          "category": {
+                            "type": "string",
+                            "maxLength": 40
+                          },
+                          "tags": {
+                            "default": [],
+                            "maxItems": 12,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 30
+                            }
+                          },
+                          "featuredImage": {
+                            "type": "string",
+                            "maxLength": 300
+                          },
+                          "imageAlt": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "seoTitle": {
+                            "type": "string",
+                            "maxLength": 70
+                          },
+                          "seoDescription": {
+                            "type": "string",
+                            "maxLength": 170
+                          },
+                          "relatedServices": {
+                            "default": [],
+                            "maxItems": 6,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "flights",
+                                "hotels",
+                                "trains",
+                                "buses",
+                                "stays",
+                                "visa",
+                                "tours",
+                                "cip",
+                                "cargo",
+                                "insurance",
+                                "track",
+                                "support",
+                                "club"
+                              ]
+                            }
+                          },
+                          "claimsToVerify": {
+                            "default": [],
+                            "maxItems": 20,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 300
+                            }
+                          },
+                          "publishAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "DRAFT",
+                              "IN_REVIEW",
+                              "PUBLISHED",
+                              "ARCHIVED"
+                            ]
+                          },
+                          "version": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "authorName": {
+                            "type": "string"
+                          },
+                          "publishedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "locale",
+                          "slug",
+                          "title",
+                          "summary",
+                          "bodyMd",
+                          "tags",
+                          "relatedServices",
+                          "claimsToVerify",
+                          "id",
+                          "status",
+                          "version",
+                          "authorName",
+                          "publishedAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "page",
+                    "pageSize"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCmsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "ARTICLE",
+                      "GUIDE",
+                      "LEGAL",
+                      "PAGE"
+                    ]
+                  },
+                  "locale": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "fa"
+                    ]
+                  },
+                  "slug": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 160
+                  },
+                  "summary": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 400
+                  },
+                  "bodyMd": {
+                    "type": "string",
+                    "maxLength": 120000
+                  },
+                  "category": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "tags": {
+                    "default": [],
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 30
+                    }
+                  },
+                  "featuredImage": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "imageAlt": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "seoTitle": {
+                    "type": "string",
+                    "maxLength": 70
+                  },
+                  "seoDescription": {
+                    "type": "string",
+                    "maxLength": 170
+                  },
+                  "relatedServices": {
+                    "default": [],
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "flights",
+                        "hotels",
+                        "trains",
+                        "buses",
+                        "stays",
+                        "visa",
+                        "tours",
+                        "cip",
+                        "cargo",
+                        "insurance",
+                        "track",
+                        "support",
+                        "club"
+                      ]
+                    }
+                  },
+                  "claimsToVerify": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300
+                    }
+                  },
+                  "publishAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "locale",
+                  "slug",
+                  "title",
+                  "bodyMd"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "ARTICLE",
+                        "GUIDE",
+                        "LEGAL",
+                        "PAGE"
+                      ]
+                    },
+                    "locale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fa"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 160
+                    },
+                    "summary": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 400
+                    },
+                    "bodyMd": {
+                      "type": "string",
+                      "maxLength": 120000
+                    },
+                    "category": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "tags": {
+                      "default": [],
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      }
+                    },
+                    "featuredImage": {
+                      "type": "string",
+                      "maxLength": 300
+                    },
+                    "imageAlt": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "seoTitle": {
+                      "type": "string",
+                      "maxLength": 70
+                    },
+                    "seoDescription": {
+                      "type": "string",
+                      "maxLength": 170
+                    },
+                    "relatedServices": {
+                      "default": [],
+                      "maxItems": 6,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "flights",
+                          "hotels",
+                          "trains",
+                          "buses",
+                          "stays",
+                          "visa",
+                          "tours",
+                          "cip",
+                          "cargo",
+                          "insurance",
+                          "track",
+                          "support",
+                          "club"
+                        ]
+                      }
+                    },
+                    "claimsToVerify": {
+                      "default": [],
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300
+                      }
+                    },
+                    "publishAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "IN_REVIEW",
+                        "PUBLISHED",
+                        "ARCHIVED"
+                      ]
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "authorName": {
+                      "type": "string"
+                    },
+                    "publishedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "locale",
+                    "slug",
+                    "title",
+                    "summary",
+                    "bodyMd",
+                    "tags",
+                    "relatedServices",
+                    "claimsToVerify",
+                    "id",
+                    "status",
+                    "version",
+                    "authorName",
+                    "publishedAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      }
+    },
+    "/v1/admin/cms/entries/{id}": {
+      "get": {
+        "operationId": "AdminCmsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "ARTICLE",
+                        "GUIDE",
+                        "LEGAL",
+                        "PAGE"
+                      ]
+                    },
+                    "locale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fa"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 160
+                    },
+                    "summary": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 400
+                    },
+                    "bodyMd": {
+                      "type": "string",
+                      "maxLength": 120000
+                    },
+                    "category": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "tags": {
+                      "default": [],
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      }
+                    },
+                    "featuredImage": {
+                      "type": "string",
+                      "maxLength": 300
+                    },
+                    "imageAlt": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "seoTitle": {
+                      "type": "string",
+                      "maxLength": 70
+                    },
+                    "seoDescription": {
+                      "type": "string",
+                      "maxLength": 170
+                    },
+                    "relatedServices": {
+                      "default": [],
+                      "maxItems": 6,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "flights",
+                          "hotels",
+                          "trains",
+                          "buses",
+                          "stays",
+                          "visa",
+                          "tours",
+                          "cip",
+                          "cargo",
+                          "insurance",
+                          "track",
+                          "support",
+                          "club"
+                        ]
+                      }
+                    },
+                    "claimsToVerify": {
+                      "default": [],
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300
+                      }
+                    },
+                    "publishAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "IN_REVIEW",
+                        "PUBLISHED",
+                        "ARCHIVED"
+                      ]
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "authorName": {
+                      "type": "string"
+                    },
+                    "publishedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "locale",
+                    "slug",
+                    "title",
+                    "summary",
+                    "bodyMd",
+                    "tags",
+                    "relatedServices",
+                    "claimsToVerify",
+                    "id",
+                    "status",
+                    "version",
+                    "authorName",
+                    "publishedAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminCmsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "ARTICLE",
+                      "GUIDE",
+                      "LEGAL",
+                      "PAGE"
+                    ]
+                  },
+                  "locale": {
+                    "type": "string",
+                    "enum": [
+                      "en",
+                      "fa"
+                    ]
+                  },
+                  "slug": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80,
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 160
+                  },
+                  "summary": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 400
+                  },
+                  "bodyMd": {
+                    "type": "string",
+                    "maxLength": 120000
+                  },
+                  "category": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "tags": {
+                    "default": [],
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 30
+                    }
+                  },
+                  "featuredImage": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "imageAlt": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "seoTitle": {
+                    "type": "string",
+                    "maxLength": 70
+                  },
+                  "seoDescription": {
+                    "type": "string",
+                    "maxLength": 170
+                  },
+                  "relatedServices": {
+                    "default": [],
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "flights",
+                        "hotels",
+                        "trains",
+                        "buses",
+                        "stays",
+                        "visa",
+                        "tours",
+                        "cip",
+                        "cargo",
+                        "insurance",
+                        "track",
+                        "support",
+                        "club"
+                      ]
+                    }
+                  },
+                  "claimsToVerify": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300
+                    }
+                  },
+                  "publishAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "version"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "ARTICLE",
+                        "GUIDE",
+                        "LEGAL",
+                        "PAGE"
+                      ]
+                    },
+                    "locale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fa"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 160
+                    },
+                    "summary": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 400
+                    },
+                    "bodyMd": {
+                      "type": "string",
+                      "maxLength": 120000
+                    },
+                    "category": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "tags": {
+                      "default": [],
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      }
+                    },
+                    "featuredImage": {
+                      "type": "string",
+                      "maxLength": 300
+                    },
+                    "imageAlt": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "seoTitle": {
+                      "type": "string",
+                      "maxLength": 70
+                    },
+                    "seoDescription": {
+                      "type": "string",
+                      "maxLength": 170
+                    },
+                    "relatedServices": {
+                      "default": [],
+                      "maxItems": 6,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "flights",
+                          "hotels",
+                          "trains",
+                          "buses",
+                          "stays",
+                          "visa",
+                          "tours",
+                          "cip",
+                          "cargo",
+                          "insurance",
+                          "track",
+                          "support",
+                          "club"
+                        ]
+                      }
+                    },
+                    "claimsToVerify": {
+                      "default": [],
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300
+                      }
+                    },
+                    "publishAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "IN_REVIEW",
+                        "PUBLISHED",
+                        "ARCHIVED"
+                      ]
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "authorName": {
+                      "type": "string"
+                    },
+                    "publishedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "locale",
+                    "slug",
+                    "title",
+                    "summary",
+                    "bodyMd",
+                    "tags",
+                    "relatedServices",
+                    "claimsToVerify",
+                    "id",
+                    "status",
+                    "version",
+                    "authorName",
+                    "publishedAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      }
+    },
+    "/v1/admin/cms/entries/{id}/transition": {
+      "post": {
+        "operationId": "AdminCmsController_transition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "enum": [
+                      "DRAFT",
+                      "IN_REVIEW",
+                      "PUBLISHED",
+                      "ARCHIVED"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "to",
+                  "version"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "ARTICLE",
+                        "GUIDE",
+                        "LEGAL",
+                        "PAGE"
+                      ]
+                    },
+                    "locale": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "fa"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 80,
+                      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 160
+                    },
+                    "summary": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 400
+                    },
+                    "bodyMd": {
+                      "type": "string",
+                      "maxLength": 120000
+                    },
+                    "category": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "tags": {
+                      "default": [],
+                      "maxItems": 12,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 30
+                      }
+                    },
+                    "featuredImage": {
+                      "type": "string",
+                      "maxLength": 300
+                    },
+                    "imageAlt": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "seoTitle": {
+                      "type": "string",
+                      "maxLength": 70
+                    },
+                    "seoDescription": {
+                      "type": "string",
+                      "maxLength": 170
+                    },
+                    "relatedServices": {
+                      "default": [],
+                      "maxItems": 6,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "flights",
+                          "hotels",
+                          "trains",
+                          "buses",
+                          "stays",
+                          "visa",
+                          "tours",
+                          "cip",
+                          "cargo",
+                          "insurance",
+                          "track",
+                          "support",
+                          "club"
+                        ]
+                      }
+                    },
+                    "claimsToVerify": {
+                      "default": [],
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300
+                      }
+                    },
+                    "publishAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "IN_REVIEW",
+                        "PUBLISHED",
+                        "ARCHIVED"
+                      ]
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "authorName": {
+                      "type": "string"
+                    },
+                    "publishedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "locale",
+                    "slug",
+                    "title",
+                    "summary",
+                    "bodyMd",
+                    "tags",
+                    "relatedServices",
+                    "claimsToVerify",
+                    "id",
+                    "status",
+                    "version",
+                    "authorName",
+                    "publishedAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      }
+    },
+    "/v1/admin/cms/entries/{id}/revisions": {
+      "get": {
+        "operationId": "AdminCmsController_revisions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "version": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "DRAFT",
+                          "IN_REVIEW",
+                          "PUBLISHED",
+                          "ARCHIVED"
+                        ]
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "changedBy": {
+                        "type": "string"
+                      },
+                      "note": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "status",
+                      "title",
+                      "changedBy",
+                      "note",
+                      "createdAt"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      }
+    },
+    "/v1/admin/cms/glossary": {
+      "get": {
+        "operationId": "AdminCmsController_glossary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "termFa": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "termEn": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      "explanationFa": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1500
+                      },
+                      "explanationEn": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 1500
+                      },
+                      "category": {
+                        "type": "string",
+                        "enum": [
+                          "FLIGHT",
+                          "BAGGAGE",
+                          "CLASS",
+                          "HOTEL",
+                          "ROOM",
+                          "MEAL"
+                        ]
+                      },
+                      "related": {
+                        "default": [],
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 120
+                        }
+                      },
+                      "service": {
+                        "type": "string",
+                        "enum": [
+                          "flights",
+                          "hotels",
+                          "trains",
+                          "buses",
+                          "stays",
+                          "visa",
+                          "tours",
+                          "cip",
+                          "cargo",
+                          "insurance",
+                          "track",
+                          "support",
+                          "club"
+                        ]
+                      },
+                      "slug": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "DRAFT",
+                          "IN_REVIEW",
+                          "PUBLISHED",
+                          "ARCHIVED"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "termFa",
+                      "termEn",
+                      "explanationFa",
+                      "explanationEn",
+                      "category",
+                      "related",
+                      "slug",
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCmsController_createTerm",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "termFa": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "termEn": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "explanationFa": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1500
+                  },
+                  "explanationEn": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 1500
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "FLIGHT",
+                      "BAGGAGE",
+                      "CLASS",
+                      "HOTEL",
+                      "ROOM",
+                      "MEAL"
+                    ]
+                  },
+                  "related": {
+                    "default": [],
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 120
+                    }
+                  },
+                  "service": {
+                    "type": "string",
+                    "enum": [
+                      "flights",
+                      "hotels",
+                      "trains",
+                      "buses",
+                      "stays",
+                      "visa",
+                      "tours",
+                      "cip",
+                      "cargo",
+                      "insurance",
+                      "track",
+                      "support",
+                      "club"
+                    ]
+                  }
+                },
+                "required": [
+                  "termFa",
+                  "termEn",
+                  "explanationFa",
+                  "category"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "termFa": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "termEn": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "explanationFa": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1500
+                    },
+                    "explanationEn": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 1500
+                    },
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "FLIGHT",
+                        "BAGGAGE",
+                        "CLASS",
+                        "HOTEL",
+                        "ROOM",
+                        "MEAL"
+                      ]
+                    },
+                    "related": {
+                      "default": [],
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 120
+                      }
+                    },
+                    "service": {
+                      "type": "string",
+                      "enum": [
+                        "flights",
+                        "hotels",
+                        "trains",
+                        "buses",
+                        "stays",
+                        "visa",
+                        "tours",
+                        "cip",
+                        "cargo",
+                        "insurance",
+                        "track",
+                        "support",
+                        "club"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "IN_REVIEW",
+                        "PUBLISHED",
+                        "ARCHIVED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "termFa",
+                    "termEn",
+                    "explanationFa",
+                    "explanationEn",
+                    "category",
+                    "related",
+                    "slug",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      }
+    },
+    "/v1/admin/cms/glossary/{slug}": {
+      "patch": {
+        "operationId": "AdminCmsController_updateTerm",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "termFa": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "termEn": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "explanationFa": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1500
+                  },
+                  "explanationEn": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 1500
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "FLIGHT",
+                      "BAGGAGE",
+                      "CLASS",
+                      "HOTEL",
+                      "ROOM",
+                      "MEAL"
+                    ]
+                  },
+                  "related": {
+                    "default": [],
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 120
+                    }
+                  },
+                  "service": {
+                    "type": "string",
+                    "enum": [
+                      "flights",
+                      "hotels",
+                      "trains",
+                      "buses",
+                      "stays",
+                      "visa",
+                      "tours",
+                      "cip",
+                      "cargo",
+                      "insurance",
+                      "track",
+                      "support",
+                      "club"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "termFa": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "termEn": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "explanationFa": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1500
+                    },
+                    "explanationEn": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 1500
+                    },
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "FLIGHT",
+                        "BAGGAGE",
+                        "CLASS",
+                        "HOTEL",
+                        "ROOM",
+                        "MEAL"
+                      ]
+                    },
+                    "related": {
+                      "default": [],
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 120
+                      }
+                    },
+                    "service": {
+                      "type": "string",
+                      "enum": [
+                        "flights",
+                        "hotels",
+                        "trains",
+                        "buses",
+                        "stays",
+                        "visa",
+                        "tours",
+                        "cip",
+                        "cargo",
+                        "insurance",
+                        "track",
+                        "support",
+                        "club"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "IN_REVIEW",
+                        "PUBLISHED",
+                        "ARCHIVED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "termFa",
+                    "termEn",
+                    "explanationFa",
+                    "explanationEn",
+                    "category",
+                    "related",
+                    "slug",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
+        ]
+      }
+    },
+    "/v1/admin/cms/glossary/{slug}/transition": {
+      "post": {
+        "operationId": "AdminCmsController_transitionTerm",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "enum": [
+                      "DRAFT",
+                      "IN_REVIEW",
+                      "PUBLISHED",
+                      "ARCHIVED"
+                    ]
+                  }
+                },
+                "required": [
+                  "to"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "termFa": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "termEn": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "explanationFa": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1500
+                    },
+                    "explanationEn": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 1500
+                    },
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "FLIGHT",
+                        "BAGGAGE",
+                        "CLASS",
+                        "HOTEL",
+                        "ROOM",
+                        "MEAL"
+                      ]
+                    },
+                    "related": {
+                      "default": [],
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 120
+                      }
+                    },
+                    "service": {
+                      "type": "string",
+                      "enum": [
+                        "flights",
+                        "hotels",
+                        "trains",
+                        "buses",
+                        "stays",
+                        "visa",
+                        "tours",
+                        "cip",
+                        "cargo",
+                        "insurance",
+                        "track",
+                        "support",
+                        "club"
+                      ]
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT",
+                        "IN_REVIEW",
+                        "PUBLISHED",
+                        "ARCHIVED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "termFa",
+                    "termEn",
+                    "explanationFa",
+                    "explanationEn",
+                    "category",
+                    "related",
+                    "slug",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-content"
         ]
       }
     },

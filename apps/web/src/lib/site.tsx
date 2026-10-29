@@ -8,7 +8,7 @@ import { api } from "./api"
 
 /** Until the API answers, only the items that never depend on a flag are shown, so a switched-off service never flashes in. */
 export const SITE_FALLBACK: SiteConfig = {
-  menu: { flights: true, track: true, support: true, cargo: false, club: false, hotels: false, stays: false, trains: false, buses: false, visa: false, tours: false, cip: false, insurance: false },
+  menu: { flights: true, track: true, support: true, cargo: false, club: false, hotels: false, stays: false, trains: false, buses: false, visa: false, tours: false, cip: false, insurance: false, card: false },
   support: { phone: null, email: null, hours: null },
   payments: { online: false },
 }

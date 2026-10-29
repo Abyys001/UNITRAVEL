@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kit_ui/kit_ui.dart';
@@ -7,6 +9,7 @@ import '../core/format.dart';
 import '../core/session.dart';
 import '../l10n/app_localizations.dart';
 import 'theme.dart';
+import 'tokens.g.dart';
 
 extension L10nContext on BuildContext {
   AppL10n get l => AppL10n.of(this);
@@ -105,6 +108,77 @@ class LtrText extends StatelessWidget {
   );
 }
 
+/// Liquid glass pane (DESIGN.md "Glass"): blurs and saturates what is behind it, with a bright specular top edge.
+/// Falls back to an opaque surface when the platform asks for high contrast so text stays AA.
+class GlassPanel extends StatelessWidget {
+  const GlassPanel({super.key, required this.child, this.radius, this.padding, this.blur = BrandTokens.glassBlur});
+  final Widget child;
+  final BorderRadius? radius;
+  final EdgeInsetsGeometry? padding;
+  final double blur;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = isDark(context);
+    final r = radius ?? BorderRadius.circular(Brand.radius);
+    final opaque = MediaQuery.highContrastOf(context);
+    final fill = dark ? Brand.navy950.withValues(alpha: BrandTokens.glassFillDark) : Colors.white.withValues(alpha: BrandTokens.glassFillLight);
+    final edge = Colors.white.withValues(alpha: dark ? 0.16 : BrandTokens.glassEdge);
+    final decorated = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: r,
+        color: opaque ? (dark ? Brand.inkRaised : Colors.white) : null,
+        gradient: opaque
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.white.withValues(alpha: dark ? 0.14 : 0.78), fill, fill.withValues(alpha: fill.a * 0.8)],
+                stops: const [0, 0.5, 1],
+              ),
+        border: Border.all(color: opaque ? (dark ? Brand.inkLine : Brand.line) : edge),
+        boxShadow: dark ? null : Brand.cardShadow,
+      ),
+      child: padding == null ? child : Padding(padding: padding!, child: child),
+    );
+    if (opaque) return ClipRRect(borderRadius: r, child: decorated);
+    return ClipRRect(
+      borderRadius: r,
+      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur), child: decorated),
+    );
+  }
+}
+
+/// Soft aurora behind the app so glass has something to refract. Decorative, so it adds nothing to semantics.
+class GlassBackdrop extends StatelessWidget {
+  const GlassBackdrop({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = isDark(context);
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ExcludeSemantics(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(center: const Alignment(-0.9, -1), radius: 1.3, colors: [Brand.cyan.withValues(alpha: dark ? 0.16 : 0.18), Colors.transparent]),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(center: const Alignment(1, 0.7), radius: 1.2, colors: [Brand.orange.withValues(alpha: dark ? 0.10 : 0.12), Colors.transparent]),
+                ),
+              ),
+            ),
+          ),
+        ),
+        child,
+      ],
+    );
+  }
+}
+
 class AppCard extends StatelessWidget {
   const AppCard({super.key, required this.child, this.onTap, this.padding = const EdgeInsets.all(16), this.semanticLabel});
   final Widget child;
@@ -114,9 +188,11 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(onTap: onTap, child: Padding(padding: padding, child: child)),
+    final card = GlassPanel(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(onTap: onTap, child: Padding(padding: padding, child: child)),
+      ),
     );
     // One merged node: the label replaces the card's inner texts, and carries the tap action.
     return semanticLabel == null
@@ -212,6 +288,6 @@ class PageBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
-    child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 680), child: child),
+    child: ConstrainedBox(constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width >= 1000 ? 840 : 680), child: child),
   );
 }

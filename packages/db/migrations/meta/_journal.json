@@ -85,6 +85,27 @@
       "when": 1792790000000,
       "tag": "0011_customer_club",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792880000000,
+      "tag": "0012_content_system",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792890000000,
+      "tag": "0013_travel_card_flag",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792970000000,
+      "tag": "0014_services_on",
+      "breakpoints": true
     }
   ]
 }

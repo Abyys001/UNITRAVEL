@@ -234,7 +234,7 @@ export const ServiceCancelBody = z.object({ reason: z.string().trim().max(1000).
 
 // ---- site menu and support (spec §4.1, §4.6) ----
 export const MENU_KEYS = [
-  "flights", "hotels", "trains", "buses", "stays", "visa", "tours", "cip", "cargo", "insurance", "club", "track", "support",
+  "flights", "hotels", "trains", "buses", "stays", "visa", "tours", "cip", "cargo", "insurance", "card", "club", "track", "support",
 ] as const
 export const MenuKey = z.enum(MENU_KEYS)
 export type MenuKey = z.infer<typeof MenuKey>

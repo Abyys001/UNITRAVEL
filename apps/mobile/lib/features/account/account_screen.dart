@@ -160,6 +160,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
             ],
             const SiteServiceLinks(),
             SectionTitle(l.helpTitle),
+            ListTile(key: const Key('learn-link'), contentPadding: EdgeInsets.zero, minTileHeight: 56, leading: const Icon(Icons.menu_book_outlined), title: Text(l.learnTitle), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/learn')),
+            ListTile(key: const Key('glossary-link'), contentPadding: EdgeInsets.zero, minTileHeight: 56, leading: const Icon(Icons.translate), title: Text(l.glossaryTitle), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/glossary')),
             const HelpLinks(),
             const SizedBox(height: 24),
             OutlinedButton.icon(onPressed: _signOut, icon: const Icon(Icons.logout), label: Text(l.signOut)),
@@ -241,25 +243,24 @@ class HelpLinks extends StatelessWidget {
   }
 }
 
-/// Account › Services: the website's service pages that are switched on (`GET /v1/site`, spec §4.1), opened in the
-/// browser like Help. Flights and cargo stay native screens; the Safar card is not built (O14).
+/// Account › Services: every switched-on service, opened as a native screen (the same flag set as the website menu,
+/// `GET /v1/site`, spec §4.1). The full explorer with availability states is the Services tab; this is the shortcut list.
 class SiteServiceLinks extends ConsumerWidget {
   const SiteServiceLinks({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l;
-    final lang = context.lang;
     final menu = ref.watch(siteMenuProvider).value ?? const <String, bool>{};
     final entries = <(String, IconData, String, String)>[
-      ('hotels', Icons.hotel_outlined, l.menuHotels, '/hotels'),
-      ('stays', Icons.house_outlined, l.menuStays, '/stays'),
-      ('trains', Icons.train_outlined, l.menuTrains, '/trains'),
-      ('buses', Icons.directions_bus_outlined, l.menuBuses, '/buses'),
-      ('visa', Icons.approval_outlined, l.menuVisa, '/visa'),
-      ('tours', Icons.public, l.menuTours, '/tours'),
-      ('cip', Icons.chair_outlined, l.menuCip, '/cip'),
-      ('insurance', Icons.health_and_safety_outlined, l.menuInsurance, '/insurance'),
+      ('hotels', Icons.hotel_outlined, l.menuHotels, '/services/new/hotels'),
+      ('stays', Icons.house_outlined, l.menuStays, '/services/new/stays'),
+      ('trains', Icons.train_outlined, l.menuTrains, '/services/new/trains'),
+      ('buses', Icons.directions_bus_outlined, l.menuBuses, '/services/new/buses'),
+      ('visa', Icons.approval_outlined, l.menuVisa, '/services/new/visa'),
+      ('tours', Icons.public, l.menuTours, '/services/new/tours'),
+      ('cip', Icons.chair_outlined, l.menuCip, '/services/new/cip'),
+      ('insurance', Icons.health_and_safety_outlined, l.menuInsurance, '/services/new/insurance'),
       ('club', Icons.star_outline, l.menuClub, '/club'),
       ('track', Icons.manage_search, l.menuTrack, '/track'),
       ('support', Icons.support_agent, l.menuSupport, '/support'),
@@ -276,11 +277,8 @@ class SiteServiceLinks extends ConsumerWidget {
             minTileHeight: 56,
             leading: Icon(icon),
             title: Text(label),
-            trailing: const Icon(Icons.open_in_new, size: 18),
-            onTap: () async {
-              final ok = await launchUrl(helpPageUri(lang, path), mode: LaunchMode.externalApplication);
-              if (!ok && context.mounted) showMessage(context, l.billingOpenFailed, error: true);
-            },
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(path),
           ),
       ],
     );

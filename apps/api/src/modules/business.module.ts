@@ -19,6 +19,8 @@ import { PaymentsService } from "./payments/payments.service"
 import { RefundsService } from "./payments/refunds.service"
 import { AdminClubController, CustomerClubController } from "./loyalty/loyalty.controller"
 import { LoyaltyService } from "./loyalty/loyalty.service"
+import { AdminCmsController, PublicCmsController } from "./cms/cms.controller"
+import { CmsService } from "./cms/cms.service"
 import { NotificationsModule } from "./notifications/notifications.module"
 import { AdminServiceRequestsController, CustomerServiceRequestsController } from "./services/services.controller"
 import { ServicesService } from "./services/services.service"
@@ -41,10 +43,10 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   DocumentsController, TravellersController, MyDetailsController, AdminCustomersController, AdminVerificationsController, ComplianceController, CustomerFlightRequestsController, AdminFlightRequestsController, SearchController, StaffSearchController,
   CustomerCargoController, AdminCargoController, DevCargoController, CustomerBillingController, AdminInvoicesController,
   CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
-  CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController,
+  CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

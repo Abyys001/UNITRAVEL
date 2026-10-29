@@ -3690,6 +3690,972 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Support'**
   String get menuSupport;
+
+  /// No description provided for @learnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel guides'**
+  String get learnTitle;
+
+  /// No description provided for @glossaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel glossary'**
+  String get glossaryTitle;
+
+  /// No description provided for @learnEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing published yet.'**
+  String get learnEmpty;
+
+  /// No description provided for @glossarySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search terms'**
+  String get glossarySearch;
+
+  /// No description provided for @menuFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights'**
+  String get menuFlights;
+
+  /// No description provided for @menuCargo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cargo & shipping'**
+  String get menuCargo;
+
+  /// No description provided for @menuCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel card'**
+  String get menuCard;
+
+  /// No description provided for @exploreLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a service. We show what is live, what we arrange by request and what is still coming.'**
+  String get exploreLead;
+
+  /// No description provided for @stateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get stateAvailable;
+
+  /// No description provided for @stateRequestOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Request only'**
+  String get stateRequestOnly;
+
+  /// No description provided for @stateComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get stateComingSoon;
+
+  /// No description provided for @exFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Search real routes; our team arranges the ticket.'**
+  String get exFlights;
+
+  /// No description provided for @exHotels.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us where and when; we send a quote.'**
+  String get exHotels;
+
+  /// No description provided for @exTrains.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a train ticket; we send a quote.'**
+  String get exTrains;
+
+  /// No description provided for @exBuses.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a bus ticket; we send a quote.'**
+  String get exBuses;
+
+  /// No description provided for @exStays.
+  ///
+  /// In en, this message translates to:
+  /// **'Villas and stays, found by our team on request.'**
+  String get exStays;
+
+  /// No description provided for @exVisa.
+  ///
+  /// In en, this message translates to:
+  /// **'We check what is needed and quote for our help.'**
+  String get exVisa;
+
+  /// No description provided for @exTours.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave your details; we call to talk through options.'**
+  String get exTours;
+
+  /// No description provided for @exCip.
+  ///
+  /// In en, this message translates to:
+  /// **'Lounge and fast-track at Tehran Imam Khomeini.'**
+  String get exCip;
+
+  /// No description provided for @exCargo.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes and tracking for parcels and cargo.'**
+  String get exCargo;
+
+  /// No description provided for @exInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for cover; we check what is available.'**
+  String get exInsurance;
+
+  /// No description provided for @exCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available yet.'**
+  String get exCard;
+
+  /// No description provided for @exClub.
+  ///
+  /// In en, this message translates to:
+  /// **'Your membership, benefits and credit.'**
+  String get exClub;
+
+  /// No description provided for @exTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow your requests, shipments and invoices.'**
+  String get exTrack;
+
+  /// No description provided for @exSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact details and help.'**
+  String get exSupport;
+
+  /// No description provided for @svUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This service is not available yet'**
+  String get svUnavailableTitle;
+
+  /// No description provided for @svUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We are preparing it. For help now, contact our support team.'**
+  String get svUnavailableBody;
+
+  /// No description provided for @svVisaLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us where you are going and who is travelling. Our team checks what is needed and sends you a quote for our help. Sending this form is not a visa application.'**
+  String get svVisaLead;
+
+  /// No description provided for @svToursLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave your details and our team will call you to talk through tour options. Nothing is booked on this call.'**
+  String get svToursLead;
+
+  /// No description provided for @svCipLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for CIP (lounge and fast-track) service for an arrival or departure at Tehran Imam Khomeini Airport. Our team checks availability and sends you a quote.'**
+  String get svCipLead;
+
+  /// No description provided for @svInsuranceLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for travel insurance for your trip. Our team checks which cover is available for your travellers and destination and sends you a quote. This form is not an insurance policy.'**
+  String get svInsuranceLead;
+
+  /// No description provided for @svListingLead.
+  ///
+  /// In en, this message translates to:
+  /// **'We do not show live listings for this service yet. Tell us what you need and our team will find options and send you a quote.'**
+  String get svListingLead;
+
+  /// No description provided for @svTourName.
+  ///
+  /// In en, this message translates to:
+  /// **'Tour call-back'**
+  String get svTourName;
+
+  /// No description provided for @svDestinationCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination country (2-letter code, e.g. GB)'**
+  String get svDestinationCountry;
+
+  /// No description provided for @svPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Purpose of travel'**
+  String get svPurpose;
+
+  /// No description provided for @svPurposeTourism.
+  ///
+  /// In en, this message translates to:
+  /// **'Tourism'**
+  String get svPurposeTourism;
+
+  /// No description provided for @svPurposeBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get svPurposeBusiness;
+
+  /// No description provided for @svPurposeStudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Study'**
+  String get svPurposeStudy;
+
+  /// No description provided for @svPurposeFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Visiting family'**
+  String get svPurposeFamily;
+
+  /// No description provided for @svPurposeTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'Transit'**
+  String get svPurposeTransit;
+
+  /// No description provided for @svTravelDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned travel date'**
+  String get svTravelDate;
+
+  /// No description provided for @svLinkedFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Your flight request reference'**
+  String get svLinkedFlight;
+
+  /// No description provided for @svNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything else we should know'**
+  String get svNote;
+
+  /// No description provided for @svDestination.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination'**
+  String get svDestination;
+
+  /// No description provided for @svApproxDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate dates'**
+  String get svApproxDates;
+
+  /// No description provided for @svTravellersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of travellers'**
+  String get svTravellersCount;
+
+  /// No description provided for @svBestTimeToCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Best time to call'**
+  String get svBestTimeToCall;
+
+  /// No description provided for @svDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival or departure'**
+  String get svDirection;
+
+  /// No description provided for @svArrival.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrival'**
+  String get svArrival;
+
+  /// No description provided for @svDeparture.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure'**
+  String get svDeparture;
+
+  /// No description provided for @svFlightNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Flight number'**
+  String get svFlightNumber;
+
+  /// No description provided for @svDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get svDate;
+
+  /// No description provided for @svPassengersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of passengers'**
+  String get svPassengersCount;
+
+  /// No description provided for @svAirportIka.
+  ///
+  /// In en, this message translates to:
+  /// **'Airport: Tehran Imam Khomeini (IKA)'**
+  String get svAirportIka;
+
+  /// No description provided for @svRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover area'**
+  String get svRegion;
+
+  /// No description provided for @svRegionUk.
+  ///
+  /// In en, this message translates to:
+  /// **'United Kingdom'**
+  String get svRegionUk;
+
+  /// No description provided for @svRegionSchengen.
+  ///
+  /// In en, this message translates to:
+  /// **'Schengen area'**
+  String get svRegionSchengen;
+
+  /// No description provided for @svRegionEurope.
+  ///
+  /// In en, this message translates to:
+  /// **'Europe'**
+  String get svRegionEurope;
+
+  /// No description provided for @svRegionWorldExAmericas.
+  ///
+  /// In en, this message translates to:
+  /// **'Worldwide except the Americas'**
+  String get svRegionWorldExAmericas;
+
+  /// No description provided for @svRegionWorldwide.
+  ///
+  /// In en, this message translates to:
+  /// **'Worldwide'**
+  String get svRegionWorldwide;
+
+  /// No description provided for @svStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get svStartDate;
+
+  /// No description provided for @svEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get svEndDate;
+
+  /// No description provided for @svLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'City or area'**
+  String get svLocation;
+
+  /// No description provided for @svCheckIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in'**
+  String get svCheckIn;
+
+  /// No description provided for @svCheckOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-out'**
+  String get svCheckOut;
+
+  /// No description provided for @svGuests.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests'**
+  String get svGuests;
+
+  /// No description provided for @svRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Rooms'**
+  String get svRooms;
+
+  /// No description provided for @svFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get svFrom;
+
+  /// No description provided for @svTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get svTo;
+
+  /// No description provided for @svPassengers.
+  ///
+  /// In en, this message translates to:
+  /// **'Passengers'**
+  String get svPassengers;
+
+  /// No description provided for @svWhoTravelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is travelling'**
+  String get svWhoTravelling;
+
+  /// No description provided for @svNoTravellers.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the travellers in your account first.'**
+  String get svNoTravellers;
+
+  /// No description provided for @svAddTravellers.
+  ///
+  /// In en, this message translates to:
+  /// **'Add travellers'**
+  String get svAddTravellers;
+
+  /// No description provided for @svContactPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number we will call'**
+  String get svContactPhone;
+
+  /// No description provided for @svNoPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Add and verify a phone number in your account first.'**
+  String get svNoPhone;
+
+  /// No description provided for @svAckNotBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand that sending this request does not book or buy anything.'**
+  String get svAckNotBooking;
+
+  /// No description provided for @svAckPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to Uni Travel using these details to handle my request, as described in the privacy notice.'**
+  String get svAckPrivacy;
+
+  /// No description provided for @svSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send request'**
+  String get svSubmit;
+
+  /// No description provided for @svSentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent'**
+  String get svSentTitle;
+
+  /// No description provided for @svSentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reference is {ref}. Our team will contact you on your phone.'**
+  String svSentBody(String ref);
+
+  /// No description provided for @svDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request'**
+  String get svDetails;
+
+  /// No description provided for @svQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your quote'**
+  String get svQuote;
+
+  /// No description provided for @svLineServiceFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Service fee'**
+  String get svLineServiceFee;
+
+  /// No description provided for @svLineThirdParty.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party fee'**
+  String get svLineThirdParty;
+
+  /// No description provided for @svLineClubDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer club discount'**
+  String get svLineClubDiscount;
+
+  /// No description provided for @svTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get svTotal;
+
+  /// No description provided for @svValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {time}'**
+  String svValidUntil(String time);
+
+  /// No description provided for @svAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept quote'**
+  String get svAccept;
+
+  /// No description provided for @svAcceptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepting confirms you want us to go ahead. We will then send you an invoice.'**
+  String get svAcceptHint;
+
+  /// No description provided for @svQuoteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you'**
+  String get svQuoteSent;
+
+  /// No description provided for @svQuoteAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get svQuoteAccepted;
+
+  /// No description provided for @svQuoteDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get svQuoteDeclined;
+
+  /// No description provided for @svQuoteExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get svQuoteExpired;
+
+  /// No description provided for @svCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel request'**
+  String get svCancel;
+
+  /// No description provided for @svCancelConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this request? Nothing has been charged.'**
+  String get svCancelConfirm;
+
+  /// No description provided for @svMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get svMessages;
+
+  /// No description provided for @svMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to our team'**
+  String get svMessageHint;
+
+  /// No description provided for @svNoMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet.'**
+  String get svNoMessages;
+
+  /// No description provided for @svTimeline.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get svTimeline;
+
+  /// No description provided for @svStatusReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get svStatusReceived;
+
+  /// No description provided for @svStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Being handled'**
+  String get svStatusInProgress;
+
+  /// No description provided for @svStatusQuoted.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote ready'**
+  String get svStatusQuoted;
+
+  /// No description provided for @svStatusConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get svStatusConfirmed;
+
+  /// No description provided for @svStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get svStatusCompleted;
+
+  /// No description provided for @svStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get svStatusCancelled;
+
+  /// No description provided for @svStatusNoReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed (no reply)'**
+  String get svStatusNoReply;
+
+  /// No description provided for @svStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get svStatusClosed;
+
+  /// No description provided for @svNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not find this request.'**
+  String get svNotFound;
+
+  /// No description provided for @svRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get svRequired;
+
+  /// No description provided for @tkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track a purchase'**
+  String get tkTitle;
+
+  /// No description provided for @tkMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Your requests and invoices'**
+  String get tkMine;
+
+  /// No description provided for @tkAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get tkAll;
+
+  /// No description provided for @tkFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights'**
+  String get tkFlights;
+
+  /// No description provided for @tkCargo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cargo'**
+  String get tkCargo;
+
+  /// No description provided for @tkServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get tkServices;
+
+  /// No description provided for @tkInvoices.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoices'**
+  String get tkInvoices;
+
+  /// No description provided for @tkEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to track yet.'**
+  String get tkEmpty;
+
+  /// No description provided for @tkLookupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track with a reference'**
+  String get tkLookupTitle;
+
+  /// No description provided for @tkLookupLead.
+  ///
+  /// In en, this message translates to:
+  /// **'No account at hand? Enter the reference and the phone number on the request. We send a code to that phone.'**
+  String get tkLookupLead;
+
+  /// No description provided for @tkRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get tkRef;
+
+  /// No description provided for @tkRefHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example UT-…'**
+  String get tkRefHint;
+
+  /// No description provided for @tkPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number on the request'**
+  String get tkPhone;
+
+  /// No description provided for @tkSendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get tkSendCode;
+
+  /// No description provided for @tkChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking your device…'**
+  String get tkChecking;
+
+  /// No description provided for @tkSent.
+  ///
+  /// In en, this message translates to:
+  /// **'If the reference and phone number match, we have sent a 6-digit code to that phone.'**
+  String get tkSent;
+
+  /// No description provided for @tkCode.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get tkCode;
+
+  /// No description provided for @tkVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Show status'**
+  String get tkVerify;
+
+  /// No description provided for @tkResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Status of {ref}'**
+  String tkResult(String ref);
+
+  /// No description provided for @tkRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait a minute before asking for another code.'**
+  String get tkRateLimited;
+
+  /// No description provided for @tkOtpInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is not right.'**
+  String get tkOtpInvalid;
+
+  /// No description provided for @tkOtpExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'That code has expired. Ask for a new one.'**
+  String get tkOtpExpired;
+
+  /// No description provided for @tkOtpLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many tries. Ask for a new code later.'**
+  String get tkOtpLocked;
+
+  /// No description provided for @tkAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Track another'**
+  String get tkAgain;
+
+  /// No description provided for @tkSignInLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Track with a reference'**
+  String get tkSignInLink;
+
+  /// No description provided for @clUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The customer club is not available yet.'**
+  String get clUnavailable;
+
+  /// No description provided for @clNotMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You are not a club member yet. Our team invites customers to the club; members receive benefits that we apply when we prepare a quote.'**
+  String get clNotMember;
+
+  /// No description provided for @clLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your level'**
+  String get clLevel;
+
+  /// No description provided for @clSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {date}'**
+  String clSince(String date);
+
+  /// No description provided for @clSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'Your membership is paused. Contact support if you have questions.'**
+  String get clSuspended;
+
+  /// No description provided for @clBenefits.
+  ///
+  /// In en, this message translates to:
+  /// **'Your benefits'**
+  String get clBenefits;
+
+  /// No description provided for @clNoBenefits.
+  ///
+  /// In en, this message translates to:
+  /// **'No benefits right now.'**
+  String get clNoBenefits;
+
+  /// No description provided for @clPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}% off'**
+  String clPercent(int value);
+
+  /// No description provided for @clFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} off'**
+  String clFixed(String amount);
+
+  /// No description provided for @clPerk.
+  ///
+  /// In en, this message translates to:
+  /// **'Perk'**
+  String get clPerk;
+
+  /// No description provided for @clCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Club credit'**
+  String get clCredit;
+
+  /// No description provided for @clApFlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights'**
+  String get clApFlight;
+
+  /// No description provided for @clApCargo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cargo'**
+  String get clApCargo;
+
+  /// No description provided for @clApService.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get clApService;
+
+  /// No description provided for @clApAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Any purchase'**
+  String get clApAny;
+
+  /// No description provided for @clValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String clValidUntil(String date);
+
+  /// No description provided for @clCreditNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Club credit has no cash value. Our team uses it on an invoice when you ask.'**
+  String get clCreditNote;
+
+  /// No description provided for @clHow.
+  ///
+  /// In en, this message translates to:
+  /// **'Benefits are applied by our team when they prepare your quote; they appear on it as their own line.'**
+  String get clHow;
+
+  /// No description provided for @spTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get spTitle;
+
+  /// No description provided for @spLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Our team answers in Persian and English.'**
+  String get spLead;
+
+  /// No description provided for @spPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get spPhone;
+
+  /// No description provided for @spEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get spEmail;
+
+  /// No description provided for @spHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get spHours;
+
+  /// No description provided for @spSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Our contact details will appear here soon.'**
+  String get spSoon;
+
+  /// No description provided for @spMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to us on your request page'**
+  String get spMessage;
+
+  /// No description provided for @spMyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Open my requests'**
+  String get spMyRequests;
+
+  /// No description provided for @svSignInFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to send a request.'**
+  String get svSignInFirst;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

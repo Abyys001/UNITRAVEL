@@ -9,6 +9,7 @@ import { Reveal } from "@unitravel/ui/brand/reveal"
 
 import { FaqAccordion } from "@/components/content-blocks"
 import { HeroVideo } from "@/components/hero-video"
+import { Benefits, FeaturedDestinations, ServiceExplorer, SupportBand } from "@/components/home-sections"
 import { SearchForm, type SearchParamsShape } from "@/components/search-form"
 import { useI18n } from "@/lib/i18n"
 
@@ -61,7 +62,7 @@ export default function Home() {
             <div aria-hidden className="absolute -inset-6 -z-10 rounded-[32px] bg-orange/20 blur-3xl" />
             {/* Anchored to the card so the path, plane and pin always sit in the clear space above it. */}
             <FlightPath className="absolute inset-x-0 bottom-full mb-1 hidden w-full opacity-80 lg:block rtl:-scale-x-100" />
-            <SearchForm />
+            <div id="search" className="scroll-mt-24"><SearchForm /></div>
           </div>
         </div>
         <Ribbon className="relative" />
@@ -79,6 +80,8 @@ export default function Home() {
           ))}
         </ul>
       </section>
+
+      <ServiceExplorer />
 
       {/* 3 · How it works: four stops on a dashed flight path. */}
       <section className="mx-auto max-w-7xl px-4 py-20 md:px-6 md:py-28">
@@ -139,6 +142,9 @@ export default function Home() {
         </div>
       </section>
 
+      <Benefits />
+      <FeaturedDestinations />
+
       {/* 5 · Cargo band. */}
       <section className="mx-auto max-w-7xl px-4 pt-20 md:px-6 md:pt-28">
         <Reveal className="card-brand grid overflow-hidden md:grid-cols-2">
@@ -158,6 +164,8 @@ export default function Home() {
           </div>
         </Reveal>
       </section>
+
+      <SupportBand />
 
       {/* 6 · Frequently asked questions: the same five items as /faq, native details. */}
       <section aria-labelledby="faq" className="mx-auto max-w-3xl px-4 pt-20 md:px-6 md:pt-28">

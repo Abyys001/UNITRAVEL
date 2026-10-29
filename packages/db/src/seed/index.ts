@@ -10,6 +10,7 @@ import * as s from "../schema"
 import { AIRCRAFT, AIRLINES, AIRPORTS, CITIES, COUNTRIES } from "./reference-data"
 import { TEMPLATES } from "./templates"
 import { DEMO_TOTP_SECRET_HEX, devEncrypt } from "./dev-crypto"
+import { seedContent } from "./content"
 import { providerSeedRows, shouldSeedDemo } from "./providers"
 
 const FLAG_META: Record<string, { owner: string; removeBy: string | null; description: string }> = {
@@ -30,6 +31,7 @@ const FLAG_META: Record<string, { owner: string; removeBy: string | null; descri
   "services.tours.enabled": { owner: "owner", removeBy: null, description: "Tour call-back requests; a call, never a package sale, until counsel advises on package travel rules (O10, ADR-0015)" },
   "services.cip.enabled": { owner: "owner", removeBy: null, description: "Airport CIP requests at Tehran Imam Khomeini only; off until counsel clears the operator and sanctions position (O9, ADR-0015)" },
   "services.insurance.enabled": { owner: "owner", removeBy: null, description: "Travel insurance requests; off until counsel confirms insurance distribution permissions (O7, ADR-0015)" },
+  "services.card.enabled": { owner: "owner", removeBy: null, description: "Publishes the Travel card page as a Coming Soon notice; no card product exists, nothing can be issued or charged (brief 29 Oct 2026 section 18)" },
   "loyalty.enabled": { owner: "owner", removeBy: null, description: "Customer club: membership, benefits and credit; off until the owner launches it (ADR-0016)" },
 }
 
@@ -212,6 +214,8 @@ async function main() {
       console.log("demo users:", DEMO_USERS.map((u) => `${u.key}=${u.phone}`).join(" "))
     }
   }
+  const content = await seedContent(db)
+  console.log(content ? `content: ${content.entries} entries, ${content.terms} glossary terms added` : "content: skipped (no owner user yet)")
   await pool.end()
   console.log("seed complete")
 }

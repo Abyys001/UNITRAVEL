@@ -72,11 +72,11 @@ for (const lang of ["en", "fa"] as const) {
     await expect(page.locator("html")).toHaveAttribute("dir", dir)
     await expect(page.getByRole("heading", { level: 1, name: c.guide.h1 })).toBeVisible()
     await expect(page.getByRole("heading", { level: 2, name: c.guide.first })).toBeVisible()
-    // Visa (7) and insurance (9) are off until their flags exist: 12 headings minus 2.
-    await expect(page.locator("main section")).toHaveCount(10)
-    await expect(page.locator('main section[id="visa"], main section[id="insurance"]')).toHaveCount(0)
+    // Visa and insurance are on (owner decision 29 Oct 2026), so all 12 sections show.
+    await expect(page.locator("main section")).toHaveCount(12)
+    await expect(page.locator('main section[id="visa"], main section[id="insurance"]')).toHaveCount(2)
     const contents = page.getByRole("navigation").filter({ has: page.getByRole("link", { name: c.guide.anchor }) })
-    await expect(contents.getByRole("link")).toHaveCount(10)
+    await expect(contents.getByRole("link")).toHaveCount(12)
     await contents.getByRole("link", { name: c.guide.anchor }).click()
     await expect(page).toHaveURL(/#pay-at-ticketing$/)
     await expect(page.getByRole("heading", { level: 2, name: c.guide.anchor })).toBeInViewport()

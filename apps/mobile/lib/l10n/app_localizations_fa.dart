@@ -2100,4 +2100,526 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get menuSupport => 'پشتیبانی';
+
+  @override
+  String get learnTitle => 'راهنمای سفر';
+
+  @override
+  String get glossaryTitle => 'فرهنگ اصطلاحات سفر';
+
+  @override
+  String get learnEmpty => 'هنوز چیزی منتشر نشده است.';
+
+  @override
+  String get glossarySearch => 'جستجوی اصطلاح';
+
+  @override
+  String get menuFlights => 'پرواز';
+
+  @override
+  String get menuCargo => 'ارسال بار و کارگو';
+
+  @override
+  String get menuCard => 'سفر کارت';
+
+  @override
+  String get exploreLead =>
+      'یک خدمت انتخاب کنید. می‌بینید چه چیزی فعال است، چه چیزی به‌صورت درخواست انجام می‌شود و چه چیزی به‌زودی می‌آید.';
+
+  @override
+  String get stateAvailable => 'فعال';
+
+  @override
+  String get stateRequestOnly => 'فقط با درخواست';
+
+  @override
+  String get stateComingSoon => 'به‌زودی';
+
+  @override
+  String get exFlights =>
+      'جست‌وجوی مسیرهای واقعی؛ تیم ما بلیت را هماهنگ می‌کند.';
+
+  @override
+  String get exHotels => 'مقصد و تاریخ را بگویید؛ پیشنهاد قیمت می‌فرستیم.';
+
+  @override
+  String get exTrains => 'بلیت قطار بخواهید؛ پیشنهاد قیمت می‌فرستیم.';
+
+  @override
+  String get exBuses => 'بلیت اتوبوس بخواهید؛ پیشنهاد قیمت می‌فرستیم.';
+
+  @override
+  String get exStays => 'ویلا و اقامتگاه؛ تیم ما درخواستی پیدا می‌کند.';
+
+  @override
+  String get exVisa => 'بررسی مدارک لازم و پیشنهاد قیمت برای خدمات ما.';
+
+  @override
+  String get exTours =>
+      'مشخصات بگذارید؛ برای گفت‌وگو دربارهٔ گزینه‌ها تماس می‌گیریم.';
+
+  @override
+  String get exCip => 'سالن و تشریفات فرودگاه امام خمینی تهران.';
+
+  @override
+  String get exCargo => 'پیشنهاد قیمت و پیگیری برای بسته و بار.';
+
+  @override
+  String get exInsurance => 'پوشش بخواهید؛ بررسی می‌کنیم چه چیزی در دسترس است.';
+
+  @override
+  String get exCard => 'هنوز در دسترس نیست.';
+
+  @override
+  String get exClub => 'عضویت، مزایا و اعتبار شما.';
+
+  @override
+  String get exTrack => 'پیگیری درخواست‌ها، بارها و فاکتورها.';
+
+  @override
+  String get exSupport => 'اطلاعات تماس و راهنما.';
+
+  @override
+  String get svUnavailableTitle => 'این خدمت هنوز در دسترس نیست';
+
+  @override
+  String get svUnavailableBody =>
+      'در حال آماده‌سازی آن هستیم. برای کمک همین حالا با پشتیبانی ما تماس بگیرید.';
+
+  @override
+  String get svVisaLead =>
+      'بگویید به کجا سفر می‌کنید و چه کسانی همراه شما هستند. تیم ما مدارک لازم را بررسی می‌کند و برای خدمات ما پیشنهاد قیمت می‌فرستد. ارسال این فرم به معنای درخواست ویزا نیست.';
+
+  @override
+  String get svToursLead =>
+      'مشخصات خود را بگذارید تا تیم ما برای گفت‌وگو دربارهٔ گزینه‌های تور با شما تماس بگیرد. در این تماس چیزی رزرو نمی‌شود.';
+
+  @override
+  String get svCipLead =>
+      'خدمات CIP (سالن و تشریفات) را برای ورود یا خروج از فرودگاه امام خمینی تهران درخواست کنید. تیم ما امکان ارائه را بررسی می‌کند و پیشنهاد قیمت می‌فرستد.';
+
+  @override
+  String get svInsuranceLead =>
+      'بیمهٔ مسافرتی سفر خود را درخواست کنید. تیم ما بررسی می‌کند چه پوششی برای مسافران و مقصد شما در دسترس است و پیشنهاد قیمت می‌فرستد. این فرم بیمه‌نامه نیست.';
+
+  @override
+  String get svListingLead =>
+      'برای این خدمت هنوز فهرست زنده نمایش نمی‌دهیم. بگویید چه می‌خواهید تا تیم ما گزینه‌ها را پیدا کند و پیشنهاد قیمت بفرستد.';
+
+  @override
+  String get svTourName => 'درخواست تماس برای تور';
+
+  @override
+  String get svDestinationCountry => 'کشور مقصد (کد ۲ حرفی، مثلاً GB)';
+
+  @override
+  String get svPurpose => 'هدف سفر';
+
+  @override
+  String get svPurposeTourism => 'گردشگری';
+
+  @override
+  String get svPurposeBusiness => 'کاری';
+
+  @override
+  String get svPurposeStudy => 'تحصیلی';
+
+  @override
+  String get svPurposeFamily => 'دیدار خانواده';
+
+  @override
+  String get svPurposeTransit => 'ترانزیت';
+
+  @override
+  String get svTravelDate => 'تاریخ سفر برنامه‌ریزی‌شده';
+
+  @override
+  String get svLinkedFlight => 'شمارهٔ درخواست پرواز شما';
+
+  @override
+  String get svNote => 'نکتهٔ دیگری که باید بدانیم';
+
+  @override
+  String get svDestination => 'مقصد';
+
+  @override
+  String get svApproxDates => 'تاریخ تقریبی';
+
+  @override
+  String get svTravellersCount => 'تعداد مسافران';
+
+  @override
+  String get svBestTimeToCall => 'بهترین زمان تماس';
+
+  @override
+  String get svDirection => 'ورود یا خروج';
+
+  @override
+  String get svArrival => 'ورود';
+
+  @override
+  String get svDeparture => 'خروج';
+
+  @override
+  String get svFlightNumber => 'شمارهٔ پرواز';
+
+  @override
+  String get svDate => 'تاریخ';
+
+  @override
+  String get svPassengersCount => 'تعداد مسافران';
+
+  @override
+  String get svAirportIka => 'فرودگاه: امام خمینی تهران (IKA)';
+
+  @override
+  String get svRegion => 'محدودهٔ پوشش';
+
+  @override
+  String get svRegionUk => 'بریتانیا';
+
+  @override
+  String get svRegionSchengen => 'منطقهٔ شنگن';
+
+  @override
+  String get svRegionEurope => 'اروپا';
+
+  @override
+  String get svRegionWorldExAmericas => 'سراسر جهان به‌جز قارهٔ آمریکا';
+
+  @override
+  String get svRegionWorldwide => 'سراسر جهان';
+
+  @override
+  String get svStartDate => 'تاریخ شروع';
+
+  @override
+  String get svEndDate => 'تاریخ پایان';
+
+  @override
+  String get svLocation => 'شهر یا منطقه';
+
+  @override
+  String get svCheckIn => 'ورود';
+
+  @override
+  String get svCheckOut => 'خروج';
+
+  @override
+  String get svGuests => 'مهمانان';
+
+  @override
+  String get svRooms => 'اتاق‌ها';
+
+  @override
+  String get svFrom => 'مبدأ';
+
+  @override
+  String get svTo => 'مقصد';
+
+  @override
+  String get svPassengers => 'مسافران';
+
+  @override
+  String get svWhoTravelling => 'چه کسانی سفر می‌کنند';
+
+  @override
+  String get svNoTravellers =>
+      'ابتدا مسافران را در حساب کاربری خود اضافه کنید.';
+
+  @override
+  String get svAddTravellers => 'افزودن مسافر';
+
+  @override
+  String get svContactPhone => 'شماره‌ای که با آن تماس می‌گیریم';
+
+  @override
+  String get svNoPhone =>
+      'ابتدا یک شمارهٔ تلفن را در حساب کاربری خود اضافه و تأیید کنید.';
+
+  @override
+  String get svAckNotBooking =>
+      'می‌دانم که ارسال این درخواست به معنای رزرو یا خرید نیست.';
+
+  @override
+  String get svAckPrivacy =>
+      'موافقم که یونی‌تراول طبق اطلاعیهٔ حریم خصوصی از این مشخصات برای رسیدگی به درخواست من استفاده کند.';
+
+  @override
+  String get svSubmit => 'ارسال درخواست';
+
+  @override
+  String get svSentTitle => 'درخواست ارسال شد';
+
+  @override
+  String svSentBody(String ref) {
+    return 'شمارهٔ پیگیری شما $ref است. تیم ما با تلفن شما تماس می‌گیرد.';
+  }
+
+  @override
+  String get svDetails => 'درخواست شما';
+
+  @override
+  String get svQuote => 'پیشنهاد قیمت شما';
+
+  @override
+  String get svLineServiceFee => 'هزینهٔ خدمات';
+
+  @override
+  String get svLineThirdParty => 'هزینهٔ اشخاص ثالث';
+
+  @override
+  String get svLineClubDiscount => 'تخفیف باشگاه مشتریان';
+
+  @override
+  String get svTotal => 'جمع';
+
+  @override
+  String svValidUntil(String time) {
+    return 'معتبر تا $time';
+  }
+
+  @override
+  String get svAccept => 'پذیرش پیشنهاد';
+
+  @override
+  String get svAcceptHint =>
+      'با پذیرش، تأیید می‌کنید که کار را ادامه دهیم. پس از آن فاکتور برایتان می‌فرستیم.';
+
+  @override
+  String get svQuoteSent => 'در انتظار شما';
+
+  @override
+  String get svQuoteAccepted => 'پذیرفته شد';
+
+  @override
+  String get svQuoteDeclined => 'رد شد';
+
+  @override
+  String get svQuoteExpired => 'منقضی شد';
+
+  @override
+  String get svCancel => 'لغو درخواست';
+
+  @override
+  String get svCancelConfirm =>
+      'این درخواست لغو شود؟ هیچ مبلغی دریافت نشده است.';
+
+  @override
+  String get svMessages => 'پیام‌ها';
+
+  @override
+  String get svMessageHint => 'برای تیم ما بنویسید';
+
+  @override
+  String get svNoMessages => 'هنوز پیامی نیست.';
+
+  @override
+  String get svTimeline => 'روند کار';
+
+  @override
+  String get svStatusReceived => 'دریافت شد';
+
+  @override
+  String get svStatusInProgress => 'در حال پیگیری';
+
+  @override
+  String get svStatusQuoted => 'پیشنهاد قیمت آماده است';
+
+  @override
+  String get svStatusConfirmed => 'تأیید شد';
+
+  @override
+  String get svStatusCompleted => 'انجام شد';
+
+  @override
+  String get svStatusCancelled => 'لغو شد';
+
+  @override
+  String get svStatusNoReply => 'بسته شد (بدون پاسخ)';
+
+  @override
+  String get svStatusClosed => 'بسته شد';
+
+  @override
+  String get svNotFound => 'این درخواست پیدا نشد.';
+
+  @override
+  String get svRequired => 'الزامی';
+
+  @override
+  String get tkTitle => 'پیگیری خرید';
+
+  @override
+  String get tkMine => 'درخواست‌ها و فاکتورهای شما';
+
+  @override
+  String get tkAll => 'همه';
+
+  @override
+  String get tkFlights => 'پرواز';
+
+  @override
+  String get tkCargo => 'بار';
+
+  @override
+  String get tkServices => 'خدمات';
+
+  @override
+  String get tkInvoices => 'فاکتورها';
+
+  @override
+  String get tkEmpty => 'هنوز موردی برای پیگیری نیست.';
+
+  @override
+  String get tkLookupTitle => 'پیگیری با شمارهٔ پیگیری';
+
+  @override
+  String get tkLookupLead =>
+      'به حساب کاربری دسترسی ندارید؟ شمارهٔ پیگیری و شماره تلفن ثبت‌شده در درخواست را وارد کنید. کدی به همان تلفن می‌فرستیم.';
+
+  @override
+  String get tkRef => 'شمارهٔ پیگیری';
+
+  @override
+  String get tkRefHint => 'مثلاً UT-…';
+
+  @override
+  String get tkPhone => 'شماره تلفن ثبت‌شده در درخواست';
+
+  @override
+  String get tkSendCode => 'ارسال کد';
+
+  @override
+  String get tkChecking => 'در حال بررسی دستگاه…';
+
+  @override
+  String get tkSent =>
+      'اگر شمارهٔ پیگیری و شماره تلفن با هم بخوانند، یک کد ۶ رقمی به همان تلفن فرستاده‌ایم.';
+
+  @override
+  String get tkCode => 'کد ۶ رقمی';
+
+  @override
+  String get tkVerify => 'نمایش وضعیت';
+
+  @override
+  String tkResult(String ref) {
+    return 'وضعیت $ref';
+  }
+
+  @override
+  String get tkRateLimited => 'لطفاً یک دقیقه صبر کنید و بعد کد تازه بخواهید.';
+
+  @override
+  String get tkOtpInvalid => 'این کد درست نیست.';
+
+  @override
+  String get tkOtpExpired => 'این کد منقضی شده است. کد تازه بخواهید.';
+
+  @override
+  String get tkOtpLocked => 'تلاش‌ها بیش از حد بود. کمی بعد کد تازه بخواهید.';
+
+  @override
+  String get tkAgain => 'پیگیری مورد دیگر';
+
+  @override
+  String get tkSignInLink => 'پیگیری با شمارهٔ پیگیری';
+
+  @override
+  String get clUnavailable => 'باشگاه مشتریان هنوز در دسترس نیست.';
+
+  @override
+  String get clNotMember =>
+      'شما هنوز عضو باشگاه نیستید. تیم ما مشتریان را به باشگاه دعوت می‌کند؛ اعضا مزایایی دارند که هنگام آماده‌کردن پیشنهاد قیمت اعمال می‌شود.';
+
+  @override
+  String get clLevel => 'سطح شما';
+
+  @override
+  String clSince(String date) {
+    return 'عضو از $date';
+  }
+
+  @override
+  String get clSuspended =>
+      'عضویت شما موقتاً متوقف است. اگر سؤالی دارید با پشتیبانی تماس بگیرید.';
+
+  @override
+  String get clBenefits => 'مزایای شما';
+
+  @override
+  String get clNoBenefits => 'در حال حاضر مزیتی ندارید.';
+
+  @override
+  String clPercent(int value) {
+    final intl.NumberFormat valueNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String valueString = valueNumberFormat.format(value);
+
+    return '$valueString٪ تخفیف';
+  }
+
+  @override
+  String clFixed(String amount) {
+    return '$amount تخفیف';
+  }
+
+  @override
+  String get clPerk => 'امتیاز ویژه';
+
+  @override
+  String get clCredit => 'اعتبار باشگاه';
+
+  @override
+  String get clApFlight => 'پرواز';
+
+  @override
+  String get clApCargo => 'بار';
+
+  @override
+  String get clApService => 'خدمات';
+
+  @override
+  String get clApAny => 'هر خرید';
+
+  @override
+  String clValidUntil(String date) {
+    return 'تا $date';
+  }
+
+  @override
+  String get clCreditNote =>
+      'اعتبار باشگاه ارزش نقدی ندارد. تیم ما به درخواست شما آن را روی فاکتور اعمال می‌کند.';
+
+  @override
+  String get clHow =>
+      'تیم ما مزایا را هنگام آماده‌کردن پیشنهاد قیمت اعمال می‌کند و به‌صورت ردیفی جداگانه در آن دیده می‌شود.';
+
+  @override
+  String get spTitle => 'پشتیبانی';
+
+  @override
+  String get spLead => 'تیم ما به فارسی و انگلیسی پاسخ می‌دهد.';
+
+  @override
+  String get spPhone => 'تلفن';
+
+  @override
+  String get spEmail => 'ایمیل';
+
+  @override
+  String get spHours => 'ساعات پاسخ‌گویی';
+
+  @override
+  String get spSoon => 'اطلاعات تماس ما به‌زودی اینجا قرار می‌گیرد.';
+
+  @override
+  String get spMessage => 'در صفحهٔ درخواست خود برای ما بنویسید';
+
+  @override
+  String get spMyRequests => 'درخواست‌های من';
+
+  @override
+  String get svSignInFirst => 'برای ارسال درخواست وارد شوید.';
 }

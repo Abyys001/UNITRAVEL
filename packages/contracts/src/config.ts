@@ -180,7 +180,7 @@ export const FEATURE_FLAGS = [
   "sms.free_text.enabled", "push.pushy_pilot.enabled", "maintenance.enabled",
   // Spec docs/CONTENT-MENU-LIVE-DATA.md §4.1: off until a provider is contracted (O8) or counsel confirms (O6, O7, O9, O10).
   "hotels.enabled", "stays.enabled", "trains.enabled", "buses.enabled", "services.visa.enabled", "services.tours.enabled",
-  "services.cip.enabled", "services.insurance.enabled", "loyalty.enabled",
+  "services.cip.enabled", "services.insurance.enabled", "services.card.enabled", "loyalty.enabled",
 ] as const
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number]
 export const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
@@ -192,15 +192,16 @@ export const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
   "sms.free_text.enabled": false,
   "push.pushy_pilot.enabled": false,
   "maintenance.enabled": false,
-  "hotels.enabled": false,
-  "stays.enabled": false,
-  "trains.enabled": false,
-  "buses.enabled": false,
-  "services.visa.enabled": false,
-  "services.tours.enabled": false,
-  "services.cip.enabled": false,
-  "services.insurance.enabled": false,
-  "loyalty.enabled": false,
+  "hotels.enabled": true,
+  "stays.enabled": true,
+  "trains.enabled": true,
+  "buses.enabled": true,
+  "services.visa.enabled": true,
+  "services.tours.enabled": true,
+  "services.cip.enabled": true,
+  "services.insurance.enabled": true,
+  "services.card.enabled": true,
+  "loyalty.enabled": true,
 }
 
 export const AppSettings = z.object({
