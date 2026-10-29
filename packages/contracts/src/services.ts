@@ -70,11 +70,24 @@ export const InsuranceDetails = z
   .object({ destinationRegion: InsuranceRegion, startDate: IsoDate, endDate: IsoDate, travellerIds: Travellers, note: Note })
   .refine((d) => d.endDate >= d.startDate, { message: "The end date must be on or after the start date", path: ["endDate"] })
 
+/** Hotel request preferences (ADR-0017). Codes, not prose: labels live in the en/fa catalogues. */
+export const ACCOMMODATION_TYPES = ["HOTEL", "APARTMENT_HOTEL", "BOUTIQUE_HOTEL", "HOSTEL", "MOTEL", "AIRPORT_HOTEL"] as const
+export const AccommodationType = z.enum(ACCOMMODATION_TYPES)
+export const ROOM_TYPES = ["SINGLE", "DOUBLE", "TWIN", "TRIPLE", "FAMILY", "SUITE"] as const
+export const RoomType = z.enum(ROOM_TYPES)
+export const MEAL_PLANS = ["RO", "BB", "HB", "FB", "AI"] as const
+export const MealPlan = z.enum(MEAL_PLANS)
+
 /** Listing verticals: an immutable offer snapshot once a provider exists (§4.3), else the search-form fields. */
 const FromSnapshot = z.object({ offerSnapshotId: Uuid, note: Note })
 export const AccommodationDetails = z.union([
   FromSnapshot,
-  z.object({ location: z.string().trim().min(2).max(120), checkIn: IsoDate, checkOut: IsoDate, guests: z.number().int().min(1).max(20), rooms: z.number().int().min(1).max(10), note: Note })
+  z.object({
+    location: z.string().trim().min(2).max(120), checkIn: IsoDate, checkOut: IsoDate, guests: z.number().int().min(1).max(20), rooms: z.number().int().min(1).max(10), note: Note,
+    // Optional preferences from the hotel page workflow (ADR-0017); absent means "no preference".
+    accommodationType: AccommodationType.optional(), minStars: z.number().int().min(1).max(5).optional(), roomType: RoomType.optional(),
+    mealPlan: MealPlan.optional(), cheapestFirst: z.boolean().optional(),
+  })
     .refine((d) => d.checkOut > d.checkIn, { message: "Check-out must be after check-in", path: ["checkOut"] }),
 ])
 export const GroundDetails = z.union([

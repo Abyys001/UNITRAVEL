@@ -12,7 +12,7 @@ export async function contentFlags(): Promise<ContentFlags> {
     const res = await fetch(`${API}/v1/site`, { next: { revalidate: 60 }, headers: { accept: "application/json" } })
     if (!res.ok) return {}
     const site = (await res.json()) as SiteConfig
-    return { "services.visa.enabled": site.menu.visa === true, "services.insurance.enabled": site.menu.insurance === true, "payments.online.enabled": site.payments.online === true }
+    return { "services.visa.enabled": site.menu.visa === true, "services.insurance.enabled": site.menu.insurance === true, "payments.online.enabled": site.payments.online === true, "hotels.enabled": site.menu.hotels === true }
   } catch {
     return {}
   }

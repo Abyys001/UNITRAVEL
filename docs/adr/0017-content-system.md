@@ -1,5 +1,7 @@
 # ADR-0017: content system (CMS, blog, guides, glossary, legal pages)
 
+> Numbering note: `0017-hotel-page-content-and-request-preferences.md` was added in parallel and also carries 0017. Code comments saying "ADR-0017" mean this content system unless they are in the hotel page files.
+
 Status: accepted (owner brief of 29 Oct 2026, UniTravel-Content.docx). Deviation from the booklet: it has no CMS; this adds one. No new infrastructure: same API, PostgreSQL, web and console.
 
 ## Decision

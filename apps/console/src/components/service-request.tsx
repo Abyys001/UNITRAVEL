@@ -51,8 +51,10 @@ export function ServiceStatus({ value }: { value: string }) {
 /* ---------- details ---------- */
 
 const ENUM_FIELDS = new Set(["purpose", "direction", "destinationRegion"])
+/** Hotel preferences (ADR-0017) have their own label namespaces: FAMILY is both a visa purpose and a room type. */
+const PREF_FIELDS: Record<string, string> = { accommodationType: "svc.v.acc", roomType: "svc.v.room", mealPlan: "svc.v.meal" }
 const DATE_FIELDS = new Set(["intendedTravelDate", "date", "startDate", "endDate", "checkIn", "checkOut"])
-const ORDER = ["destinationCountry", "destination", "location", "from", "to", "airport", "direction", "flightNumber", "purpose", "destinationRegion", "date", "intendedTravelDate", "approxDates", "startDate", "endDate", "checkIn", "checkOut", "guests", "rooms", "passengers", "passengersCount", "travellersCount", "travellerIds", "bestTimeToCall", "linkedFlightRequestRef", "offerSnapshotId", "note"]
+const ORDER = ["destinationCountry", "destination", "location", "from", "to", "airport", "direction", "flightNumber", "purpose", "destinationRegion", "date", "intendedTravelDate", "approxDates", "startDate", "endDate", "checkIn", "checkOut", "guests", "rooms", "accommodationType", "minStars", "roomType", "mealPlan", "cheapestFirst", "passengers", "passengersCount", "travellersCount", "travellerIds", "bestTimeToCall", "linkedFlightRequestRef", "offerSnapshotId", "note"]
 
 /** The customer's form, field by field in a readable order; traveller ids become names (no document data). */
 export function ServiceDetails({ d }: { d: StaffServiceRequestView }) {
@@ -68,6 +70,9 @@ export function ServiceDetails({ d }: { d: StaffServiceRequestView }) {
     if (k === "linkedFlightRequestRef" && typeof v === "string") return can("flight_request.read.any") ? <Link href={`/requests/${v}`} className="ref text-link hover:underline">{v}</Link> : <span className="ref">{v}</span>
     if (k === "offerSnapshotId" || k === "flightNumber" || k === "airport" || k === "destinationCountry") return <span className="ref" dir="ltr">{String(v)}</span>
     if (ENUM_FIELDS.has(k) && typeof v === "string") return label(t, "svc.v", v)
+    if (PREF_FIELDS[k] && typeof v === "string") return <>{label(t, PREF_FIELDS[k], v)}{k === "mealPlan" && <span className="ref text-steel" dir="ltr"> {v}</span>}</>
+    if (k === "minStars" && typeof v === "number") return <span className="num">{t("svc.v.stars", { n: v })}</span>
+    if (typeof v === "boolean") return t(v ? "svc.v.yes" : "svc.v.no")
     if (DATE_FIELDS.has(k) && typeof v === "string") return <span className="num">{fmtDate(v)}</span>
     if (typeof v === "number") return <span className="num">{v}</span>
     if (typeof v === "string") return <span className="whitespace-pre-wrap" dir="auto">{k === "note" ? `“${v}”` : v}</span>

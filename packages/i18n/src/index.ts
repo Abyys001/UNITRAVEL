@@ -60,5 +60,6 @@ export { en, fa }
 
 export { faq } from "./content/faq"
 export { flightGuide } from "./content/flight-guide"
+export { hotelGuide } from "./content/hotel-guide"
 export { travelRules } from "./content/travel-rules"
-export { type Block, type Content, type ContentFlag, type ContentFlags, type Item, visibleItems } from "./content/types"
+export { type Block, type Content, type ContentFlag, type ContentFlags, type Item, type Term, visibleItems } from "./content/types"

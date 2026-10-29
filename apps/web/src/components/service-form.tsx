@@ -48,8 +48,10 @@ export function Unavailable({ title }: { title: string }) {
  * Shared frame for every service request form (ADR-0015): flag gate, sign-in, contact phone, travellers (when the type
  * needs them), the two acknowledgements and the submit. The page owns its own fields and passes the `details` object.
  */
-export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, details, valid, children }: {
-  type: ServiceRequestType; menuKey: MenuKey; title: string; lead: string; withTravellers?: boolean; details: Record<string, unknown>; valid: boolean; children: React.ReactNode
+export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, details, valid, embedded, children }: {
+  type: ServiceRequestType; menuKey: MenuKey; title: string; lead: string; withTravellers?: boolean; details: Record<string, unknown>; valid: boolean
+  /** Inside a landing page (hotels, ADR-0017): no page redirect to sign-in, an h2 heading, and nothing when the service is off. */
+  embedded?: boolean; children: React.ReactNode
 }) {
   const { t, href, locale } = useI18n()
   const router = useRouter()
@@ -58,7 +60,7 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
   const path = usePathname()
   const enabled = loaded && site.menu[menuKey] === true
   // Sign-in is needed only to send a request: a switched-off service shows its notice to everyone, signed in or not.
-  useEffect(() => { if (enabled && !loading && !me) router.replace(href(`/sign-in?next=${encodeURIComponent(path)}`)) }, [enabled, loading, me, router, path, href])
+  useEffect(() => { if (!embedded && enabled && !loading && !me) router.replace(href(`/sign-in?next=${encodeURIComponent(path)}`)) }, [embedded, enabled, loading, me, router, path, href])
   const travellers = useQuery({ queryKey: ["travellers"], queryFn: () => api<TravellerView[]>("/v1/me/travellers"), enabled: !!me && !!withTravellers })
   const phones = me?.identities.filter((i) => i.type === "PHONE") ?? []
   const [phoneId, setPhoneId] = useState<string>("")
@@ -69,7 +71,16 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
   const [busy, setBusy] = useState(false)
   const [key] = useState(newIdempotencyKey)
 
-  if (loaded && !enabled) return <Unavailable title={title} />
+  if (loaded && !enabled) return embedded ? null : <Unavailable title={title} />
+  if (embedded && loaded && !loading && !me) {
+    return (
+      <div className="card-brand p-6 md:p-8" data-testid="service-sign-in">
+        <h2 className="font-display text-2xl md:text-3xl">{title}</h2>
+        <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
+        <Link href={href(`/sign-in?next=${encodeURIComponent(path + "#request")}`)} className="btn-orange mt-6 inline-flex">{t("nav.signIn")}</Link>
+      </div>
+    )
+  }
   if (!loaded || loading || !me) return <div className="mx-auto max-w-3xl px-4 py-8"><LoadingState label={t("common.loading")} rows={3} /></div>
 
   const ready = valid && !!contact && ack.notABooking && ack.privacy && (!withTravellers || chosen.length > 0)
@@ -88,8 +99,8 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
   const name = (x: TravellerView) => (locale === "fa" && x.nameFa ? x.nameFa : `${x.givenNames} ${x.surname}`)
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
-      <h1 className="font-display text-3xl md:text-4xl">{title}</h1>
+    <div className={embedded ? "" : "mx-auto max-w-3xl px-4 py-8 md:py-10"}>
+      {embedded ? <h2 className="font-display text-3xl md:text-4xl">{title}</h2> : <h1 className="font-display text-3xl md:text-4xl">{title}</h1>}
       <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
       <form className="mt-6 space-y-6" onSubmit={(e) => { e.preventDefault(); if (ready && !busy) void submit() }} noValidate>
         <fieldset className="card-brand grid gap-4 p-5 sm:grid-cols-2">{children}</fieldset>

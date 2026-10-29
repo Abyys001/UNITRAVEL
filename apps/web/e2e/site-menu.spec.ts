@@ -76,12 +76,32 @@ test("menu: switched-off services are absent; turning visa on adds it to the Ser
 
 test("a switched-off service page says it is not available and points to support", async ({ page }) => {
   await setFlag("services.visa.enabled", false)
-  for (const p of ["/en/visa", "/en/hotels", "/en/trains"]) {
+  for (const p of ["/en/visa", "/en/trains"]) {
     await page.goto(p)
     await expect(page.getByTestId("service-unavailable")).toBeVisible()
     await expect(page.getByText("This service is not available yet")).toBeVisible()
   }
   await axeClean(page)
+})
+
+test("hotels page: the guide always shows; the promise, steps and request form only with hotels.enabled (ADR-0017)", async ({ page, browser }) => {
+  await setFlag("hotels.enabled", false)
+  await page.goto("/en/hotels")
+  await expect(page.getByText("Hotel booking is not open yet", { exact: false })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Types of hotels and accommodation" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Meal plans and levels of service" })).toBeVisible()
+  await expect(page.getByTestId("hotel-steps")).toHaveCount(0)
+  await expect(page.locator("#request")).toHaveCount(0)
+  await axeClean(page)
+
+  await setFlag("hotels.enabled", true)
+  const fresh = await (await browser.newContext()).newPage()
+  await fresh.goto("/fa/hotels")
+  await expect(fresh.getByTestId("hotel-steps").getByRole("listitem")).toHaveCount(5)
+  await expect(fresh.getByTestId("service-sign-in")).toBeVisible()
+  await axeClean(fresh)
+  await fresh.context().close()
+  await setFlag("hotels.enabled", false)
 })
 
 test("visa request: form, detail page with the sent notice, listed in My requests and Track", async ({ page }) => {
