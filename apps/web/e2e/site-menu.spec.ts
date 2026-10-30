@@ -6,11 +6,11 @@ import { signIn } from "./helpers"
 
 // Phase I (spec §4.1–4.6, ADR-0015/0016): the menu follows GET /v1/site, switched-off services are never advertised,
 // a visa request goes from form to detail page to My requests and Track, support never shows placeholder contacts.
-const FLAGS = ["services.visa.enabled", "hotels.enabled", "loyalty.enabled"] as const
+const FLAGS = ["services.visa.enabled", "hotels.enabled", "loyalty.enabled", "trains.enabled"] as const
 let dev: Session
 const initial: Record<string, boolean> = {}
 const anon = new Session("WEB")
-const MENU: Record<(typeof FLAGS)[number], string> = { "services.visa.enabled": "visa", "hotels.enabled": "hotels", "loyalty.enabled": "club" }
+const MENU: Record<(typeof FLAGS)[number], string> = { "services.visa.enabled": "visa", "hotels.enabled": "hotels", "loyalty.enabled": "club", "trains.enabled": "trains" }
 
 async function setFlag(key: (typeof FLAGS)[number], enabled: boolean) {
   expect((await dev.put(`/v1/dev/feature-flags/${key}`, { enabled })).status).toBe(200)
@@ -71,17 +71,21 @@ test("menu: switched-off services are absent; turning visa on adds it to the Ser
   await mainFa.getByRole("button", { name: "خدمات" }).click()
   await expect(fresh.locator("#services-menu").getByRole("link", { name: "ویزا" })).toBeVisible()
   await fresh.context().close()
-  await setFlag("hotels.enabled", false)
+  await setFlag("hotels.enabled", true)
 })
 
 test("a switched-off service page says it is not available and points to support", async ({ page }) => {
   await setFlag("services.visa.enabled", false)
+  await setFlag("trains.enabled", false)
+  await new Promise((r) => setTimeout(r, 61_000)) // the site config is cached for 60 s
   for (const p of ["/en/visa", "/en/trains"]) {
     await page.goto(p)
     await expect(page.getByTestId("service-unavailable")).toBeVisible()
     await expect(page.getByText("This service is not available yet")).toBeVisible()
   }
   await axeClean(page)
+  await setFlag("services.visa.enabled", true)
+  await setFlag("trains.enabled", true)
 })
 
 test("hotels page: the guide always shows; the promise, steps and request form only with hotels.enabled (ADR-0017)", async ({ page, browser }) => {
@@ -95,13 +99,14 @@ test("hotels page: the guide always shows; the promise, steps and request form o
   await axeClean(page)
 
   await setFlag("hotels.enabled", true)
+  await new Promise((r) => setTimeout(r, 125_000)) // the site config is cached for 60 s
   const fresh = await (await browser.newContext()).newPage()
   await fresh.goto("/fa/hotels")
   await expect(fresh.getByTestId("hotel-steps").getByRole("listitem")).toHaveCount(5)
   await expect(fresh.getByTestId("service-sign-in")).toBeVisible()
   await axeClean(fresh)
   await fresh.context().close()
-  await setFlag("hotels.enabled", false)
+  await setFlag("hotels.enabled", true)
 })
 
 test("visa request: form, detail page with the sent notice, listed in My requests and Track", async ({ page }) => {

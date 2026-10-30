@@ -88,6 +88,7 @@ function SignIn() {
           <div className="p-6 sm:p-10">
         <h1 className="font-display text-3xl md:text-4xl">{step === "profile" ? t("auth.nameTitle") : t("auth.title")}</h1>
         <p className="mt-3 text-steel">{t("auth.noPassword")}</p>
+        <p className="mt-1 text-sm text-steel" data-testid="remember-note">{t("auth.remember")}</p>
         {step === "identity" && (
           <form className="mt-6 space-y-4" onSubmit={(e) => { e.preventDefault(); void send() }}>
             <label className="block text-sm font-medium">{t("auth.email")}

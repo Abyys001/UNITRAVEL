@@ -22,6 +22,8 @@ export interface IssuedTokens {
 }
 
 export const REFRESH_REUSE_GRACE_SECONDS = 10
+/** Hard cap on how long one customer sign-in can be kept alive by use (web and app); after it the customer signs in again. */
+export const REMEMBER_DEVICE_DAYS = 90
 const clientBinding = (ctx: { ip?: string; userAgent?: string }) => sha256(`${ctx.ip ?? ""}|${ctx.userAgent ?? ""}`)
 
 const CLIENT_AUDIENCE: Record<"WEB" | "CONSOLE" | "MOBILE", Audience> = { WEB: "web", CONSOLE: "console", MOBILE: "mobile" }
@@ -45,7 +47,9 @@ export class SessionsService {
 
   async create(tx: Tx, input: { userId: string; client: "WEB" | "CONSOLE" | "MOBILE"; deviceId?: string; ip?: string; userAgent?: string; mfaSatisfied?: boolean }): Promise<IssuedTokens> {
     const auth = this.config.get("AUTH")
-    const absolute = input.client === "CONSOLE" ? auth.staffSessionHours * 3600_000 : auth.refreshTtlDays * 86400_000
+    // A customer device is remembered: the refresh token rotates on every use and lasts refreshTtlDays from the last use, so a
+    // device in regular use stays signed in, up to a hard cap of REMEMBER_DEVICE_DAYS from sign-in. Staff sessions stay short.
+    const absolute = input.client === "CONSOLE" ? auth.staffSessionHours * 3600_000 : Math.max(auth.refreshTtlDays, REMEMBER_DEVICE_DAYS) * 86400_000
     const [s] = await tx.insert(sessions).values({ userId: input.userId, client: input.client, deviceId: input.deviceId, ip: input.ip, userAgent: input.userAgent?.slice(0, 400), absoluteExpiresAt: new Date(Date.now() + absolute), ...(input.mfaSatisfied ? { mfaLevel: 1, mfaVerifiedAt: new Date() } : {}) }).returning()
     return this.issue(tx, s!, uuidv7())
   }

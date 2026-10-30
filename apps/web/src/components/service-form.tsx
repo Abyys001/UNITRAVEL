@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query"
 import { LifeBuoy } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import type { MenuKey, ServiceRequestType, TravellerView } from "@unitravel/contracts"
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Auto } from "@/components/badges"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
+import { restoreForm, saveDraft, snapshotForm, takeDraft } from "@/lib/form-draft"
 import { useI18n } from "@/lib/i18n"
 import { useSite } from "@/lib/site"
 import { useSession } from "@/lib/session"
@@ -59,8 +60,8 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
   const { me, loading } = useSession()
   const path = usePathname()
   const enabled = loaded && site.menu[menuKey] === true
-  // Sign-in is needed only to send a request: a switched-off service shows its notice to everyone, signed in or not.
-  useEffect(() => { if (!embedded && enabled && !loading && !me) router.replace(href(`/sign-in?next=${encodeURIComponent(path)}`)) }, [embedded, enabled, loading, me, router, path, href])
+  // Browsing is open: the form shows to everyone and sign-in is asked only when the request is sent.
+  const formRef = useRef<HTMLFormElement>(null)
   const travellers = useQuery({ queryKey: ["travellers"], queryFn: () => api<TravellerView[]>("/v1/me/travellers"), enabled: !!me && !!withTravellers })
   const phones = me?.identities.filter((i) => i.type === "PHONE") ?? []
   const [phoneId, setPhoneId] = useState<string>("")
@@ -71,20 +72,26 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
   const [busy, setBusy] = useState(false)
   const [key] = useState(newIdempotencyKey)
 
+  // Restore what the visitor typed before the sign-in round trip (once the form has rendered).
+  const formShown = loaded && enabled && !loading
+  useEffect(() => {
+    if (!formShown || !formRef.current) return
+    const d = takeDraft<{ form: Parameters<typeof restoreForm>[1]; ack: typeof ack }>(`svc:${type}`)
+    if (!d) return
+    restoreForm(formRef.current, d.form)
+    setAck(d.ack)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formShown])
   if (loaded && !enabled) return embedded ? null : <Unavailable title={title} />
-  if (embedded && loaded && !loading && !me) {
-    return (
-      <div className="card-brand p-6 md:p-8" data-testid="service-sign-in">
-        <h2 className="font-display text-2xl md:text-3xl">{title}</h2>
-        <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
-        <Link href={href(`/sign-in?next=${encodeURIComponent(path + "#request")}`)} className="btn-orange mt-6 inline-flex">{t("nav.signIn")}</Link>
-      </div>
-    )
-  }
-  if (!loaded || loading || !me) return <div className="mx-auto max-w-3xl px-4 py-8"><LoadingState label={t("common.loading")} rows={3} /></div>
+  if (!loaded || loading) return <div className="mx-auto max-w-3xl px-4 py-8"><LoadingState label={t("common.loading")} rows={3} /></div>
 
-  const ready = valid && !!contact && ack.notABooking && ack.privacy && (!withTravellers || chosen.length > 0)
+  const ready = valid && ack.notABooking && ack.privacy && (!me || (!!contact && (!withTravellers || chosen.length > 0)))
   const submit = async () => {
+    if (!me) {
+      if (formRef.current) saveDraft(`svc:${type}`, { form: snapshotForm(formRef.current), ack })
+      router.push(href(`/sign-in?next=${encodeURIComponent(path)}`))
+      return
+    }
     setBusy(true); setErr(null)
     try {
       const body = { type, contactIdentityId: contact, acknowledgements: { notABooking: true, privacy: true }, details: withTravellers ? { ...details, travellerIds: chosen } : details }
@@ -102,10 +109,10 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
     <div className={embedded ? "" : "mx-auto max-w-3xl px-4 py-8 md:py-10"}>
       {embedded ? <h2 className="font-display text-3xl md:text-4xl">{title}</h2> : <h1 className="font-display text-3xl md:text-4xl">{title}</h1>}
       <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
-      <form className="mt-6 space-y-6" onSubmit={(e) => { e.preventDefault(); if (ready && !busy) void submit() }} noValidate>
+      <form ref={formRef} className="mt-6 space-y-6" onSubmit={(e) => { e.preventDefault(); if (ready && !busy) void submit() }} noValidate>
         <fieldset className="card-brand grid gap-4 p-5 sm:grid-cols-2">{children}</fieldset>
 
-        {withTravellers && (
+        {withTravellers && !!me && (
           <fieldset className="card-brand p-5">
             <legend className="font-display px-1 text-lg">{t("services.travellers")}</legend>
             {travellers.isLoading && <LoadingState label={t("common.loading")} rows={1} />}
@@ -123,7 +130,7 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
 
         <fieldset className="card-brand space-y-3 p-5">
           <legend className="font-display px-1 text-lg">{t("services.contact")}</legend>
-          {phones.length === 0
+          {!me ? <p className="text-sm text-steel" data-testid="service-sign-in">{t("services.signInNote")}</p> : phones.length === 0
             ? <p className="text-sm text-steel">{t("services.noPhone")} <Link className="font-semibold text-royal underline" href={href("/account")}>{t("nav.account")}</Link></p>
             : (
               <select aria-label={t("services.contact")} className={inputCls} value={contact} onChange={(e) => setPhoneId(e.target.value)} dir="ltr">
@@ -144,7 +151,7 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
             {err.problem.errors?.map((e) => <p key={e.path} dir="auto">{e.path}: {e.message ?? e.code}</p>)}
           </div>
         )}
-        <button type="submit" className="btn-orange" disabled={!ready || busy} aria-disabled={!ready || busy}>{t("services.submit")}</button>
+        <button type="submit" className="btn-orange" disabled={!ready || busy} aria-disabled={!ready || busy}>{me ? t("services.submit") : t("services.signInToSend")}</button>
       </form>
     </div>
   )

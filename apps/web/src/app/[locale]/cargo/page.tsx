@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { CheckCircle2, Plus, Trash2, Upload } from "lucide-react"
 import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 
 import { IconBadge } from "@unitravel/ui/brand/art"
@@ -14,7 +15,8 @@ import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
 import { COUNTRIES, countryName } from "@/lib/countries"
 import { uploadFile } from "@/lib/upload"
-import { useRequireSignIn } from "@/lib/use-auth-redirect"
+import { saveDraft, takeDraft } from "@/lib/form-draft"
+import { useSession } from "@/lib/session"
 
 interface Lane { id: string; originCountry: string; destinationCountry: string; label: string; enabled: boolean; services: string[]; volumetricDivisor: number; notice: string | null }
 const CATS = ["DOCUMENTS", "CLOTHING", "PERSONAL_EFFECTS", "BOOKS", "FOOD_NON_PERISHABLE", "COSMETICS", "MEDICINES", "MEDICAL_DEVICES", "ELECTRONICS", "LITHIUM_BATTERIES", "AIRCRAFT_VEHICLE_INDUSTRIAL_PARTS", "JEWELLERY_ART", "OTHER"]
@@ -42,7 +44,9 @@ function PartyFields({ title, v, set, freight }: { title: string; v: Party; set:
 
 export default function CargoPage() {
   const { t, href, money, sep, locale } = useI18n()
-  const { me } = useRequireSignIn()
+  const { me } = useSession()
+  const router = useRouter()
+  const path = usePathname()
   const lanes = useQuery({ queryKey: ["lanes"], queryFn: () => api<Lane[]>("/v1/cargo/lanes") })
   const [laneId, setLaneId] = useState("")
   const [service, setService] = useState("PARCEL")
@@ -73,7 +77,19 @@ export default function CargoPage() {
   const phone = me?.identities.find((i) => i.type === "PHONE" && i.verifiedAt)
   const total = items.reduce((s, i) => s + Math.round(i.value * 100) * i.quantity, 0)
   const party = (p: typeof shipper) => ({ name: p.name, company: p.company || undefined, address: { line1: p.line1, city: p.city, postcode: p.postcode || undefined, country: p.country }, phone: p.phone || phone?.value || "", email: p.email || undefined })
+  // Browsing and preparing a shipment is open; sign-in is asked when it is sent, and the form is kept across it.
+  useEffect(() => {
+    const d = takeDraft<{ laneId: string; service: string; shipper: typeof shipper; consignee: typeof consignee; pieces: typeof pieces; items: typeof items; decl: typeof decl; readyDate: string; handover: string; incoterm: string; consent: typeof consent }>("cargo")
+    if (!d) return
+    setLaneId(d.laneId); setService(d.service); setShipper(d.shipper); setConsignee(d.consignee); setPieces(d.pieces); setItems(d.items)
+    setDecl(d.decl); setReadyDate(d.readyDate); setHandover(d.handover); setIncoterm(d.incoterm); setConsent(d.consent)
+  }, [])
   const submit = async () => {
+    if (!me) {
+      saveDraft("cargo", { laneId, service, shipper, consignee, pieces, items, decl, readyDate, handover, incoterm, consent })
+      router.push(href(`/sign-in?next=${encodeURIComponent(path)}`))
+      return
+    }
     setBusy(true); setErr(null)
     try {
       const r = await api<{ ref: string }>("/v1/cargo-requests", { headers: { "idempotency-key": key }, body: {
@@ -144,8 +160,8 @@ export default function CargoPage() {
         </fieldset>
         {decl.dangerousGoods && <p role="alert" className="rounded-xl border-s-4 border-danger bg-danger-subtle px-4 py-3 text-sm text-danger sm:col-span-3">{t("flow.dgWarn")}</p>}
         <div className="sm:col-span-3"><p className="text-sm font-semibold">{t("cargo.documents")}</p>
-          <label className="mt-2 inline-flex cursor-pointer items-center gap-2 field py-2 text-sm"><Upload className="size-4" />{t("cargo.upload")}
-            <input type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setDocs([...docs, await uploadFile(f, "OTHER")]) }} /></label>
+          <label aria-disabled={!me} className={`mt-2 inline-flex items-center gap-2 field py-2 text-sm ${me ? "cursor-pointer" : "pointer-events-none opacity-60"}`}><Upload className="size-4" />{t("cargo.upload")}
+            <input disabled={!me} type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setDocs([...docs, await uploadFile(f, "OTHER")]) }} /></label>
           <ul className="mt-2 text-sm text-steel">{docs.map((d) => <li key={d.documentId}>{d.filename}</li>)}</ul>
         </div>
       </section>
@@ -153,7 +169,8 @@ export default function CargoPage() {
         {(["accuracy", "prohibitedItems", "privacy"] as const).map((k) => <label key={k} className="flex items-start gap-3 pointer-coarse:min-h-11"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={consent[k]} onChange={(e) => setConsent({ ...consent, [k]: e.target.checked })} />{t(`cargo.consent${k === "accuracy" ? "Accuracy" : k === "prohibitedItems" ? "Prohibited" : "Privacy"}`)}</label>)}
       </section>
       {err && <p role="alert" className="mt-4 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err.problem.detail ?? err.problem.title}{err.problem.errors?.map((x) => <span key={x.path} className="block">{x.path}: {x.message}</span>)}</p>}
-      <button type="button" className="btn-orange mt-6 h-13 w-full text-base" disabled={busy || !laneId || !phone || !consent.accuracy || !consent.prohibitedItems || !consent.privacy} onClick={() => void submit()}>{t("cargo.submit")}</button>
+      <button type="button" className="btn-orange mt-6 h-13 w-full text-base" disabled={busy || !laneId || (!!me && !phone) || !consent.accuracy || !consent.prohibitedItems || !consent.privacy} onClick={() => void submit()}>{me ? t("cargo.submit") : t("cargo.signInToSend")}</button>
+      {!me && <p className="mt-3 text-sm text-steel" data-testid="cargo-sign-in">{t("cargo.signInNote")}</p>}
     </div>
   )
 }

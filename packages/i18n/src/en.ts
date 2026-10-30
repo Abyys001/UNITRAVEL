@@ -78,6 +78,7 @@ export const en = {
     loadFailed: "We could not load this request.", noDocuments: "No documents yet.",
   },
   cargo: {
+    signInNote: "You can prepare your shipment without an account. We ask you to sign in with a one-time code only when you send it.", signInToSend: "Sign in to send request",
     title: "Send cargo", service: "Service", DOCUMENTS: "Documents and small parcels", PARCEL: "Parcel", EXCESS_BAGGAGE: "Excess baggage / personal effects", AIR_FREIGHT: "Commercial air freight",
     lane: "Route", laneDisabled: "Not available", shipper: "Sender", consignee: "Recipient", name: "Full name (Latin letters)", company: "Company", address: "Address", city: "City", postcode: "Postcode", country: "Country", phone: "Phone", email: "Email",
     pieces: "Pieces", length: "Length (cm)", width: "Width (cm)", height: "Height (cm)", weight: "Weight (kg)", addPiece: "Add piece", items: "Contents", description: "Description", category: "Category", quantity: "Qty", value: "Unit value", hs: "HS code", origin: "Made in", purpose: "Purpose", addItem: "Add item",
@@ -121,6 +122,7 @@ export const en = {
   },
   tracking: { events: { PICKED_UP: "Picked up", RECEIVED: "Received at our partner", DEPARTED: "Departed", ARRIVED: "Arrived", AT_CUSTOMS: "At customs", CLEARED: "Cleared customs", OUT_FOR_DELIVERY: "Out for delivery", DELIVERED: "Delivered", HELD: "On hold", DAMAGED: "Damage reported", RETURNED: "Returned", NOTE: "Update" } },
   auth: {
+    remember: "We remember this device for 30 days of use (up to 90), so you will not need a code every time. Sign out from your account any time.",
     title: "Sign in", phone: "Mobile number", email: "Email", useEmail: "Use email instead", usePhone: "Use phone instead", sendCode: "Send code", code: "Enter the 6-digit code sent to {to}",
     test: { title: "Test sign-in (testing phase)", hint: "Signs in with the email only — no code. Disabled in production.", email: "Email", submit: "Sign in without a code", busy: "Signing in…", error: "Test sign-in failed. Check the email and try again." },
     dev: { title: "Test sign-in (local only): code from the email sink", waiting: "Waiting for the code…", refill: "Fill again" },
@@ -194,6 +196,7 @@ export const en = {
     notice: "Hotel rules, check-in times and what a rate includes are set by each hotel; your quote and voucher state them for your booking.",
   },
   services: {
+    signInNote: "You can fill this in without an account. We ask you to sign in with a one-time code only when you send it, and we keep what you typed.", signInToSend: "Sign in to send request",
     types: { VISA: "Visa", TOUR_CALLBACK: "Tour call-back", CIP: "Airport CIP", INSURANCE: "Travel insurance", HOTEL: "Hotel", STAY: "Villa or stay", TRAIN: "Train", BUS: "Bus" },
     status: { SUBMITTED: "Received", COMPLIANCE_HOLD: "Received", IN_PROGRESS: "Being handled", QUOTED: "Quote ready", CONFIRMED: "Confirmed", COMPLETED: "Completed", CANCELLED: "Cancelled", CLOSED_NO_RESPONSE: "Closed (no reply)", DECLINED: "Closed" },
     visaTitle: "Visa services", visaLead: "Tell us where you are going and who is travelling. Our team checks what is needed and sends you a quote for our help. Sending this form is not a visa application.",
@@ -229,6 +232,7 @@ export const en = {
     faq: "Read the frequently asked questions", message: "Write to us on your request page", myRequests: "Open my requests",
   },
   club: {
+    signInPrompt: "Sign in to see your membership. Browsing this page needs no account.", signInCta: "Sign in",
     title: "Customer club", unavailable: "The customer club is not available yet.",
     notMember: "You are not a club member yet. Our team invites customers to the club; members receive benefits that we apply when we prepare a quote.",
     level: "Your level", since: "Member since {date}", suspended: "Your membership is paused. Contact support if you have questions.",

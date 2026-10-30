@@ -2,6 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { Star } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import type { CustomerClubView } from "@unitravel/contracts"
 import { EmptyState, ErrorState, LoadingState } from "@unitravel/ui/product/states"
@@ -9,19 +11,21 @@ import { EmptyState, ErrorState, LoadingState } from "@unitravel/ui/product/stat
 import { Auto } from "@/components/badges"
 import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
-import { useRequireSignIn } from "@/lib/use-auth-redirect"
+import { useSession } from "@/lib/session"
 
 /** Customer club (ADR-0016): the customer's tier, usable benefits and credit. Amounts reach money only on a staff-built quote. */
 export default function ClubPage() {
-  const { t, date, money, locale, sep } = useI18n()
-  const { me } = useRequireSignIn()
+  const { t, date, money, locale, sep, href } = useI18n()
+  const path = usePathname()
+  const { me, loading } = useSession()
   const q = useQuery({ queryKey: ["club"], queryFn: () => api<CustomerClubView>("/v1/me/club"), enabled: !!me })
   const off = q.data?.enabled === false
   const c = q.data
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
       <h1 className="font-display text-3xl md:text-4xl">{t("club.title")}</h1>
-      {(q.isLoading || !me) && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
+      {(loading || (!!me && q.isLoading)) && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
+      {!loading && !me && <EmptyState className="mt-6" icon={<Star />} title={t("club.signInPrompt")} action={<Link href={href(`/sign-in?next=${encodeURIComponent(path)}`)} className="btn-orange mt-2 inline-flex">{t("club.signInCta")}</Link>} />}
       {off && <EmptyState className="mt-6" icon={<Star />} title={t("club.unavailable")} />}
       {q.isError && <ErrorState className="mt-6" title={t("common.error")} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} />}
       {c && !off && !c.member && <EmptyState className="mt-6" icon={<Star />} title={t("club.notMember")} />}
