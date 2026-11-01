@@ -3,7 +3,8 @@ import { headers } from "next/headers"
 
 import { faq, type Locale, translate } from "@unitravel/i18n"
 
-import { ContentPage, FaqAccordion, faqPageSchema, jsonLd } from "@/components/content-blocks"
+import { ContentPage, faqPageSchema, jsonLd } from "@/components/content-blocks"
+import { FaqAccordion } from "@/components/faq-accordion"
 
 type Props = { params: Promise<{ locale: string }> }
 

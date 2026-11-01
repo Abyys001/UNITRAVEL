@@ -9,20 +9,26 @@
  *   <StateChip value />                            workflow status as a StatusChip (tone from the status, text = the status)
  *   <TruthTally tally />                           known / not included / UNKNOWN counts; UNKNOWN is never softened
  *   <CommandBar actions onRun />                   server-computed commands: one solid primary, the rest secondary, unavailable ones listed with their reason
+ *   <ActionMenu items onRun />                     overflow menu (destructive commands such as cancel/decline live here, in destructive colour)
+ *   <SlaGauge dueAt startAt />                     large SLA ring with the countdown; overdue turns danger
+ *   <StatusStepper status />                       horizontal workflow progress for a flight request
  *   <ActionBar edge>                               sticky bar for the server-computed commands (top) or a form's submit (bottom)
  *   <CaseTabs> + paneClass()                       phone/tablet tabs over the columns; all columns show side by side at lg
  *   <Timeline items />                             day-grouped vertical activity trail
  *   <ListSkeleton rows />                          table/card placeholder rows
  */
+import { Check, CircleHelp, Ellipsis, Minus } from "lucide-react"
 import { useEffect, useId, useState, useSyncExternalStore } from "react"
 
 import { cn } from "@unitravel/ui/lib/utils"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@unitravel/ui/components/dropdown-menu"
 
 import { StatusChip } from "@/components/bento"
 import { COMMAND_LABEL } from "@/components/ui"
 import { Button } from "@unitravel/ui/components/button"
 import { COMMAND_LABEL_FA } from "@/lib/command-labels"
-import { type MsgKey, type T, useT } from "@/lib/i18n"
+import { fmtClock, fmtDate, fmtDateTime } from "@/lib/format"
+import { type MsgKey, statusText, type T, useT } from "@/lib/i18n"
 import { type Locale, useLocale } from "@/lib/prefs"
 import type { AllowedCommand, StaffQuoteOption } from "@/lib/types"
 
@@ -84,6 +90,40 @@ export function SlaChip({ dueAt, startAt, breached, done, className }: { dueAt: 
   return <StatusChip tone={s.tone} className={cn(locale === "fa" ? "font-fa" : "num", "max-sm:whitespace-normal", className)} icon={<SlaRing frac={s.frac} className="size-3.5" />}>{text}</StatusChip>
 }
 
+const TONE_TEXT = { danger: "text-danger", warn: "text-orange-700", neutral: "text-royal", ok: "text-success" } as const
+
+/**
+ * The SLA as a ring that fills as the first-contact window is used up, with the time left (or overdue) in the middle.
+ * Text is always present beside it; colour only reinforces (overdue = danger). Drawn from the same slaState as the chip.
+ */
+export function SlaGauge({ dueAt, startAt, breached, firstContactAt, className }: { dueAt: string | null | undefined; startAt?: string | null; breached?: boolean; firstContactAt?: string | null; className?: string }) {
+  const t = useT()
+  const [locale] = useLocale()
+  const now = useNow() || Date.now()
+  const size = 84, r = 36, c = 2 * Math.PI * r
+  const state = firstContactAt ? ({ tone: "ok", used: 1, late: false, diff: 0 } as const) : dueAt ? (() => { const s = slaState(dueAt, startAt, breached, now); return { tone: s.tone, used: s.late ? 1 : Number.isFinite(s.frac) ? 1 - s.frac : 0, late: s.late, diff: s.diff } })() : null
+  const tone = state?.tone ?? "neutral"
+  const text = !state ? t("sla.none") : firstContactAt ? t("case.sla.made", { at: fmtDateTime(firstContactAt) }) : state.late ? t("sla.breached", { t: duration(state.diff, t, locale) }) : t("time.in", { t: duration(state.diff, t, locale) })
+  return (
+    <div className={cn("flex items-center gap-3", className)} data-testid="sla-gauge" data-tone={tone}>
+      <div className={cn("relative shrink-0", TONE_TEXT[tone])} style={{ width: size, height: size }}>
+        <svg viewBox="0 0 84 84" aria-hidden className="size-full -rotate-90 rtl:-scale-x-100">
+          <circle cx="42" cy="42" r={r} fill="none" stroke="currentColor" strokeOpacity="0.18" strokeWidth="6" />
+          {state && <circle cx="42" cy="42" r={r} fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${Math.max(0.02, Math.min(1, state.used)) * c} ${c}`} className="ring-in" />}
+        </svg>
+        <div className="absolute inset-0 grid place-items-center text-center">
+          {firstContactAt ? <Check className="size-7" aria-hidden /> : state ? <span className={cn("num px-2 text-meta leading-tight font-semibold", locale === "fa" ? "font-fa" : "")}>{duration(state.diff, t, locale)}</span> : <Minus className="size-6 text-steel" aria-hidden />}
+        </div>
+      </div>
+      <div className="min-w-0">
+        <p className="cap">{t("case.sla.title")}</p>
+        <p className={cn("font-semibold", state?.late ? "text-danger" : "text-ink", locale === "fa" ? "font-fa" : "num")}>{text}</p>
+        {dueAt && !firstContactAt && <p className="text-meta text-steel">{t("case.firstContact.due")} <span className="num">{fmtDateTime(dueAt)}</span></p>}
+      </div>
+    </div>
+  )
+}
+
 /* ---------- status ---------- */
 const OK = new Set(["ACCEPTED", "RESERVED", "TICKETED", "COMPLETED", "DELIVERED", "BOOKED", "VERIFIED", "RELEASED", "ALLOWED", "ACTIVE", "CONFIRMED", "PAID", "PUBLISHED", "CLEAR"])
 const WARN = new Set(["NEW", "SUBMITTED", "AWAITING_CUSTOMER", "REVIEW", "PENDING_APPROVAL", "CORRECTION_REQUIRED", "ESCALATED", "HELD", "RECORDED", "IN_TRANSIT"])
@@ -93,7 +133,58 @@ export const statusTone = (status: string): "ok" | "warn" | "danger" | "info" | 
 
 /** Workflow status as a chip. The DOM text is the status itself (tests and screen readers); CSS only softens the casing. */
 export function StateChip({ value, className }: { value: string; className?: string }) {
-  return <StatusChip tone={statusTone(value)} className={className}><span className="inline-block lowercase first-letter:uppercase">{value.replace(/_/g, " ")}</span></StatusChip>
+  const t = useT()
+  return <StatusChip tone={statusTone(value)} className={className}><span className="inline-block lowercase first-letter:uppercase">{statusText(t, value)}</span></StatusChip>
+}
+
+const STEPS: { status: string; label: MsgKey }[] = [
+  { status: "NEW", label: "case.step.new" }, { status: "IN_REVIEW", label: "case.step.review" }, { status: "QUOTED", label: "case.step.quoted" }, { status: "ACCEPTED", label: "case.step.accepted" },
+  { status: "RESERVED", label: "case.step.reserved" }, { status: "TICKETED", label: "case.step.ticketed" }, { status: "COMPLETED", label: "case.step.completed" },
+]
+const ENDED = new Set(["DECLINED", "CANCELLED", "EXPIRED"])
+/** Where a flight request sits on the happy path. Waiting states stay on the step they interrupt; ended ones show no progress. */
+function stepOf(status: string): { index: number; tone: "ok" | "warn" | "danger" | "info"; note?: MsgKey } {
+  switch (status) {
+    case "SUBMITTED": return { index: 0, tone: "info" }
+    case "COMPLIANCE_HOLD": return { index: 0, tone: "danger", note: "case.step.hold" }
+    case "AWAITING_CUSTOMER": return { index: 1, tone: "warn", note: "case.step.awaiting" }
+    default: { const i = STEPS.findIndex((x) => x.status === status); return { index: i < 0 ? 0 : i, tone: i === STEPS.length - 1 ? "ok" : "info" } }
+  }
+}
+const STEP_TONE = { ok: "border-success bg-success text-white", warn: "border-orange bg-orange text-navy-950", danger: "border-danger bg-danger text-white", info: "border-royal bg-royal text-white" } as const
+
+/**
+ * Horizontal workflow progress. Labels are positioned under their dot (absolutely, so a long label never changes the
+ * spacing); every label shows from sm up, on phones only the current one, so seven steps fit 360 px. The first and last
+ * labels align to the row's edges instead of centring, so they cannot spill past the page margin.
+ */
+export function StatusStepper({ status, className }: { status: string; className?: string }) {
+  const t = useT()
+  const ended = ENDED.has(status)
+  const cur = stepOf(status)
+  const last = STEPS.length - 1
+  return (
+    <ol aria-label={t("case.steps")} className={cn("flex items-start pb-12", className)} data-testid="status-stepper">
+      {STEPS.map((x, i) => {
+        const done = !ended && i < cur.index, here = !ended && i === cur.index
+        return (
+          <li key={x.status} aria-current={here ? "step" : undefined} className={cn("flex items-start", i < last && "flex-1")}>
+            <span className="relative block size-6 shrink-0">
+              <span className={cn("grid size-6 place-items-center rounded-full border-2 text-2xs font-bold", done ? "border-royal bg-royal text-white" : here ? STEP_TONE[cur.tone] : "border-rule-strong bg-surface-raised text-steel")}>
+                {done ? <Check className="size-3.5" aria-hidden /> : <span className="num">{i + 1}</span>}
+              </span>
+              {here && cur.tone !== "ok" && <span aria-hidden className="absolute -inset-1 rounded-full ring-2 ring-current opacity-30" />}
+              <span className={cn("absolute top-full mt-1.5 w-max max-w-[7.5rem] text-caption leading-tight", i === 0 ? "start-0 text-start" : i === last ? "end-0 text-end" : "left-1/2 -translate-x-1/2 text-center", here ? "font-semibold text-ink" : "text-steel max-sm:sr-only")}>
+                {t(x.label)}{here && cur.note && <span className="block font-normal text-steel">{t(cur.note)}</span>}
+              </span>
+            </span>
+            {i < last && <span aria-hidden className={cn("mx-1.5 mt-[0.7rem] h-0.5 min-w-2 flex-1 rounded-full", done ? "bg-royal/70" : "bg-rule-strong")} />}
+          </li>
+        )
+      })}
+      {ended && <li className="ms-3 flex shrink-0 items-center self-start"><StateChip value={status} /></li>}
+    </ol>
+  )
 }
 
 /* ---------- truth (known / not included / UNKNOWN) ---------- */
@@ -119,8 +210,23 @@ export function tallyOptions(options: Pick<StaffQuoteOption, "baggage" | "condit
   return out
 }
 
-export function TruthTally({ tally, className, compact }: { tally: Tally; className?: string; compact?: boolean }) {
+const BADGE = {
+  ok: "border-success-border bg-success-subtle text-success-subtle-fg", neutral: "border-rule-strong bg-surface-sunk text-steel", danger: "border-danger/40 bg-danger-subtle text-danger",
+} as const
+
+export function TruthTally({ tally, className, compact, badges }: { tally: Tally; className?: string; compact?: boolean; badges?: boolean }) {
   const t = useT()
+  if (badges) {
+    // Tri-state badges: icon + word + count, so known / not included / UNKNOWN never rely on colour. UNKNOWN > 0 is the loud one.
+    const badge = (k: MsgKey, n: number, tone: keyof typeof BADGE, icon: React.ReactNode) => (
+      <div className={cn("inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-meta", BADGE[tone])}><span aria-hidden className="[&_svg]:size-3.5">{icon}</span><dt className="font-medium">{t(k)}</dt><dd className="num font-bold">{n}</dd></div>
+    )
+    return (
+      <dl className={cn("flex flex-wrap gap-1.5", className)} data-testid="truth-tally">
+        {badge("case.truth.known", tally.known, "ok", <Check />)}{badge("case.truth.notIncluded", tally.notIncluded, "neutral", <Minus />)}{badge("case.truth.unknown", tally.unknown, tally.unknown > 0 ? "danger" : "neutral", <CircleHelp />)}
+      </dl>
+    )
+  }
   if (compact) {
     const item = (k: MsgKey, n: number, bad?: boolean) => <div className="flex items-baseline gap-1"><dt className="text-steel">{t(k)}</dt><dd className={cn("num font-semibold", bad ? "text-danger" : "text-ink")}>{n}</dd></div>
     return (
@@ -166,6 +272,36 @@ export const SummaryItem = ({ label, children, className }: { label: React.React
 // Presentation order only: which allowed command is the usual next step. Whether a command is allowed is the server's call.
 const NEXT_STEP = ["claim", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "receive", "record_booking", "request_info", "assign"]
 const COOL = new Set(["cancel", "decline", "close", "reject"])
+/** Commands that end the case: kept out of the main row, in an overflow menu with destructive styling (they still open their confirm dialog). */
+export const DESTRUCTIVE = new Set(["cancel", "decline"])
+export const pickPrimary = (allowed: AllowedCommand[]) => NEXT_STEP.map((c) => allowed.find((a) => a.command === c)).find(Boolean) ?? allowed.find((a) => !COOL.has(a.command))
+export const commandLabelOf = (c: string, locale: Locale) => (locale === "fa" ? COMMAND_LABEL_FA[c] : undefined) ?? COMMAND_LABEL[c] ?? c
+
+/**
+ * Overflow menu for commands. Allowed destructive ones are grouped at the bottom in destructive colour; disabled items
+ * carry the server's reason. Choosing one calls onRun, which opens the same confirm dialog as a button would.
+ */
+export function ActionMenu({ items, onRun, className }: { items: AllowedCommand[]; onRun: (command: string) => void; className?: string }) {
+  const t = useT()
+  const [locale] = useLocale()
+  if (!items.length) return null
+  const danger = items.filter((a) => DESTRUCTIVE.has(a.command)), rest = items.filter((a) => !DESTRUCTIVE.has(a.command))
+  const row = (a: AllowedCommand) => (
+    <DropdownMenuItem key={a.command} variant={DESTRUCTIVE.has(a.command) ? "destructive" : "default"} disabled={!a.allowed} onClick={() => onRun(a.command)} data-command={a.command} className="min-h-9 flex-wrap pointer-coarse:min-h-11">
+      <span>{commandLabelOf(a.command, locale)}</span>{!a.allowed && a.reason && <span className="basis-full text-caption font-normal text-steel">{a.reason}</span>}
+    </DropdownMenuItem>
+  )
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger aria-label={t("case.more")} data-testid="actions-more" className={cn("inline-flex size-control shrink-0 items-center justify-center rounded-lg border border-control bg-surface-raised text-ink hover:bg-hover pointer-coarse:size-11 data-popup-open:bg-hover", className)}><Ellipsis className="size-4" aria-hidden /></DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-auto min-w-56 max-w-[min(20rem,calc(100vw-2rem))]">
+        {rest.map(row)}
+        {danger.length > 0 && rest.length > 0 && <DropdownMenuSeparator />}
+        {danger.length > 0 && <DropdownMenuGroup><DropdownMenuLabel className="text-danger">{t("case.cmd.danger")}</DropdownMenuLabel>{danger.map(row)}</DropdownMenuGroup>}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 /**
  * Commands as the server computed them. The first allowed next step is solid, other allowed ones are outlined, and the
@@ -177,9 +313,9 @@ export function CommandBar({ actions, onRun, none, hint }: { actions: AllowedCom
   const [open, setOpen] = useState(false)
   const id = useId()
   useEffect(() => { try { if (localStorage.getItem("ut-cmd-more") === "1") setOpen(true) } catch { /* storage blocked: stay collapsed */ } }, [])
-  const label = (c: string) => (locale === "fa" ? COMMAND_LABEL_FA[c] : undefined) ?? COMMAND_LABEL[c] ?? c
+  const label = (c: string) => commandLabelOf(c, locale)
   const allowed = actions.filter((a) => a.allowed), blocked = actions.filter((a) => !a.allowed)
-  const primary = NEXT_STEP.map((c) => allowed.find((a) => a.command === c)).find(Boolean) ?? allowed.find((a) => !COOL.has(a.command))
+  const primary = pickPrimary(allowed)
   return (
     <div>
       <div role="group" aria-label={t("case.actions")} className="flex flex-wrap items-center gap-2">
@@ -241,6 +377,33 @@ export function CaseTabs<K extends string>({ tabs, value, onChange, label }: { t
     </div>
   )
 }
+/**
+ * Tabs inside a card, at every width (CaseTabs is the phone/tablet switcher over whole columns). Panels stay mounted and
+ * are hidden by the caller (`hidden={value !== key}`) so a half-written note survives a tab change. Ids: `{id}-tab-{key}`, `{id}-pane-{key}`.
+ */
+export function PanelTabs<K extends string>({ id, tabs, value, onChange, label }: { id: string; tabs: { key: K; label: string; count?: number }[]; value: K; onChange: (k: K) => void; label: string }) {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const i = tabs.findIndex((x) => x.key === value)
+    const rtl = document.documentElement.dir === "rtl"
+    const next = e.key === "ArrowRight" ? i + (rtl ? -1 : 1) : e.key === "ArrowLeft" ? i + (rtl ? 1 : -1) : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : null
+    if (next === null) return
+    e.preventDefault()
+    const to = tabs[(next + tabs.length) % tabs.length]!
+    onChange(to.key)
+    document.getElementById(`${id}-tab-${to.key}`)?.focus()
+  }
+  return (
+    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="-mt-1 flex gap-1 overflow-x-auto border-b border-rule">
+      {tabs.map((x) => (
+        <button key={x.key} type="button" role="tab" id={`${id}-tab-${x.key}`} aria-selected={value === x.key} aria-controls={`${id}-pane-${x.key}`} tabIndex={value === x.key ? 0 : -1} onClick={() => onChange(x.key)}
+          className={cn("-mb-px min-h-10 shrink-0 border-b-2 px-3 whitespace-nowrap transition-colors pointer-coarse:min-h-11", value === x.key ? "border-[var(--indicator)] font-semibold text-ink" : "border-transparent text-steel hover:text-ink")}>
+          {x.label}{x.count ? <span className="num ms-1.5 rounded-full bg-surface-sunk px-1.5 text-2xs leading-5 text-steel ring-1 ring-rule">{x.count}</span> : null}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /** Class for a column that is a tab pane on phones/tablets and always shown at lg. */
 export const paneClass = <K extends string>(current: K, key: K) => cn(current === key ? "block" : "hidden", "lg:block")
 export const paneProps = (key: string) => ({ id: `pane-${key}`, role: "tabpanel" as const, "aria-labelledby": `tab-${key}` })
@@ -248,22 +411,20 @@ export const paneProps = (key: string) => ({ id: `pane-${key}`, role: "tabpanel"
 /* ---------- timeline ---------- */
 export interface TimelineItem { id: string | number; at: string; title: React.ReactNode; detail?: React.ReactNode; meta?: React.ReactNode; tone?: "strong" | "accent" | "muted" | "danger" }
 const DOT = { strong: "bg-ink", accent: "bg-orange", muted: "bg-steel", danger: "bg-danger" } as const
-const day = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" })
-const clock = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" })
 
 export function Timeline({ items, className, ...rest }: { items: TimelineItem[] } & Omit<React.ComponentProps<"ol">, "children">) {
   let last = ""
   return (
     <ol className={cn("text-body", className)} {...rest}>
       {items.map((i) => {
-        const d = day.format(new Date(i.at))
+        const d = fmtDate(i.at)
         const head = d !== last
         last = d
         return (
           <li key={i.id} className="relative ps-5 pb-3 before:absolute before:inset-y-0 before:start-[4.5px] before:w-px before:bg-rule-strong last:before:bottom-auto last:before:h-3">
             {head && <p className="cap pb-1">{d}</p>}
             <span aria-hidden className={cn("absolute start-0 size-2.5 rounded-full ring-2 ring-surface-raised", DOT[i.tone ?? "muted"], head ? "top-6" : "top-1.5")} />
-            <p><span className="num text-caption text-steel">{clock.format(new Date(i.at))}</span> <span className={i.tone === "strong" ? "font-medium" : ""}>{i.title}</span>{i.meta && <span className="text-steel"> · {i.meta}</span>}</p>
+            <p><span className="num text-caption text-steel">{fmtClock(i.at)}</span> <span className={i.tone === "strong" ? "font-medium" : ""}>{i.title}</span>{i.meta && <span className="text-steel"> · {i.meta}</span>}</p>
             {i.detail && <p className="text-steel" dir="auto">{i.detail}</p>}
           </li>
         )

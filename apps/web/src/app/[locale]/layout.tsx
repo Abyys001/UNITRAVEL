@@ -9,6 +9,7 @@ import { Toaster } from "@unitravel/ui/components/sonner"
 
 import { Footer, Header } from "@/components/shell"
 import { I18nProvider } from "@/lib/i18n"
+import { ActivityTracker } from "@/components/activity-tracker"
 import { Providers } from "@/lib/session"
 
 import { jetbrains, montserrat, vazirmatn } from "../fonts"
@@ -24,6 +25,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
       <body className="min-h-dvh flex flex-col" nonce={nonce}>
         <I18nProvider locale={locale as Locale}>
           <Providers>
+            <ActivityTracker />
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />

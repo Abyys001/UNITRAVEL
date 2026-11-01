@@ -10,7 +10,7 @@ import '../../models/search.dart';
 import '../../ui/widgets.dart';
 
 /// Bottom sheet with type-ahead over `GET /v1/locations?q=` (EN or FA names).
-Future<Place?> pickPlace(BuildContext context) => showModalBottomSheet<Place>(
+Future<Place?> pickPlace(BuildContext context) => showGlassSheet<Place>(
   context: context,
   isScrollControlled: true,
   useSafeArea: true,

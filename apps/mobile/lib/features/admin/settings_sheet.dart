@@ -6,8 +6,12 @@ import '../../ui/bento.dart';
 import '../../ui/widgets.dart';
 
 /// Admin settings: appearance (light / dark / system, persisted) and language.
-Future<void> showAdminSettings(BuildContext context) =>
-    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _SettingsSheet());
+Future<void> showAdminSettings(BuildContext context) => showGlassSheet<void>(
+  context: context,
+  isScrollControlled: true,
+  useSafeArea: true,
+  builder: (_) => const _SettingsSheet(),
+);
 
 class _SettingsSheet extends ConsumerWidget {
   const _SettingsSheet();

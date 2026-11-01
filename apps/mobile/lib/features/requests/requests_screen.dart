@@ -43,7 +43,10 @@ class RequestsScreen extends ConsumerWidget {
                       : RefreshIndicator(
                           onRefresh: () async => ref.refresh(requestsProvider.future),
                           child: ListView.separated(
-                            padding: const EdgeInsets.all(16),
+                            padding: navInset(
+                              context,
+                              const EdgeInsets.all(16),
+                            ),
                             itemCount: items.length,
                             separatorBuilder: (_, _) => const SizedBox(height: 12),
                             itemBuilder: (context, i) => RequestTile(item: items[i]),

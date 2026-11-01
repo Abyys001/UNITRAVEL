@@ -6,7 +6,7 @@ const shots = "../../docs/screens/web"
 
 test("home renders the honest route promise @mobile", async ({ page }, info) => {
   await page.goto("/en")
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Real routes out of Iran")
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Every route out of Iran")
   await expect(page.getByRole("button", { name: "Search flights" })).toBeVisible()
   await page.screenshot({ path: `${shots}/home-${info.project.name}.png`, fullPage: true })
 })

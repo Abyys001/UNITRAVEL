@@ -5,10 +5,11 @@ import { FileText, ReceiptText } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
-import type { BillingDocuments } from "@unitravel/contracts"
+import type { BillingDocuments, PurchasableItem } from "@unitravel/contracts"
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Ltr } from "@/components/badges"
+import { PanelShell } from "@/components/customer-panel"
 import { InvoiceStatus } from "@/components/invoice-status"
 import { api } from "@/lib/api"
 import { download } from "@/lib/documents"
@@ -20,13 +21,27 @@ export default function BillingPage() {
   const { t, href, date, money, sep } = useI18n()
   const { me } = useRequireSignIn()
   const q = useQuery({ queryKey: ["billing"], queryFn: () => api<BillingDocuments>("/v1/billing/documents"), enabled: !!me, refetchInterval: 30_000 })
+  const buy = useQuery({ queryKey: ["billing", "purchasable"], queryFn: () => api<PurchasableItem[]>("/v1/billing/purchasable"), enabled: !!me, refetchInterval: 30_000 })
   const open = (id: string) => download(id).catch(() => toast.error(t("billing.openFailed")))
   const quotations = q.data?.quotations ?? []
   const invoices = q.data?.invoices ?? []
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 md:py-10">
-      <h1 className="font-display text-3xl md:text-4xl">{t("billing.title")}</h1>
-      <p className="mt-1 text-steel">{t("billing.lead")}</p>
+    <PanelShell title={t("billing.title")} lead={t("billing.lead")}>
+      {!!buy.data?.length && (
+        <section className="mt-8" aria-labelledby="buy-h" data-testid="purchasable">
+          <h2 id="buy-h" className="font-display text-xl">{t("billing.available")}</h2>
+          <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+            {buy.data.map((x) => (
+              <li key={`${x.kind}:${x.number}`} className="card-brand flex flex-col gap-3 border-s-4 !border-s-orange p-4">
+                <div><p className="font-display text-lg" dir="auto">{x.title}</p><p className="text-xs text-steel"><Ltr className="font-mono">{x.number}</Ltr>{sep}<Ltr className="font-mono">{x.requestRef}</Ltr></p></div>
+                <p className="font-display text-2xl">{money(x.amount)}</p>
+                <p className="text-xs text-steel">{t("billing.dueBy", { date: date(x.dueAt, { withTime: true }) })}</p>
+                <Link href={href(x.action === "PAY" ? `/billing/${x.number}` : x.productType === "FLIGHT" ? `/requests/${x.requestRef}` : x.productType === "CARGO" ? `/cargo/${x.requestRef}` : `/services/${x.requestRef}`)} className="btn-orange mt-auto w-fit">{x.action === "PAY" ? t("billing.reviewPay") : t("billing.reviewQuote")}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {q.isLoading && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
 
       <section className="mt-8" aria-labelledby="invoices-h">
@@ -65,6 +80,6 @@ export default function BillingPage() {
           ))}
         </ul>
       </section>
-    </div>
+    </PanelShell>
   )
 }

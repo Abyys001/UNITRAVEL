@@ -171,7 +171,10 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
                     onRefresh: _reload,
                     child: ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      padding: navInset(
+                        context,
+                        const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      ),
                       itemCount: shown.length + 1,
                       separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, i) => i == 0

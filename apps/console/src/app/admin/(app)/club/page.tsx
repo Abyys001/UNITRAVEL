@@ -16,7 +16,7 @@ import { ListSkeleton, TableScroll } from "@/components/case"
 import { Chip, ClubOffNotice, clubError, credit, MEMBER_STATUSES, useClubLabels, useMembers, useRefresh, useTiers } from "@/components/club"
 import { Chips, ListCard, ListPage, Pager, tableClass, Toolbar, usePaged } from "@/components/data-list"
 import { FormDialog } from "@/components/form-dialog"
-import { Field, PageHead } from "@/components/ui"
+import { Arrow, Field, PageHead } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDate } from "@/lib/format"
 import { useSession } from "@/lib/session"
@@ -42,7 +42,7 @@ export default function ClubMembers() {
         {can("loyalty.manage") && <Button size="sm" onClick={() => setAdding(true)} disabled={!tiers.data?.some((x) => x.active)} data-testid="club-add-member"><UserPlus aria-hidden />{t("club.add")}</Button>}
       </PageHead>
       <ClubOffNotice />
-      {tiers.data && !tiers.data.length && <p className="mx-4 mb-3 text-meta text-steel md:mx-6">{t("club.tiers.none")} <Link href="/club/tiers" className="font-medium text-link hover:underline">{t("nav.clubTiers")} →</Link></p>}
+      {tiers.data && !tiers.data.length && <p className="mx-4 mb-3 text-meta text-steel md:mx-6">{t("club.tiers.none")} <Link href="/club/tiers" className="font-medium text-link hover:underline">{t("nav.clubTiers")} <Arrow /></Link></p>}
       <Toolbar query={search} onQuery={setSearch} placeholder={t("club.members.search")} count={q.data ? rows.length : undefined}>
         <Chips label={t("pg.c.status")} value={status} options={[...MEMBER_STATUSES.map((s) => ({ value: s, label: L.memberStatus(s) })), { value: "" as const, label: t("pg.all") }]} onChange={setStatus} />
         <label className="w-full sm:w-48">

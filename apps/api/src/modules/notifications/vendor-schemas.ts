@@ -12,6 +12,16 @@ export const VENDOR_CREDENTIAL_SCHEMAS = {
   "push:expo": z.strictObject({ accessToken: secret }),
   "push:pushy": z.strictObject({ secretApiKey: secret }),
   "email:brevo": z.strictObject({ smtpUser: secret, smtpKey: secret }),
+  /** ADR-0020: any SMTP relay. Values arrive as strings from the Developer Panel, so the port and the TLS switch are strings here. */
+  "email:smtp": z.strictObject({
+    host: z.string().min(3).max(253).regex(/^[A-Za-z0-9.-]+$/, "A host name such as smtp.example.com"),
+    port: z.string().regex(/^\d{2,5}$/, "A port number such as 587"),
+    user: secret, pass: secret,
+    secure: z.enum(["true", "false"]).optional(),
+    from: z.string().max(254).optional(),
+  }),
+  /** ADR-0019: Bonline call tracking. The webhook secret signs incoming call events; the API fields stay empty until Bonline's documentation is supplied (UNKNOWN). */
+  "telephony:bonline": z.strictObject({ webhookSecret: z.string().min(16).max(4096), apiKey: optionalSecret, baseUrl: z.string().url().startsWith("https://").optional() }),
 } as const
 
 export type VendorId = keyof typeof VENDOR_CREDENTIAL_SCHEMAS

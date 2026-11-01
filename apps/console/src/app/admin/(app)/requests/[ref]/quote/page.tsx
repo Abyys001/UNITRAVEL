@@ -15,7 +15,7 @@ import { SliceView } from "@/components/flight/itinerary"
 import { badAmounts, type DraftOption, fromInput, fromItinerary, toInput, unknowns } from "@/components/quote/model"
 import { OptionEditor } from "@/components/quote/option-editor"
 import { ListSkeleton, SummaryItem } from "@/components/case"
-import { ErrorLine, Field, Loading, PageHead, Tag } from "@/components/ui"
+import { ErrorLine, Field, Loading, PageHead, RouteText, Tag } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime, money } from "@/lib/format"
 import { useT } from "@/lib/i18n"
@@ -107,7 +107,7 @@ function Builder() {
 
   return (
     <div>
-      <PageHead kicker={<><Link href={`/requests/${ref}`} className="ref hover:underline">{ref}</Link> · {d.routeLabel} · {d.customer.preferredLocale === "fa" ? "customer reads Persian" : "customer reads English"}</>} title={w.quoteId ? "Quote draft" : "New quote"}>
+      <PageHead kicker={<><Link href={`/requests/${ref}`} className="ref hover:underline">{ref}</Link> · <RouteText>{d.routeLabel}</RouteText> · {d.customer.preferredLocale === "fa" ? "customer reads Persian" : "customer reads English"}</>} title={w.quoteId ? "Quote draft" : "New quote"}>
         <Button size="sm" variant="outline" onClick={() => void addSnapshot()} disabled={!d.snapshot || w.options.length >= 5 || !can("pricing.read.internal")}>+ From snapshot</Button>
         <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`/search?ref=${ref}`} />} disabled={w.options.length >= 5}>+ From staff search</Button>
         <Button size="sm" variant="outline" onClick={addManual} disabled={w.options.length >= 5}>+ Manual entry</Button>
@@ -136,12 +136,12 @@ function Builder() {
         {preview && w.options.length > 0 && (
           <section className="rounded-md border-2 border-ink bg-surface-raised p-4" data-testid="quote-preview" aria-label="Customer preview">
             <p className="cap">Customer preview · as the customer will see it{d.customer.preferredLocale === "fa" ? " (shown here in English; the customer app renders Persian labels)" : ""}</p>
-            <p className="mt-1 font-display text-xl">Your options for {d.routeLabel}</p>
+            <p className="mt-1 font-display text-xl">Your options for <RouteText>{d.routeLabel}</RouteText></p>
             <p className="text-steel">Valid until {w.validUntil ? fmtDateTime(new Date(w.validUntil).toISOString()) : "24 hours after sending"}. Prices are not held until you accept and we reserve.</p>
             <ol className="mt-3 grid gap-3 md:grid-cols-2">
               {w.options.map((o) => { const inp = toInput(o, w.currency); return (
                 <li key={o.key} className="rounded-md border border-rule bg-surface-raised p-3">
-                  <p className="flex justify-between font-medium"><span>{o.label}</span><span className="num">{money(inp.priceBreakdown.total)}</span></p>
+                  <p className="flex justify-between font-medium"><span><RouteText>{o.label}</RouteText></span><span className="num">{money(inp.priceBreakdown.total)}</span></p>
                   {o.ticketingModel === "SEPARATE_TICKETS" && <p className="font-mono text-2xs text-danger">SEPARATE TICKETS</p>}
                   <div className="mt-1 space-y-1">{o.slices.map((s, i) => <SliceView key={i} slice={s} />)}</div>
                   <p className="mt-1 text-meta text-steel">Baggage: {inp.baggage.map((b) => (b.checked.status === "KNOWN" ? (b.checked.value.pieces ? `${b.checked.value.pieces}×${b.checked.value.kgPerPiece ?? "?"} kg` : "none") : "to be confirmed")).join(" · ")} · Change: {o.conditions.change.status === "KNOWN" ? (o.conditions.change.value.allowed ? (o.conditions.change.value.penalty ? `fee ${money(o.conditions.change.value.penalty)}` : "free") : "not allowed") : "to be confirmed"} · Refund: {o.conditions.refund.status === "KNOWN" ? (o.conditions.refund.value.allowed ? (o.conditions.refund.value.penalty ? `fee ${money(o.conditions.refund.value.penalty)}` : "free") : "not allowed") : "to be confirmed"}</p>

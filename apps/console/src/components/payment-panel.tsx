@@ -7,10 +7,12 @@ import { REFUND_REASONS, type StaffInvoice, type StaffInvoicePayments } from "@u
 import { Button } from "@unitravel/ui/components/button"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { StateChip } from "@/components/case"
+import { codeLabel } from "@/components/club"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
-import { Field, Tag, useAct } from "@/components/ui"
+import { Arrow, Field, useAct } from "@/components/ui"
 import { api } from "@/lib/api"
-import { fmtDateTime, human, money } from "@/lib/format"
+import { fmtDateTime, money } from "@/lib/format"
 import { useT } from "@/lib/i18n"
 import type { PaymentRecordingState } from "@/lib/types"
 import { useSession } from "@/lib/session"
@@ -42,15 +44,15 @@ export function PaymentPanel({ invoice }: { invoice: StaffInvoice }) {
         <p data-testid="online-state">{d.online.offered ? t("pay.offered") : t("pay.notOffered", { why: d.online.reasons.map((r) => t(`pay.reason.${r}` as never)).join(", ") })}</p>
       )}
       {nothing && <p className="text-steel">{t("pay.none")}</p>}
-      {d.sessions.length > 0 && <p className="text-steel">{t("pay.sessions")}: {d.sessions.map((s) => <Tag key={s.id} value={s.status} title={`${s.provider} · ${fmtDateTime(s.createdAt)}`} className="me-1" />)}</p>}
+      {d.sessions.length > 0 && <p className="text-steel">{t("pay.sessions")}: {d.sessions.map((s) => <span key={s.id} title={`${s.provider} · ${fmtDateTime(s.createdAt)}`} className="me-1 inline-block"><StateChip value={s.status} /></span>)}</p>}
       {d.payments.map((p) => (
-        <p key={p.id} className="flex justify-between gap-2" data-testid="payment-item"><span>{human(p.method)} <Tag value={p.status} /> <span className="num text-steel">{p.providerRef ?? ""}</span></span><span className="num">{money(p.amount)}{p.refunded && p.refunded.amountMinor > 0 && <span className="text-steel"> · {money(p.refunded)} {t("pay.refund.refunded")}</span>}</span></p>
+        <p key={p.id} className="flex justify-between gap-2" data-testid="payment-item"><span>{codeLabel(t, "pay.method", p.method)} <StateChip value={p.status} /> <span className="num text-steel">{p.providerRef ?? ""}</span></span><span className="num">{money(p.amount)}{p.refunded && p.refunded.amountMinor > 0 && <span className="text-steel"> · {money(p.refunded)} {t("pay.refund.refunded")}</span>}</span></p>
       ))}
       {d.refunds.length > 0 && <p className="font-semibold">{t("pay.refunds")}</p>}
       {d.refunds.map((r) => (
         <div key={r.id} className="space-y-0.5" data-testid="refund-item">
-          <p className="flex items-center justify-between gap-2"><span><Tag value={r.status} /> {human(r.reasonCode)}</span><span className="num">{money(r.amount)}</span></p>
-          <p className="text-steel">{r.requestedBy}{r.approvedBy && <> → {r.approvedBy}</>}{r.failure && <> · {r.failure}</>}</p>
+          <p className="flex items-center justify-between gap-2"><span><StateChip value={r.status} /> {codeLabel(t, "invp.reason", r.reasonCode)}</span><span className="num">{money(r.amount)}</span></p>
+          <p className="text-steel">{r.requestedBy}{r.approvedBy && <> <Arrow /> {r.approvedBy}</>}{r.failure && <> · {r.failure}</>}</p>
           {r.status === "PENDING_APPROVAL" && can("payment.refund.approve") && (
             <div className="flex gap-1.5"><Button size="xs" loading={approve.isPending && approve.variables === r.id} onClick={() => approve.mutate(r.id)} data-command="approve_refund">{t("pay.refund.approve")}</Button><Button size="xs" variant="outline" onClick={() => { setRejecting(r.id); setWhy(""); dlg.open("reject") }} data-command="reject_refund">{t("pay.refund.reject")}</Button></div>
           )}
@@ -69,7 +71,7 @@ export function PaymentPanel({ invoice }: { invoice: StaffInvoice }) {
           await q.refetch()
         }}>
         <Field label={t("pay.refund.amount")}><input className="field-input num" inputMode="decimal" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} data-testid="refund-amount" /></Field>
-        <Field label={t("pay.refund.reason")}><NativeSelect className="field-input" value={f.reasonCode} onChange={(e) => setF({ ...f, reasonCode: e.target.value })}>{REFUND_REASONS.map((r) => <option key={r} value={r}>{human(r)}</option>)}</NativeSelect></Field>
+        <Field label={t("pay.refund.reason")}><NativeSelect className="field-input" value={f.reasonCode} onChange={(e) => setF({ ...f, reasonCode: e.target.value })}>{REFUND_REASONS.map((r) => <option key={r} value={r}>{codeLabel(t, "invp.reason", r)}</option>)}</NativeSelect></Field>
         <Field label={t("pay.refund.note")}><textarea className="field-input" rows={2} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} required={f.reasonCode === "OTHER"} /></Field>
       </FormDialog>
       <FormDialog {...dlg.bind("reject")} testId="dlg-reject-refund" title={t("pay.refund.reject")} submitLabel={t("pay.refund.reject")} destructive
@@ -85,7 +87,8 @@ export function PaymentPanel({ invoice }: { invoice: StaffInvoice }) {
  * the reason is shown instead of a button that ends in a 409 (ADR-0008 W8).
  */
 export function RecordPaymentTrigger({ state, onOpen }: { state?: PaymentRecordingState; onOpen: () => void }) {
+  const t = useT()
   if (!state) return null
-  if (state.allowed) return <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={onOpen} data-command="record_payment">Record payment</button>
-  return <span className="max-w-56 text-end text-caption text-steel" title={state.reason} data-command="record_payment" aria-disabled="true">Record payment unavailable{state.reason ? `: ${state.reason}` : ""}</span>
+  if (state.allowed) return <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={onOpen} data-command="record_payment">{t("pay.record")}</button>
+  return <span className="max-w-56 text-end text-caption text-steel" title={state.reason} data-command="record_payment" aria-disabled="true">{t("pay.record.unavailable")}{state.reason ? `: ${state.reason}` : ""}</span>
 }

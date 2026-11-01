@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Param, Post, Query } from "@nestjs/com
 import { ApiTags } from "@nestjs/swagger"
 import { z } from "zod"
 
-import { CreateServiceRequestBody, CustomerServiceRequestView, MessageBody, ServiceCancelBody, ServiceRequestListQuery, ServiceRequestSummary, ServiceTransitionBody, StaffServiceRequestPage, StaffServiceRequestView } from "@unitravel/contracts"
+import { AssignmentResult, AssignServiceBody, CreateServiceRequestBody, CustomerServiceRequestView, MessageBody, ServiceCancelBody, ServiceRequestListQuery, ServiceRequestSummary, ServiceTransitionBody, StaffServiceRequestPage, StaffServiceRequestView } from "@unitravel/contracts"
 
 import { type Actor, Ctx, CurrentActor, Idempotent, RateLimit, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
 import { ApiZodBody, ApiZodResponse, zbody } from "../../core/http/zod"
@@ -103,5 +103,24 @@ export class AdminServiceRequestsController {
   @ApiZodBody(MessageBody)
   message(@Param("ref") ref: string, @Body(zbody(MessageBody)) body: z.infer<typeof MessageBody>, @CurrentActor() actor: Actor) {
     return this.services.staffMessage(ref, actor, body.body, body.documentIds)
+  }
+}
+
+/** Staff put a service on a customer's account (ADR-0020): screened, claimed and quoted in one call; a hold or block is returned, not hidden. */
+@ApiTags("admin-service-requests")
+@Controller("v1/admin/customers")
+@StaffOnly()
+export class AdminAssignmentsController {
+  constructor(private readonly services: ServicesService) {}
+
+  @Post(":id/assignments")
+  @RequirePermission("service.assign")
+  @Idempotent()
+  @HttpCode(201)
+  @RateLimit({ name: "assignments", limit: 60, windowSeconds: 3600, key: "user" })
+  @ApiZodBody(AssignServiceBody)
+  @ApiZodResponse(201, AssignmentResult)
+  assign(@Param("id", zbody(z.uuid())) id: string, @Body(zbody(AssignServiceBody)) body: z.infer<typeof AssignServiceBody>, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.services.assign(id, body, actor, { requestId: ctx.id })
   }
 }

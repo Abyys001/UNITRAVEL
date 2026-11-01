@@ -3,12 +3,12 @@ import { ApiTags } from "@nestjs/swagger"
 import type { Request } from "express"
 import { z } from "zod"
 
-import { PaymentConfigPatchBody, RefundRejectBody, RefundRequestBody, StripeCredentialsBody, StripeModeRequestBody } from "@unitravel/contracts"
+import { PaymentConfigPatchBody, PaymentPageView, RefundRejectBody, RefundRequestBody, StripeCredentialsBody, StripeModeRequestBody } from "@unitravel/contracts"
 import { isLocal } from "../../core/env"
 
 import { AppError } from "../../core/errors"
 import { type Actor, CurrentActor, DevSurface, Public, RateLimit, RequirePermission, StaffOnly, StepUp } from "../../core/http/decorators"
-import { zbody } from "../../core/http/zod"
+import { ApiZodResponse, zbody } from "../../core/http/zod"
 import { InvoicesService } from "../invoices/invoices.service"
 import type { FakeEventKind } from "./fake-payment.adapter"
 import { PaymentConfigService } from "./payment-config.service"
@@ -22,6 +22,14 @@ const OWN = ["flight_request.read.own", "cargo_request.read.own"] as const
 @Controller("v1/billing/invoices")
 export class CustomerPaymentsController {
   constructor(private readonly payments: PaymentsService) {}
+
+  /** Everything the payment page shows: invoice, issuer, due date, lines, pay link or offline instructions, PDF link (ADR-0020). */
+  @Get(":number/payment-page")
+  @RequirePermission(...OWN)
+  @ApiZodResponse(200, PaymentPageView)
+  page(@Param("number") number: string, @CurrentActor() actor: Actor) {
+    return this.payments.paymentPage(number, actor)
+  }
 
   /** Read from our database. The return page uses this; a redirect from the provider is never proof of payment. */
   @Get(":number/payment")

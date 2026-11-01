@@ -72,7 +72,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Scaffold(
       body: PageBody(
         child: ListView(
-          padding: EdgeInsets.zero,
+          padding: navInset(context, EdgeInsets.zero),
           children: [
             RouteArcsHeader(
               height: 285,

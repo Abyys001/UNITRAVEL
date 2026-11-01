@@ -67,7 +67,10 @@ class _AdminSearchScreenState extends ConsumerState<AdminSearchScreen> {
                           data: (items) => items.isEmpty
                               ? EmptyState(title: l.adminSearchNone, iconName: 'search-x')
                               : ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                                  padding: navInset(
+                                    context,
+                                    const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                                  ),
                                   itemCount: items.length,
                                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                                   itemBuilder: (_, i) => CaseTile(item: items[i]),

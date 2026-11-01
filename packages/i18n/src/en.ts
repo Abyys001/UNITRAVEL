@@ -1,9 +1,11 @@
 export const en = {
   brand: { name: "Uni Travel", tagline: "Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people." },
+  faq: { search: "Search questions", expandAll: "Expand all", collapseAll: "Collapse all", noMatch: "No question matches your search. Ask our team on the support page." },
+  panel: { nav: "Your account", all: "All", open: "In progress", unread: "New messages", filter: "Filter requests", lead: "Everything you asked us for, in one place." },
   nav: { search: "Flights", cargo: "Send cargo", shipments: "Shipments", billing: "Documents & billing", requests: "My requests", inbox: "Inbox", account: "Account", signIn: "Sign in", signOut: "Sign out", language: "فارسی", help: "How it works", faq: "FAQ", blog: "Articles", card: "Travel card", destinations: "Destinations", glossary: "Glossary", travelRules: "Travel rules", flightGuide: "Buying guide", flights: "Flights", hotels: "Hotels", trains: "Trains", buses: "Buses", stays: "Villas & stays", visa: "Visa", tours: "Tours", cip: "Airport CIP", insurance: "Travel insurance", club: "Customer club", track: "Track a purchase", support: "Support", services: "Services", groupBook: "Book", groupServices: "Services", groupHelp: "Help" },
   home: {
     eyebrow: "Iran · Türkiye · Armenia · UK · Europe",
-    title: "Real routes out of Iran, assembled with care.",
+    title: "Every route out of Iran, arranged by people.",
     lead: "We search airline and agency systems for flights that actually exist today — including starts from Van, Erzurum and Yerevan — and a person calls you to arrange the rest.",
     honest: "October 2026: Turkish carriers have no Iran flights before March 2027, and Iranian airlines are not offered. We show what really flies.",
     stepsTitle: "How it works",
@@ -11,7 +13,7 @@ export const en = {
     step2: "Request", step2Body: "Pick an itinerary or ask our team. Requesting does not book a seat.",
     step3: "We call you", step3Body: "Our team confirms prices, baggage and entry rules, then sends options.",
     step4: "Ticketed", step4Body: "You pay when the ticket is issued. Tickets appear in your request.",
-    titleAccent: "Real routes",
+    titleAccent: "Every route",
     searchTab: "Flights", cargoTab: "Cargo",
     trustTitle: "Why travellers trust us",
     trust1: "Honest results", trust1Body: "Every price shows its source and age.",
@@ -96,6 +98,7 @@ export const en = {
     lastUpdate: "Latest update", noEvents: "Nothing scanned yet. Updates appear here as our partner reports them.", updated: "Updated", awb: "AWB",
   },
   billing: {
+    available: "Available to pay", dueBy: "Pay or accept by {date}", reviewPay: "Review and pay", reviewQuote: "Review quote", offlineTitle: "How to pay", billedTo: "Billed to", issuer: "Issued by", dueDate: "Due", currency: "Currency",
     title: "Documents & billing", lead: "Your quotations and invoices in one place. Documents are issued in English.", quotations: "Quotations", invoices: "Invoices",
     emptyQuotations: "No quotations yet. When we send you a quote it appears here.", emptyInvoices: "No invoices yet. When we issue one it appears here.",
     number: "Number", request: "Request", sent: "Sent", validUntil: "Valid until", total: "Total", issued: "Issued", expires: "Expires", paidOn: "Paid on", cancelledOn: "Cancelled on",
@@ -230,6 +233,16 @@ export const en = {
   support: {
     title: "Support", lead: "Our team answers in Persian and English.", phone: "Phone", email: "Email", hours: "Hours", soon: "Our contact details will appear here soon.",
     faq: "Read the frequently asked questions", message: "Write to us on your request page", myRequests: "Open my requests",
+    formTitle: "Write to us", formLead: "Tell us what you need. We reply by email or phone, whichever you give.", name: "Your name", emailField: "Email", phoneField: "Phone", topic: "Topic", requestRef: "Request reference", messageField: "Message", send: "Send message", sending: "Sending…",
+    needContact: "Give an email address or a phone number so we can answer.", sentTitle: "Message received", sentBody: "Your reference is {ref}. We will answer by the contact you gave.", another: "Send another",
+    ticketsTitle: "Your messages", noTickets: "No messages yet.", reply: "Reply", replyPlaceholder: "Write a reply…", closed: "This conversation is closed. Send a new message if you still need help.", back: "All messages", checking: "Checking…",
+    topics: { BOOKING: "Booking or request", PAYMENT: "Payment", DOCUMENTS: "Documents", VISA: "Visa", CARGO: "Cargo", ACCOUNT: "Account", FEEDBACK: "Feedback", OTHER: "Other" },
+    status: { OPEN: "Open", PENDING_CUSTOMER: "Waiting for you", RESOLVED: "Resolved", CLOSED: "Closed" },
+  },
+  listings: {
+    flightsTitle: "Flights", flightsLead: "Routes our live sources returned recently. Prices appear only on a quote from our team.", busesTitle: "Buses", trainsTitle: "Trains", staysTitle: "Villas & stays",
+    groundLead: "Routes and places our team handles. Details and prices are confirmed on your quote.", cached: "Seen {time}", sandbox: "Test data", indicative: "Indicative: confirmed on quote", quotedPrice: "Quoted price",
+    searchPlaceholder: "Filter by destination", empty: "Nothing listed right now.", emptyFlights: "No live flight source is switched on right now. Ask our team and we will search for you.", stops: "{n} stops", direct: "Direct", requestThis: "Request this", searchFlights: "Search flights", askTeam: "Ask our team", requestForm: "Or tell us what you need", validUntil: "Valid until {date}",
   },
   club: {
     signInPrompt: "Sign in to see your membership. Browsing this page needs no account.", signInCta: "Sign in",

@@ -109,21 +109,42 @@ class LtrText extends StatelessWidget {
 }
 
 /// Liquid glass pane (DESIGN.md "Glass"): blurs and saturates what is behind it, with a bright specular top edge.
-/// Falls back to an opaque surface when the platform asks for high contrast so text stays AA.
+/// Falls back to an opaque surface when the platform asks for high contrast or reduced motion (also the low-end
+/// proxy: battery saver and "remove animations" set it), so text stays AA and weak GPUs skip the blur.
+bool glassOpaque(BuildContext context) =>
+    MediaQuery.highContrastOf(context) ||
+    MediaQuery.disableAnimationsOf(context);
+
 class GlassPanel extends StatelessWidget {
-  const GlassPanel({super.key, required this.child, this.radius, this.padding, this.blur = BrandTokens.glassBlur});
+  const GlassPanel({
+    super.key,
+    required this.child,
+    this.radius,
+    this.padding,
+    this.blur = BrandTokens.glassBlur,
+    this.fill,
+  });
   final Widget child;
   final BorderRadius? radius;
   final EdgeInsetsGeometry? padding;
   final double blur;
 
+  /// Overrides the tint alpha for panes that carry text over arbitrary content (sheets, the tab bar).
+  final double? fill;
+
   @override
   Widget build(BuildContext context) {
     final dark = isDark(context);
     final r = radius ?? BorderRadius.circular(Brand.radius);
-    final opaque = MediaQuery.highContrastOf(context);
-    final fill = dark ? Brand.navy950.withValues(alpha: BrandTokens.glassFillDark) : Colors.white.withValues(alpha: BrandTokens.glassFillLight);
-    final edge = Colors.white.withValues(alpha: dark ? 0.16 : BrandTokens.glassEdge);
+    final opaque = glassOpaque(context);
+    final tint =
+        fill ?? (dark ? BrandTokens.glassFillDark : BrandTokens.glassFillLight);
+    final fillColor = dark
+        ? Brand.navy950.withValues(alpha: tint)
+        : Colors.white.withValues(alpha: tint);
+    final edge = Colors.white.withValues(
+      alpha: dark ? 0.16 : BrandTokens.glassEdge,
+    );
     final decorated = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: r,
@@ -133,7 +154,11 @@ class GlassPanel extends StatelessWidget {
             : LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Colors.white.withValues(alpha: dark ? 0.14 : 0.78), fill, fill.withValues(alpha: fill.a * 0.8)],
+                colors: [
+                  Colors.white.withValues(alpha: dark ? 0.14 : 0.78),
+                  fillColor,
+                  fillColor.withValues(alpha: fillColor.a * 0.8),
+                ],
                 stops: const [0, 0.5, 1],
               ),
         border: Border.all(color: opaque ? (dark ? Brand.inkLine : Brand.line) : edge),
@@ -141,10 +166,84 @@ class GlassPanel extends StatelessWidget {
       ),
       child: padding == null ? child : Padding(padding: padding!, child: child),
     );
-    if (opaque) return ClipRRect(borderRadius: r, child: decorated);
-    return ClipRRect(
-      borderRadius: r,
-      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur), child: decorated),
+    if (opaque || blur <= 0) {
+      return RepaintBoundary(
+        child: ClipRRect(borderRadius: r, child: decorated),
+      );
+    }
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: r,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: decorated,
+        ),
+      ),
+    );
+  }
+}
+
+/// Modal bottom sheet on one liquid-glass pane (a single blur layer, opaque fallback via [glassOpaque]).
+/// Replaces `showModalBottomSheet` so every sheet shares the surface, drag handle and shape.
+Future<T?> showGlassSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool isScrollControlled = false,
+  bool useSafeArea = false,
+}) => showModalBottomSheet<T>(
+  context: context,
+  isScrollControlled: isScrollControlled,
+  useSafeArea: useSafeArea,
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  showDragHandle: false,
+  barrierColor: Colors.black.withValues(alpha: 0.32),
+  clipBehavior: Clip.antiAlias,
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(_sheetRadius)),
+  ),
+  builder: (ctx) => _GlassSheetSurface(child: builder(ctx)),
+);
+
+const _sheetRadius = 28.0;
+
+/// Bottom inset a scrollable needs so its last row clears the floating tab bar. The shell Scaffold uses
+/// `extendBody`, which folds the bar height into `MediaQuery.padding.bottom`; outside the shell it is the plain safe area.
+EdgeInsets navInset(BuildContext context, EdgeInsets base) =>
+    base.copyWith(bottom: base.bottom + MediaQuery.paddingOf(context).bottom);
+
+class _GlassSheetSurface extends StatelessWidget {
+  const _GlassSheetSurface({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = isDark(context);
+    return GlassPanel(
+      radius: const BorderRadius.vertical(top: Radius.circular(_sheetRadius)),
+      blur: 14,
+      fill: dark ? 0.78 : 0.86,
+      child: Material(
+        // Transparent Material so ink and list tiles paint on top of the glass fill, not under it.
+        type: MaterialType.transparency,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ExcludeSemantics(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                decoration: BoxDecoration(
+                  color: xc(context).fgMuted.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Flexible(child: child),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -188,7 +287,9 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cards repeat in lists: tint and specular edge only, no BackdropFilter per card (blur is kept for bars and sheets).
     final card = GlassPanel(
+      blur: 0,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(onTap: onTap, child: Padding(padding: padding, child: child)),

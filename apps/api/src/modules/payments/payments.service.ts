@@ -3,7 +3,7 @@ import { and, asc, desc, eq, lt, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 import type Stripe from "stripe"
 
-import type { CheckoutSessionView, CustomerPaymentState, OnlinePaymentEligibility, PaymentProviderId } from "@unitravel/contracts"
+import type { CheckoutSessionView, CustomerPaymentState, OnlinePaymentEligibility, PaymentPageView, PaymentProviderId } from "@unitravel/contracts"
 import { type Db, invoices, paymentConfig, paymentRecords, paymentSessions, refundRequests, stripeEvents, type Tx, users } from "@unitravel/db"
 import { canEnterStripeMode, checkoutExpiry, onlinePaymentEligibility, sessionNext, type SessionCommand, settlementCheck } from "@unitravel/domain"
 
@@ -144,6 +144,27 @@ export class PaymentsService implements OnModuleInit {
       session: last ? { status: last.status, expiresAt: last.expiresAt.toISOString() } : null,
       processing: inv.status === "ISSUED" && !!last && last.status === "OPEN" && !!last.paymentIntentId,
       paidAt: inv.paidAt?.toISOString() ?? null,
+    }
+  }
+
+  /**
+   * The whole invoice payment page in one read (ADR-0020). `payUrl` is set only while online payment is offered for this
+   * invoice; otherwise the offline instructions from settings are shown (null while UNKNOWN). Nothing here says "booked".
+   */
+  async paymentPage(number: string, actor: Actor): Promise<PaymentPageView> {
+    const inv = await this.invoices.customerInvoice(number, actor.userId)
+    const row = await this.ownInvoice(number, actor.userId)
+    const online = await this.eligibility(row)
+    const cfg = this.config.settings()
+    const [customerName] = await this.invoices.billTo(this.db, actor.userId)
+    const offered = online.offered && inv.status === "ISSUED"
+    return {
+      invoiceNumber: inv.number, status: inv.status, requestRef: inv.requestRef, productType: inv.productType,
+      issuer: { ...cfg.company, vatNumber: cfg.commercialDocuments.vatNumber, registeredAddress: cfg.commercialDocuments.registeredAddress },
+      customerName: customerName ?? "", issuedAt: inv.issuedAt, dueAt: inv.expiresAt, currency: inv.total.currency, lines: inv.lines, total: inv.total, paidAt: inv.paidAt,
+      pdfDocumentId: inv.documentId, pdfUrl: inv.documentId ? `/v1/documents/${inv.documentId}/download` : null,
+      online, payUrl: offered ? `${env().PUBLIC_WEB_URL}/${actor.locale}/billing/${inv.number}/pay` : null,
+      offlineInstructions: inv.status === "ISSUED" && !offered ? cfg.payment.offlineInstructions?.[actor.locale] ?? null : null,
     }
   }
 

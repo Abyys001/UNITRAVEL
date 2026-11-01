@@ -1,7 +1,7 @@
 "use client"
 
-import { VerticalRequest } from "@/components/vertical-request"
+import { GroundListing } from "@/components/listings"
 
 export default function Page() {
-  return <VerticalRequest type="STAY" kind="stay" />
+  return <GroundListing vertical="STAY" />
 }

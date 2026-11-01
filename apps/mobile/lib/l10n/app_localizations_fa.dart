@@ -2622,4 +2622,438 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get svSignInFirst => 'برای ارسال درخواست وارد شوید.';
+
+  @override
+  String get stWrite => 'برای ما بنویسید';
+
+  @override
+  String get stWriteNote =>
+      'بدون ثبت درخواست پیام بفرستید. با ایمیل یا تلفن پاسخ می‌دهیم.';
+
+  @override
+  String get stMyTickets => 'پیام‌های من';
+
+  @override
+  String get stFormTitle => 'تماس با ما';
+
+  @override
+  String get stFormLead =>
+      'نیاز خود را بنویسید. برای پاسخ، ایمیل یا شماره تلفن بدهید.';
+
+  @override
+  String get stName => 'نام شما';
+
+  @override
+  String get stContactNeeded => 'ایمیل یا شماره تلفن را وارد کنید.';
+
+  @override
+  String get stTopic => 'موضوع';
+
+  @override
+  String get stTopicBooking => 'رزرو';
+
+  @override
+  String get stTopicPayment => 'پرداخت';
+
+  @override
+  String get stTopicDocuments => 'مدارک';
+
+  @override
+  String get stTopicVisa => 'ویزا';
+
+  @override
+  String get stTopicCargo => 'بار';
+
+  @override
+  String get stTopicAccount => 'حساب کاربری';
+
+  @override
+  String get stTopicFeedback => 'بازخورد';
+
+  @override
+  String get stTopicOther => 'سایر';
+
+  @override
+  String get stRequestRef => 'شناسه درخواست (اختیاری)';
+
+  @override
+  String get stMessage => 'پیام';
+
+  @override
+  String get stMessageHelp => 'دست‌کم ۱۰ نویسه.';
+
+  @override
+  String get stSend => 'ارسال پیام';
+
+  @override
+  String get stSentTitle => 'پیام ارسال شد';
+
+  @override
+  String stSentBody(String ref) {
+    return 'شناسهٔ پیام شما $ref است. با ایمیل یا تلفن پاسخ می‌دهیم.';
+  }
+
+  @override
+  String get stWriteAnother => 'پیام دیگر';
+
+  @override
+  String get stTicketsEmpty => 'هنوز پیامی برای ما ننوشته‌اید.';
+
+  @override
+  String get stStatusOpen => 'باز';
+
+  @override
+  String get stStatusPending => 'منتظر پاسخ شما';
+
+  @override
+  String get stStatusResolved => 'حل‌شده';
+
+  @override
+  String get stStatusClosed => 'بسته';
+
+  @override
+  String get stReplyHint => 'پاسخ خود را بنویسید';
+
+  @override
+  String get stReplySend => 'پاسخ';
+
+  @override
+  String get stClosedNote =>
+      'این گفتگو بسته شده است. اگر هنوز کمک می‌خواهید پیام تازه‌ای بفرستید.';
+
+  @override
+  String get stYou => 'شما';
+
+  @override
+  String stAboutRequest(String ref) {
+    return 'دربارهٔ درخواست $ref';
+  }
+
+  @override
+  String get stNotFound => 'این پیام پیدا نشد.';
+
+  @override
+  String get ppAvailable => 'قابل پرداخت';
+
+  @override
+  String get ppAvailableLead =>
+      'پیشنهادهایی که می‌توانید بپذیرید و فاکتورهایی که می‌توانید پرداخت کنید.';
+
+  @override
+  String get ppKindInvoice => 'فاکتور';
+
+  @override
+  String get ppKindQuote => 'پیشنهاد قیمت';
+
+  @override
+  String get ppActionPay => 'پرداخت';
+
+  @override
+  String get ppActionAccept => 'مشاهده پیشنهاد';
+
+  @override
+  String ppPayBy(String date) {
+    return 'پرداخت تا $date';
+  }
+
+  @override
+  String get ppTitle => 'صفحهٔ پرداخت';
+
+  @override
+  String get ppIssuedBy => 'صادرکننده';
+
+  @override
+  String get ppBilledTo => 'صادر شده برای';
+
+  @override
+  String ppDue(String date) {
+    return 'سررسید $date';
+  }
+
+  @override
+  String ppPaidOn(String date) {
+    return 'پرداخت‌شده در $date';
+  }
+
+  @override
+  String ppRegistration(String n) {
+    return 'شمارهٔ ثبت $n';
+  }
+
+  @override
+  String ppVat(String n) {
+    return 'شناسهٔ مالیاتی $n';
+  }
+
+  @override
+  String get ppOfflineTitle => 'روش پرداخت';
+
+  @override
+  String get ppOfflineNone =>
+      'پرداخت آنلاین برای این فاکتور در دسترس نیست. با ما تماس بگیرید تا روش پرداخت را اعلام کنیم.';
+
+  @override
+  String get ppNotBooking =>
+      'پرداخت فقط این فاکتور را تسویه می‌کند. درخواست شما وضعیت جداگانهٔ خود را دارد.';
+
+  @override
+  String get ppViewRequest => 'مشاهدهٔ درخواست';
+
+  @override
+  String get lsBrowse => 'مرور گزینه‌ها';
+
+  @override
+  String get lsBrowseLead =>
+      'ببینید چه گزینه‌هایی داریم. هیچ‌یک پیشنهاد رزرو نیست؛ از تیم ما بخواهید ترتیبش را بدهد.';
+
+  @override
+  String get lsFilter => 'مقصد';
+
+  @override
+  String get lsFilterFlightsHint => 'کد فرودگاه، مثلاً IKA';
+
+  @override
+  String get lsFilterApply => 'فیلتر';
+
+  @override
+  String get lsClear => 'پاک کردن';
+
+  @override
+  String get lsIndicative => 'راهنما';
+
+  @override
+  String get lsIndicativeNote =>
+      'فقط راهنما. موجودی و قیمت در پیشنهاد قیمت تأیید می‌شود.';
+
+  @override
+  String get lsCached => 'نتیجهٔ ذخیره‌شده';
+
+  @override
+  String get lsSandbox => 'داده آزمایشی';
+
+  @override
+  String lsFetched(String when) {
+    return 'دریافت‌شده در $when';
+  }
+
+  @override
+  String get lsFlightsNote =>
+      'نتایج ذخیره‌شدهٔ جستجو، نه موجودی زنده. نرخی نمایش داده نمی‌شود؛ برای قیمت درخواست پیشنهاد بدهید.';
+
+  @override
+  String lsQuotedPrice(String amount) {
+    return 'قیمت اعلام‌شده $amount';
+  }
+
+  @override
+  String get lsEmptyTitle => 'هنوز گزینه‌ای فهرست نشده';
+
+  @override
+  String get lsEmptyBody =>
+      'گزینه‌ای برای این مورد فهرست نکرده‌ایم. از تیم ما بپرسید تا برایتان جستجو کنیم.';
+
+  @override
+  String get lsAsk => 'از تیم ما بپرسید';
+
+  @override
+  String get lsRequest => 'ثبت درخواست';
+
+  @override
+  String get lsDirect => 'مستقیم';
+
+  @override
+  String lsStops(String n) {
+    return '$n توقف';
+  }
+
+  @override
+  String lsDeparts(String date) {
+    return 'حرکت $date';
+  }
+
+  @override
+  String get cuTitle => 'مشتریان';
+
+  @override
+  String get cuCardNote => 'چه کسی آنلاین است، آخرین بازدید و فعالیت';
+
+  @override
+  String get cuSearchHint => 'نام، ایمیل یا تلفن';
+
+  @override
+  String get cuOnline => 'آنلاین';
+
+  @override
+  String get cuOffline => 'آفلاین';
+
+  @override
+  String cuLastSeen(String when) {
+    return 'آخرین بازدید $when';
+  }
+
+  @override
+  String get cuNeverSeen => 'تاکنون دیده نشده';
+
+  @override
+  String cuLastScreen(String screen) {
+    return 'آخرین صفحه: $screen';
+  }
+
+  @override
+  String cuOpenRequests(String n) {
+    return '$n درخواست باز';
+  }
+
+  @override
+  String cuSignIns(String n) {
+    return '$n ورود';
+  }
+
+  @override
+  String get cuVerified => 'تأییدشده';
+
+  @override
+  String get cuSuspended => 'معلق';
+
+  @override
+  String get cuDeleted => 'حذف‌شده';
+
+  @override
+  String get cuEmpty => 'مشتری‌ای پیدا نشد.';
+
+  @override
+  String get cuActivity => 'فعالیت';
+
+  @override
+  String get cuActivityEmpty => 'فعالیتی ثبت نشده است.';
+
+  @override
+  String cuSessions(String active, String total) {
+    return '$active نشست فعال از $total';
+  }
+
+  @override
+  String get cuTrackingOff =>
+      'این مشتری ردیابی فعالیت را خاموش کرده است؛ صفحه‌های تازه ثبت نمی‌شوند.';
+
+  @override
+  String cuRetention(String days) {
+    return 'فقط نام صفحه‌ها، به مدت $days روز نگهداری می‌شود.';
+  }
+
+  @override
+  String get cuKindSignIn => 'وارد شد';
+
+  @override
+  String get cuKindSignOut => 'خارج شد';
+
+  @override
+  String cuKindView(String screen) {
+    return 'مشاهدهٔ $screen';
+  }
+
+  @override
+  String get scrHome => 'خانه';
+
+  @override
+  String get scrSearch => 'جستجو';
+
+  @override
+  String get scrResults => 'نتایج';
+
+  @override
+  String get scrItinerary => 'برنامه سفر';
+
+  @override
+  String get scrFlights => 'پرواز';
+
+  @override
+  String get scrHotels => 'هتل';
+
+  @override
+  String get scrStays => 'اقامتگاه';
+
+  @override
+  String get scrTrains => 'قطار';
+
+  @override
+  String get scrBuses => 'اتوبوس';
+
+  @override
+  String get scrVisa => 'ویزا';
+
+  @override
+  String get scrTours => 'تور';
+
+  @override
+  String get scrCip => 'سالن VIP';
+
+  @override
+  String get scrInsurance => 'بیمه';
+
+  @override
+  String get scrCargo => 'بار';
+
+  @override
+  String get scrShipments => 'مرسوله‌ها';
+
+  @override
+  String get scrRequestNew => 'درخواست جدید';
+
+  @override
+  String get scrRequests => 'درخواست‌ها';
+
+  @override
+  String get scrRequestDetail => 'درخواست';
+
+  @override
+  String get scrTrack => 'پیگیری';
+
+  @override
+  String get scrAccount => 'حساب';
+
+  @override
+  String get scrDetails => 'مشخصات من';
+
+  @override
+  String get scrTravellers => 'مسافران';
+
+  @override
+  String get scrBilling => 'صورتحساب';
+
+  @override
+  String get scrInvoice => 'فاکتور';
+
+  @override
+  String get scrPay => 'پرداخت';
+
+  @override
+  String get scrInbox => 'صندوق پیام';
+
+  @override
+  String get scrSupport => 'پشتیبانی';
+
+  @override
+  String get scrSupportTicket => 'پیام پشتیبانی';
+
+  @override
+  String get scrClub => 'باشگاه';
+
+  @override
+  String get scrSettings => 'تنظیمات';
+
+  @override
+  String get scrFaq => 'سوالات متداول';
+
+  @override
+  String get scrGuides => 'راهنماها';
+
+  @override
+  String get scrBlog => 'وبلاگ';
+
+  @override
+  String get scrGlossary => 'واژه‌نامه';
+
+  @override
+  String get scrSignIn => 'ورود';
 }

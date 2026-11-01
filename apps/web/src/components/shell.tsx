@@ -47,6 +47,10 @@ export function Header() {
   }, [])
   useEffect(() => setOpen(false), [path])
   useEffect(() => {
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number }
+    if (nav.connection?.saveData || (nav.deviceMemory !== undefined && nav.deviceMemory <= 4)) document.documentElement.dataset.lite = ""
+  }, [])
+  useEffect(() => {
     if (!open) return
     menuRef.current?.querySelector<HTMLElement>("a")?.focus()
     const onKey = (e: KeyboardEvent) => {
@@ -61,7 +65,7 @@ export function Header() {
   const { on } = useSite()
   // Spec §4.1: items come from GET /v1/site, so a service whose flag is off never appears. Safar card is not built (O14).
   const book: NavLink[] = [
-    { href: href("/"), label: t("nav.flights"), icon: Plane },
+    { href: href("/flights"), label: t("nav.flights"), icon: Plane },
     ...(on("hotels") ? [{ href: href("/hotels"), label: t("nav.hotels"), icon: BedDouble }] : []),
     ...(on("trains") ? [{ href: href("/trains"), label: t("nav.trains"), icon: TrainFront }] : []),
     ...(on("buses") ? [{ href: href("/buses"), label: t("nav.buses"), icon: Bus }] : []),
@@ -89,13 +93,14 @@ export function Header() {
   const solid = !home || scrolled || open
   return (
     <>
-      <header className={`${home ? "fixed inset-x-0" : "sticky"} top-0 z-40 text-white transition-[background-color,box-shadow] duration-300 ${solid ? "liquid-dark !rounded-none !border-x-0 !border-t-0 shadow-[0_10px_30px_-18px_rgb(0_0_0/0.6)]" : "bg-transparent"}`}>
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-2 px-4 min-[400px]:gap-4 md:px-6">
+      <header className={`${home ? "fixed inset-x-0" : "sticky"} top-0 z-40 text-white`}>
+        <div aria-hidden className={`glass-layer pointer-events-none absolute inset-0 transition-opacity duration-300 ${solid ? "opacity-100 shadow-[0_10px_30px_-18px_rgb(0_0_0/0.6)]" : "opacity-0"}`} />
+        <div className="relative mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-2 px-4 min-[400px]:gap-4 md:px-6">
           <Link href={href("/")} aria-label="Uni Travel home" className="shrink-0 rounded-lg">
             <BrandLogo variant="mark" tone="onDark" size={38} className="min-[400px]:hidden" />
             <Logo className="hidden min-[400px]:inline-flex" />
           </Link>
-          <nav className="glass hidden items-center gap-1 rounded-full p-1 text-sm font-semibold lg:flex" aria-label="Main">
+          <nav className="glass-flat hidden items-center gap-1 rounded-full p-1 text-sm font-semibold lg:flex" aria-label="Main">
             {book.map((l) => <NavPill key={l.href} l={l} active={path === l.href} />)}
             {services.length > 0 && <ServicesMenu label={t("nav.services")} items={services} path={path} />}
             {links.slice(book.length).map((l) => <NavPill key={l.href} l={l} active={path === l.href} />)}
@@ -115,7 +120,7 @@ export function Header() {
           </div>
         </div>
         {open && (
-          <nav ref={menuRef} className="max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Mobile">
+          <nav ref={menuRef} className="relative max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Mobile">
             {([[t("nav.groupBook"), book], [t("nav.groupServices"), services], [t("nav.groupHelp"), [...help, ...(me ? [{ href: href("/inbox"), label: t("nav.inbox"), icon: Inbox }, { href: href("/account"), label: t("nav.account"), icon: UserRound }] : [])]]] as [string, NavLink[]][]).filter(([, items]) => items.length > 0).map(([title, items]) => (
               <div key={title} className="pt-2">
                 <p className="px-2 pb-1 pt-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-300">{title}</p>
@@ -146,6 +151,10 @@ function ServicesMenu({ label, items, path }: { label: string; items: NavLink[];
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => setOpen(false), [path])
+  useEffect(() => {
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number }
+    if (nav.connection?.saveData || (nav.deviceMemory !== undefined && nav.deviceMemory <= 4)) document.documentElement.dataset.lite = ""
+  }, [])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); ref.current?.querySelector("button")?.focus() } }

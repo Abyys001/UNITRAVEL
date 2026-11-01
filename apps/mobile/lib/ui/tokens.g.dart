@@ -39,7 +39,7 @@ abstract final class BrandTokens {
   static const radiusTile = 20.0;
 
   // Liquid glass (see GlassPanel in widgets.dart).
-  static const glassBlur = 22.0;
+  static const glassBlur = 16.0;
   static const glassFillLight = 0.6;
   static const glassFillDark = 0.5;
   static const glassEdge = 0.55;

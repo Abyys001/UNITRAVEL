@@ -70,7 +70,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       appBar: AppBar(title: Text(l.accountTitle)),
       body: PageBody(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: navInset(context, const EdgeInsets.all(16)),
           children: [
             AppCard(
               child: Row(

@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useSyncExternalStore } from "react"
 
 import { api } from "@/lib/api"
+import type { StaffTicketPage } from "@unitravel/contracts"
+
 import type { QueueSummary } from "@/lib/types"
 
 /**
@@ -31,7 +33,7 @@ export function useFallbackInterval(ms: number): number | false {
  */
 export type ActivityEntry =
   | { id: number; at: number; kind: "queue"; changes: { key: keyof Omit<QueueSummary, "deadlinesNext24h">; from: number; to: number }[] }
-  | { id: number; at: number; kind: "request"; requestType: "FLIGHT" | "CARGO"; ref: string; status?: string }
+  | { id: number; at: number; kind: "request"; requestType: "FLIGHT" | "CARGO" | "SERVICE"; ref: string; status?: string }
 const COUNT_KEYS = ["new", "mine", "awaitingCustomer", "quoted", "reserved", "complianceHolds", "slaBreaches"] as const
 const NO_ACTIVITY: ActivityEntry[] = []
 let activity = NO_ACTIVITY
@@ -45,6 +47,21 @@ export function useActivity(): ActivityEntry[] {
 export function useQueueSummary(enabled = true) {
   const interval = useFallbackInterval(15_000)
   return useQuery({ queryKey: ["queue-summary"], queryFn: () => api<QueueSummary>("/v1/admin/queues/summary"), refetchInterval: interval, enabled })
+}
+
+/**
+ * Open support tickets for the nav badge and the home tile. Ticket changes do not travel on the staff stream (the API
+ * sends no event the console can read for the `support_ticket` aggregate), so this polls on its own, stream or not.
+ */
+export function useSupportOverview(enabled: boolean) {
+  return useQuery({
+    queryKey: ["support", "home"],
+    queryFn: async () => {
+      const p = await api<StaffTicketPage>("/v1/admin/support/tickets?status=OPEN&limit=100")
+      return { open: p.items.length, more: p.nextCursor !== null, overdue: p.items.filter((x) => x.overdue).length, unassigned: p.items.filter((x) => !x.assignee).length }
+    },
+    refetchInterval: 30_000, enabled,
+  })
 }
 
 export function useStaffStream(enabled: boolean) {
@@ -67,12 +84,18 @@ export function useStaffStream(enabled: boolean) {
       qc.setQueryData(["queue-summary"], next)
     })
     es.addEventListener("request-changed", (e) => {
-      const r = JSON.parse((e as MessageEvent<string>).data) as { requestType: "FLIGHT" | "CARGO"; ref: string; version: number; status: string; statusLabel: string }
+      // The payload type is open-ended on purpose: a type this console does not know is ignored, never a crash.
+      const r = JSON.parse((e as MessageEvent<string>).data) as { requestType?: string; ref?: string; version?: number; status?: string; statusLabel?: string }
+      if (r.requestType === "SUPPORT") { void qc.invalidateQueries({ queryKey: ["support"] }); return }
+      if (!r.ref || (r.requestType !== "FLIGHT" && r.requestType !== "CARGO" && r.requestType !== "SERVICE")) return
       pushActivity({ kind: "request", requestType: r.requestType, ref: r.ref, status: r.statusLabel })
       if (r.requestType === "FLIGHT") qc.setQueryData(["fr-version", r.ref], r.version)
-      else void qc.invalidateQueries({ queryKey: ["cargo-detail", r.ref] })
+      else if (r.requestType === "CARGO") void qc.invalidateQueries({ queryKey: ["cargo-detail", r.ref] })
+      else void qc.invalidateQueries({ queryKey: ["services"] })
       lists ??= setTimeout(() => { lists = undefined; void qc.invalidateQueries({ queryKey: ["fr"] }); void qc.invalidateQueries({ queryKey: ["cargo-list"] }) }, 500)
     })
+    // Reserved name for a ticket event; harmless until the API sends one.
+    es.addEventListener("support-changed", () => { void qc.invalidateQueries({ queryKey: ["support"] }) })
     return () => { es.close(); setLive(false); if (lists) clearTimeout(lists) }
   }, [enabled, qc])
 }

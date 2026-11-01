@@ -16,6 +16,7 @@ import { TravellerForm } from "@/components/traveller-form"
 import { Tag } from "@/components/badges"
 import { api, ApiError } from "@/lib/api"
 import { COUNTRIES, countryName } from "@/lib/countries"
+import { PanelFrame } from "@/components/customer-panel"
 import { useI18n } from "@/lib/i18n"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
@@ -43,7 +44,8 @@ export default function MyDetailsPage() {
   const a = address ?? d.address ?? EMPTY
   const self = d.self
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-8 md:py-10">
+    <PanelFrame>
+    <div className="space-y-8">
       <div><Link href={href("/account")} className="text-sm text-royal underline">← {t("account.title")}</Link><h1 className="font-display mt-2 text-3xl md:text-4xl">{t("identity.title")}</h1><p className="mt-2 text-sm text-steel">{t("identity.intro")}</p></div>
 
       <section aria-labelledby="contact-h"><h2 id="contact-h" className="font-display mb-1 text-xl">{t("identity.contactTitle")}</h2><p className="mb-3 text-sm text-steel">{t("identity.contactHelp")}</p>
@@ -89,5 +91,6 @@ export default function MyDetailsPage() {
         </div>
       </section>
     </div>
+    </PanelFrame>
   )
 }

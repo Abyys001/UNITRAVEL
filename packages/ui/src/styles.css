@@ -100,28 +100,45 @@ html:not([data-surface]) body {
     radial-gradient(54rem 34rem at 40% 108%, rgb(12 103 185 / 0.14), transparent 62%),
     var(--background);
 }
+/* Cards are many per page: a blur layer each is what made scrolling heavy, so they fake glass (tint + specular edge) and never blur. */
 html:not([data-surface]) :is(.card-brand, [data-slot="card"]) {
-  background: linear-gradient(145deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.68));
-  border-color: rgb(255 255 255 / 0.7);
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.96), rgb(247 251 255 / 0.88));
+  border-color: rgb(255 255 255 / 0.8);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.95), var(--shadow-card);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 html:not([data-surface]) :is([data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="select-content"], [data-slot="dialog-content"], [data-slot="sheet-content"]) {
   background: linear-gradient(145deg, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.74));
   border-color: rgb(255 255 255 / 0.75);
-  backdrop-filter: blur(calc(var(--glass-blur) * 1.2)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.2)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 html:not([data-surface]) [data-slot="dialog-overlay"], html:not([data-surface]) [data-slot="sheet-overlay"] {
-  background: rgb(6 31 76 / 0.38); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  background: rgb(6 31 76 / 0.45);
 }
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
   html:not([data-surface]) :is(.card-brand, [data-slot="card"], [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="select-content"], [data-slot="dialog-content"], [data-slot="sheet-content"]) { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
   html:not([data-surface]) body { background: var(--background); }
 }
-/* Lower-powered phones: a cheaper blur keeps scrolling smooth. */
-@media (max-width: 640px) { :root { --glass-blur: 14px; } }
+/* Lower-powered phones: a cheaper blur keeps scrolling smooth. Touch devices get 10px; `data-lite` (Save-Data, <= 4 GB RAM, set in Header) drops blur entirely. */
+@media (max-width: 640px), (hover: none) and (pointer: coarse) { :root { --glass-blur: 10px; --glass-saturate: 1.25; } }
+html[data-lite] :is(.liquid, .liquid-dark, .glass, .glass-layer, .btn-glass, .btn-glass-light, [data-slot="popover-content"], [data-slot="dropdown-menu-content"], [data-slot="select-content"], [data-slot="dialog-content"], [data-slot="sheet-content"]) { backdrop-filter: none; -webkit-backdrop-filter: none; }
+html[data-lite] .liquid-dark, html[data-lite] .glass, html[data-lite] .glass-layer { background: var(--color-navy-900); }
+html[data-lite] .liquid { background: #fff; }
+/* Header glass layer: always mounted so the backdrop layer is never created or destroyed mid-scroll; only its opacity changes. */
+@utility glass-layer {
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.08), var(--glass-fill-dark) 40%, rgb(6 31 76 / 0.8)), rgb(6 31 76 / 0.78);
+  border-bottom: 1px solid rgb(255 255 255 / 0.14);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  transform: translateZ(0);
+}
+/* Tinted pill without its own blur, for use inside an already blurred bar. */
+@utility glass-flat {
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.05));
+  border: 1px solid rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.24);
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) { .glass-layer { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--color-navy-900); } }
 @utility btn-glass-light {
   display: inline-flex; align-items: center; gap: 0.5rem;
   border-radius: 16px; padding: 0.7rem 1.1rem; font-weight: 700; color: var(--color-navy-950);
@@ -182,6 +199,13 @@ html:not([data-surface]) [data-slot="dialog-overlay"], html:not([data-surface]) 
   .animate-float { animation: float 6s ease-in-out infinite; }
   .animate-pulse-ring { animation: pulse-ring 2.6s cubic-bezier(0.2, 0.7, 0.2, 1) infinite; }
   .animate-marquee { animation: marquee var(--marquee-duration, 40s) linear infinite; }
+  .scene-drift { animation: scene-drift var(--d, 16s) linear infinite alternate; }
+  .scene-slide { animation: scene-slide var(--d, 10s) linear infinite; }
+  .scene-bob { animation: scene-bob 3.2s ease-in-out infinite; }
+  .scene-spin { animation: orbit 1.4s linear infinite; }
+  .scene-glow { animation: scene-glow 3.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  .scene-twinkle { animation: scene-twinkle 3s ease-in-out infinite; }
+  .scene-stamp { animation: scene-stamp 4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
   .fly-path { offset-rotate: auto; animation: fly var(--fly-duration, 9s) cubic-bezier(0.45, 0, 0.55, 1) infinite; }
   .draw-in { stroke-dasharray: var(--len, 1400); stroke-dashoffset: var(--len, 1400); animation: draw 2.4s ease-out forwards; }
   [data-reveal="pending"] .draw-on-view { stroke-dashoffset: var(--len, 1400); }
@@ -197,3 +221,9 @@ html:not([data-surface]) [data-slot="dialog-overlay"], html:not([data-surface]) 
 @keyframes marquee { to { transform: translateX(-50%); } }
 @keyframes fly { from { offset-distance: 0%; } to { offset-distance: 100%; } }
 @keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes scene-drift { from { translate: -18px 0; } to { translate: 18px 0; } }
+@keyframes scene-slide { to { translate: -140px 0; } }
+@keyframes scene-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+@keyframes scene-glow { 0%, 100% { scale: 1; opacity: .9; } 50% { scale: 1.12; opacity: 1; } }
+@keyframes scene-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+@keyframes scene-stamp { 0%, 55% { scale: 1.6; opacity: 0; } 65% { scale: 1; opacity: 1; } 95%, 100% { scale: 1; opacity: 1; } }

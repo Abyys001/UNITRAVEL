@@ -8,7 +8,7 @@ import type { MessageKey } from "@unitravel/i18n"
 import { Field, inDays, inputCls, ServiceFormFrame, today } from "@/components/service-form"
 import { useI18n } from "@/lib/i18n"
 
-type Vertical = { type: "HOTEL" | "STAY"; kind: "stay" } | { type: "TRAIN" | "BUS"; kind: "ground" }
+type Vertical = ({ type: "HOTEL" | "STAY"; kind: "stay" } | { type: "TRAIN" | "BUS"; kind: "ground" }) & { embedded?: boolean }
 const TITLE: Record<Vertical["type"], MessageKey> = { HOTEL: "services.hotelsTitle", STAY: "services.staysTitle", TRAIN: "services.trainsTitle", BUS: "services.busesTitle" }
 const MENU: Record<Vertical["type"], MenuKey> = { HOTEL: "hotels", STAY: "stays", TRAIN: "trains", BUS: "buses" }
 
@@ -29,7 +29,7 @@ export function VerticalRequest(v: Vertical) {
     ? stay.location.trim().length >= 2 && stay.checkOut > stay.checkIn && stay.guests >= 1 && stay.rooms >= 1
     : ground.from.trim().length >= 2 && ground.to.trim().length >= 2 && !!ground.date && ground.passengers >= 1
   return (
-    <ServiceFormFrame type={v.type} menuKey={MENU[v.type]} title={t(TITLE[v.type])} lead={t("services.listingLead")} details={details} valid={valid}>
+    <ServiceFormFrame type={v.type} menuKey={MENU[v.type]} title={t(TITLE[v.type])} lead={t("services.listingLead")} details={details} valid={valid} embedded={v.embedded}>
       {v.kind === "stay" ? (
         <>
           <div className="sm:col-span-2"><Field id="s-loc" label={t("services.location")}><input id="s-loc" className={inputCls} dir="auto" maxLength={120} value={stay.location} onChange={(e) => setStay({ ...stay, location: e.target.value })} required /></Field></div>

@@ -104,6 +104,38 @@ describe("fail-closed route declarations", () => {
     for (const p of ["/v1/track/lookup", "/v1/track/verify"]) expect(find("POST", p)).toMatchObject({ isPublic: true, staff: false })
   })
 
+  it("customer activity (ADR-0018): telemetry is for any signed-in user, the customer list and activity timeline need customer.read", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("POST", "/v1/me/activity")).toMatchObject({ authenticated: true, permissions: [], staff: false })
+    for (const p of ["/v1/admin/customers", "/v1/admin/customers/:id/activity"]) expect({ p, perms: find("GET", p)?.permissions, staff: find("GET", p)?.staff }).toEqual({ p, perms: ["customer.read"], staff: true })
+    // The existing full-contact view stays behind the PII permission; the list does not widen it.
+    expect(find("GET", "/v1/admin/customers/:id")).toMatchObject({ permissions: ["customer.read.pii"], staff: true })
+  })
+
+  it("support and calls (ADR-0019): the form is public, the customer thread is own-scoped, staff need support.read / support.reply / call.log, the webhook is public but signed", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("POST", "/v1/support/tickets")).toMatchObject({ isPublic: true, staff: false })
+    for (const [m, p] of [["GET", "/v1/support/tickets"], ["GET", "/v1/support/tickets/:ref"], ["POST", "/v1/support/tickets/:ref/messages"]] as const) expect({ p, auth: find(m, p)?.authenticated, staff: find(m, p)?.staff }).toEqual({ p, auth: true, staff: false })
+    for (const p of ["/v1/admin/support/tickets", "/v1/admin/support/tickets/:ref"]) expect({ p, perms: find("GET", p)?.permissions, staff: find("GET", p)?.staff }).toEqual({ p, perms: ["support.read"], staff: true })
+    for (const p of ["/v1/admin/support/tickets/:ref/replies", "/v1/admin/support/tickets/:ref/commands"]) expect({ p, perms: find("POST", p)?.permissions, staff: find("POST", p)?.staff }).toEqual({ p, perms: ["support.reply"], staff: true })
+    for (const [m, p] of [["GET", "/v1/admin/calls"], ["POST", "/v1/admin/calls"], ["POST", "/v1/admin/calls/click-to-call"]] as const) expect({ p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, perms: ["call.log"], staff: true })
+    expect(find("POST", "/v1/webhooks/bonline")).toMatchObject({ isPublic: true, staff: false, dev: false })
+  })
+
+  it("assigned services and the payment page (ADR-0020): assigning needs service.assign; the page and the purchasable list are own-scoped", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("POST", "/v1/admin/customers/:id/assignments")).toMatchObject({ permissions: ["service.assign"], staff: true })
+    for (const p of ["/v1/billing/purchasable", "/v1/billing/invoices/:number/payment-page"]) expect({ p, perms: find("GET", p)?.permissions, staff: find("GET", p)?.staff }).toEqual({ p, perms: ["flight_request.read.own", "cargo_request.read.own"], staff: false })
+  })
+
+  it("listings (ADR-0021): public reads are public, staff curation needs listings.write", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    for (const p of ["/v1/listings/flights", "/v1/listings/:vertical"]) expect({ p, pub: find("GET", p)?.isPublic, staff: find("GET", p)?.staff }).toEqual({ p, pub: true, staff: false })
+    // `flights` is registered before `:vertical`, so it is never read as a vertical.
+    expect(routes.findIndex((r) => r.path === "/v1/listings/flights")).toBeLessThan(routes.findIndex((r) => r.path === "/v1/listings/:vertical"))
+    for (const [m, p] of [["GET", "/v1/admin/listings"], ["GET", "/v1/admin/listings/:id"], ["POST", "/v1/admin/listings"], ["PATCH", "/v1/admin/listings/:id"]] as const) expect({ p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, perms: ["listings.write"], staff: true })
+  })
+
   it("flags a route that lacks a declaration (the check fails the build)", () => {
     @Controller("v1/oops")
     class Undeclared {

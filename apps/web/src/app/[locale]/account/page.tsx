@@ -16,6 +16,7 @@ import { TravellerForm } from "@/components/traveller-form"
 import { VerificationBadge } from "@/components/verification-badge"
 import { api } from "@/lib/api"
 import { describeUserAgent } from "@/lib/user-agent"
+import { PanelFrame } from "@/components/customer-panel"
 import { useI18n } from "@/lib/i18n"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
@@ -43,7 +44,8 @@ export default function AccountPage() {
   const devices = [...(sessions.data ?? [])].sort((a, b) => Number(b.current) - Number(a.current) || b.lastSeenAt.localeCompare(a.lastSeenAt))
   const shown = allDevices ? devices : devices.slice(0, DEVICE_CAP)
   return (
-    <div className="mx-auto max-w-4xl space-y-8 px-4 py-8 md:py-10">
+    <PanelFrame>
+    <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="font-display text-3xl md:text-4xl">{t("account.title")}</h1><Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => void signOut()}>{t("nav.signOut")}</Button></div>
       <section><h2 className="font-display mb-3 text-xl">{t("account.profile")}</h2>
         <div className="card-brand p-5 text-sm">
@@ -94,5 +96,6 @@ export default function AccountPage() {
         <p className="mt-2 max-w-xl text-sm text-steel" lang={locale}>{t("account.deleteNote")}</p>
       </section>
     </div>
+    </PanelFrame>
   )
 }

@@ -1,32 +1,34 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Phone } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { Button, buttonVariants } from "@unitravel/ui/components/button"
+import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
-import { StatusChip, TileError } from "@/components/bento"
-import { ActionBar, CaseHeader, CaseTabs, CommandBar, ListSkeleton, paneClass, paneProps, SlaChip, StateChip, statusTone, SummaryItem, tallyOptions, Timeline, TruthTally } from "@/components/case"
+import { TileError } from "@/components/bento"
+import { ActionBar, ActionMenu, CaseTabs, CommandBar, commandLabelOf, DESTRUCTIVE, ListSkeleton, PanelTabs, paneClass, paneProps, pickPrimary, StateChip, tallyOptions, Timeline } from "@/components/case"
+import { codeLabel } from "@/components/club"
 import { CommandDialog, DIALOG_COMMANDS } from "@/components/flight/commands"
 import { RecordPaymentTrigger } from "@/components/payment-panel"
 import { ItineraryView } from "@/components/flight/itinerary"
+import { RequestHero } from "@/components/flight/request-hero"
 import { InvoicesPanel } from "@/components/invoices-panel"
 import { AmendDialog } from "@/components/flight/amend-dialog"
 import { CustomerCard, TravellerCard, TripSummary } from "@/components/flight/request-panels"
 import { AfterSalesDialog, CreditOverrideDialog, PaymentDialog, ReservationDialog, TicketsDialog } from "@/components/flight/records"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
 import { Composer, MessagesList, NotesList } from "@/components/thread"
-import { Empty, ErrorLine, Field, Loading, Panel, Tag, useAct } from "@/components/ui"
+import { Arrow, Empty, ErrorLine, Field, Loading, Panel, RouteText, Tag, useAct } from "@/components/ui"
 import { api, errText } from "@/lib/api"
-import { fmtDate, fmtDateTime, human, money } from "@/lib/format"
+import { fmtDate, fmtDateTime, ltrIsolate, money } from "@/lib/format"
 import { useIsMobile, useKeys } from "@/lib/hooks"
-import { type MsgKey, useT } from "@/lib/i18n"
+import { type MsgKey, statusText, useT } from "@/lib/i18n"
+import { useLocale } from "@/lib/prefs"
 import { useFallbackInterval } from "@/lib/live"
 import { useSession } from "@/lib/session"
 import type { FlightDetail } from "@/lib/types"
@@ -57,7 +59,9 @@ export default function FlightRequestPage() {
   const [contact, setContact] = useState({ outcome: "REACHED", note: "", callBackAt: "" })
   const [sms, setSms] = useState("tried_to_call")
   const [tab, setTab] = useState<"case" | "customer" | "records">("case")
+  const [thread, setThread] = useState<"messages" | "notes" | "timeline">("messages")
   const t = useT()
+  const [locale] = useLocale()
   const tt = t // the travellers map below shadows `t`
 
   const run = (command: string) => {
@@ -67,21 +71,23 @@ export default function FlightRequestPage() {
     void claimOrSimple(command)
   }
   const claimOrSimple = async (command: string) => {
-    try { await api(`/v1/admin/flight-requests/${ref}/commands/${command}`, { body: {}, headers: { "if-match": String(d!.version) } }); toast.success(`${human(command)} — done`); await refresh() } catch (e) { toast.error(errText(e)) }
+    try { await api(`/v1/admin/flight-requests/${ref}/commands/${command}`, { body: {}, headers: { "if-match": String(d!.version) } }); toast.success(t("rq.done", { what: commandLabelOf(command, locale).replace("…", "") })); await refresh() } catch (e) { toast.error(errText(e)) }
   }
   const claim = d?.actions.find((a) => a.command === "claim")
-  useKeys({ c: () => { if (claim?.allowed) void claimOrSimple("claim") }, n: () => noteRef.current?.focus(), m: () => msgRef.current?.focus() }, !!d)
+  // The composers stay mounted under their tab, so the shortcut first shows the tab, then focuses after the DOM update.
+  const focusThread = (to: "messages" | "notes", ref: React.RefObject<HTMLTextAreaElement | null>) => { setTab("case"); setThread(to); requestAnimationFrame(() => ref.current?.focus()) }
+  useKeys({ c: () => { if (claim?.allowed) void claimOrSimple("claim") }, n: () => focusThread("notes", noteRef), m: () => focusThread("messages", msgRef) }, !!d)
 
   const reveal = useAct(async (travellerId: string) => api<{ number: string; type: string; issuingCountry: string; expiryDate: string }>(`/v1/admin/customers/travellers/${travellerId}/reveal-document`, { body: { ref } }).then((r) => ({ travellerId, r })), {
     onDone: ({ travellerId, r }) => { setRevealed((x) => ({ ...x, [travellerId]: r.number })); setTimeout(() => setRevealed((x) => { const { [travellerId]: _, ...rest } = x; return rest }), 60_000) },
   })
-  const verifyPayment = useAct((id: string) => api(`/v1/admin/payments/${id}/verify`, { body: {} }), { success: "Payment verified", invalidate: [key] })
-  const approveOverride = useAct((id: string) => api(`/v1/admin/credit-overrides/${id}/approve`, { body: {} }), { success: "Credit override approved", invalidate: [key] })
+  const verifyPayment = useAct((id: string) => api(`/v1/admin/payments/${id}/verify`, { body: {} }), { success: t("rq.paymentVerified"), invalidate: [key] })
+  const approveOverride = useAct((id: string) => api(`/v1/admin/credit-overrides/${id}/approve`, { body: {} }), { success: t("rq.overrideApproved"), invalidate: [key] })
   const recheck = useAct(() => api<PriceCheck>(`/v1/admin/itineraries/${encodeURIComponent(d!.snapshot!.itinerary.id)}/price-check`, { body: {} }), {
     onDone: (r) => {
       const delta = r.currentTotal ? r.currentTotal.amountMinor - r.previousTotal.amountMinor : 0
-      const text = `${money(r.previousTotal)} → ${r.currentTotal ? money(r.currentTotal) : "no price"}${r.currentTotal ? ` (${delta >= 0 ? "+" : ""}${money({ ...r.currentTotal, amountMinor: delta })})` : ""}. ${t("case.priceCheck.note")}`
-      ;(r.outcome === "CONFIRMED" ? toast.success : toast.warning)(`${t("case.priceCheck")}: ${human(r.outcome)} · ${fmtDateTime(r.checkedAt)}`, { description: text, duration: 12_000 })
+      const text = `${ltrIsolate(`${money(r.previousTotal)} → ${r.currentTotal ? money(r.currentTotal) : t("rq.noPrice")}${r.currentTotal ? ` (${delta >= 0 ? "+" : ""}${money({ ...r.currentTotal, amountMinor: delta })})` : ""}`)}. ${t("case.priceCheck.note")}`
+      ;(r.outcome === "CONFIRMED" ? toast.success : toast.warning)(`${t("case.priceCheck")}: ${codeLabel(t, "rq.outcome", r.outcome)} · ${fmtDateTime(r.checkedAt)}`, { description: text, duration: 12_000 })
     },
   })
   const download = async (id: string) => { try { const r = await api<{ url: string }>(`/v1/documents/${id}/download`); window.open(r.url, "_blank", "noopener") } catch (e) { toast.error(errText(e)) } }
@@ -90,7 +96,7 @@ export default function FlightRequestPage() {
   }
 
   if (q.error) return <div className="p-5"><TileError error={q.error} onRetry={() => void q.refetch()} /></div>
-  if (!d) return <><Loading label={`Opening ${ref}…`} /><ListSkeleton rows={6} /></>
+  if (!d) return <><Loading label={t("rq.opening", { ref })} /><ListSkeleton rows={6} /></>
   const mineCase = d.assignee?.id === me?.id
   // Versions only grow; ">" keeps your own command's event from flashing the banner before the reload lands.
   const changed = poll.data !== undefined && poll.data > d.version
@@ -101,112 +107,115 @@ export default function FlightRequestPage() {
   const tally = latestQuote ? tallyOptions(latestQuote.options) : null
   const canOverride = !mobile && can("ticket.record") && d.status === "RESERVED"
 
+  const allowedNow = visibleActions.filter((a) => a.allowed)
+  const primary = pickPrimary(allowedNow)
+  const danger = allowedNow.filter((a) => DESTRUCTIVE.has(a.command))
+  const mainRow = visibleActions.filter((a) => !(a.allowed && DESTRUCTIVE.has(a.command)))
+  // Phones: one solid primary and a menu with everything else (also the commands that cannot run, with the server's reason).
+  const phoneMenu = visibleActions.filter((a) => a !== primary)
+  const desktopNote = mobile && d.actions.some((a) => DESKTOP_ONLY.has(a.command)) && <p className="mt-1 text-caption text-steel">{t("case.desktopOnly")}</p>
+  const bar = mobile ? (
+    <ActionBar edge="bottom" aria-label={t("case.actions")} className="bottom-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="flex items-center gap-2">
+        <div data-testid="actions" className="min-w-0 flex-1">
+          {primary ? <Button className="w-full pointer-coarse:min-h-11" onClick={() => run(primary.command)} data-command={primary.command}>{commandLabelOf(primary.command, locale)}</Button> : <p className="py-1 text-steel">{t("case.actions.none", { status: d.status })}</p>}
+        </div>
+        <ActionMenu items={phoneMenu} onRun={run} />
+      </div>
+      {desktopNote}
+    </ActionBar>
+  ) : (
+    <ActionBar aria-label={t("case.actions")}>
+      <div className="flex items-start gap-2">
+        <div data-testid="actions" className="min-w-0 flex-1">
+          <CommandBar actions={mainRow} onRun={run} none={t("case.actions.none", { status: d.status })} hint={<><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
+        </div>
+        <ActionMenu items={danger} onRun={run} />
+      </div>
+    </ActionBar>
+  )
+
   return (
-    <div className="pb-8">
+    <div className={cn(mobile ? "pb-2" : "pb-8")}>
       {changed && (
         <div role="status" className="flex items-center justify-between gap-3 bg-warning-subtle px-5 py-2 text-warning-subtle-fg">
-          <span>Someone else changed this case (version {d.version} → {poll.data}).</span>
-          <Button size="xs" variant="outline" onClick={() => void refresh()}>Reload case</Button>
+          <span>{t("case.changed", { from: d.version, to: poll.data ?? "" })}</span>
+          <Button size="xs" variant="outline" onClick={() => void refresh()}>{t("case.reload")}</Button>
         </div>
       )}
-      <CaseHeader
-        reference={<span className="ref text-lead font-semibold" data-testid="ref">{d.ref}</span>}
-        title={d.routeLabel}
-        meta={<>{Object.entries(pax).map(([k, n]) => `${n} ${k}`).join(" · ")} · {fmtDate(d.firstTravelDate)} · {human(d.tripType)} · {d.kind === "MANUAL" ? "manual request" : "itinerary request"} · submitted {fmtDateTime(d.submittedAt)} via {d.submittedVia.toLowerCase()} ({d.submittedLocale})</>}
-        aside={mobile ? <a href={`tel:${d.customer.phone}`} className={buttonVariants({ size: "sm" })}><Phone /> Call</a> : undefined}
-        summary={<>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span data-testid="status"><StateChip value={d.status} /></span>
-            <StatusChip tone={statusTone(d.paymentStatus)} className="font-semibold">{t("case.payment", { status: d.paymentStatus.replace(/_/g, " ").toLowerCase() })}</StatusChip>
-            {d.urgent && <StatusChip tone="danger" className="font-semibold">{t("case.urgent")}</StatusChip>}
-          </div>
-          <SummaryItem label={t("case.sla")}>
-            <SlaChip dueAt={d.sla.dueAt} startAt={d.submittedAt} done={!!d.sla.firstContactAt} />
-            <span className="text-meta text-steel">{d.sla.firstContactAt ? fmtDateTime(d.sla.firstContactAt) : d.sla.dueAt ? <>{t("case.firstContact.due")} <span className="num">{fmtDateTime(d.sla.dueAt)}</span></> : t("sla.none")}</span>
-          </SummaryItem>
-          <SummaryItem label={t("case.owner.short")}><span className="font-medium" data-testid="assignee">{d.assignee ? (mineCase ? t("case.assignedYou") : t("case.assignedTo", { name: d.assignee.name ?? "—" })) : <span className="text-danger">{t("case.unassigned")}</span>}</span></SummaryItem>
-          <SummaryItem label={t("case.truth.short")} className={tally && tally.unknown > 0 ? "basis-full sm:basis-auto" : undefined}>
-            {!tally ? <span className="text-steel">{t("case.truth.none")}</span> : (
-              <>
-                <TruthTally compact tally={tally} />
-                <span className={cn("text-meta", tally.unknown > 0 ? "font-medium text-danger" : "text-steel")} data-testid="truth-note">{tally.unknown > 0 ? t("case.truth.blocks") : t("case.truth.clear")} <span className="text-steel">· {t("case.truth.quote", { v: latestQuote!.version })}</span></span>
-              </>
-            )}
-          </SummaryItem>
-        </>}
-      />
-      <ActionBar data-testid="actions" aria-label={t("case.actions")}>
-        <CommandBar actions={visibleActions} onRun={run} none={t("case.actions.none", { status: d.status })} hint={<><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
-        {mobile && d.actions.some((a) => DESKTOP_ONLY.has(a.command)) && <p className="mt-1 text-caption text-steel">Quote sending and recording dialogs are desktop features in v1.</p>}
-      </ActionBar>
+      <RequestHero d={d} mobile={mobile} mineCase={mineCase} tally={tally} quoteVersion={latestQuote?.version ?? null} />
+      {!mobile && bar}
       <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "case", label: t("case.tab.case") }, { key: "customer", label: t("case.tab.customer") }, { key: "records", label: t("case.tab.records"), count: d.reservations.length + d.tickets.length + d.payments.length }]} />
 
       <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-[minmax(250px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
         {/* LEFT — customer */}
         <div {...paneProps("customer")} className={paneClass(tab, "customer")}>
-          <Panel title="Customer" aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className="font-medium text-link hover:underline">Context →</Link>}>
-            <CustomerCard d={d} mobile={mobile} canAct={can("flight_request.transition")} onCopy={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success("Number copied") }} onCall={() => dlg.open("contact")} onSms={() => dlg.open("sms")} />
+          <Panel title={t("case.panel.customer")} aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className="font-medium text-link hover:underline">{t("case.context")} <Arrow /></Link>}>
+            <CustomerCard d={d} mobile={mobile} canAct={can("flight_request.transition")} onCopy={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success(t("rq.copied")) }} onCall={() => dlg.open("contact")} onSms={() => dlg.open("sms")} />
           </Panel>
-          <Panel title={<>Travellers <span className="num text-steel">{d.travellers.length}</span></>}>
+          <Panel title={<>{t("case.panel.travellers")} <span className="num text-steel">{d.travellers.length}</span></>}>
             <ul className="space-y-2">
               {d.travellers.map((t, i) => <TravellerCard key={t.travellerId} t={t} index={i} revealed={revealed[t.travellerId]} canReveal={can("customer.read.documents")} onReveal={() => reveal.mutate(t.travellerId)} verificationLabel={tt(`vstatus.${t.verificationStatus}` as MsgKey)} />)}
             </ul>
-            {Object.keys(revealed).length > 0 && <p className="text-caption text-steel">Revealed numbers hide again after a minute. Each reveal is in the audit log.</p>}
+            {Object.keys(revealed).length > 0 && <p className="text-caption text-steel">{t("case.reveal.note")}</p>}
           </Panel>
-          <Panel title="Contact log">
-            {!d.contacts.length ? <Empty>No calls logged.</Empty> : (
-              <ul className="ledger-rows" data-testid="contacts">{d.contacts.map((c) => <li key={c.id} className="py-1"><span className="num text-meta">{fmtDateTime(c.createdAt)}</span> · <Tag value={c.outcome} />{c.channel === "SMS_TEMPLATE" && <span className="ms-1 text-steel">SMS</span>}{c.note && <p className="text-steel" dir="auto">“{c.note}”</p>}{c.callBackAt && <p className="text-caption text-orange-700">Call back {fmtDateTime(c.callBackAt)}</p>}</li>)}</ul>
+          <Panel title={t("case.panel.contacts")}>
+            {!d.contacts.length ? <Empty>{t("case.contacts.none")}</Empty> : (
+              <ul className="ledger-rows" data-testid="contacts">{d.contacts.map((c) => <li key={c.id} className="py-1"><span className="num text-meta">{fmtDateTime(c.createdAt)}</span> · <StateChip value={c.outcome} />{c.channel === "SMS_TEMPLATE" && <span className="ms-1 text-steel">{t("rp.sms")}</span>}{c.note && <p className="text-steel" dir="auto">“{c.note}”</p>}{c.callBackAt && <p className="text-caption text-orange-700">{t("rq.callBack", { t: fmtDateTime(c.callBackAt) })}</p>}</li>)}</ul>
             )}
           </Panel>
-          <Panel title="History">
-            {!d.customer.history.length ? <Empty>First request from this customer.</Empty> : <ul className="ledger-rows">{d.customer.history.map((h) => <li key={h.ref} className="flex justify-between py-1"><Link className="ref text-meta hover:underline" href={h.productType === "CARGO" ? `/cargo/${h.ref}` : `/requests/${h.ref}`}>{h.ref}</Link><Tag value={h.status} /></li>)}</ul>}
+          <Panel title={t("case.panel.history")}>
+            {!d.customer.history.length ? <Empty>{t("case.history.first")}</Empty> : <ul className="ledger-rows">{d.customer.history.map((h) => <li key={h.ref} className="flex justify-between py-1"><Link className="ref text-meta hover:underline" href={h.productType === "CARGO" ? `/cargo/${h.ref}` : `/requests/${h.ref}`}>{h.ref}</Link><StateChip value={h.status} /></li>)}</ul>}
           </Panel>
         </div>
 
         {/* CENTRE — request, conversation, activity */}
         <div {...paneProps("case")} className={cn("min-w-0", paneClass(tab, "case"))}>
-          <Panel title="Request" aside={can("flight_request.transition") && !mobile ? (d.amendment?.allowed
-            ? <Button size="xs" variant="outline" onClick={() => dlg.open("amend")} data-testid="amend-open">Amend trip</Button>
-            : <span className="text-caption text-steel" title={d.amendment?.reason}>Amend: {d.amendment?.reason ?? "not available"}</span>) : undefined}>
+          <Panel title={t("case.panel.request")} aside={can("flight_request.transition") && !mobile ? (d.amendment?.allowed
+            ? <Button size="xs" variant="outline" onClick={() => dlg.open("amend")} data-testid="amend-open">{t("rq.amend")}</Button>
+            : <span className="text-caption text-steel" title={d.amendment?.reason}>{t("rq.amendWhy", { why: d.amendment?.reason ?? t("rq.notAvailable") })}</span>) : undefined}>
             <TripSummary d={d} />
           </Panel>
           {d.snapshot && (
-            <Panel title="Offer snapshot (immutable)" aside={can("pricing.read.internal") && <Button size="xs" variant="outline" onClick={() => recheck.mutate()} loading={recheck.isPending}>Re-check price</Button>}>
+            <Panel title={t("case.panel.snapshot")} aside={can("pricing.read.internal") && <Button size="xs" variant="outline" onClick={() => recheck.mutate()} loading={recheck.isPending}>{t("rq.recheck")}</Button>}>
               <div className="rounded-md border border-rule bg-surface-raised p-3">
                 <ItineraryView it={d.snapshot.itinerary} />
-                <p className="mt-2 flex flex-wrap gap-x-4 text-meta text-steel">{d.snapshot.priceAtSubmit && <span>At submission <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>Revalidated <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>Rules v{d.snapshot.ruleVersion} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
+                <p className="mt-2 flex flex-wrap gap-x-4 text-meta text-steel">{d.snapshot.priceAtSubmit && <span>{t("rq.atSubmission")} <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>{t("rq.revalidated")} <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>{t("rq.rules", { v: d.snapshot.ruleVersion })} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
                 {recheck.error && <ErrorLine error={recheck.error} />}
               </div>
             </Panel>
           )}
           {d.compliance.length > 0 && (
-            <Panel title="Compliance">
-              <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><Tag value={c.status} />{can("compliance.case.read") && <Link className="font-medium text-link hover:underline" href={`/compliance/${c.id}`}>Open →</Link>}</span></li>)}</ul>
+            <Panel title={t("case.panel.compliance")}>
+              <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><StateChip value={c.status} />{can("compliance.case.read") && <Link className="font-medium text-link hover:underline" href={`/compliance/${c.id}`}>{t("case.open")} <Arrow /></Link>}</span></li>)}</ul>
             </Panel>
           )}
-          <Panel title={t("case.conversation")}>
-            <MessagesList messages={d.messages} />
-            {can("flight_request.transition") && <Composer ref={msgRef} hint={t("case.composer.message")} label="Send message" placeholder="Write a message to the customer… (m)" testId="message-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/messages`, { body: { body } }); toast.success("Message sent"); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
-          </Panel>
-          <Panel title={t("case.notes")}>
-            <NotesList notes={d.notes} />
-            {can("flight_request.note.internal") && <Composer ref={noteRef} tone="note" label="Add note" hint={t("case.composer.note")} placeholder="Write an internal note… (n)" testId="note-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/notes`, { body: { body } }); toast.success("Note added"); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
-          </Panel>
           <Panel title={t("case.activity")}>
-            <Timeline data-testid="timeline" items={d.timeline.map((x, i) => ({ id: i, at: x.at, title: x.label, detail: x.detail, meta: x.actor?.toLowerCase(), tone: x.kind === "STATUS" ? "strong" : x.kind === "CONTACT" ? "accent" : "muted" }))} />
+            <PanelTabs id="thread" label={t("case.thread.tabs")} value={thread} onChange={setThread} tabs={[{ key: "messages", label: t("case.tab.messages"), count: d.messages.length }, { key: "notes", label: t("case.tab.notes"), count: d.notes.length }, { key: "timeline", label: t("case.tab.timeline"), count: d.timeline.length }]} />
+            <div id="thread-pane-messages" role="tabpanel" aria-labelledby="thread-tab-messages" hidden={thread !== "messages"} className="pt-3">
+              <MessagesList messages={d.messages} />
+              {can("flight_request.transition") && <Composer ref={msgRef} hint={t("case.composer.message")} label={t("rq.sendMessage")} placeholder={t("rq.messagePlaceholder")} testId="message-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/messages`, { body: { body } }); toast.success(t("rq.messageSent")); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
+            </div>
+            <div id="thread-pane-notes" role="tabpanel" aria-labelledby="thread-tab-notes" hidden={thread !== "notes"} className="pt-3">
+              <NotesList notes={d.notes} />
+              {can("flight_request.note.internal") && <Composer ref={noteRef} tone="note" label={t("rq.addNote")} hint={t("case.composer.note")} placeholder={t("rq.notePlaceholder")} testId="note-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/notes`, { body: { body } }); toast.success(t("rq.noteAdded")); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
+            </div>
+            <div id="thread-pane-timeline" role="tabpanel" aria-labelledby="thread-tab-timeline" hidden={thread !== "timeline"} className="pt-3">
+              <Timeline data-testid="timeline" items={d.timeline.map((x, i) => ({ id: i, at: x.at, title: x.label, detail: x.detail, meta: x.actor?.toLowerCase(), tone: x.kind === "STATUS" ? "strong" : x.kind === "CONTACT" ? "accent" : "muted" }))} />
+            </div>
           </Panel>
         </div>
 
         {/* RIGHT — quotes, invoices, records, documents */}
         <div {...paneProps("records")} className={cn(paneClass(tab, "records"), "lg:col-span-2 xl:col-span-1")}>
           {!mobile && (can("quote.create") || can("pricing.write")) && (
-            <Panel title="Quotes" aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className="font-medium text-link hover:underline" data-testid="open-quote-builder">{draft ? "Edit draft →" : "New quote →"}</Link>}>
-              {!d.quotes.length ? <Empty>No quotes yet.</Empty> : (
+            <Panel title={t("case.panel.quotes")} aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className="font-medium text-link hover:underline" data-testid="open-quote-builder">{draft ? t("case.quote.edit") : t("case.quote.new")} <Arrow /></Link>}>
+              {!d.quotes.length ? <Empty>{t("case.quotes.none")}</Empty> : (
                 <ul className="ledger-rows" data-testid="quotes">
                   {d.quotes.map((qv) => (
                     <li key={qv.id} className="py-1.5">
-                      <p className="flex items-center justify-between"><span>v{qv.version} · {qv.options.length} option{qv.options.length === 1 ? "" : "s"}{qv.validUntil && <span className="text-steel"> · valid until {fmtDateTime(qv.validUntil)}</span>}</span><Tag value={qv.status} /></p>
-                      <ul className="text-meta">{qv.options.map((o) => <li key={o.id} className="flex justify-between gap-2"><span className="truncate">{o.id === qv.acceptedOptionId && "✓ "}{o.label}{o.source === "MANUAL" && <span className="ms-1 font-mono text-2xs text-orange-700">MANUAL</span>}{o.unknownFields.length > 0 && <span className="ms-1 text-danger">· {o.unknownFields.length} to confirm</span>}</span><span className="num">{money(o.priceBreakdown.total)}</span></li>)}</ul>
+                      <p className="flex items-center justify-between"><span>v{qv.version} · {t(qv.options.length === 1 ? "rq.option.one" : "rq.options", { n: qv.options.length })}{qv.validUntil && <span className="text-steel"> · {t("rq.validUntil", { t: fmtDateTime(qv.validUntil) })}</span>}</span><StateChip value={qv.status} /></p>
+                      <ul className="text-meta">{qv.options.map((o) => <li key={o.id} className="flex justify-between gap-2"><span className="truncate">{o.id === qv.acceptedOptionId && "✓ "}<RouteText>{o.label}</RouteText>{o.source === "MANUAL" && <span className="ms-1 font-mono text-2xs text-orange-700">{statusText(t, "MANUAL")}</span>}{o.unknownFields.length > 0 && <span className="ms-1 text-danger">· {t("rq.toConfirm", { n: o.unknownFields.length })}</span>}</span><span className="num">{money(o.priceBreakdown.total)}</span></li>)}</ul>
                     </li>
                   ))}
                 </ul>
@@ -214,58 +223,59 @@ export default function FlightRequestPage() {
             </Panel>
           )}
           {!mobile && ["ACCEPTED", "RESERVED", "TICKETED", "COMPLETED"].includes(d.status) && <InvoicesPanel requestRef={d.ref} />}
-          <Panel title="Records">
+          <Panel title={t("case.panel.records")}>
             <dl className="ledger-rows">
               <div className="py-1.5">
-                <dt className="flex justify-between"><span className="text-steel">Reservation</span></dt>
-                {d.reservations.length ? d.reservations.map((r) => <dd key={r.id} className="flex flex-wrap items-center justify-between gap-1"><span><span className="num font-medium">{r.recordLocator}</span> <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-caption">TTL {fmtDateTime(r.ticketingDeadline)}</span><Tag value={r.status} /></span></dd>) : <dd>—</dd>}
+                <dt className="flex justify-between"><span className="text-steel">{t("case.rec.reservation")}</span></dt>
+                {d.reservations.length ? d.reservations.map((r) => <dd key={r.id} className="flex flex-wrap items-center justify-between gap-1"><span><span className="num font-medium">{r.recordLocator}</span> <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-caption">{t("rq.ttl", { t: fmtDateTime(r.ticketingDeadline) })}</span><StateChip value={r.status} /></span></dd>) : <dd>—</dd>}
               </div>
               <div className="py-1.5">
-                <dt className="text-steel">Tickets</dt>
-                {d.tickets.length ? d.tickets.map((t) => <dd key={t.id} className="flex justify-between"><span><span className="num">{t.ticketNumber}</span> {t.travellerName}</span><Tag value={t.status} /></dd>) : <dd>—</dd>}
+                <dt className="text-steel">{t("case.rec.tickets")}</dt>
+                {d.tickets.length ? d.tickets.map((tk) => <dd key={tk.id} className="flex justify-between"><span><span className="num">{tk.ticketNumber}</span> {tk.travellerName}</span><StateChip value={tk.status} /></dd>) : <dd>—</dd>}
               </div>
               <div className="py-1.5">
-                <dt className="flex items-center justify-between"><span className="text-steel">Payments · {d.paymentStatus}</span>{!mobile && can("payment.record") && <RecordPaymentTrigger state={d.paymentRecording} onOpen={() => dlg.open("payment")} />}</dt>
+                <dt className="flex items-center justify-between"><span className="text-steel">{t("case.rec.payments")} · {statusText(t, d.paymentStatus)}</span>{!mobile && can("payment.record") && <RecordPaymentTrigger state={d.paymentRecording} onOpen={() => dlg.open("payment")} />}</dt>
                 {d.payments.length ? d.payments.map((p) => (
                   <dd key={p.id} className="mt-1">
-                    <p className="flex justify-between"><span className="num">{money(p.amount)}</span><Tag value={p.status} /></p>
-                    <p className="text-caption text-steel">{p.method} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · recorded by {p.recordedBy}{p.verifiedBy && ` · verified by ${p.verifiedBy}`}</p>
-                    {p.status === "RECORDED" && can("payment.record") && <div className="mt-1 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>Verify (second person)</Button>{p.needsSecondVerifier && <span className="text-caption text-orange-700">Above the four-eyes threshold</span>}</div>}
+                    <p className="flex justify-between"><span className="num">{money(p.amount)}</span><StateChip value={p.status} /></p>
+                    <p className="text-caption text-steel">{codeLabel(t, "pay.method", p.method)} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · {t("rq.recordedBy", { n: p.recordedBy })}{p.verifiedBy && ` · ${t("rq.verifiedBy", { n: p.verifiedBy })}`}</p>
+                    {p.status === "RECORDED" && can("payment.record") && <div className="mt-1 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>{t("rq.verifySecond")}</Button>{p.needsSecondVerifier && <span className="text-caption text-orange-700">{t("rq.fourEyes")}</span>}</div>}
                   </dd>
                 )) : <dd>—</dd>}
               </div>
               {(canOverride || d.creditOverrides.length > 0) && (
                 <div className="py-1.5" data-testid="credit-overrides">
-                  <dt className="flex justify-between"><span className="text-steel">Credit override</span>{canOverride && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("override")}>Request override</button>}</dt>
+                  <dt className="flex justify-between"><span className="text-steel">{t("case.rec.override")}</span>{canOverride && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("override")}>{t("case.rec.requestOverride")}</button>}</dt>
                   {d.creditOverrides.map((o) => (
                     <dd key={o.id} className="mt-1">
-                      <p className="flex flex-wrap items-center justify-between gap-2"><span dir="auto">“{o.reason}”</span>{o.approvedAt ? <Tag value="APPROVED" className="border-success text-success" /> : <Tag value="PENDING" />}</p>
-                      <p className="text-caption text-steel">requested by {o.requestedBy} · {fmtDateTime(o.createdAt)}{o.approvedBy && ` · approved by ${o.approvedBy} ${fmtDateTime(o.approvedAt)}`}</p>
-                      {!o.approvedAt && !o.requestedByMe && can("user.role.assign.privileged") && <Button size="xs" variant="outline" className="mt-1" onClick={() => approveOverride.mutate(o.id)} loading={approveOverride.isPending}>Approve (owner)</Button>}
+                      <p className="flex flex-wrap items-center justify-between gap-2"><span dir="auto">“{o.reason}”</span>{o.approvedAt ? <StateChip value="APPROVED" /> : <StateChip value="PENDING" />}</p>
+                      <p className="text-caption text-steel">{t("rq.requestedBy", { n: o.requestedBy })} · {fmtDateTime(o.createdAt)}{o.approvedBy && ` · ${t("rq.approvedBy", { n: o.approvedBy })} ${fmtDateTime(o.approvedAt)}`}</p>
+                      {!o.approvedAt && !o.requestedByMe && can("user.role.assign.privileged") && <Button size="xs" variant="outline" className="mt-1" onClick={() => approveOverride.mutate(o.id)} loading={approveOverride.isPending}>{t("rq.approveOwner")}</Button>}
                     </dd>
                   ))}
                 </div>
               )}
               {(d.afterSales.length > 0 || (["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition"))) && (
                 <div className="py-1.5" data-testid="after-sales">
-                  <dt className="flex justify-between"><span className="text-steel">After-sales</span>{["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition") && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("aftersales")}>Open case</button>}</dt>
+                  <dt className="flex justify-between"><span className="text-steel">{t("case.rec.afterSales")}</span>{["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition") && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("aftersales")}>{t("case.rec.openCase")}</button>}</dt>
                   {d.afterSales.map((a) => (
                     <dd key={a.ref} className="mt-1">
-                      <p className="flex flex-wrap items-center gap-1.5"><span className="ref">{a.ref}</span><span className="text-steel">{a.type}</span><Tag value={a.status} /><span className="num text-caption text-steel">{fmtDate(a.createdAt)}</span></p>
+                      <p className="flex flex-wrap items-center gap-1.5"><span className="ref">{a.ref}</span><span className="text-steel">{a.type}</span><StateChip value={a.status} /><span className="num text-caption text-steel">{fmtDate(a.createdAt)}</span></p>
                       {a.note && <p className="text-meta text-steel" dir="auto">“{a.note}”</p>}
-                      {can("flight_request.transition") && !["RESOLVED", "REJECTED"].includes(a.status) && <p className="flex flex-wrap gap-1">{["start", "request_info", "resolve", "reject"].map((c) => <Button key={c} size="xs" variant="ghost" onClick={() => void asCommand(a.ref, c)}>{human(c)}</Button>)}</p>}
+                      {can("flight_request.transition") && !["RESOLVED", "REJECTED"].includes(a.status) && <p className="flex flex-wrap gap-1">{["start", "request_info", "resolve", "reject"].map((c) => <Button key={c} size="xs" variant="ghost" onClick={() => void asCommand(a.ref, c)}>{codeLabel(t, "rq.as", c)}</Button>)}</p>}
                     </dd>
                   ))}
                 </div>
               )}
             </dl>
           </Panel>
-          <Panel title="Documents">
-            {!d.documents.length ? <Empty>No documents.</Empty> : <ul className="ledger-rows">{d.documents.map((doc) => <li key={doc.id} className="flex items-center justify-between gap-2 py-1"><button type="button" className="truncate text-start underline-offset-2 hover:underline" onClick={() => void download(doc.id)}>{doc.filename}</button><span className="flex gap-1"><Tag value={doc.type} /><Tag value={doc.visibility} /></span></li>)}</ul>}
+          <Panel title={t("case.panel.documents")}>
+            {!d.documents.length ? <Empty>{t("case.docs.none")}</Empty> : <ul className="ledger-rows">{d.documents.map((doc) => <li key={doc.id} className="flex items-center justify-between gap-2 py-1"><button type="button" className="truncate text-start underline-offset-2 hover:underline" onClick={() => void download(doc.id)}>{doc.filename}</button><span className="flex gap-1"><Tag value={doc.type} /><Tag value={doc.visibility} /></span></li>)}</ul>}
           </Panel>
         </div>
       </div>
 
+      {mobile && bar}
       <CommandDialog command={command} d={d} onClose={() => setCommand(null)} done={refresh} />
       <ReservationDialog {...dlg.bind("reservation")} d={d} done={refresh} />
       <TicketsDialog {...dlg.bind("tickets")} d={d} done={refresh} />
@@ -273,13 +283,13 @@ export default function FlightRequestPage() {
       <CreditOverrideDialog {...dlg.bind("override")} d={d} done={refresh} />
       <AfterSalesDialog {...dlg.bind("aftersales")} d={d} done={refresh} />
       <AmendDialog {...dlg.bind("amend")} d={d} done={refresh} />
-      <FormDialog {...dlg.bind("contact")} title="Log call…" description="Outcomes feed SLA reporting (ch. 15.4)." submitLabel="Log call" onSubmit={async () => { await api(`/v1/admin/flight-requests/${ref}/contact-attempts`, { body: { channel: "PHONE", outcome: contact.outcome, note: contact.note || undefined, callBackAt: contact.outcome === "CALL_BACK_REQUESTED" && contact.callBackAt ? new Date(contact.callBackAt).toISOString() : undefined } }); setContact({ outcome: "REACHED", note: "", callBackAt: "" }); await refresh() }}>
-        <Field label="Outcome"><NativeSelect className="field-input" value={contact.outcome} onChange={(e) => setContact({ ...contact, outcome: e.target.value })}>{["REACHED", "NO_ANSWER", "BUSY", "WRONG_NUMBER", "CALL_BACK_REQUESTED"].map((o) => <option key={o}>{o}</option>)}</NativeSelect></Field>
-        {contact.outcome === "CALL_BACK_REQUESTED" && <Field label="Call back at"><input type="datetime-local" className="field-input" value={contact.callBackAt} onChange={(e) => setContact({ ...contact, callBackAt: e.target.value })} required /></Field>}
-        <Field label="Note"><textarea className="field-input min-h-20" value={contact.note} onChange={(e) => setContact({ ...contact, note: e.target.value })} dir="auto" /></Field>
+      <FormDialog {...dlg.bind("contact")} title={t("case.log.title")} description={t("case.log.desc")} submitLabel={t("case.log.submit")} onSubmit={async () => { await api(`/v1/admin/flight-requests/${ref}/contact-attempts`, { body: { channel: "PHONE", outcome: contact.outcome, note: contact.note || undefined, callBackAt: contact.outcome === "CALL_BACK_REQUESTED" && contact.callBackAt ? new Date(contact.callBackAt).toISOString() : undefined } }); setContact({ outcome: "REACHED", note: "", callBackAt: "" }); await refresh() }}>
+        <Field label={t("case.log.outcome")}><NativeSelect className="field-input" value={contact.outcome} onChange={(e) => setContact({ ...contact, outcome: e.target.value })}>{["REACHED", "NO_ANSWER", "BUSY", "WRONG_NUMBER", "CALL_BACK_REQUESTED"].map((o) => <option key={o} value={o}>{codeLabel(t, "rq.contact", o)}</option>)}</NativeSelect></Field>
+        {contact.outcome === "CALL_BACK_REQUESTED" && <Field label={t("case.log.callback")}><input type="datetime-local" className="field-input" value={contact.callBackAt} onChange={(e) => setContact({ ...contact, callBackAt: e.target.value })} required /></Field>}
+        <Field label={t("case.log.note")}><textarea className="field-input min-h-20" value={contact.note} onChange={(e) => setContact({ ...contact, note: e.target.value })} dir="auto" /></Field>
       </FormDialog>
-      <FormDialog {...dlg.bind("sms")} title="Send SMS template…" description="Pre-approved templates only; free-text SMS is off by default." submitLabel="Send SMS" onSubmit={async () => { await api(`/v1/admin/flight-requests/${ref}/contact-attempts`, { body: { channel: "SMS_TEMPLATE", outcome: "NO_ANSWER", templateKey: sms } }); await refresh() }}>
-        <Field label="Template"><NativeSelect className="field-input" value={sms} onChange={(e) => setSms(e.target.value)}><option value="tried_to_call">We tried to call you about {d.ref}…</option><option value="please_contact">Please contact us about {d.ref}…</option></NativeSelect></Field>
+      <FormDialog {...dlg.bind("sms")} title={t("case.sms.title")} description={t("case.sms.desc")} submitLabel={t("case.sms.submit")} onSubmit={async () => { await api(`/v1/admin/flight-requests/${ref}/contact-attempts`, { body: { channel: "SMS_TEMPLATE", outcome: "NO_ANSWER", templateKey: sms } }); await refresh() }}>
+        <Field label={t("case.sms.template")}><NativeSelect className="field-input" value={sms} onChange={(e) => setSms(e.target.value)}><option value="tried_to_call">{t("rq.sms.tried", { ref: d.ref })}</option><option value="please_contact">{t("rq.sms.please", { ref: d.ref })}</option></NativeSelect></Field>
       </FormDialog>
     </div>
   )

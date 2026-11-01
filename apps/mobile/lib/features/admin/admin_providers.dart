@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/api_client.dart';
 import '../../core/providers.dart';
 import '../../core/session.dart';
 import '../../models/admin.dart';
+import '../../models/customers.dart';
 import '../../models/json.dart';
 
 final queueSummaryProvider = FutureProvider.autoDispose<QueueSummary>((ref) async {
@@ -105,4 +107,32 @@ class SummaryHistory extends Notifier<List<SummarySample>> {
   }
 }
 
-final summaryHistoryProvider = NotifierProvider<SummaryHistory, List<SummarySample>>(SummaryHistory.new);
+final summaryHistoryProvider =
+    NotifierProvider<SummaryHistory, List<SummarySample>>(SummaryHistory.new);
+
+/// One page of the staff customer list (`customer.read`); `cursor` null is the first page.
+Future<CustomerPage> fetchCustomers(
+  ApiClient api, {
+  String q = '',
+  String? cursor,
+}) async {
+  final j = await api.getJson(
+    '/v1/admin/customers',
+    query: {'limit': 25, if (q.isNotEmpty) 'q': q, 'cursor': ?cursor},
+  );
+  return CustomerPage.fromJson(j);
+}
+
+final customersFirstPageProvider = FutureProvider.autoDispose
+    .family<CustomerPage, String>(
+      (ref, q) => fetchCustomers(ref.watch(apiClientProvider), q: q),
+    );
+
+final customerActivityProvider = FutureProvider.autoDispose
+    .family<CustomerActivity, String>((ref, id) async {
+      return CustomerActivity.fromJson(
+        await ref
+            .watch(apiClientProvider)
+            .getJson('/v1/admin/customers/$id/activity', query: {'limit': 50}),
+      );
+    });

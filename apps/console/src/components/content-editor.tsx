@@ -16,7 +16,7 @@ import { ActionBar, ListSkeleton } from "@/components/case"
 import { contentError, csv, isConflict, KINDS, NEEDS_PUBLISH, NEXT, SERVICES, StatusPill, useContentLabels, webUrl } from "@/components/content"
 import { Check, Segmented } from "@/components/controls"
 import { Markdown } from "@/components/markdown"
-import { Field, Loading, Panel } from "@/components/ui"
+import { Arrow, Field, Loading, Panel } from "@/components/ui"
 import { api } from "@/lib/api"
 import { useCrumbLabel } from "@/lib/crumb"
 import { fmtDateTime } from "@/lib/format"
@@ -107,7 +107,7 @@ export function ContentEditor({ id }: { id: string | null }) {
     <form onSubmit={save} className="pb-8" data-testid="cms-editor">
       <ActionBar aria-label={t("case.actions")}>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href="/content" className="text-meta font-medium text-link hover:underline">← {t("cms.back")}</Link>
+          <Link href="/content" className="text-meta font-medium text-link hover:underline"><Arrow back /> {t("cms.back")}</Link>
           <span className="font-semibold" dir="auto">{id ? entry!.title : t("cms.edit.new")}</span>
           {status && <span data-testid="cms-status"><StatusPill status={status} label={L.status(status)} /></span>}
           {entry && <span className="num text-meta text-steel">v{entry.version}</span>}

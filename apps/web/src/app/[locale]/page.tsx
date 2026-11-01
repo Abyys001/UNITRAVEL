@@ -7,7 +7,7 @@ import { faq } from "@unitravel/i18n"
 import { FlightPath, GlobeLines, IconBadge, Ribbon } from "@unitravel/ui/brand/art"
 import { Reveal } from "@unitravel/ui/brand/reveal"
 
-import { FaqAccordion } from "@/components/content-blocks"
+import { FaqAccordion } from "@/components/faq-accordion"
 import { HeroVideo } from "@/components/hero-video"
 import { Benefits, FeaturedDestinations, ServiceExplorer, SupportBand } from "@/components/home-sections"
 import { SearchForm, type SearchParamsShape } from "@/components/search-form"

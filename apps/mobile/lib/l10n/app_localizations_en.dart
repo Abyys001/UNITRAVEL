@@ -2685,4 +2685,438 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get svSignInFirst => 'Sign in to send a request.';
+
+  @override
+  String get stWrite => 'Write to us';
+
+  @override
+  String get stWriteNote =>
+      'Send a message without a request. We reply by email or phone.';
+
+  @override
+  String get stMyTickets => 'My messages';
+
+  @override
+  String get stFormTitle => 'Contact us';
+
+  @override
+  String get stFormLead =>
+      'Tell us what you need. Give an email address or a phone number so we can answer.';
+
+  @override
+  String get stName => 'Your name';
+
+  @override
+  String get stContactNeeded => 'Give an email address or a phone number.';
+
+  @override
+  String get stTopic => 'Topic';
+
+  @override
+  String get stTopicBooking => 'Booking';
+
+  @override
+  String get stTopicPayment => 'Payment';
+
+  @override
+  String get stTopicDocuments => 'Documents';
+
+  @override
+  String get stTopicVisa => 'Visa';
+
+  @override
+  String get stTopicCargo => 'Cargo';
+
+  @override
+  String get stTopicAccount => 'Account';
+
+  @override
+  String get stTopicFeedback => 'Feedback';
+
+  @override
+  String get stTopicOther => 'Other';
+
+  @override
+  String get stRequestRef => 'Request reference (optional)';
+
+  @override
+  String get stMessage => 'Message';
+
+  @override
+  String get stMessageHelp => 'At least 10 characters.';
+
+  @override
+  String get stSend => 'Send message';
+
+  @override
+  String get stSentTitle => 'Message sent';
+
+  @override
+  String stSentBody(String ref) {
+    return 'Your reference is $ref. We will answer by email or phone.';
+  }
+
+  @override
+  String get stWriteAnother => 'Write another message';
+
+  @override
+  String get stTicketsEmpty => 'You have not written to us yet.';
+
+  @override
+  String get stStatusOpen => 'Open';
+
+  @override
+  String get stStatusPending => 'Waiting for you';
+
+  @override
+  String get stStatusResolved => 'Resolved';
+
+  @override
+  String get stStatusClosed => 'Closed';
+
+  @override
+  String get stReplyHint => 'Write a reply';
+
+  @override
+  String get stReplySend => 'Reply';
+
+  @override
+  String get stClosedNote =>
+      'This conversation is closed. Write a new message if you still need help.';
+
+  @override
+  String get stYou => 'You';
+
+  @override
+  String stAboutRequest(String ref) {
+    return 'About request $ref';
+  }
+
+  @override
+  String get stNotFound => 'We could not find that message.';
+
+  @override
+  String get ppAvailable => 'Available to pay';
+
+  @override
+  String get ppAvailableLead =>
+      'Quotes you can accept and invoices you can pay.';
+
+  @override
+  String get ppKindInvoice => 'Invoice';
+
+  @override
+  String get ppKindQuote => 'Quote';
+
+  @override
+  String get ppActionPay => 'Pay';
+
+  @override
+  String get ppActionAccept => 'Review quote';
+
+  @override
+  String ppPayBy(String date) {
+    return 'Pay by $date';
+  }
+
+  @override
+  String get ppTitle => 'Payment page';
+
+  @override
+  String get ppIssuedBy => 'Issued by';
+
+  @override
+  String get ppBilledTo => 'Billed to';
+
+  @override
+  String ppDue(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String ppPaidOn(String date) {
+    return 'Paid on $date';
+  }
+
+  @override
+  String ppRegistration(String n) {
+    return 'Registration $n';
+  }
+
+  @override
+  String ppVat(String n) {
+    return 'VAT $n';
+  }
+
+  @override
+  String get ppOfflineTitle => 'How to pay';
+
+  @override
+  String get ppOfflineNone =>
+      'Online payment is not available for this invoice. Contact us and we will tell you how to pay.';
+
+  @override
+  String get ppNotBooking =>
+      'Paying settles this invoice only. Your request keeps its own status.';
+
+  @override
+  String get ppViewRequest => 'View request';
+
+  @override
+  String get lsBrowse => 'Browse options';
+
+  @override
+  String get lsBrowseLead =>
+      'See what we list. None of this is a booking offer; ask our team to arrange it.';
+
+  @override
+  String get lsFilter => 'Destination';
+
+  @override
+  String get lsFilterFlightsHint => 'Airport code, for example IKA';
+
+  @override
+  String get lsFilterApply => 'Filter';
+
+  @override
+  String get lsClear => 'Clear';
+
+  @override
+  String get lsIndicative => 'Indicative';
+
+  @override
+  String get lsIndicativeNote =>
+      'Indicative only. Availability and price are confirmed in a quote.';
+
+  @override
+  String get lsCached => 'Saved search';
+
+  @override
+  String get lsSandbox => 'Test data';
+
+  @override
+  String lsFetched(String when) {
+    return 'Fetched $when';
+  }
+
+  @override
+  String get lsFlightsNote =>
+      'Saved search results, not live availability. No fares are shown; ask for a quote to get a price.';
+
+  @override
+  String lsQuotedPrice(String amount) {
+    return 'Quoted price $amount';
+  }
+
+  @override
+  String get lsEmptyTitle => 'Nothing listed yet';
+
+  @override
+  String get lsEmptyBody =>
+      'We have no listed options for this. Ask our team and we will look for you.';
+
+  @override
+  String get lsAsk => 'Ask our team';
+
+  @override
+  String get lsRequest => 'Make a request';
+
+  @override
+  String get lsDirect => 'Direct';
+
+  @override
+  String lsStops(String n) {
+    return '$n stops';
+  }
+
+  @override
+  String lsDeparts(String date) {
+    return 'Departs $date';
+  }
+
+  @override
+  String get cuTitle => 'Customers';
+
+  @override
+  String get cuCardNote => 'Who is online, last seen and activity';
+
+  @override
+  String get cuSearchHint => 'Name, email or phone';
+
+  @override
+  String get cuOnline => 'Online';
+
+  @override
+  String get cuOffline => 'Offline';
+
+  @override
+  String cuLastSeen(String when) {
+    return 'Last seen $when';
+  }
+
+  @override
+  String get cuNeverSeen => 'Never seen';
+
+  @override
+  String cuLastScreen(String screen) {
+    return 'Last screen: $screen';
+  }
+
+  @override
+  String cuOpenRequests(String n) {
+    return '$n open requests';
+  }
+
+  @override
+  String cuSignIns(String n) {
+    return '$n sign-ins';
+  }
+
+  @override
+  String get cuVerified => 'Verified';
+
+  @override
+  String get cuSuspended => 'Suspended';
+
+  @override
+  String get cuDeleted => 'Deleted';
+
+  @override
+  String get cuEmpty => 'No customers match.';
+
+  @override
+  String get cuActivity => 'Activity';
+
+  @override
+  String get cuActivityEmpty => 'No activity recorded.';
+
+  @override
+  String cuSessions(String active, String total) {
+    return '$active active of $total sessions';
+  }
+
+  @override
+  String get cuTrackingOff =>
+      'This customer turned activity tracking off, so new screens are not recorded.';
+
+  @override
+  String cuRetention(String days) {
+    return 'Screen names only, kept for $days days.';
+  }
+
+  @override
+  String get cuKindSignIn => 'Signed in';
+
+  @override
+  String get cuKindSignOut => 'Signed out';
+
+  @override
+  String cuKindView(String screen) {
+    return 'Viewed $screen';
+  }
+
+  @override
+  String get scrHome => 'Home';
+
+  @override
+  String get scrSearch => 'Search';
+
+  @override
+  String get scrResults => 'Results';
+
+  @override
+  String get scrItinerary => 'Itinerary';
+
+  @override
+  String get scrFlights => 'Flights';
+
+  @override
+  String get scrHotels => 'Hotels';
+
+  @override
+  String get scrStays => 'Stays';
+
+  @override
+  String get scrTrains => 'Trains';
+
+  @override
+  String get scrBuses => 'Buses';
+
+  @override
+  String get scrVisa => 'Visa';
+
+  @override
+  String get scrTours => 'Tours';
+
+  @override
+  String get scrCip => 'CIP lounge';
+
+  @override
+  String get scrInsurance => 'Insurance';
+
+  @override
+  String get scrCargo => 'Cargo';
+
+  @override
+  String get scrShipments => 'Shipments';
+
+  @override
+  String get scrRequestNew => 'New request';
+
+  @override
+  String get scrRequests => 'Requests';
+
+  @override
+  String get scrRequestDetail => 'Request';
+
+  @override
+  String get scrTrack => 'Tracking';
+
+  @override
+  String get scrAccount => 'Account';
+
+  @override
+  String get scrDetails => 'My details';
+
+  @override
+  String get scrTravellers => 'Travellers';
+
+  @override
+  String get scrBilling => 'Billing';
+
+  @override
+  String get scrInvoice => 'Invoice';
+
+  @override
+  String get scrPay => 'Payment';
+
+  @override
+  String get scrInbox => 'Inbox';
+
+  @override
+  String get scrSupport => 'Support';
+
+  @override
+  String get scrSupportTicket => 'Support message';
+
+  @override
+  String get scrClub => 'Club';
+
+  @override
+  String get scrSettings => 'Settings';
+
+  @override
+  String get scrFaq => 'FAQ';
+
+  @override
+  String get scrGuides => 'Guides';
+
+  @override
+  String get scrBlog => 'Blog';
+
+  @override
+  String get scrGlossary => 'Glossary';
+
+  @override
+  String get scrSignIn => 'Sign in';
 }

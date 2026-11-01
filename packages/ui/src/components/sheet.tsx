@@ -48,8 +48,8 @@ const sheetSideClasses: Record<SheetSide, string> = {
   bottom:
     "inset-x-0 bottom-0 h-auto border-t data-closed:slide-out-to-bottom data-open:slide-in-from-bottom",
   right:
-    "inset-y-0 right-0 h-full w-3/4 border-l rounded-s-lg data-closed:slide-out-to-right data-open:slide-in-from-right sm:max-w-sm",
-  left: "inset-y-0 left-0 h-full w-3/4 border-r rounded-e-lg data-closed:slide-out-to-left data-open:slide-in-from-left sm:max-w-sm",
+    "inset-y-0 right-0 h-full w-3/4 border-l rounded-l-lg data-closed:slide-out-to-right data-open:slide-in-from-right sm:max-w-sm",
+  left: "inset-y-0 left-0 h-full w-3/4 border-r rounded-r-lg data-closed:slide-out-to-left data-open:slide-in-from-left sm:max-w-sm",
   end: "inset-y-0 end-0 h-full w-3/4 border-s rounded-s-lg data-closed:ltr:slide-out-to-right data-closed:rtl:slide-out-to-left data-open:ltr:slide-in-from-right data-open:rtl:slide-in-from-left sm:max-w-sm",
   start:
     "inset-y-0 start-0 h-full w-3/4 border-e rounded-e-lg data-closed:ltr:slide-out-to-left data-closed:rtl:slide-out-to-right data-open:ltr:slide-in-from-left data-open:rtl:slide-in-from-right sm:max-w-sm",

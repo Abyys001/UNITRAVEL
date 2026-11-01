@@ -32,6 +32,6 @@ class NotificationWorkers implements OnModuleInit {
 @Module({
   controllers: [NotificationsController],
   providers: [NotificationsService, NotificationRouter, SmsProviders, PushProviders, EmailSender, VendorCredentialsService, NotificationWorkers],
-  exports: [NotificationsService, VendorCredentialsService, SmsProviders],
+  exports: [NotificationsService, VendorCredentialsService, SmsProviders, EmailSender],
 })
 export class NotificationsModule {}

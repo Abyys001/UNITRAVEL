@@ -9,7 +9,7 @@ import { FormDialog } from "@/components/form-dialog"
 import { EmptyState } from "@/components/bento"
 import { ListCard } from "@/components/data-list"
 import { DataTable, DevPage } from "@/components/dev-ui"
-import { ErrorLine, Field, Loading, PageHead, Tag } from "@/components/ui"
+import { Arrow, ErrorLine, Field, Loading, PageHead, Tag } from "@/components/ui"
 import { api } from "@/lib/api"
 import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
@@ -33,7 +33,7 @@ export default function SmsRoutesPage() {
         {!q.data.length ? <ListCard className="mx-0 mb-0 md:mx-0"><EmptyState title={t("sms.none")} className="py-10" /></ListCard> : (
           <ListCard className="mx-0 mb-0 md:mx-0"><DataTable data-testid="sms-routes">
             <thead><tr>{[t("sms.c.prefix"), t("sms.c.providers"), t("sms.c.enabled"), t("sms.c.success"), t("sms.c.sent"), ""].map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
-            <tbody>{q.data.map((r) => <tr key={r.id}><td className="num font-medium" dir="ltr">{r.prefix}</td><td className="font-mono text-meta" dir="ltr">{r.providers.join(" → ")}</td><td><Tag value={r.enabled ? "ON" : "OFF"} className={r.enabled ? "border-success text-success" : ""} /></td><td className="num">{r.successRate == null ? "—" : `${Math.round(r.successRate * 100)}%`}</td><td className="num">{r.sent24h}</td><td className="text-end">{canWrite && <Button size="xs" variant="ghost" onClick={() => setEdit({ prefix: r.prefix, providers: r.providers.join(", "), enabled: r.enabled })}>{t("lanes.edit")}</Button>}</td></tr>)}</tbody>
+            <tbody>{q.data.map((r) => <tr key={r.id}><td className="num font-medium" dir="ltr">{r.prefix}</td><td className="font-mono text-meta" dir="ltr">{r.providers.map((x, i) => <span key={x}>{i > 0 && <> <Arrow /> </>}{x}</span>)}</td><td><Tag value={r.enabled ? "ON" : "OFF"} className={r.enabled ? "border-success text-success" : ""} /></td><td className="num">{r.successRate == null ? "—" : `${Math.round(r.successRate * 100)}%`}</td><td className="num">{r.sent24h}</td><td className="text-end">{canWrite && <Button size="xs" variant="ghost" onClick={() => setEdit({ prefix: r.prefix, providers: r.providers.join(", "), enabled: r.enabled })}>{t("lanes.edit")}</Button>}</td></tr>)}</tbody>
           </DataTable></ListCard>
         )}
       </DevPage>

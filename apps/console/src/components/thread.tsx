@@ -8,7 +8,7 @@ import { cn } from "@unitravel/ui/lib/utils"
 import { fmtDateTime } from "@/lib/format"
 import { useT } from "@/lib/i18n"
 
-import { Empty } from "./ui"
+import { Arrow, Empty } from "./ui"
 
 /** Internal notes and customer messages side by side but visually distinct: notes are hatched orange, never sent. */
 export function NotesList({ notes }: { notes: { id: string; body: string; author: string | null; createdAt: string }[] }) {
@@ -26,6 +26,7 @@ export function NotesList({ notes }: { notes: { id: string; body: string; author
 }
 
 export function MessagesList({ messages }: { messages: { id: string; direction: string; body: string; authorName: string; createdAt: string }[] }) {
+  const t = useT()
   if (!messages.length) return <Empty>No messages with the customer.</Empty>
   return (
     <ul className="space-y-2" data-testid="messages">
@@ -34,7 +35,7 @@ export function MessagesList({ messages }: { messages: { id: string; direction: 
         return (
           <li key={m.id} className={cn("max-w-[88%] rounded-lg border px-3 py-2", out ? "ms-auto border-info-border bg-info-subtle" : "border-rule bg-surface-raised")}>
             <p className="whitespace-pre-wrap" dir="auto">{m.body}</p>
-            <p className="mt-1 text-caption text-steel">{out ? `${m.authorName} → customer` : <span dir="auto">{m.authorName}</span>} · {fmtDateTime(m.createdAt)}</p>
+            <p className="mt-1 text-caption text-steel">{out ? <>{m.authorName} <Arrow /> {t("case.panel.customer").toLowerCase()}</> : <span dir="auto">{m.authorName}</span>} · {fmtDateTime(m.createdAt)}</p>
           </li>
         )
       })}

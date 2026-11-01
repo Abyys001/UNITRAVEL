@@ -33,6 +33,8 @@ export const ERROR_STATUS = {
   ONLINE_PAYMENT_NOT_OFFERED: 403,
   COMPLIANCE_REVIEW_REQUIRED: 409,
   SEARCH_EXPIRED: 410,
+  /** An integration has no credentials or no vendor API implemented yet (for example click-to-call before the Bonline docs, ADR-0019). */
+  NOT_CONFIGURED: 501,
   INTERNAL: 500,
 } as const
 

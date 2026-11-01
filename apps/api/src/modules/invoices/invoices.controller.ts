@@ -2,10 +2,10 @@ import { Body, Controller, Get, HttpCode, Param, Post, Query } from "@nestjs/com
 import { ApiTags } from "@nestjs/swagger"
 import { z } from "zod"
 
-import { InvoiceCancelBody, InvoiceStatus } from "@unitravel/contracts"
+import { InvoiceCancelBody, InvoiceStatus, PurchasableItem } from "@unitravel/contracts"
 
-import { type Actor, CurrentActor, RequirePermission, StaffOnly } from "../../core/http/decorators"
-import { zbody } from "../../core/http/zod"
+import { type Actor, Ctx, CurrentActor, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
+import { ApiZodResponse, zbody } from "../../core/http/zod"
 import { InvoicesService } from "./invoices.service"
 
 /** Documents & billing for the signed-in customer: own invoices and quotations, 404 for anything else (ADR-0006 C9). */
@@ -18,6 +18,14 @@ export class CustomerBillingController {
   @RequirePermission("flight_request.read.own", "cargo_request.read.own")
   documents(@CurrentActor() actor: Actor) {
     return this.invoices.billing(actor.userId)
+  }
+
+  /** Own issued invoices that can still be paid and own service quotes that can still be accepted (ADR-0020). */
+  @Get("purchasable")
+  @RequirePermission("flight_request.read.own", "cargo_request.read.own")
+  @ApiZodResponse(200, PurchasableItem.array())
+  purchasable(@CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.invoices.purchasable(actor.userId, ctx.locale)
   }
 
   @Get("invoices/:number")

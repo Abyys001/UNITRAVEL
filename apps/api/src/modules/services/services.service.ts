@@ -2,8 +2,8 @@ import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { and, desc, eq, inArray, isNull, lt, max, ne, sql } from "drizzle-orm"
 
 import {
-  type CreateServiceRequestBody, CustomerServiceQuoteView, type CustomerServiceRequestView, type PublicTrackView, SERVICE_COMMANDS, SERVICE_TYPE_FLAG, type ServiceCommand, ServiceCommandBodies, type ServiceQuoteLine,
-  type ServiceQuoteView, type ServiceRequestStatus, type ServiceRequestSummary, type ServiceRequestType, type StaffServiceRequestPage, type StaffServiceRequestView, serviceQuoteTotal,
+  type AssignmentResult, type AssignServiceBody, type CreateServiceRequestBody, CustomerServiceQuoteView, type CustomerServiceRequestView, type PublicTrackView, SERVICE_COMMANDS, SERVICE_TYPE_FLAG, type ServiceCommand, ServiceCommandBodies, type ServiceQuoteLine,
+  type ServiceQuoteView, type ServiceRequestStatus, type ServiceRequestSummary, type ServiceRequestType, type StaffServiceRequestPage, type StaffServiceRequestView, serviceQuoteTotal, STAFF_SURFACE_PERMISSIONS,
 } from "@unitravel/contracts"
 import {
   complianceCases, customerProfiles, type Db, type DbOrTx, flightRequests, quotes, requestMessages, requestStatusHistory, serviceRequests, travellers, type Tx, userIdentities, users,
@@ -153,19 +153,68 @@ export class ServicesService implements OnModuleInit {
       const [f] = await this.db.select({ owner: flightRequests.customerUserId }).from(flightRequests).where(eq(flightRequests.ref, linked))
       if (f?.owner !== actor.userId) throw new AppError("VALIDATION_FAILED", "Choose one of your own flight requests", [{ path: "details.linkedFlightRequestRef", code: "INVALID" }])
     }
+    return this.uow.run((tx) => this.submit(tx, {
+      type: body.type, details, customerUserId: actor.userId, contact, locale: ctx.locale, via: ctx.via,
+      actor: { userId: actor.userId, kind: "CUSTOMER", ip: actor.ip }, requestId: ctx.requestId, command: "submit", auditAction: "service_request.submitted", auditAfter: { type: body.type, travellers: travellerIds.length },
+    }))
+  }
+
+  /** The one place a request row is born, so a customer's submission and a staff assignment cannot drift apart. */
+  private async submit(tx: Tx, p: {
+    type: ServiceRequestType; details: Record<string, unknown>; customerUserId: string; contact: typeof userIdentities.$inferSelect; locale: Locale; via: "WEB" | "MOBILE" | "CONSOLE"
+    actor: { userId: string; kind: "CUSTOMER" | "STAFF"; ip?: string }; requestId: string; command: "submit" | "assign_to_customer"; auditAction: string; auditAfter: Record<string, unknown>
+  }) {
     const wf = this.config.get("WORKFLOW")
-    return this.uow.run(async (tx) => {
-      const ref = await this.uniqueRef(tx)
-      const now = new Date()
-      const [r] = await tx.insert(serviceRequests).values({
-        ref, type: body.type, status: "SUBMITTED", customerUserId: actor.userId, contactIdentityId: contact.id, contactPhoneSnapshot: contact.valueNormalised, details,
-        submittedVia: ctx.via, submittedLocale: ctx.locale, slaDueAt: addBusinessMinutes(wf.businessHours, now, wf.sla.unassignedMinutes), submittedAt: now,
-      }).returning()
-      await tx.insert(requestStatusHistory).values({ requestType: "SERVICE", requestId: r!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: "CUSTOMER" })
-      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "service_request.submitted", entityType: "service_request", entityId: r!.id, contextRef: ref, after: { type: body.type, travellers: travellerIds.length }, ip: actor.ip, requestId: ctx.requestId })
-      await this.outbox.add(tx, { aggregateType: "service_request", aggregateId: r!.id, eventType: "service_request.submitted", payload: { requestId: r!.id, ref, customerUserId: actor.userId, serviceType: body.type, ...this.labelVars(body.type), routeLabel: SERVICE_TYPE_LABELS[body.type][ctx.locale] }, dedupeKey: `sr-submitted:${r!.id}` })
-      return { ref, type: body.type, status: "SUBMITTED" as const }
+    const ref = await this.uniqueRef(tx)
+    const now = new Date()
+    const [r] = await tx.insert(serviceRequests).values({
+      ref, type: p.type, status: "SUBMITTED", customerUserId: p.customerUserId, contactIdentityId: p.contact.id, contactPhoneSnapshot: p.contact.valueNormalised, details: p.details,
+      submittedVia: p.via, submittedLocale: p.locale, slaDueAt: addBusinessMinutes(wf.businessHours, now, wf.sla.unassignedMinutes), submittedAt: now,
+    }).returning()
+    await tx.insert(requestStatusHistory).values({ requestType: "SERVICE", requestId: r!.id, fromStatus: null, toStatus: "SUBMITTED", command: p.command, actorUserId: p.actor.userId, actorKind: p.actor.kind })
+    await this.audit.record(tx, { actorUserId: p.actor.userId, actorKind: p.actor.kind, action: p.auditAction, entityType: "service_request", entityId: r!.id, contextRef: ref, after: p.auditAfter, ip: p.actor.ip, requestId: p.requestId })
+    await this.outbox.add(tx, { aggregateType: "service_request", aggregateId: r!.id, eventType: "service_request.submitted", payload: { requestId: r!.id, ref, customerUserId: p.customerUserId, serviceType: p.type, ...this.labelVars(p.type), routeLabel: SERVICE_TYPE_LABELS[p.type][p.locale] }, dedupeKey: `sr-submitted:${r!.id}` })
+    return { ref, type: p.type, status: "SUBMITTED" as const }
+  }
+
+  /**
+   * Staff put a service on a customer's account (ADR-0020). The request is created as the customer would, screened with the
+   * same parties and policies, and only a request that is still clean is claimed and quoted. A hold or block stays as it is.
+   */
+  async assign(customerId: string, body: AssignServiceBody, actor: Actor, ctx: { requestId: string }): Promise<AssignmentResult> {
+    if (!this.config.flag(SERVICE_TYPE_FLAG[body.type])) throw new AppError("FEATURE_DISABLED", "This service is not available")
+    const [u] = await this.db.select().from(users).where(eq(users.id, customerId))
+    if (!u || u.status !== "ACTIVE" || u.mergedInto) throw notFound("Customer")
+    // Staff are not customers: a service cannot be assigned to a colleague's account.
+    if ((await this.access.load(customerId)).permissions.some((p) => STAFF_SURFACE_PERMISSIONS.includes(p as never))) throw notFound("Customer")
+    const phones = await this.db.select().from(userIdentities).where(and(eq(userIdentities.userId, customerId), eq(userIdentities.type, "PHONE"), isNull(userIdentities.revokedAt)))
+    const contact = phones.find((i) => i.isPrimary && i.verifiedAt) ?? phones.find((i) => i.verifiedAt) ?? phones.find((i) => i.isPrimary) ?? phones[0]
+    if (!contact) throw new AppError("VALIDATION_FAILED", "The customer has no phone number on file", [{ path: "customerId", code: "NO_PHONE" }])
+    if (this.config.get("AUTH").requireVerifiedPhoneForRequests && !contact.verifiedAt) throw new AppError("PHONE_NOT_VERIFIED", "The customer's phone number is not verified")
+    const details = body.details
+    const travellerIds = Array.isArray(details.travellerIds) ? (details.travellerIds as string[]) : []
+    for (const id of new Set(travellerIds)) await this.customers.owned(customerId, id)
+    const linked = typeof details.linkedFlightRequestRef === "string" ? normaliseReference(details.linkedFlightRequestRef) : null
+    if (linked) {
+      const [f] = await this.db.select({ owner: flightRequests.customerUserId }).from(flightRequests).where(eq(flightRequests.ref, linked))
+      if (f?.owner !== customerId) throw new AppError("VALIDATION_FAILED", "Choose one of the customer's own flight requests", [{ path: "details.linkedFlightRequestRef", code: "INVALID" }])
+    }
+    const created = await this.uow.run((tx) => this.submit(tx, {
+      type: body.type, details, customerUserId: customerId, contact, locale: u.preferredLocale, via: "CONSOLE",
+      actor: { userId: actor.userId, kind: "STAFF", ip: actor.ip }, requestId: ctx.requestId, command: "assign_to_customer", auditAction: "service_request.assigned", auditAfter: { type: body.type, customerId, travellers: travellerIds.length },
+    }))
+    await this.screen((await this.byRef(created.ref)).id)
+    const m = staffActor(actor)
+    const quoted = await this.uow.run(async (tx) => {
+      const r = await this.byRef(created.ref, tx, true)
+      if (r.status !== "SUBMITTED") return null
+      const claimed = await this.transition(tx, r, "claim", m, { patch: { assigneeUserId: actor.userId } })
+      await this.sendQuote(tx, claimed, body.quote, m, actor, claimed.version)
+      const [q] = await tx.select().from(quotes).where(and(eq(quotes.requestType, "SERVICE"), eq(quotes.requestId, r.id), eq(quotes.status, "SENT"))).orderBy(desc(quotes.version)).limit(1)
+      return q ?? null
     })
+    const final = await this.byRef(created.ref)
+    return { ref: final.ref as AssignmentResult["ref"], type: final.type, status: final.status, quoteSent: !!quoted, quotationNumber: quoted?.documentNumber ?? null, validUntil: iso(quoted?.validUntil ?? null) }
   }
 
   private labelVars(type: ServiceRequestType) {

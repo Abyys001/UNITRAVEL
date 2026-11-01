@@ -9,31 +9,22 @@ import type { DashboardMetrics, VerificationQueueItem } from "@unitravel/contrac
 import { formatMoney } from "@unitravel/domain"
 import { cn } from "@unitravel/ui/lib/utils"
 
-import { EmptyState, Skeleton, Sparkline, StatusChip, TileError } from "@/components/bento"
+import { EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
 import { BarChart, Donut, Legend, SplitBar } from "@/components/charts"
 import { Segmented, Switch } from "@/components/controls"
-import { Tag, useAct } from "@/components/ui"
+import { AppHealth } from "@/components/app-health"
+import { Kpi } from "@/components/kpi"
+import { Arrow, RouteText, Tag, useAct } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDateTime, rel } from "@/lib/format"
 import { type MsgKey, type T, useT } from "@/lib/i18n"
-import { type ActivityEntry, useActivity, useLive, useQueueSummary } from "@/lib/live"
+import { type ActivityEntry, useActivity, useLive, useQueueSummary, useSupportOverview } from "@/lib/live"
 import { useLocale } from "@/lib/prefs"
 import { useSession } from "@/lib/session"
+import { STAGES } from "@/lib/stages"
 import type { CaseView, FlightListItem, Page } from "@/lib/types"
 
 type CountKey = "new" | "mine" | "awaitingCustomer" | "quoted" | "reserved" | "complianceHolds" | "slaBreaches"
-
-/* Open stages in workflow order; colours follow the stage (waiting → working → with the customer → committed). */
-const STAGES: { status: string; label: MsgKey; color: string }[] = [
-  { status: "NEW", label: "home.stage.new", color: "var(--viz-2)" },
-  { status: "IN_REVIEW", label: "home.stage.review", color: "var(--viz-1)" },
-  { status: "AWAITING_CUSTOMER", label: "home.stage.awaiting", color: "var(--viz-3)" },
-  { status: "QUOTED", label: "home.stage.quoted", color: "var(--viz-5)" },
-  { status: "ACCEPTED", label: "home.stage.accepted", color: "var(--viz-4)" },
-  { status: "RESERVED", label: "home.stage.reserved", color: "color-mix(in oklab, var(--viz-4) 55%, var(--surface-raised))" },
-  { status: "COMPLIANCE_HOLD", label: "home.stage.hold", color: "var(--viz-6)" },
-  { status: "SUBMITTED", label: "home.stage.screening", color: "var(--ink-subtle)" },
-]
 
 function Card({ title, aside, children, className, tone, testId, sub }: { title: React.ReactNode; aside?: React.ReactNode; children: React.ReactNode; className?: string; tone?: "alert"; testId?: string; sub?: React.ReactNode }) {
   return (
@@ -57,7 +48,7 @@ function CaseRows({ items, t, empty }: { items: FlightListItem[]; t: T; empty: s
         <li key={r.ref}>
           <Link href={`/requests/${r.ref}`} className="grid min-h-12 grid-cols-[7.5rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-2 transition-colors hover:bg-hover max-sm:grid-cols-[minmax(0,1fr)_auto]">
             <span className="ref font-semibold text-ink max-sm:col-span-2" dir="ltr">{r.ref}</span>
-            <span className="min-w-0 truncate"><span dir="auto" className="font-medium">{r.customer ?? "—"}</span> <span className="text-steel">· <bdi>{r.routeLabel}</bdi></span></span>
+            <span className="min-w-0 truncate"><span dir="auto" className="font-medium">{r.customer ?? "—"}</span> <span className="text-steel">· <RouteText>{r.routeLabel}</RouteText></span></span>
             <span className="flex items-center justify-end gap-2">
               {r.slaBreached ? <StatusChip tone="danger">{t("sla.at", { t: rel(r.slaDueAt) })}</StatusChip> : r.slaDueAt ? <StatusChip tone="warn">{t("due.at", { t: rel(r.slaDueAt) })}</StatusChip> : null}
               <Tag value={r.status} className="max-md:hidden" />
@@ -66,6 +57,25 @@ function CaseRows({ items, t, empty }: { items: FlightListItem[]; t: T; empty: s
         </li>
       ))}
     </ul>
+  )
+}
+
+/** Open support tickets (waiting on staff), how many are past their first-answer time and how many have no owner. */
+function SupportTile() {
+  const t = useT()
+  const q = useSupportOverview(true)
+  const d = q.data
+  const n = (v: number) => (d?.more ? `${v}+` : String(v))
+  return (
+    <Card title={t("home.support")} aside={<More href="/support">{t("home.support.open")}</More>} testId="tile-support">
+      {q.isError ? <TileError error={q.error} onRetry={() => void q.refetch()} /> : !d ? <div className="grid grid-cols-3 gap-3"><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div> : !d.open ? <EmptyState icon={<CircleCheck />} title={t("home.support.clear")} className="py-5" /> : (
+        <dl className="grid grid-cols-3 gap-3">
+          <Link href="/support?status=OPEN" className="rounded-lg bg-surface-sunk px-3 py-2.5 hover:bg-hover"><dt className="text-caption text-steel">{t("home.support.openN")}</dt><dd className="num mt-1 text-section font-semibold">{n(d.open)}</dd></Link>
+          <Link href="/support?status=OPEN&overdue=1" className="rounded-lg bg-surface-sunk px-3 py-2.5 hover:bg-hover"><dt className="text-caption text-steel">{t("home.support.overdue")}</dt><dd className={cn("num mt-1 text-section font-semibold", d.overdue > 0 && "text-danger")}>{n(d.overdue)}</dd></Link>
+          <Link href="/support?status=OPEN&assignee=none" className="rounded-lg bg-surface-sunk px-3 py-2.5 hover:bg-hover"><dt className="text-caption text-steel">{t("home.support.unassigned")}</dt><dd className="num mt-1 text-section font-semibold">{n(d.unassigned)}</dd></Link>
+        </dl>
+      )}
+    </Card>
   )
 }
 
@@ -78,27 +88,12 @@ function ActivityRow({ e, t, locale }: { e: ActivityEntry; t: T; locale: string 
     <li className="flex min-h-9 items-baseline gap-3 py-2">
       <time className="num shrink-0 text-caption text-steel" dateTime={new Date(e.at).toISOString()}>{time}</time>
       {e.kind === "request" ? (
-        <Link href={e.requestType === "FLIGHT" ? `/requests/${e.ref}` : `/cargo/${e.ref}`} className="min-w-0 truncate hover:underline">{e.status ? t("home.activity.requestTo", { ref: e.ref, status: e.status.replace(/_/g, " ").toLowerCase() }) : t("home.activity.request", { ref: e.ref })}</Link>
+        <Link href={e.requestType === "FLIGHT" ? `/requests/${e.ref}` : e.requestType === "SERVICE" ? `/services/${e.ref}` : `/cargo/${e.ref}`} className="min-w-0 truncate hover:underline">{e.status ? t("home.activity.requestTo", { ref: e.ref, status: e.status.replace(/_/g, " ").toLowerCase() }) : t("home.activity.request", { ref: e.ref })}</Link>
       ) : (
-        <span className="min-w-0 flex-1">{e.changes.map((c) => <span key={c.key} className="me-2 whitespace-nowrap">{label[c.key]} <b className="num">{c.from}→{c.to}</b></span>)}</span>
+        <span className="min-w-0 flex-1">{e.changes.map((c) => <span key={c.key} className="me-2 whitespace-nowrap">{label[c.key]} <b className="num">{c.from}<Arrow />{c.to}</b></span>)}</span>
       )}
     </li>
   )
-}
-
-function Kpi({ label, value, href, sub, subTone, spark, sparkLabel, tone, loading }: { label: string; value: number | undefined; href: string | null; sub?: React.ReactNode; subTone?: "danger" | "ok" | "muted"; spark?: number[]; sparkLabel?: string; tone?: "danger"; loading: boolean }) {
-  const inner = (
-    <>
-      <p className="text-meta font-medium text-steel">{label}</p>
-      {loading ? <Skeleton className="mt-3 h-8 w-16" /> : <p className={cn("num mt-2 text-display leading-none font-semibold tracking-tight", tone === "danger" && value ? "text-danger" : "text-ink")}>{value ?? "—"}</p>}
-      <div className="mt-3 flex min-h-6 items-end justify-between gap-3">
-        <p className={cn("text-meta", subTone === "danger" ? "font-medium text-danger" : subTone === "ok" ? "text-success" : "text-steel")}>{loading ? "" : sub}</p>
-        {spark && spark.length > 1 && <Sparkline values={spark} label={sparkLabel} className="h-6 w-24 shrink-0 text-viz-1" height={24} />}
-      </div>
-    </>
-  )
-  const cls = "bento-tile block min-h-32 transition-colors"
-  return href ? <Link href={href} className={cn(cls, "hover:border-rule-strong hover:bg-hover/40")}>{inner}</Link> : <div className={cls}>{inner}</div>
 }
 
 export default function Home() {
@@ -194,6 +189,8 @@ export default function Home() {
         </div>
       )}
 
+      {(flights || cargoRead) && <AppHealth metrics={m} loading={!m && metrics.isPending} error={metrics.isError ? metrics.error : undefined} onRetry={() => void metrics.refetch()} flights={flights} />}
+
       <div className="grid items-start gap-4 xl:grid-cols-12">
         <div className="space-y-4 xl:col-span-8">
           {flights && (
@@ -209,6 +206,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-4 xl:col-span-4">
+          {can("support.read") && <SupportTile />}
           {flights && (
             <Card title={t("home.sla")} sub={m ? t("home.sla.sub", { n: m.range.days }) : undefined} testId="tile-sla">
               {metrics.isError ? <TileError error={metrics.error} onRetry={() => void metrics.refetch()} /> : !fc ? <SkeletonRows n={2} /> : !(fc.met + fc.missed + fc.pending) ? <EmptyState title={t("home.sla.empty")} /> : (

@@ -29,3 +29,10 @@ export function useKeys(map: Record<string, () => void>, enabled = true) {
     return () => window.removeEventListener("keydown", onKey)
   })
 }
+
+/** The value after it has stopped changing for `ms`; keeps a search box from calling the API on every keystroke. */
+export function useDebounced<V>(value: V, ms = 300): V {
+  const [v, setV] = useState(value)
+  useEffect(() => { const id = setTimeout(() => setV(value), ms); return () => clearTimeout(id) }, [value, ms])
+  return v
+}

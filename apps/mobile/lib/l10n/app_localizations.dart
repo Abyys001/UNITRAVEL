@@ -4656,6 +4656,780 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Sign in to send a request.'**
   String get svSignInFirst;
+
+  /// No description provided for @stWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to us'**
+  String get stWrite;
+
+  /// No description provided for @stWriteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a message without a request. We reply by email or phone.'**
+  String get stWriteNote;
+
+  /// No description provided for @stMyTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'My messages'**
+  String get stMyTickets;
+
+  /// No description provided for @stFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact us'**
+  String get stFormTitle;
+
+  /// No description provided for @stFormLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what you need. Give an email address or a phone number so we can answer.'**
+  String get stFormLead;
+
+  /// No description provided for @stName.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get stName;
+
+  /// No description provided for @stContactNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Give an email address or a phone number.'**
+  String get stContactNeeded;
+
+  /// No description provided for @stTopic.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic'**
+  String get stTopic;
+
+  /// No description provided for @stTopicBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking'**
+  String get stTopicBooking;
+
+  /// No description provided for @stTopicPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get stTopicPayment;
+
+  /// No description provided for @stTopicDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get stTopicDocuments;
+
+  /// No description provided for @stTopicVisa.
+  ///
+  /// In en, this message translates to:
+  /// **'Visa'**
+  String get stTopicVisa;
+
+  /// No description provided for @stTopicCargo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cargo'**
+  String get stTopicCargo;
+
+  /// No description provided for @stTopicAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get stTopicAccount;
+
+  /// No description provided for @stTopicFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get stTopicFeedback;
+
+  /// No description provided for @stTopicOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get stTopicOther;
+
+  /// No description provided for @stRequestRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Request reference (optional)'**
+  String get stRequestRef;
+
+  /// No description provided for @stMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get stMessage;
+
+  /// No description provided for @stMessageHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 10 characters.'**
+  String get stMessageHelp;
+
+  /// No description provided for @stSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get stSend;
+
+  /// No description provided for @stSentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Message sent'**
+  String get stSentTitle;
+
+  /// No description provided for @stSentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reference is {ref}. We will answer by email or phone.'**
+  String stSentBody(String ref);
+
+  /// No description provided for @stWriteAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Write another message'**
+  String get stWriteAnother;
+
+  /// No description provided for @stTicketsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You have not written to us yet.'**
+  String get stTicketsEmpty;
+
+  /// No description provided for @stStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get stStatusOpen;
+
+  /// No description provided for @stStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you'**
+  String get stStatusPending;
+
+  /// No description provided for @stStatusResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get stStatusResolved;
+
+  /// No description provided for @stStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get stStatusClosed;
+
+  /// No description provided for @stReplyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a reply'**
+  String get stReplyHint;
+
+  /// No description provided for @stReplySend.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get stReplySend;
+
+  /// No description provided for @stClosedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This conversation is closed. Write a new message if you still need help.'**
+  String get stClosedNote;
+
+  /// No description provided for @stYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get stYou;
+
+  /// No description provided for @stAboutRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'About request {ref}'**
+  String stAboutRequest(String ref);
+
+  /// No description provided for @stNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not find that message.'**
+  String get stNotFound;
+
+  /// No description provided for @ppAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available to pay'**
+  String get ppAvailable;
+
+  /// No description provided for @ppAvailableLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes you can accept and invoices you can pay.'**
+  String get ppAvailableLead;
+
+  /// No description provided for @ppKindInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get ppKindInvoice;
+
+  /// No description provided for @ppKindQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote'**
+  String get ppKindQuote;
+
+  /// No description provided for @ppActionPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get ppActionPay;
+
+  /// No description provided for @ppActionAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Review quote'**
+  String get ppActionAccept;
+
+  /// No description provided for @ppPayBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay by {date}'**
+  String ppPayBy(String date);
+
+  /// No description provided for @ppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment page'**
+  String get ppTitle;
+
+  /// No description provided for @ppIssuedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued by'**
+  String get ppIssuedBy;
+
+  /// No description provided for @ppBilledTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Billed to'**
+  String get ppBilledTo;
+
+  /// No description provided for @ppDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String ppDue(String date);
+
+  /// No description provided for @ppPaidOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid on {date}'**
+  String ppPaidOn(String date);
+
+  /// No description provided for @ppRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration {n}'**
+  String ppRegistration(String n);
+
+  /// No description provided for @ppVat.
+  ///
+  /// In en, this message translates to:
+  /// **'VAT {n}'**
+  String ppVat(String n);
+
+  /// No description provided for @ppOfflineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How to pay'**
+  String get ppOfflineTitle;
+
+  /// No description provided for @ppOfflineNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Online payment is not available for this invoice. Contact us and we will tell you how to pay.'**
+  String get ppOfflineNone;
+
+  /// No description provided for @ppNotBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Paying settles this invoice only. Your request keeps its own status.'**
+  String get ppNotBooking;
+
+  /// No description provided for @ppViewRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'View request'**
+  String get ppViewRequest;
+
+  /// No description provided for @lsBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse options'**
+  String get lsBrowse;
+
+  /// No description provided for @lsBrowseLead.
+  ///
+  /// In en, this message translates to:
+  /// **'See what we list. None of this is a booking offer; ask our team to arrange it.'**
+  String get lsBrowseLead;
+
+  /// No description provided for @lsFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination'**
+  String get lsFilter;
+
+  /// No description provided for @lsFilterFlightsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Airport code, for example IKA'**
+  String get lsFilterFlightsHint;
+
+  /// No description provided for @lsFilterApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get lsFilterApply;
+
+  /// No description provided for @lsClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get lsClear;
+
+  /// No description provided for @lsIndicative.
+  ///
+  /// In en, this message translates to:
+  /// **'Indicative'**
+  String get lsIndicative;
+
+  /// No description provided for @lsIndicativeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Indicative only. Availability and price are confirmed in a quote.'**
+  String get lsIndicativeNote;
+
+  /// No description provided for @lsCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved search'**
+  String get lsCached;
+
+  /// No description provided for @lsSandbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Test data'**
+  String get lsSandbox;
+
+  /// No description provided for @lsFetched.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetched {when}'**
+  String lsFetched(String when);
+
+  /// No description provided for @lsFlightsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved search results, not live availability. No fares are shown; ask for a quote to get a price.'**
+  String get lsFlightsNote;
+
+  /// No description provided for @lsQuotedPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Quoted price {amount}'**
+  String lsQuotedPrice(String amount);
+
+  /// No description provided for @lsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing listed yet'**
+  String get lsEmptyTitle;
+
+  /// No description provided for @lsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We have no listed options for this. Ask our team and we will look for you.'**
+  String get lsEmptyBody;
+
+  /// No description provided for @lsAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask our team'**
+  String get lsAsk;
+
+  /// No description provided for @lsRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a request'**
+  String get lsRequest;
+
+  /// No description provided for @lsDirect.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get lsDirect;
+
+  /// No description provided for @lsStops.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} stops'**
+  String lsStops(String n);
+
+  /// No description provided for @lsDeparts.
+  ///
+  /// In en, this message translates to:
+  /// **'Departs {date}'**
+  String lsDeparts(String date);
+
+  /// No description provided for @cuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers'**
+  String get cuTitle;
+
+  /// No description provided for @cuCardNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is online, last seen and activity'**
+  String get cuCardNote;
+
+  /// No description provided for @cuSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, email or phone'**
+  String get cuSearchHint;
+
+  /// No description provided for @cuOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get cuOnline;
+
+  /// No description provided for @cuOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get cuOffline;
+
+  /// No description provided for @cuLastSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {when}'**
+  String cuLastSeen(String when);
+
+  /// No description provided for @cuNeverSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Never seen'**
+  String get cuNeverSeen;
+
+  /// No description provided for @cuLastScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last screen: {screen}'**
+  String cuLastScreen(String screen);
+
+  /// No description provided for @cuOpenRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} open requests'**
+  String cuOpenRequests(String n);
+
+  /// No description provided for @cuSignIns.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} sign-ins'**
+  String cuSignIns(String n);
+
+  /// No description provided for @cuVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get cuVerified;
+
+  /// No description provided for @cuSuspended.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspended'**
+  String get cuSuspended;
+
+  /// No description provided for @cuDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get cuDeleted;
+
+  /// No description provided for @cuEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No customers match.'**
+  String get cuEmpty;
+
+  /// No description provided for @cuActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get cuActivity;
+
+  /// No description provided for @cuActivityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No activity recorded.'**
+  String get cuActivityEmpty;
+
+  /// No description provided for @cuSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'{active} active of {total} sessions'**
+  String cuSessions(String active, String total);
+
+  /// No description provided for @cuTrackingOff.
+  ///
+  /// In en, this message translates to:
+  /// **'This customer turned activity tracking off, so new screens are not recorded.'**
+  String get cuTrackingOff;
+
+  /// No description provided for @cuRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen names only, kept for {days} days.'**
+  String cuRetention(String days);
+
+  /// No description provided for @cuKindSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in'**
+  String get cuKindSignIn;
+
+  /// No description provided for @cuKindSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out'**
+  String get cuKindSignOut;
+
+  /// No description provided for @cuKindView.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewed {screen}'**
+  String cuKindView(String screen);
+
+  /// No description provided for @scrHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get scrHome;
+
+  /// No description provided for @scrSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get scrSearch;
+
+  /// No description provided for @scrResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Results'**
+  String get scrResults;
+
+  /// No description provided for @scrItinerary.
+  ///
+  /// In en, this message translates to:
+  /// **'Itinerary'**
+  String get scrItinerary;
+
+  /// No description provided for @scrFlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Flights'**
+  String get scrFlights;
+
+  /// No description provided for @scrHotels.
+  ///
+  /// In en, this message translates to:
+  /// **'Hotels'**
+  String get scrHotels;
+
+  /// No description provided for @scrStays.
+  ///
+  /// In en, this message translates to:
+  /// **'Stays'**
+  String get scrStays;
+
+  /// No description provided for @scrTrains.
+  ///
+  /// In en, this message translates to:
+  /// **'Trains'**
+  String get scrTrains;
+
+  /// No description provided for @scrBuses.
+  ///
+  /// In en, this message translates to:
+  /// **'Buses'**
+  String get scrBuses;
+
+  /// No description provided for @scrVisa.
+  ///
+  /// In en, this message translates to:
+  /// **'Visa'**
+  String get scrVisa;
+
+  /// No description provided for @scrTours.
+  ///
+  /// In en, this message translates to:
+  /// **'Tours'**
+  String get scrTours;
+
+  /// No description provided for @scrCip.
+  ///
+  /// In en, this message translates to:
+  /// **'CIP lounge'**
+  String get scrCip;
+
+  /// No description provided for @scrInsurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Insurance'**
+  String get scrInsurance;
+
+  /// No description provided for @scrCargo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cargo'**
+  String get scrCargo;
+
+  /// No description provided for @scrShipments.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipments'**
+  String get scrShipments;
+
+  /// No description provided for @scrRequestNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New request'**
+  String get scrRequestNew;
+
+  /// No description provided for @scrRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests'**
+  String get scrRequests;
+
+  /// No description provided for @scrRequestDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Request'**
+  String get scrRequestDetail;
+
+  /// No description provided for @scrTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking'**
+  String get scrTrack;
+
+  /// No description provided for @scrAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get scrAccount;
+
+  /// No description provided for @scrDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'My details'**
+  String get scrDetails;
+
+  /// No description provided for @scrTravellers.
+  ///
+  /// In en, this message translates to:
+  /// **'Travellers'**
+  String get scrTravellers;
+
+  /// No description provided for @scrBilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing'**
+  String get scrBilling;
+
+  /// No description provided for @scrInvoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice'**
+  String get scrInvoice;
+
+  /// No description provided for @scrPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get scrPay;
+
+  /// No description provided for @scrInbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get scrInbox;
+
+  /// No description provided for @scrSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get scrSupport;
+
+  /// No description provided for @scrSupportTicket.
+  ///
+  /// In en, this message translates to:
+  /// **'Support message'**
+  String get scrSupportTicket;
+
+  /// No description provided for @scrClub.
+  ///
+  /// In en, this message translates to:
+  /// **'Club'**
+  String get scrClub;
+
+  /// No description provided for @scrSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get scrSettings;
+
+  /// No description provided for @scrFaq.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQ'**
+  String get scrFaq;
+
+  /// No description provided for @scrGuides.
+  ///
+  /// In en, this message translates to:
+  /// **'Guides'**
+  String get scrGuides;
+
+  /// No description provided for @scrBlog.
+  ///
+  /// In en, this message translates to:
+  /// **'Blog'**
+  String get scrBlog;
+
+  /// No description provided for @scrGlossary.
+  ///
+  /// In en, this message translates to:
+  /// **'Glossary'**
+  String get scrGlossary;
+
+  /// No description provided for @scrSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get scrSignIn;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

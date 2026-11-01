@@ -42,6 +42,9 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "service_request.transitioned": ["notify.route", "timers.sla"],
   "service_request.message": ["notify.route"],
   "loyalty.member_added": ["notify.route"],
+  // Staff reply emails go to events.misc (support.service.ts); a new ticket is only a staff-stream signal.
+  "support.ticket_created": [],
+  "support.reply": ["events.misc"],
   "service_request.quote_sent": ["notify.route"],
   "compliance.case_opened": ["notify.route"],
   "compliance.case_decided": ["notify.route"],

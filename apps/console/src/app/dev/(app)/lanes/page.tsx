@@ -11,8 +11,9 @@ import { FormDialog } from "@/components/form-dialog"
 import { EmptyState } from "@/components/bento"
 import { Chips, ListCard, Toolbar } from "@/components/data-list"
 import { DataTable } from "@/components/dev-ui"
-import { ErrorLine, Field, Loading, PageHead, Tag } from "@/components/ui"
+import { Arrow, ErrorLine, Field, Loading, PageHead, Tag } from "@/components/ui"
 import { api } from "@/lib/api"
+import { ltrIsolate } from "@/lib/format"
 import { useT } from "@/lib/i18n"
 
 interface Lane { id: string; originCountry: string; destinationCountry: string; services: string[]; enabled: boolean; requiresComplianceApproval: boolean; volumetricDivisor: number; customerNotice: { en: string; fa: string } | null; counselReference: string | null; version: number; enabledByOwner?: string | null; enabledByCompliance?: string | null }
@@ -41,7 +42,7 @@ export default function LanesPage() {
               const iran = l.originCountry === "IR" || l.destinationCountry === "IR"
               return (
                 <tr key={l.id} className="align-top">
-                  <td className="num font-medium whitespace-nowrap" dir="ltr">{l.originCountry} → {l.destinationCountry}{iran && <span className="ms-2 rounded-full bg-danger-subtle px-1.5 text-2xs font-semibold text-danger">IRAN</span>}</td>
+                  <td className="num font-medium whitespace-nowrap" dir="ltr">{l.originCountry} <Arrow /> {l.destinationCountry}{iran && <span className="ms-2 rounded-full bg-danger-subtle px-1.5 text-2xs font-semibold text-danger">IRAN</span>}</td>
                   <td><span className="flex flex-wrap gap-1">{l.services.map((x) => <span key={x} className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-caption" dir="ltr">{x}</span>)}</span></td>
                   <td className="num">{l.volumetricDivisor}</td>
                   <td className="text-meta">{l.requiresComplianceApproval ? t("lanes.casePer") : "—"}{l.counselReference && <span className="block text-caption text-steel">{t("lanes.counsel")} <span dir="ltr">{l.counselReference}</span></span>}</td>
@@ -55,7 +56,7 @@ export default function LanesPage() {
         )}
       </ListCard>
       {edit && (
-        <FormDialog open onOpenChange={(o) => !o && setEdit(null)} title={t("lanes.editTitle", { lane: `${edit.originCountry} → ${edit.destinationCountry}` })} description={edit.originCountry === "IR" || edit.destinationCountry === "IR" ? t("lanes.iranNote") : undefined} submitLabel={t("lanes.save")}
+        <FormDialog open onOpenChange={(o) => !o && setEdit(null)} title={t("lanes.editTitle", { lane: ltrIsolate(`${edit.originCountry} → ${edit.destinationCountry}`) })} description={edit.originCountry === "IR" || edit.destinationCountry === "IR" ? t("lanes.iranNote") : undefined} submitLabel={t("lanes.save")}
           onSubmit={async () => {
             const r = await api<{ enabled: boolean; pendingSecondApproval: boolean }>(`/v1/dev/cargo/lanes/${edit.id}`, { method: "PUT", body: { enabled: edit.enabled, services: edit.services, requiresComplianceApproval: edit.requiresComplianceApproval, volumetricDivisor: edit.volumetricDivisor, customerNotice: edit.customerNotice, counselReference: edit.counselReference } })
             if (r.pendingSecondApproval) toast.info(t("lanes.pending"))

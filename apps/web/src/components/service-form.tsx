@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
 import type { MenuKey, ServiceRequestType, TravellerView } from "@unitravel/contracts"
+import { ServiceScene, type SceneKind } from "@unitravel/ui/brand/scenes"
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Auto } from "@/components/badges"
@@ -33,6 +34,8 @@ export function Field({ id, label, optional, children }: { id: string; label: st
 export const inputCls = "field h-10 w-full"
 
 /** A page whose flag is off (or a vertical without a provider): an honest notice and the way to support, never fake listings. */
+const SCENE: Record<ServiceRequestType, SceneKind> = { VISA: "visa", TOUR_CALLBACK: "flight", CIP: "cip", INSURANCE: "stay", HOTEL: "stay", STAY: "stay", TRAIN: "train", BUS: "bus" }
+
 export function Unavailable({ title }: { title: string }) {
   const { t, href } = useI18n()
   return (
@@ -106,10 +109,15 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
   const name = (x: TravellerView) => (locale === "fa" && x.nameFa ? x.nameFa : `${x.givenNames} ${x.surname}`)
 
   return (
-    <div className={embedded ? "" : "mx-auto max-w-3xl px-4 py-8 md:py-10"}>
-      {embedded ? <h2 className="font-display text-3xl md:text-4xl">{title}</h2> : <h1 className="font-display text-3xl md:text-4xl">{title}</h1>}
-      <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
-      <form ref={formRef} className="mt-6 space-y-6" onSubmit={(e) => { e.preventDefault(); if (ready && !busy) void submit() }} noValidate>
+    <div className={embedded ? "" : "mx-auto max-w-5xl px-4 py-8 md:py-10"}>
+      <div className="grid items-center gap-6 md:grid-cols-[1fr_16rem]">
+        <div>
+          {embedded ? <h2 className="font-display text-3xl md:text-4xl">{title}</h2> : <h1 className="font-display text-3xl md:text-4xl">{title}</h1>}
+          <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
+        </div>
+        <ServiceScene kind={SCENE[type]} className="hidden aspect-[5/3] md:block" />
+      </div>
+      <form ref={formRef} className="mt-6 max-w-3xl space-y-6" onSubmit={(e) => { e.preventDefault(); if (ready && !busy) void submit() }} noValidate>
         <fieldset className="card-brand grid gap-4 p-5 sm:grid-cols-2">{children}</fieldset>
 
         {withTravellers && !!me && (

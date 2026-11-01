@@ -159,6 +159,12 @@ html[lang="fa"] body { font-family: var(--font-fa); font-feature-settings: norma
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
+/* Request hero: dashes flow from origin to destination (reversed in RTL, where the origin is on the right); the SLA ring sweeps in once. */
+@keyframes route-flow { to { stroke-dashoffset: -16; } }
+.route-dash { stroke-dasharray: 5 6; animation: route-flow 1.2s linear infinite; }
+[dir="rtl"] .route-dash { animation-direction: reverse; }
+@keyframes ring-in { from { stroke-dasharray: 0 400; } }
+.ring-in { animation: ring-in 0.8s var(--ease-out, ease-out) both; }
 @keyframes fade-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 
 /* ---- Stacking utilities (see --z-* above) ---- */

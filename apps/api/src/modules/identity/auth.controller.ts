@@ -96,8 +96,8 @@ export class AuthController {
   @Post("logout")
   @Authenticated()
   @HttpCode(204)
-  async logout(@CurrentActor() actor: Actor, @Res({ passthrough: true }) res: Response) {
-    await this.sessions.revoke(actor.sessionId, "LOGOUT")
+  async logout(@CurrentActor() actor: Actor, @Ctx() ctx: RequestContext, @Res({ passthrough: true }) res: Response) {
+    await this.sessions.signOut(actor, ctx.id)
     clearSessionCookies(res)
   }
 

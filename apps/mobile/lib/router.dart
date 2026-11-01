@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/activity.dart';
 import 'core/repos.dart';
 import 'core/session.dart';
 import 'features/account/account_screen.dart';
@@ -11,16 +12,21 @@ import 'features/account/details_screen.dart';
 import 'features/admin/admin_providers.dart';
 import 'features/admin/admin_search_screen.dart';
 import 'features/admin/case_screen.dart';
+import 'features/admin/customers_screen.dart';
 import 'features/admin/home_screen.dart';
 import 'features/admin/queue_screen.dart';
 import 'features/auth/profile_screen.dart';
 import 'features/auth/sign_in_screen.dart';
 import 'features/cargo/cargo_screens.dart';
 import 'features/club/club_screen.dart';
+import 'features/listings/listings_screen.dart';
 import 'features/services/service_detail_screen.dart';
 import 'features/services/service_explorer.dart';
 import 'features/services/service_form_screen.dart';
 import 'features/support/support_screen.dart';
+import 'features/support/support_tickets.dart';
+import 'models/customers.dart';
+import 'models/listings.dart';
 import 'features/track/track_screen.dart';
 import 'models/services.dart';
 import 'features/billing/billing_screen.dart';
@@ -33,6 +39,7 @@ import 'features/search/itinerary_screen.dart';
 import 'features/search/results_screen.dart';
 import 'features/search/search_screen.dart';
 import 'ui/brand_logo.dart';
+import 'ui/glass_nav_bar.dart';
 import 'features/content/content_screens.dart';
 import 'ui/theme.dart';
 import 'ui/widgets.dart';
@@ -86,7 +93,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     transitionsBuilder: (_, a, _, c) => FadeTransition(opacity: a, child: c),
   );
 
-  return GoRouter(
+  final router = GoRouter(
     navigatorKey: _rootKey,
     initialLocation: '/',
     refreshListenable: refresh,
@@ -104,7 +111,35 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/glossary', builder: (_, _) => const GlossaryScreen()),
       GoRoute(path: '/track', builder: (_, _) => const TrackScreen()),
       GoRoute(path: '/club', builder: (_, _) => const ClubScreen()),
-      GoRoute(path: '/support', builder: (_, _) => const SupportScreen()),
+      GoRoute(
+        path: '/support',
+        builder: (_, _) => const SupportScreen(),
+        routes: [
+          GoRoute(path: 'new', builder: (_, _) => const SupportFormScreen()),
+          GoRoute(
+            path: 'tickets',
+            builder: (_, _) => const TicketsScreen(),
+            routes: [
+              GoRoute(
+                path: ':ref',
+                builder: (_, s) => TicketScreen(
+                  ticketRef: s.pathParameters['ref']!.toUpperCase(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/listings/:kind',
+        redirect: (_, s) =>
+            ListingKind.fromPath(s.pathParameters['kind']) == null
+            ? '/services'
+            : null,
+        builder: (_, s) => ListingsScreen(
+          kind: ListingKind.fromPath(s.pathParameters['kind'])!,
+        ),
+      ),
       GoRoute(
         path: '/cargo',
         builder: (_, _) => const CargoScreen(),
@@ -203,7 +238,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'billing',
                     parentNavigatorKey: _rootKey,
                     builder: (_, _) => const BillingScreen(),
-                    routes: [GoRoute(path: ':number', parentNavigatorKey: _rootKey, builder: (_, s) => InvoiceScreen(number: s.pathParameters['number']!.toUpperCase()))],
+                    routes: [
+                      GoRoute(
+                        path: ':number',
+                        parentNavigatorKey: _rootKey,
+                        builder: (_, s) => InvoiceScreen(
+                          number: s.pathParameters['number']!.toUpperCase(),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'payment',
+                            parentNavigatorKey: _rootKey,
+                            builder: (_, s) => PaymentPageScreen(
+                              number: s.pathParameters['number']!.toUpperCase(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -237,12 +289,45 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
+        path: '/admin/customers',
+        parentNavigatorKey: _rootKey,
+        builder: (_, _) => const CustomersScreen(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            parentNavigatorKey: _rootKey,
+            builder: (_, s) => CustomerDetailScreen(
+              customerId: s.pathParameters['id']!,
+              customer: s.extra is CustomerItem
+                  ? s.extra as CustomerItem
+                  : null,
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
         path: '/admin/case/:ref',
         parentNavigatorKey: _rootKey,
         builder: (_, s) => CaseScreen(requestRef: s.pathParameters['ref']!.toUpperCase()),
       ),
     ],
   );
+
+  // Screen telemetry (ADR-0018): the delegate notifies on every location change, including tab switches inside the shell
+  // branches that a root-navigator observer would miss. Customers only; sign-out clears what was last sent.
+  final reporter = ref.read(activityReporterProvider);
+  void reportLocation() {
+    final s = ref.read(sessionProvider);
+    if (s.status != AuthStatus.signedIn || s.isAdminMode) {
+      reporter.reset();
+      return;
+    }
+    reporter.onLocation(router.routerDelegate.currentConfiguration.uri);
+  }
+
+  router.routerDelegate.addListener(reportLocation);
+  ref.onDispose(() => router.routerDelegate.removeListener(reportLocation));
+  return router;
 });
 
 class _Splash extends StatelessWidget {
@@ -303,34 +388,75 @@ class _ShellState extends ConsumerState<_Shell> {
         ? () {
             final s = ref.watch(queueSummaryProvider).value;
             return [
-              NavigationDestination(
-                icon: _badged(s?.slaBreaches ?? 0, const Icon(Icons.dashboard_outlined), color: xc(context).danger),
-                selectedIcon: _badged(s?.slaBreaches ?? 0, const Icon(Icons.dashboard), color: xc(context).danger),
+              GlassNavItem(
+                icon: _badged(
+                  s?.slaBreaches ?? 0,
+                  const Icon(Icons.dashboard_outlined),
+                  color: xc(context).danger,
+                ),
+                selectedIcon: _badged(
+                  s?.slaBreaches ?? 0,
+                  const Icon(Icons.dashboard),
+                  color: xc(context).danger,
+                ),
                 label: l.navHome,
               ),
-              NavigationDestination(icon: _badged(s?.newCount ?? 0, const Icon(Icons.view_list_outlined)), selectedIcon: _badged(s?.newCount ?? 0, const Icon(Icons.view_list)), label: l.navQueue),
-              NavigationDestination(icon: const Icon(Icons.search), label: l.navSearch),
-              NavigationDestination(icon: inboxIcon, selectedIcon: _badged(unread, const Icon(Icons.notifications)), label: l.navAlerts),
-              NavigationDestination(icon: const Icon(Icons.account_circle_outlined), selectedIcon: const Icon(Icons.account_circle), label: l.navMe),
+              GlassNavItem(
+                icon: _badged(
+                  s?.newCount ?? 0,
+                  const Icon(Icons.view_list_outlined),
+                ),
+                selectedIcon: _badged(
+                  s?.newCount ?? 0,
+                  const Icon(Icons.view_list),
+                ),
+                label: l.navQueue,
+              ),
+              GlassNavItem(icon: const Icon(Icons.search), label: l.navSearch),
+              GlassNavItem(
+                icon: inboxIcon,
+                selectedIcon: _badged(unread, const Icon(Icons.notifications)),
+                label: l.navAlerts,
+              ),
+              GlassNavItem(
+                icon: const Icon(Icons.account_circle_outlined),
+                selectedIcon: const Icon(Icons.account_circle),
+                label: l.navMe,
+              ),
             ];
           }()
         : [
-            NavigationDestination(icon: const Icon(Icons.flight_takeoff_outlined), selectedIcon: const Icon(Icons.flight_takeoff), label: l.navSearch),
-            NavigationDestination(icon: const Icon(Icons.assignment_outlined), selectedIcon: const Icon(Icons.assignment), label: l.navRequests),
-            NavigationDestination(icon: const Icon(Icons.apps_outlined), selectedIcon: const Icon(Icons.apps), label: l.servicesTitle),
-            NavigationDestination(icon: inboxIcon, label: l.navInbox),
-            NavigationDestination(icon: const Icon(Icons.account_circle_outlined), selectedIcon: const Icon(Icons.account_circle), label: l.navAccount),
+            GlassNavItem(
+              icon: const Icon(Icons.flight_takeoff_outlined),
+              selectedIcon: const Icon(Icons.flight_takeoff),
+              label: l.navSearch,
+            ),
+            GlassNavItem(
+              icon: const Icon(Icons.assignment_outlined),
+              selectedIcon: const Icon(Icons.assignment),
+              label: l.navRequests,
+            ),
+            GlassNavItem(
+              icon: const Icon(Icons.apps_outlined),
+              selectedIcon: const Icon(Icons.apps),
+              label: l.servicesTitle,
+            ),
+            GlassNavItem(icon: inboxIcon, label: l.navInbox),
+            GlassNavItem(
+              icon: const Icon(Icons.account_circle_outlined),
+              selectedIcon: const Icon(Icons.account_circle),
+              label: l.navAccount,
+            ),
           ];
     return Scaffold(
+      // The floating bar overlaps the page so the glass has content to blur; pages pad with navInset().
+      extendBody: true,
       body: GlassBackdrop(child: shell),
-      bottomNavigationBar: GlassPanel(
-        radius: const BorderRadius.vertical(top: Radius.circular(24)),
-        child: NavigationBar(
-          backgroundColor: Colors.transparent,
-          selectedIndex: shell.currentIndex,
-          destinations: destinations,
-          onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
-        ),
+      bottomNavigationBar: GlassNavBar(
+        items: destinations,
+        selectedIndex: shell.currentIndex,
+        onSelected: (i) =>
+            shell.goBranch(i, initialLocation: i == shell.currentIndex),
       ),
     );
   }

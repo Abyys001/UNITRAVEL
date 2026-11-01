@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
+import { cn } from "@unitravel/ui/lib/utils"
+
 import { Bidi, LedgerField as Field, PageHead, Panel, Tag } from "@unitravel/ui/product/ledger"
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
@@ -18,6 +20,14 @@ export function ErrorLine({ error }: { error: unknown }) {
   if (isDenied(error)) return <p role="alert" className="rounded-sm bg-surface-sunk px-2 py-1.5 text-steel" data-testid="denied-state"><span className="font-medium text-ink">{t("denied.title")}.</span> {t("denied.body")}</p>
   return <p role="alert" className="rounded-sm bg-danger-subtle px-2 py-1.5 text-danger">{errText(error)}</p>
 }
+/**
+ * Direction glyphs and route text for mixed-direction pages. A hard-coded arrow points the wrong way in Persian, so it
+ * mirrors with the page; a route label ("Tehran → London", airport codes) is a Latin run that must keep its own order
+ * and not be reshuffled by the surrounding RTL text, so it sits in an isolated left-to-right <bdi>.
+ */
+export const Arrow = ({ back, className }: { back?: boolean; className?: string }) => <span aria-hidden className={cn("inline-block rtl:-scale-x-100", className)}>{back ? "←" : "→"}</span>
+export const RouteText = ({ children, className }: { children: React.ReactNode; className?: string }) => <bdi dir="ltr" className={className}>{children}</bdi>
+
 export const Loading = ({ label = "Loading…" }: { label?: string }) => <LoadingState label={label} rows={2} className="p-5" />
 export const Empty = ({ children }: { children: React.ReactNode }) => <EmptyState compact title={children} />
 

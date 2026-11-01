@@ -16,7 +16,8 @@ import { EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
 import { ListSkeleton, SlaChip, StateChip } from "@/components/case"
 import { Chips, GridScroll, ListCard, tableClass, Toolbar } from "@/components/data-list"
 import { Check } from "@/components/controls"
-import { PageHead } from "@/components/ui"
+import { QueueInsights } from "@/components/queue-insights"
+import { Arrow, PageHead, RouteText } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDate, human } from "@/lib/format"
 import { type MsgKey, useT } from "@/lib/i18n"
@@ -177,6 +178,7 @@ function QueuesInner() {
         <Button size="sm" variant="outline" type="button" aria-pressed={newest} onClick={toggleSort} data-testid="sort-newest" className={cn(newest && "bg-hover")}>{t("q.sortNewest")}</Button>
         <p className="hidden items-center gap-1.5 text-caption text-steel xl:flex pointer-coarse:hidden" dir="ltr"><span className="kbd">j</span><span className="kbd">k</span> {t("q.keys")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">Enter</span> {t("q.k.open")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">c</span> {t("q.k.claim")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">n</span> {t("q.k.note")}</p>
       </PageHead>
+      {(can("flight_request.read.any") || can("cargo_request.read.any")) && <QueueInsights flights={can("flight_request.read.any")} cargo={can("cargo_request.read.any")} />}
       <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-rule px-4 md:px-6" aria-label={t("q.tabs")}>
         {TABS.filter((x) => (x.key === "cargo" ? can("cargo_request.read.any") : can("flight_request.read.any"))).map((x) => (
           <Link key={x.key} href={`/queues?tab=${x.key}`} aria-current={tab === x.key ? "page" : undefined} className={cn("-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-3 whitespace-nowrap transition-colors", tab === x.key ? "border-[var(--indicator)] font-semibold text-ink" : "border-transparent text-steel hover:text-ink")}>
@@ -223,7 +225,7 @@ function QueuesInner() {
                         <td className="max-w-48 truncate font-medium" dir="auto">{(r.flight ?? r.cargo)?.customer ?? "—"}</td>
                         {r.flight ? (
                           <>
-                            <td className="max-w-64"><span className="flex min-w-0 items-center gap-2"><span className="truncate" title={r.flight.routeLabel}>{r.flight.routeLabel}</span>{r.flight.hasSnapshot && <span className="shrink-0 rounded-md bg-success-subtle px-1.5 text-2xs leading-5 font-semibold text-success-subtle-fg" title={t("pg.q.snapshot")}>{t("pg.q.snap")}</span>}</span></td>
+                            <td className="max-w-64"><span className="flex min-w-0 items-center gap-2"><RouteText className="min-w-0 truncate"><span title={r.flight.routeLabel}>{r.flight.routeLabel}</span></RouteText>{r.flight.hasSnapshot && <span className="shrink-0 rounded-md bg-success-subtle px-1.5 text-2xs leading-5 font-semibold text-success-subtle-fg" title={t("pg.q.snapshot")}>{t("pg.q.snap")}</span>}</span></td>
                             <td className="whitespace-nowrap text-steel">{fmtDate(r.flight.firstTravelDate)}</td>
                             <td className="cell-num">{r.flight.travellers}</td>
                             <td><StateChip value={r.flight.status} /></td>
@@ -232,7 +234,7 @@ function QueuesInner() {
                           </>
                         ) : r.cargo ? (
                           <>
-                            <td>{r.cargo.lane}</td>
+                            <td><RouteText>{r.cargo.lane}</RouteText></td>
                             <td className="num text-meta">{r.cargo.service}</td>
                             <td className="whitespace-nowrap">{fmtDate(r.cargo.readyDate)}</td>
                             <td><StateChip value={r.cargo.status} /></td>
@@ -254,7 +256,7 @@ function QueuesInner() {
                       <Link href={hrefOf(r)} className="block min-h-11 rounded-xl border border-rule bg-surface-raised p-3 shadow-[var(--tile-shadow)] active:bg-hover">
                         <span className="flex items-center justify-between gap-2"><span className="ref font-medium">{r.ref}</span><span className="flex items-center gap-1.5">{r.flight?.urgent && <StatusChip tone="danger">{t("q.urgent")}</StatusChip>}<StateChip value={it.status} /></span></span>
                         <span className="mt-1 block font-medium" dir="auto">{it.customer ?? "—"}</span>
-                        <span className="block text-steel">{r.flight ? `${r.flight.routeLabel} · ${fmtDate(r.flight.firstTravelDate)}` : `${r.cargo!.lane} · ${r.cargo!.service}`}</span>
+                        <span className="block text-steel">{r.flight ? <><RouteText>{r.flight.routeLabel}</RouteText> · {fmtDate(r.flight.firstTravelDate)}</> : <><RouteText>{r.cargo!.lane}</RouteText> · {r.cargo!.service}</>}</span>
                         <span className="mt-2 flex items-center justify-between gap-2"><SlaChip dueAt={it.slaDueAt} startAt={it.submittedAt} breached={r.flight?.slaBreached} />{r.flight && <span className="truncate text-meta text-steel">{r.flight.assignee ?? "—"}</span>}</span>
                       </Link>
                     </li>
@@ -271,23 +273,23 @@ function QueuesInner() {
               <div className="space-y-3">
                 <div>
                   <p className="ref text-steel">{preview.data.ref}</p>
-                  <p className="mt-1 font-display text-section leading-snug font-bold">{preview.data.routeLabel}</p>
-                  <p className="text-steel">{fmtDate(preview.data.firstTravelDate)} · {preview.data.travellers.length} traveller{preview.data.travellers.length === 1 ? "" : "s"} · {preview.data.kind.toLowerCase()} request</p>
+                  <p className="mt-1 font-display text-section leading-snug font-bold"><RouteText>{preview.data.routeLabel}</RouteText></p>
+                  <p className="text-steel">{fmtDate(preview.data.firstTravelDate)} · {t("q.p.travellers", { n: preview.data.travellers.length })} · {t(preview.data.kind === "MANUAL" ? "q.p.kind.manual" : "q.p.kind.itinerary")}</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2"><StateChip value={preview.data.status} />{preview.data.assignee && <span className="text-steel">→ {preview.data.assignee.name}</span>}</div>
+                <div className="flex flex-wrap items-center gap-2"><StateChip value={preview.data.status} />{preview.data.assignee && <span className="text-steel"><Arrow /> {preview.data.assignee.name}</span>}</div>
                 <dl className="ledger-rows">
-                  <div className="flex justify-between py-1"><dt className="text-steel">Customer</dt><dd dir="auto">{preview.data.customer.nameLatin || preview.data.customer.displayName}{preview.data.customer.nameFa && <span className="ms-1 font-fa" dir="rtl">· {preview.data.customer.nameFa}</span>}</dd></div>
-                  <div className="flex justify-between py-1"><dt className="text-steel">Phone</dt><dd className="num" dir="ltr">{preview.data.customer.phone}</dd></div>
-                  <div className="flex justify-between py-1"><dt className="text-steel">Language</dt><dd>{preview.data.customer.preferredLocale === "fa" ? "Persian" : "English"}</dd></div>
-                  <div className="flex items-center justify-between py-1"><dt className="text-steel">SLA</dt><dd><SlaChip dueAt={preview.data.sla.dueAt} startAt={preview.data.submittedAt} done={!!preview.data.sla.firstContactAt} /></dd></div>
+                  <div className="flex justify-between py-1"><dt className="text-steel">{t("q.p.customer")}</dt><dd dir="auto">{preview.data.customer.nameLatin || preview.data.customer.displayName}{preview.data.customer.nameFa && <span className="ms-1 font-fa" dir="rtl">· {preview.data.customer.nameFa}</span>}</dd></div>
+                  <div className="flex justify-between py-1"><dt className="text-steel">{t("q.p.phone")}</dt><dd className="num" dir="ltr">{preview.data.customer.phone}</dd></div>
+                  <div className="flex justify-between py-1"><dt className="text-steel">{t("q.p.language")}</dt><dd>{t(preview.data.customer.preferredLocale === "fa" ? "q.p.lang.fa" : "q.p.lang.en")}</dd></div>
+                  <div className="flex items-center justify-between py-1"><dt className="text-steel">{t("case.sla")}</dt><dd><SlaChip dueAt={preview.data.sla.dueAt} startAt={preview.data.submittedAt} done={!!preview.data.sla.firstContactAt} /></dd></div>
                 </dl>
                 {preview.data.customerNote && <p className="rounded-sm border border-rule bg-surface-raised p-2" dir="auto">“{preview.data.customerNote}”</p>}
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={() => open(focused)}>Open case</Button>
-                  {(() => { const a = preview.data.actions.find((x) => x.command === "claim"); return a ? <Button size="sm" variant="outline" disabled={!a.allowed} title={a.reason} onClick={() => void claim(focused.ref)}>Claim <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">c</span></Button> : null })()}
-                  <Button size="sm" variant="ghost" onClick={() => { setNote(""); setNoteFor(focused.ref) }}>Note <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">n</span></Button>
+                  <Button size="sm" onClick={() => open(focused)}>{t("q.p.open")}</Button>
+                  {(() => { const a = preview.data.actions.find((x) => x.command === "claim"); return a ? <Button size="sm" variant="outline" disabled={!a.allowed} title={a.reason} onClick={() => void claim(focused.ref)}>{t("q.p.claim")} <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">c</span></Button> : null })()}
+                  <Button size="sm" variant="ghost" onClick={() => { setNote(""); setNoteFor(focused.ref) }}>{t("q.p.note")} <span className="kbd ms-1 max-md:hidden pointer-coarse:hidden">n</span></Button>
                 </div>
-                {preview.data.notes[0] && <div><p className="cap">Last internal note</p><p className="mt-1" dir="auto">{preview.data.notes[0].body}</p><p className="text-caption text-steel">{preview.data.notes[0].author}</p></div>}
+                {preview.data.notes[0] && <div><p className="cap">{t("q.p.lastNote")}</p><p className="mt-1" dir="auto">{preview.data.notes[0].body}</p><p className="text-caption text-steel">{preview.data.notes[0].author}</p></div>}
               </div>
             )}
           </aside>

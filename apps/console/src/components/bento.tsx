@@ -55,7 +55,7 @@ export type Tone = keyof typeof TONE_TEXT
 
 export function Sparkline({ values, label, tone = "default", className, height = 28 }: { values: number[]; label?: string; tone?: Tone; className?: string; height?: number }) {
   const w = 100
-  const common = { viewBox: `0 0 ${w} ${height}`, preserveAspectRatio: "none" as const, className: cn("h-7 w-full overflow-visible", TONE_TEXT[tone], className), role: "img" as const, "aria-label": label }
+  const common = { viewBox: `0 0 ${w} ${height}`, preserveAspectRatio: "none" as const, className: cn("h-7 w-full overflow-visible rtl:-scale-x-100", TONE_TEXT[tone], className), role: "img" as const, "aria-label": label }
   if (values.length < 2) {
     return <svg {...common} style={{ height }}><line x1="0" x2={w} y1={height - 2} y2={height - 2} stroke="currentColor" strokeOpacity="0.35" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" strokeWidth="1.5" /></svg>
   }

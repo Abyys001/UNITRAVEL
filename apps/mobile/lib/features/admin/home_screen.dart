@@ -122,7 +122,7 @@ class _HomeBody extends ConsumerWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding: navInset(context, const EdgeInsets.fromLTRB(16, 4, 16, 24)),
       children: [
         if (name.isNotEmpty)
           Padding(
@@ -197,6 +197,35 @@ class _HomeBody extends ConsumerWidget {
           _ActionTile(icon: Icons.search, label: l.qaFind, onTap: () => context.go('/admin/search')),
           _ActionTile(icon: Icons.tune, label: l.settingsTitle, onTap: () => showAdminSettings(context)),
         ),
+        if (perms.contains('customer.read')) ...[
+          const SizedBox(height: _gap),
+          BentoTile(
+            key: const Key('home-customers'),
+            semanticLabel: '${l.cuTitle}. ${l.cuCardNote}',
+            onTap: () => context.push('/admin/customers'),
+            child: Row(
+              children: [
+                Icon(Icons.groups_outlined, color: c.fgMuted),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l.cuTitle, style: theme.textTheme.titleSmall),
+                      Text(
+                        l.cuCardNote,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: c.fgMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         Center(
           child: Text(

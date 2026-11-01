@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { cn } from "@unitravel/ui/lib/utils"
 
 import { errText } from "@/lib/api"
+import { useT } from "@/lib/i18n"
 
 /**
  * One recording dialog pattern for every external action (ch. 15.2 "Record dialogs"): the form posts to the API and
@@ -17,6 +18,7 @@ export function FormDialog({ open, onOpenChange, title, description, submitLabel
   open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: React.ReactNode; submitLabel?: string
   onSubmit: () => Promise<unknown>; children: React.ReactNode; wide?: boolean; destructive?: boolean; testId?: string
 }) {
+  const t = useT()
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const submit = async (e: React.FormEvent) => {
@@ -34,7 +36,7 @@ export function FormDialog({ open, onOpenChange, title, description, submitLabel
           {children}
           {err && <p role="alert" className="rounded-sm bg-danger-subtle px-2 py-1.5 text-danger">{err}</p>}
           <DialogFooter>
-            <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={busy}>{t("common.cancel")}</Button>
             <Button type="submit" size="sm" variant={destructive ? "destructive" : "default"} loading={busy}>{submitLabel}</Button>
           </DialogFooter>
         </form>

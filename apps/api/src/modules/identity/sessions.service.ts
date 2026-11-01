@@ -3,10 +3,11 @@ import { and, desc, eq, isNull } from "drizzle-orm"
 import type { Redis } from "ioredis"
 import { v7 as uuidv7 } from "uuid"
 
-import { type Db, refreshTokens, sessions, type Tx } from "@unitravel/db"
+import { customerActivity, type Db, refreshTokens, sessions, type Tx, users } from "@unitravel/db"
 
 import { randomToken, sha256 } from "../../core/crypto"
 import { AppError } from "../../core/errors"
+import { ipPrefix } from "../../core/http/rate-limit"
 import { DB, REDIS } from "../../core/infra.module"
 import { AccessService } from "../access/access.service"
 import { AuditService } from "../audit/audit.service"
@@ -51,6 +52,8 @@ export class SessionsService {
     // device in regular use stays signed in, up to a hard cap of REMEMBER_DEVICE_DAYS from sign-in. Staff sessions stay short.
     const absolute = input.client === "CONSOLE" ? auth.staffSessionHours * 3600_000 : Math.max(auth.refreshTtlDays, REMEMBER_DEVICE_DAYS) * 86400_000
     const [s] = await tx.insert(sessions).values({ userId: input.userId, client: input.client, deviceId: input.deviceId, ip: input.ip, userAgent: input.userAgent?.slice(0, 400), absoluteExpiresAt: new Date(Date.now() + absolute), ...(input.mfaSatisfied ? { mfaLevel: 1, mfaVerifiedAt: new Date() } : {}) }).returning()
+    // ADR-0018: a sign-in row (no content). Staff console sign-ins are not customer activity.
+    if (input.client !== "CONSOLE") await tx.insert(customerActivity).values({ userId: input.userId, sessionId: s!.id, kind: "SIGN_IN", client: input.client, network: input.ip ? ipPrefix(input.ip) : null })
     return this.issue(tx, s!, uuidv7())
   }
 
@@ -114,6 +117,15 @@ export class SessionsService {
     await this.redis.set(`sess:${sessionId}:revoked`, "1", "EX", 13 * 3600)
   }
 
+  /** Logout: ends the session, writes the audit action `user.signed_out` and, for customers, a SIGN_OUT activity row (ADR-0018). */
+  async signOut(actor: { userId: string; sessionId: string; audience: Audience; ip?: string; userAgent?: string }, requestId?: string) {
+    await this.revoke(actor.sessionId, "LOGOUT")
+    await this.db.transaction(async (tx) => {
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: actor.audience === "console" ? "STAFF" : "CUSTOMER", action: "user.signed_out", entityType: "session", entityId: actor.sessionId, ip: actor.ip, userAgent: actor.userAgent, requestId })
+      if (actor.audience !== "console") await tx.insert(customerActivity).values({ userId: actor.userId, sessionId: actor.sessionId, kind: "SIGN_OUT", client: actor.audience === "mobile" ? "MOBILE" : "WEB", network: actor.ip ? ipPrefix(actor.ip) : null })
+    })
+  }
+
   async list(userId: string) {
     return this.db.select().from(sessions).where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt))).orderBy(desc(sessions.lastSeenAt))
   }
@@ -147,7 +159,10 @@ export class SessionsService {
   async touch(sessionId: string) {
     const ok = await this.redis.set(`sess:${sessionId}:touch`, "1", "EX", 60, "NX")
     if (ok) {
-      await this.db.update(sessions).set({ lastSeenAt: new Date() }).where(eq(sessions.id, sessionId))
+      const now = new Date()
+      const [s] = await this.db.update(sessions).set({ lastSeenAt: now }).where(eq(sessions.id, sessionId)).returning({ userId: sessions.userId })
+      // Same once-a-minute throttle: "online" and "last seen" for the customer list (ADR-0018).
+      if (s) await this.db.update(users).set({ lastActiveAt: now }).where(eq(users.id, s.userId))
       await this.redis.del(`sess:${sessionId}:meta`)
     }
   }

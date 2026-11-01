@@ -15,7 +15,7 @@ import { Search as SearchIcon } from "lucide-react"
 import { EmptyState, TileError } from "@/components/bento"
 import { ListSkeleton, TableScroll } from "@/components/case"
 import { ListCard, Pager, tableClass, usePaged } from "@/components/data-list"
-import { Field, PageHead } from "@/components/ui"
+import { Field, PageHead, RouteText } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime, human, minutes, money } from "@/lib/format"
 import { type MsgKey, useT } from "@/lib/i18n"
@@ -60,7 +60,7 @@ function StaffSearch() {
   const paged = usePaged<Itinerary>(s?.results ?? [])
   return (
     <div>
-      <PageHead kicker={ref ? <>Finding options for <Link className="ref hover:underline" href={`/requests/${ref}`}>{ref}</Link>{req.data && ` · ${req.data.routeLabel}`}</> : "Same engine as customers, with staff fields"} title="Staff flight search" />
+      <PageHead kicker={ref ? <>Finding options for <Link className="ref hover:underline" href={`/requests/${ref}`}>{ref}</Link>{req.data && <> · <RouteText>{req.data.routeLabel}</RouteText></>}</> : "Same engine as customers, with staff fields"} title="Staff flight search" />
       <form onSubmit={start} className="mx-4 mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-rule bg-surface-raised p-4 shadow-[var(--tile-shadow)] md:mx-6">
         {!ref && <Field label="Trip" className="w-28"><NativeSelect className="field-input" value={f.trip} onChange={(e) => setF({ ...f, trip: e.target.value })}><option value="ONE_WAY">One way</option><option value="RETURN">Return</option></NativeSelect></Field>}
         <Field label="From" className="w-20"><input className="field-input font-mono uppercase" value={f.from} onChange={(e) => setF({ ...f, from: e.target.value })} maxLength={3} required disabled={!!ref} /></Field>

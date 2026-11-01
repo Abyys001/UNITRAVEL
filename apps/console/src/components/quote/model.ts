@@ -44,7 +44,8 @@ export function fromItinerary(it: Itinerary): QuoteOptionInput {
   const single = it.components.length === 1
   const firstSegs = it.components[0]!.slices[0]?.segments ?? []
   return {
-    // Customers see this label on their quote: route and carrier only, no internal wording.
+    // Customers see this label on their quote: route and carrier only, no internal wording. It is stored text, so the arrow stays;
+    // every console render wraps it in <RouteText> (ltr isolate) so it keeps its order in Persian layouts.
     label: `${firstSegs[0]?.origin.iata ?? ""} → ${firstSegs.at(-1)?.destination.iata ?? ""} · ${it.carriers.join("/")}`,
     source: "STAFF_SEARCH",
     slices: it.components.flatMap((c) => c.slices),

@@ -2,7 +2,7 @@ import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { and, asc, desc, eq, inArray, ne } from "drizzle-orm"
 
 import {
-  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type InvoiceCancelCode, type InvoiceStatus, type PriceBreakdown, type ServiceQuoteLine, serviceQuoteTotal, type StaffInvoice, type StaffInvoiceListItem,
+  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type InvoiceCancelCode, type InvoiceStatus, type PriceBreakdown, type PurchasableItem, type ServiceQuoteLine, serviceQuoteTotal, type StaffInvoice, type StaffInvoiceListItem,
 } from "@unitravel/contracts"
 import {
   cargoRequests, customerProfiles, type Db, type DbOrTx, flightRequests, invoiceLines, invoices, invoiceStatusHistory, paymentRecords, quoteOptions, quotes, serviceRequests, tickets, type Tx, users,
@@ -22,6 +22,7 @@ import { TimersService } from "../platform/timers.service"
 import { staffActor, SYSTEM } from "../requests/requests.service"
 import { renderInvoicePdf } from "./commercial-pdf"
 import { DocumentNumbersService } from "./document-numbers.service"
+import { serviceTitle } from "../services/service-labels"
 import { productOf } from "./product"
 
 type Inv = typeof invoices.$inferSelect
@@ -278,7 +279,7 @@ export class InvoicesService implements OnModuleInit {
 
   // ---------------- views ----------------
 
-  private async billTo(tx: DbOrTx, userId: string): Promise<string[]> {
+  async billTo(tx: DbOrTx, userId: string): Promise<string[]> {
     const [u] = await tx.select().from(users).where(eq(users.id, userId))
     const [p] = await tx.select().from(customerProfiles).where(eq(customerProfiles.userId, userId))
     const name = p?.givenNamesLatin && p.surnameLatin ? `${p.givenNamesLatin} ${p.surnameLatin}` : u?.displayName ?? "Customer"
@@ -314,6 +315,28 @@ export class InvoicesService implements OnModuleInit {
     const quotations = [...f.map((x) => ({ ...x, t: "FLIGHT" as const })), ...c.map((x) => ({ ...x, t: "CARGO" as const })), ...sv.map((x) => ({ ...x, t: "SERVICE" as const }))]
       .filter((x) => x.q.documentNumber && x.q.sentAt).sort((a, b) => b.q.sentAt!.getTime() - a.q.sentAt!.getTime()).map((x) => quotation(x.q, x.ref, x.t))
     return { quotations, invoices: mine.map((i) => this.customerView(i, lines.get(i.id) ?? [])) }
+  }
+
+  /**
+   * "Available for purchase" (ADR-0020): the customer's own issued invoices that can still be paid and the service quotes that
+   * can still be accepted. A flight quote has several options, so it is not listed here; the request page shows it.
+   */
+  async purchasable(userId: string, locale: "en" | "fa"): Promise<PurchasableItem[]> {
+    const now = new Date()
+    const open = await this.db.select().from(invoices).where(and(eq(invoices.customerUserId, userId), eq(invoices.status, "ISSUED")))
+    const items: PurchasableItem[] = open.filter((i) => i.expiresAt && i.expiresAt > now).map((i) => ({
+      kind: "INVOICE", action: "PAY", requestRef: i.requestRef as PurchasableItem["requestRef"], number: i.number!, title: i.requestRef, productType: productOf(i.requestType),
+      amount: { amountMinor: i.totalMinor, currency: i.currency }, dueAt: i.expiresAt!.toISOString(),
+    }))
+    const sent = await this.db.select({ q: quotes, ref: serviceRequests.ref, type: serviceRequests.type, status: serviceRequests.status }).from(quotes)
+      .innerJoin(serviceRequests, eq(serviceRequests.id, quotes.requestId))
+      .where(and(eq(quotes.requestType, "SERVICE"), eq(serviceRequests.customerUserId, userId), eq(quotes.status, "SENT"), eq(serviceRequests.status, "QUOTED")))
+    for (const { q, ref, type } of sent) {
+      if (!q.validUntil || q.validUntil <= now || !q.documentNumber) continue
+      const total = serviceQuoteTotal((q.serviceLines ?? []) as ServiceQuoteLine[])
+      items.push({ kind: "QUOTE", action: "ACCEPT", requestRef: ref as PurchasableItem["requestRef"], number: q.documentNumber, title: serviceTitle(type, locale), productType: "SERVICE", amount: total, dueAt: q.validUntil.toISOString() })
+    }
+    return items.sort((a, b) => a.dueAt.localeCompare(b.dueAt))
   }
 
   async customerInvoice(number: string, userId: string): Promise<CustomerInvoice> {

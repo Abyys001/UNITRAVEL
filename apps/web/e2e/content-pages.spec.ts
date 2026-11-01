@@ -34,17 +34,17 @@ for (const lang of ["en", "fa"] as const) {
     const items = page.getByTestId("faq-item")
     await expect(items).toHaveCount(5)
     const first = items.first()
-    await expect(first).not.toHaveAttribute("open", "")
+    await expect(first).toHaveAttribute("data-open", "false")
     await expect(page.getByText(c.faq.answer)).toBeHidden()
-    await first.locator("summary").click()
-    await expect(first).toHaveAttribute("open", "")
+    await first.getByRole("button").click()
+    await expect(first).toHaveAttribute("data-open", "true")
     await expect(page.getByText(c.faq.answer)).toBeVisible()
-    await first.locator("summary").click()
-    await expect(first).not.toHaveAttribute("open", "")
-    // Keyboard: Enter on the focused summary opens it too.
-    await items.nth(1).locator("summary").focus()
+    await first.getByRole("button").click()
+    await expect(first).toHaveAttribute("data-open", "false")
+    // Keyboard: Enter on the focused heading button opens it too.
+    await items.nth(1).getByRole("button").focus()
     await page.keyboard.press("Enter")
-    await expect(items.nth(1)).toHaveAttribute("open", "")
+    await expect(items.nth(1)).toHaveAttribute("data-open", "true")
 
     const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? "") as { "@type": string; mainEntity: { "@type": string; name: string; acceptedAnswer: { text: string } }[] }
     expect(ld["@type"]).toBe("FAQPage")

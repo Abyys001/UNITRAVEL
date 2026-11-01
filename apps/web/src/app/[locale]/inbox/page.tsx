@@ -8,6 +8,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { EmptyState } from "@unitravel/ui/product/states"
 
 import { api } from "@/lib/api"
+import { PanelFrame } from "@/components/customer-panel"
 import { useI18n } from "@/lib/i18n"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
@@ -19,7 +20,8 @@ export default function InboxPage() {
   const { me } = useRequireSignIn()
   const q = useQuery({ queryKey: ["inbox", locale], queryFn: () => api<Inbox>(`/v1/notifications?limit=50&locale=${locale}`), enabled: !!me, refetchInterval: 30_000 })
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
+    <PanelFrame>
+    <div>
       <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="font-display text-3xl md:text-4xl">{t("inbox.title")}</h1>{!!q.data?.unread && <Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" size="sm" onClick={async () => { await api("/v1/notifications/read", { body: { all: true } }); void q.refetch() }}>{t("inbox.markAll")}</Button>}</div>
       {!q.data?.items.length && <EmptyState className="mt-6" icon={<InboxIcon />} title={t("inbox.empty")} />}
       <ul className="mt-6 space-y-3">{q.data?.items.map((n) => {
@@ -29,5 +31,6 @@ export default function InboxPage() {
         return <li key={n.id}>{n.data.linkPath ? <Link href={href(n.data.linkPath)} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>}</li>
       })}</ul>
     </div>
+    </PanelFrame>
   )
 }

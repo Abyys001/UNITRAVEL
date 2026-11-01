@@ -21,6 +21,7 @@ import 'package:unitravel_mobile/features/admin/sla.dart';
 import 'package:unitravel_mobile/l10n/app_localizations.dart';
 import 'package:unitravel_mobile/models/admin.dart';
 import 'package:unitravel_mobile/models/me.dart';
+import 'package:unitravel_mobile/ui/glass_nav_bar.dart';
 import 'package:unitravel_mobile/ui/theme.dart';
 
 import 'support/fake_api.dart';
@@ -551,80 +552,95 @@ void main() {
   });
 
   group('App shell', () {
-    testWidgets('admin lands on Home with five tabs, badges, and the theme toggle persists dark mode', (tester) async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-      // Wider than the smallest phone: the existing splash logo (72dp mark) overflows by ~9dp at 390dp.
-      tester.view.physicalSize = const Size(430 * 3, 932 * 3);
-      tester.view.devicePixelRatio = 3;
-      addTearDown(tester.view.reset);
-      final store = MemoryTokenStore();
-      await store.writeRefreshToken('refresh-0');
-      final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))
-        ..httpClientAdapter = FakeAdapter((o) {
-          switch (o.path) {
-            case '/v1/auth/refresh':
-              return json(tokensJson('1'));
-            case '/v1/me':
-              return json(meJson(admin: true));
-            case '/v1/admin/queues/summary':
-              return json({
-                'new': 3,
-                'mine': 1,
-                'awaitingCustomer': 0,
-                'quoted': 0,
-                'reserved': 0,
-                'slaBreaches': 2,
-                'complianceHolds': 0,
-                'deadlinesNext24h': <Object>[],
-              });
-            case '/v1/admin/flight-requests':
-              return json({'items': <Object>[], 'nextCursor': null});
-            case '/v1/notifications':
-              return json({'items': <Object>[], 'unread': 4});
-          }
-          return problem(404, 'NOT_FOUND');
-        });
-      await tester.pumpWidget(
-        ProviderScope(
-          retry: (_, _) => null,
-          overrides: [
-            sharedPreferencesProvider.overrideWithValue(prefs),
-            tokenStoreProvider.overrideWithValue(store),
-            dioProvider.overrideWithValue(dio),
-            nowProvider.overrideWith((ref) => Stream.value(_now)),
-          ],
-          child: const UniTravelApp(),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Control deck'), findsOneWidget);
-      for (final label in ['Home', 'Queue', 'Search', 'Alerts', 'Me']) {
-        expect(
-          find.descendant(of: find.byType(NavigationBar), matching: find.text(label)),
-          findsOneWidget,
-          reason: label,
+    testWidgets(
+      'admin lands on Home with five tabs, badges, and the theme toggle persists dark mode',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        // Wider than the smallest phone: the existing splash logo (72dp mark) overflows by ~9dp at 390dp.
+        tester.view.physicalSize = const Size(430 * 3, 932 * 3);
+        tester.view.devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
+        final store = MemoryTokenStore();
+        await store.writeRefreshToken('refresh-0');
+        final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))
+          ..httpClientAdapter = FakeAdapter((o) {
+            switch (o.path) {
+              case '/v1/auth/refresh':
+                return json(tokensJson('1'));
+              case '/v1/me':
+                return json(meJson(admin: true));
+              case '/v1/admin/queues/summary':
+                return json({
+                  'new': 3,
+                  'mine': 1,
+                  'awaitingCustomer': 0,
+                  'quoted': 0,
+                  'reserved': 0,
+                  'slaBreaches': 2,
+                  'complianceHolds': 0,
+                  'deadlinesNext24h': <Object>[],
+                });
+              case '/v1/admin/flight-requests':
+                return json({'items': <Object>[], 'nextCursor': null});
+              case '/v1/notifications':
+                return json({'items': <Object>[], 'unread': 4});
+            }
+            return problem(404, 'NOT_FOUND');
+          });
+        await tester.pumpWidget(
+          ProviderScope(
+            retry: (_, _) => null,
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              tokenStoreProvider.overrideWithValue(store),
+              dioProvider.overrideWithValue(dio),
+              nowProvider.overrideWith((ref) => Stream.value(_now)),
+            ],
+            child: const UniTravelApp(),
+          ),
         );
-      }
-      expect(
-        find.descendant(of: find.byType(NavigationBar), matching: find.text('4')),
-        findsOneWidget,
-        reason: 'unread alerts badge',
-      );
-      expect(
-        find.descendant(of: find.byType(NavigationBar), matching: find.text('2')),
-        findsOneWidget,
-        reason: 'SLA breach badge on Home',
-      );
+        await tester.pumpAndSettle();
+        expect(find.text('Control deck'), findsOneWidget);
+        for (final label in ['Home', 'Queue', 'Search', 'Alerts', 'Me']) {
+          expect(
+            find.descendant(
+              of: find.byType(GlassNavBar),
+              matching: find.text(label),
+            ),
+            findsOneWidget,
+            reason: label,
+          );
+        }
+        expect(
+          find.descendant(
+            of: find.byType(GlassNavBar),
+            matching: find.text('4'),
+          ),
+          findsOneWidget,
+          reason: 'unread alerts badge',
+        );
+        expect(
+          find.descendant(
+            of: find.byType(GlassNavBar),
+            matching: find.text('2'),
+          ),
+          findsOneWidget,
+          reason: 'SLA breach badge on Home',
+        );
 
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Dark'));
-      await tester.pumpAndSettle();
-      expect(prefs.getString('ut.theme_mode'), 'dark');
-      expect(Theme.of(tester.element(find.byType(NavigationBar))).brightness, Brightness.dark);
-      await tester.pumpWidget(const SizedBox());
-    });
+        await tester.tap(find.byTooltip('Settings'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Dark'));
+        await tester.pumpAndSettle();
+        expect(prefs.getString('ut.theme_mode'), 'dark');
+        expect(
+          Theme.of(tester.element(find.byType(GlassNavBar))).brightness,
+          Brightness.dark,
+        );
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
   });
 }
 

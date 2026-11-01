@@ -6,6 +6,8 @@ import '../models/json.dart';
 import '../models/my_details.dart';
 import '../models/requests.dart';
 import '../models/billing.dart';
+import '../models/listings.dart';
+import '../models/support.dart';
 import '../models/services.dart';
 import '../models/shipments.dart';
 import '../models/search.dart';
@@ -255,3 +257,63 @@ final clubProvider = FutureProvider.autoDispose<ClubView>((ref) async {
   final raw = await ref.watch(apiClientProvider).get('/v1/me/club');
   return ClubView.fromJson(raw as Json);
 });
+
+// ---- Phase J: support, payment page, listings (ADR-0018 to ADR-0021) ----
+
+final ticketsProvider = FutureProvider.autoDispose<Cached<List<Ticket>>>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return readThrough(
+    ref,
+    'tickets',
+    () => api.get('/v1/support/tickets'),
+    (raw) => _items(raw).map(Ticket.fromJson).toList(),
+  );
+});
+
+final ticketProvider = FutureProvider.autoDispose.family<Ticket, String>((
+  ref,
+  id,
+) async {
+  return Ticket.fromJson(
+    await ref.watch(apiClientProvider).get('/v1/support/tickets/$id') as Json,
+  );
+});
+
+/// Issued invoices to pay and sent quotes to accept. The server decides what is listed; the app adds nothing.
+final purchasableProvider = FutureProvider.autoDispose<List<PurchasableItem>>((
+  ref,
+) async {
+  final raw = await ref.watch(apiClientProvider).get('/v1/billing/purchasable');
+  return _items(raw).map(PurchasableItem.fromJson).toList();
+});
+
+final paymentPageProvider = FutureProvider.autoDispose
+    .family<PaymentPage, String>((ref, number) async {
+      return PaymentPage.fromJson(
+        await ref
+                .watch(apiClientProvider)
+                .get('/v1/billing/invoices/$number/payment-page')
+            as Json,
+      );
+    });
+
+/// Public listings (`to` filters the destination). Flights come only from the server's cache of live results.
+final listingsProvider = FutureProvider.autoDispose
+    .family<ListingsView, ({ListingKind kind, String to})>((ref, q) async {
+      final j = await ref
+          .watch(apiClientProvider)
+          .getJson(
+            '/v1/listings/${q.kind.path}',
+            query: {if (q.to.isNotEmpty) 'to': q.to},
+            auth: false,
+          );
+      return ListingsView.fromJson(q.kind, j);
+    });
+
+/// Accepts a bare list or a `{items: []}` page.
+List<Json> _items(Object? raw) {
+  final list = raw is List
+      ? raw
+      : (raw is Map<String, dynamic> ? raw['items'] : null);
+  return list is List ? list.whereType<Json>().toList() : const [];
+}

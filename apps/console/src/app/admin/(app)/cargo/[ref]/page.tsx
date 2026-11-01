@@ -17,11 +17,11 @@ import { useDialogs } from "@/components/form-dialog"
 import { InvoicesPanel } from "@/components/invoices-panel"
 import { RecordPaymentTrigger } from "@/components/payment-panel"
 import { Composer, MessagesList, NotesList } from "@/components/thread"
-import { Empty, Loading, Panel, Tag, useAct } from "@/components/ui"
+import { Arrow, Empty, Loading, Panel, Tag, useAct } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDate, fmtDateTime, human, money } from "@/lib/format"
 import { useIsMobile, useKeys } from "@/lib/hooks"
-import { useT } from "@/lib/i18n"
+import { statusText, useT } from "@/lib/i18n"
 import { useFallbackInterval } from "@/lib/live"
 import { useSession } from "@/lib/session"
 import type { CargoDetail, CargoPartyView } from "@/lib/types"
@@ -74,7 +74,7 @@ export default function CargoPage() {
           <div className="flex flex-wrap items-center gap-1.5">
             <span data-testid="status"><StateChip value={d.status} /></span>
             {d.exceptionReason && <StatusChip tone="danger" className="font-semibold">{d.exceptionReason.replace(/_/g, " ")}</StatusChip>}
-            <StatusChip tone={statusTone(d.paymentStatus)} className="font-semibold">{t("case.payment", { status: d.paymentStatus.replace(/_/g, " ").toLowerCase() })}</StatusChip>
+            <StatusChip tone={statusTone(d.paymentStatus)} className="font-semibold">{t("case.payment", { status: statusText(t, d.paymentStatus).toLowerCase() })}</StatusChip>
           </div>
           <SummaryItem label={t("cargo.screening")}>
             <span className={cn("num font-semibold", prohibited ? "text-danger" : "text-ink")}>{d.items.length - reviewLines}<span className="font-normal text-steel"> / {d.items.length} allowed</span></span>
@@ -96,7 +96,7 @@ export default function CargoPage() {
       <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "case", label: t("case.tab.case") }, { key: "people", label: t("case.tab.people") }, { key: "records", label: t("case.tab.records") }]} />
       <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_340px]">
         <div {...paneProps("people")} className={paneClass(tab, "people")}>
-          <Panel title="Customer" aside={can("customer.read.pii") && <Link className="font-medium text-link hover:underline" href={`/customers/${d.customer.id}?ref=${d.ref}`}>Context →</Link>}><p dir="auto" className="font-medium">{d.customer.displayName}</p>{d.customerNote && <p className="mt-1 text-steel" dir="auto">“{d.customerNote}”</p>}</Panel>
+          <Panel title={t("case.panel.customer")} aside={can("customer.read.pii") && <Link className="font-medium text-link hover:underline" href={`/customers/${d.customer.id}?ref=${d.ref}`}>{t("case.context")} <Arrow /></Link>}><p dir="auto" className="font-medium">{d.customer.displayName}</p>{d.customerNote && <p className="mt-1 text-steel" dir="auto">“{d.customerNote}”</p>}</Panel>
           <Party title="Shipper" p={d.shipper} />
           <Party title="Consignee" p={d.consignee} />
           <Panel title="Declarations">

@@ -14,12 +14,13 @@ import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 
 /// Bottom sheet that creates a saved traveller; returns it.
-Future<Traveller?> showTravellerSheet(BuildContext context) => showModalBottomSheet<Traveller>(
-  context: context,
-  isScrollControlled: true,
-  useSafeArea: true,
-  builder: (_) => const _TravellerForm(),
-);
+Future<Traveller?> showTravellerSheet(BuildContext context) =>
+    showGlassSheet<Traveller>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const _TravellerForm(),
+    );
 
 class _TravellerForm extends ConsumerStatefulWidget {
   const _TravellerForm();

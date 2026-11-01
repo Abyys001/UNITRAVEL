@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
 
-import type { CustomerInvoice, CustomerPaymentState } from "@unitravel/contracts"
+import type { CustomerInvoice, CustomerPaymentState, PaymentPageView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { LoadingState } from "@unitravel/ui/product/states"
 
@@ -30,6 +30,11 @@ export default function InvoicePage() {
   const pay = useQuery({
     queryKey: ["billing", number, "payment"], enabled: !!me && inv?.status === "ISSUED", retry: false,
     queryFn: () => api<CustomerPaymentState>(`/v1/billing/invoices/${encodeURIComponent(number)}/payment`),
+  })
+  // Issuer, due date and offline instructions come from the payment-page view; nothing here is assumed.
+  const page = useQuery({
+    queryKey: ["billing", number, "page"], enabled: !!me && !!inv, retry: false,
+    queryFn: () => api<PaymentPageView>(`/v1/billing/invoices/${encodeURIComponent(number)}/payment-page`),
   })
   const notFound = q.error instanceof ApiError && q.error.problem.status === 404
   return (
@@ -60,7 +65,18 @@ export default function InvoicePage() {
             <Link href={href(`/billing/${number}/pay`)} className="mt-5 inline-flex min-h-11 items-center rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground" data-testid="pay-online">{t("billing.pay.payOnline")}</Link>
           )}
           {inv.status === "ISSUED" && pay.data?.processing && <p className="mt-4 rounded-xl bg-cloud px-4 py-3 text-sm" role="status">{t("billing.pay.processing")}</p>}
+          {inv.status === "ISSUED" && page.data?.offlineInstructions && !page.data.payUrl && (
+            <div className="mt-4 rounded-xl border border-line bg-white p-4 text-sm" data-testid="offline-instructions"><p className="font-semibold">{t("billing.offlineTitle")}</p><p className="mt-1 whitespace-pre-wrap leading-6" dir="auto">{page.data.offlineInstructions}</p></div>
+          )}
           {inv.status === "ISSUED" && <p className="mt-4 text-sm text-steel">{t("billing.payNote")}</p>}
+          {page.data && (
+            <dl className="mt-6 grid gap-x-6 gap-y-2 border-t border-line pt-4 text-sm sm:grid-cols-2">
+              <div><dt className="text-xs uppercase tracking-wide text-steel">{t("billing.billedTo")}</dt><dd dir="auto">{page.data.customerName}</dd></div>
+              <div><dt className="text-xs uppercase tracking-wide text-steel">{t("billing.issuer")}</dt><dd dir="auto">{page.data.issuer.name}</dd></div>
+              <div><dt className="text-xs uppercase tracking-wide text-steel">{t("billing.dueDate")}</dt><dd>{date(page.data.dueAt, { withTime: true })}</dd></div>
+              <div><dt className="text-xs uppercase tracking-wide text-steel">{t("billing.currency")}</dt><dd><Ltr>{page.data.currency}</Ltr></dd></div>
+            </dl>
+          )}
           {inv.documentId && <Button className="mt-6" onClick={() => download(inv.documentId!).catch(() => toast.error(t("billing.openFailed")))}>{t("billing.download")}</Button>}
         </article>
       )}

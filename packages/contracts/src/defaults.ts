@@ -231,4 +231,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   identityScanRetentionDays: null,
   commercialDocuments: DEFAULT_COMMERCIAL_DOCUMENTS,
   support: { hours: null },
+  payment: { offlineInstructions: null },
+  listings: { flightRoutes: [] },
 }

@@ -1,10 +1,10 @@
 "use client"
 
-import { ConciergeBell, FileText, Gem, Home, IdCard, Inbox, Receipt, Search, ShieldAlert } from "lucide-react"
+import { ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Users } from "lucide-react"
 
 import { normaliseReference } from "@unitravel/domain"
 
-import { useQueueSummary, useStaffStream } from "@/lib/live"
+import { useQueueSummary, useStaffStream, useSupportOverview } from "@/lib/live"
 import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 import { useClubOn } from "@/lib/site"
@@ -18,6 +18,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const queues = can("flight_request.read.any", "cargo_request.read.any")
   useStaffStream(queues)
   const summary = useQueueSummary(queues)
+  const support = useSupportOverview(can("support.read"))
   const s = summary.data
   const flights = can("flight_request.read.any")
   const cargo = can("cargo_request.read.any")
@@ -26,8 +27,13 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   // A short flat list; each queue is a tab on the Requests page and policies/lists are tabs under Compliance.
   const items: NavItem[] = [
     { href: "/", label: t("nav.home"), mobile: true, group: "work", icon: <Home className="size-[18px]" /> },
-    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests", "/cargo", "/customers"], group: "work", count: flights ? s?.new : undefined, alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
+    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests", "/cargo"], group: "work", count: flights ? s?.new : undefined, alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
     ...(can("service_request.read.any") ? [{ href: "/services", label: t("nav.services"), group: "work", icon: <ConciergeBell className="size-[18px]" /> }] : []),
+    ...(can("customer.read") ? [{ href: "/customers", label: t("nav.customers"), group: "work", icon: <Users className="size-[18px]" /> }] : []),
+    ...(can("support.read", "call.log") ? [{
+      href: can("support.read") ? "/support" : "/support/calls", label: t("nav.support"), group: "work", count: support.data?.open, alert: (support.data?.overdue ?? 0) > 0, icon: <Headset className="size-[18px]" />,
+      tabs: [...(can("support.read") ? [{ href: "/support", label: t("nav.supportInbox") }] : []), ...(can("call.log") ? [{ href: "/support/calls", label: t("nav.supportCalls") }] : [])],
+    }] : []),
     ...(can("compliance.case.read") ? [{
       href: "/compliance", label: t("nav.compliance"), count: s?.complianceHolds, alert: true, mobile: true, group: "work", icon: <ShieldAlert className="size-[18px]" />,
       tabs: [{ href: "/compliance", label: t("nav.cases") }, { href: "/compliance/policies", label: t("nav.policies") }, { href: "/compliance/lists", label: t("nav.lists") }],
@@ -38,6 +44,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       href: "/club", label: t("nav.club"), group: "records", icon: <Gem className="size-[18px]" />,
       tabs: [{ href: "/club", label: t("nav.clubMembers") }, { href: "/club/benefits", label: t("nav.clubBenefits") }, { href: "/club/tiers", label: t("nav.clubTiers") }],
     }] : []),
+    ...(can("listings.write") ? [{ href: "/listings", label: t("nav.listings"), group: "records", icon: <ListChecks className="size-[18px]" /> }] : []),
     ...(can("cms.read") ? [{
       href: "/content", label: t("nav.content"), group: "records", icon: <FileText className="size-[18px]" />,
       tabs: [{ href: "/content", label: t("nav.contentEntries") }, { href: "/content/glossary", label: t("nav.contentGlossary") }],

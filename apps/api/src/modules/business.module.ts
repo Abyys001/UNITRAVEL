@@ -1,5 +1,7 @@
 import { Module, type Type } from "@nestjs/common"
 
+import { ActivityService } from "./activity/activity.service"
+import { AdminCustomerListController, MeActivityController } from "./activity/activity.controller"
 import { BookingsService } from "./bookings/bookings.service"
 import { AdminCargoController, CustomerCargoController, DevCargoController } from "./cargo/cargo.controller"
 import { CargoService } from "./cargo/cargo.service"
@@ -21,8 +23,15 @@ import { AdminClubController, CustomerClubController } from "./loyalty/loyalty.c
 import { LoyaltyService } from "./loyalty/loyalty.service"
 import { AdminCmsController, PublicCmsController } from "./cms/cms.controller"
 import { CmsService } from "./cms/cms.service"
+import { BonlineAdapter } from "./support/bonline.adapter"
+import { CallsService } from "./support/calls.service"
+import { AdminCallsController, AdminSupportController, BonlineWebhookController, SupportTicketsController } from "./support/support.controller"
+import { SupportService } from "./support/support.service"
+import { TELEPHONY } from "./support/telephony.port"
+import { AdminListingsController, PublicListingsController } from "./listings/listings.controller"
+import { ListingsService } from "./listings/listings.service"
 import { NotificationsModule } from "./notifications/notifications.module"
-import { AdminServiceRequestsController, CustomerServiceRequestsController } from "./services/services.controller"
+import { AdminAssignmentsController, AdminServiceRequestsController, CustomerServiceRequestsController } from "./services/services.controller"
 import { ServicesService } from "./services/services.service"
 import { SiteController } from "./site/site.controller"
 import { SiteService } from "./site/site.service"
@@ -44,9 +53,10 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   CustomerCargoController, AdminCargoController, DevCargoController, CustomerBillingController, AdminInvoicesController,
   CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
   CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
+  MeActivityController, AdminCustomerListController, SupportTicketsController, AdminSupportController, AdminCallsController, BonlineWebhookController, AdminAssignmentsController, PublicListingsController, AdminListingsController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

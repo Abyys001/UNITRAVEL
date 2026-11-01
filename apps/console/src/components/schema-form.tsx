@@ -49,13 +49,14 @@ function JsonField({ value, onChange, path, issues }: { value: Json; onChange: (
  * Renders a configuration payload as a form: scalars become typed inputs, nested objects become fieldsets, lists of
  * records fall back to an inline JSON editor. Validation is the same Zod schema the API uses (ch. 16.3 step 1).
  */
-export function SchemaForm({ value, onChange, issues, path = "", depth = 0, selects }: { value: Json; onChange: (v: Json) => void; issues: Issue[]; path?: string; depth?: number; /** Fields with a closed set of values, by path. */ selects?: Record<string, readonly string[]> }) {
+export function SchemaForm({ value, onChange, issues, path = "", depth = 0, selects, hide }: { value: Json; onChange: (v: Json) => void; issues: Issue[]; path?: string; depth?: number; /** Fields with a closed set of values, by path. */ selects?: Record<string, readonly string[]>; /** Paths a dedicated form edits instead (a list of records has no useful generic input). */ hide?: readonly string[] }) {
   const t = useT()
   if (!isObj(value)) return <JsonField value={value} onChange={onChange} path={path} issues={issues} />
   return (
     <div className={cn("grid gap-x-5 gap-y-4", depth === 0 ? "md:grid-cols-2 2xl:grid-cols-3" : "sm:grid-cols-2")}>
       {Object.entries(value).map(([k, v]) => {
         const p = path ? `${path}.${k}` : k
+        if (hide?.includes(p)) return null
         const err = issues.find((i) => i.path === p)
         const set = (nv: Json) => onChange({ ...value, [k]: nv })
         const wrap = (control: React.ReactNode, wide = false) => (
@@ -76,7 +77,7 @@ export function SchemaForm({ value, onChange, issues, path = "", depth = 0, sele
           return (
             <fieldset key={p} className="rounded-lg border border-rule bg-surface p-4 sm:col-span-2 md:col-span-full">
               <legend className="px-1.5 text-meta font-semibold text-ink">{label(k)}</legend>
-              <SchemaForm value={v} onChange={set} issues={issues} path={p} depth={depth + 1} selects={selects} />
+              <SchemaForm value={v} onChange={set} issues={issues} path={p} depth={depth + 1} selects={selects} hide={hide} />
             </fieldset>
           )
         }

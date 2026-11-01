@@ -56,7 +56,7 @@ class _CaseScreenState extends ConsumerState<CaseScreen> {
   Future<String?> _askText(String title, String hint) async {
     final l = context.l;
     final controller = TextEditingController();
-    final text = await showModalBottomSheet<String>(
+    final text = await showGlassSheet<String>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -94,7 +94,7 @@ class _CaseScreenState extends ConsumerState<CaseScreen> {
       'WRONG_NUMBER': l.outcomeWrongNumber,
       'CALL_BACK_REQUESTED': l.outcomeCallBack,
     };
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showGlassSheet<String>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(
@@ -142,7 +142,7 @@ class _CaseScreenState extends ConsumerState<CaseScreen> {
 
   Future<void> _more(AdminCase c) async {
     final l = context.l;
-    final pick = await showModalBottomSheet<String>(
+    final pick = await showGlassSheet<String>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Column(

@@ -98,3 +98,16 @@ export interface CargoLines {
   freight: { ratePerKg: Money; chargeableKg: number; amount: Money }; fuelSurcharge: Money; securitySurcharge: Money; handling: Money; customsBrokerage: Money
   dutiesTaxes: Money | "PAYABLE_BY_CONSIGNEE"; dutiesEstimate: boolean; insurance: Money; pickup: Money; delivery: Money; total: Money
 }
+
+/**
+ * PROPOSED, not served yet: shape for the future GET /v1/admin/dashboard/overview ("how the app is working": live
+ * sessions, failed sign-ins, provider health, search-to-paid funnel). It exists so the dashboard slot in
+ * components/app-health.tsx is typed; nothing requests it. Replace it with the contract type from @unitravel/contracts
+ * once the endpoint ships, and treat any field the API leaves out as UNKNOWN rather than zero.
+ */
+export interface AdminDashboardOverview {
+  generatedAt: string
+  sessions: { active: number | null; failedSignIns24h: number | null }
+  providers: { key: string; label: string; healthy: boolean | null; checkedAt: string | null }[]
+  funnel: { searches: number | null; requests: number | null; quotes: number | null; paid: number | null }
+}

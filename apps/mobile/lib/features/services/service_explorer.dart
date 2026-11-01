@@ -5,9 +5,11 @@ import 'package:kit_ui/kit_ui.dart' show XfamTone;
 
 import '../../core/site.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/listings.dart';
 import '../../models/services.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
+import '../listings/listings_screen.dart';
 
 enum Availability { available, requestOnly, comingSoon }
 
@@ -92,7 +94,7 @@ class ServicesScreen extends ConsumerWidget {
                 final w = (box.maxWidth - pad * 2 - gap * (cols - 1)) / cols;
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(pad),
+                  padding: navInset(context, const EdgeInsets.all(pad)),
                   children: [
                     Text(l.exploreLead, style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(height: 16),
@@ -100,6 +102,18 @@ class ServicesScreen extends ConsumerWidget {
                       spacing: gap,
                       runSpacing: gap,
                       children: [for (final it in explorerItems(l, cfg)) SizedBox(width: w, child: ExplorerTile(item: it))],
+                    ),
+                    // Flights are always listed (empty means "ask our team"); the others follow their service switch.
+                    ListingsBrowse(
+                      kinds: [
+                        ListingKind.flights,
+                        for (final k in const [
+                          ListingKind.buses,
+                          ListingKind.trains,
+                          ListingKind.stays,
+                        ])
+                          if (cfg.on(k.path)) k,
+                      ],
                     ),
                   ],
                 );

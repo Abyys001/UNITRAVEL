@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react"
 import Link from "next/link"
 
 import type { Block, Item, Locale, Term } from "@unitravel/i18n"
@@ -31,23 +30,6 @@ export function Terms({ items, className = "" }: { items: Term[]; className?: st
         </div>
       ))}
     </dl>
-  )
-}
-
-/** Native details/summary accordion: keyboard and screen-reader behaviour comes from the browser. */
-export function FaqAccordion({ items, locale }: { items: Item[]; locale: Locale }) {
-  return (
-    <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
-      {items.map((q) => (
-        <details key={q.id} id={q.id} className="group" data-testid="faq-item">
-          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 text-start font-bold leading-snug text-navy-950 hover:bg-cloud md:px-6 [&::-webkit-details-marker]:hidden">
-            <span>{q.heading}</span>
-            <ChevronDown aria-hidden className="mt-0.5 size-5 shrink-0 text-royal transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="px-5 pb-5 md:px-6"><Blocks blocks={q.blocks} locale={locale} /></div>
-        </details>
-      ))}
-    </div>
   )
 }
 

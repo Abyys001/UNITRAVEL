@@ -12,7 +12,7 @@ import { TileError } from "@/components/bento"
 import { ActionBar, CaseHeader, CaseTabs, CommandBar, ListSkeleton, paneClass, paneProps, SlaChip, SummaryItem, Timeline } from "@/components/case"
 import { isConflict, QuotesList, SERVICE_DIALOG_COMMANDS, ServiceCommandDialog, ServiceDetails, ServiceStatus, useServiceLabels } from "@/components/service-request"
 import { Composer, MessagesList } from "@/components/thread"
-import { Loading, Panel } from "@/components/ui"
+import { Arrow, Loading, Panel } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { useCrumbLabel } from "@/lib/crumb"
 import { fmtDateTime } from "@/lib/format"
@@ -93,7 +93,7 @@ export default function ServiceRequestPage() {
         </div>
         <div {...paneProps("records")} className={`${paneClass(tab, "records")} lg:col-span-2 xl:col-span-1`}>
           <Panel title={t("svc.quotes")}><QuotesList d={d} /></Panel>
-          <Panel title={t("case.activity")}><Timeline data-testid="service-timeline" items={timeline.map((x, i) => ({ id: i, at: x.at, title: x.toStatus ? <>{x.label} <span className="text-steel">→</span> {L.status(x.toStatus)}</> : x.label, detail: x.detail, meta: x.actor, tone: x.kind === "STATUS" ? "strong" : "muted" }))} /></Panel>
+          <Panel title={t("case.activity")}><Timeline data-testid="service-timeline" items={timeline.map((x, i) => ({ id: i, at: x.at, title: x.toStatus ? <>{x.label} <span className="text-steel"><Arrow /></span> {L.status(x.toStatus)}</> : x.label, detail: x.detail, meta: x.actor, tone: x.kind === "STATUS" ? "strong" : "muted" }))} /></Panel>
         </div>
       </div>
       <ServiceCommandDialog command={command} d={d} version={d.version} onClose={() => setCommand(null)} done={done} onConflict={refresh} />

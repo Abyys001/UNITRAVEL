@@ -1281,5 +1281,263 @@
   "spSoon": "Our contact details will appear here soon.",
   "spMessage": "Write to us on your request page",
   "spMyRequests": "Open my requests",
-  "svSignInFirst": "Sign in to send a request."
+  "svSignInFirst": "Sign in to send a request.",
+  "stWrite": "Write to us",
+  "stWriteNote": "Send a message without a request. We reply by email or phone.",
+  "stMyTickets": "My messages",
+  "stFormTitle": "Contact us",
+  "stFormLead": "Tell us what you need. Give an email address or a phone number so we can answer.",
+  "stName": "Your name",
+  "stContactNeeded": "Give an email address or a phone number.",
+  "stTopic": "Topic",
+  "stTopicBooking": "Booking",
+  "stTopicPayment": "Payment",
+  "stTopicDocuments": "Documents",
+  "stTopicVisa": "Visa",
+  "stTopicCargo": "Cargo",
+  "stTopicAccount": "Account",
+  "stTopicFeedback": "Feedback",
+  "stTopicOther": "Other",
+  "stRequestRef": "Request reference (optional)",
+  "stMessage": "Message",
+  "stMessageHelp": "At least 10 characters.",
+  "stSend": "Send message",
+  "stSentTitle": "Message sent",
+  "stSentBody": "Your reference is {ref}. We will answer by email or phone.",
+  "@stSentBody": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "stWriteAnother": "Write another message",
+  "stTicketsEmpty": "You have not written to us yet.",
+  "stStatusOpen": "Open",
+  "stStatusPending": "Waiting for you",
+  "stStatusResolved": "Resolved",
+  "stStatusClosed": "Closed",
+  "stReplyHint": "Write a reply",
+  "stReplySend": "Reply",
+  "stClosedNote": "This conversation is closed. Write a new message if you still need help.",
+  "stYou": "You",
+  "stAboutRequest": "About request {ref}",
+  "@stAboutRequest": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "stNotFound": "We could not find that message.",
+  "ppAvailable": "Available to pay",
+  "ppAvailableLead": "Quotes you can accept and invoices you can pay.",
+  "ppKindInvoice": "Invoice",
+  "ppKindQuote": "Quote",
+  "ppActionPay": "Pay",
+  "ppActionAccept": "Review quote",
+  "ppPayBy": "Pay by {date}",
+  "@ppPayBy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ppTitle": "Payment page",
+  "ppIssuedBy": "Issued by",
+  "ppBilledTo": "Billed to",
+  "ppDue": "Due {date}",
+  "@ppDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ppPaidOn": "Paid on {date}",
+  "@ppPaidOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ppRegistration": "Registration {n}",
+  "@ppRegistration": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "ppVat": "VAT {n}",
+  "@ppVat": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "ppOfflineTitle": "How to pay",
+  "ppOfflineNone": "Online payment is not available for this invoice. Contact us and we will tell you how to pay.",
+  "ppNotBooking": "Paying settles this invoice only. Your request keeps its own status.",
+  "ppViewRequest": "View request",
+  "lsBrowse": "Browse options",
+  "lsBrowseLead": "See what we list. None of this is a booking offer; ask our team to arrange it.",
+  "lsFilter": "Destination",
+  "lsFilterFlightsHint": "Airport code, for example IKA",
+  "lsFilterApply": "Filter",
+  "lsClear": "Clear",
+  "lsIndicative": "Indicative",
+  "lsIndicativeNote": "Indicative only. Availability and price are confirmed in a quote.",
+  "lsCached": "Saved search",
+  "lsSandbox": "Test data",
+  "lsFetched": "Fetched {when}",
+  "@lsFetched": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "lsFlightsNote": "Saved search results, not live availability. No fares are shown; ask for a quote to get a price.",
+  "lsQuotedPrice": "Quoted price {amount}",
+  "@lsQuotedPrice": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "lsEmptyTitle": "Nothing listed yet",
+  "lsEmptyBody": "We have no listed options for this. Ask our team and we will look for you.",
+  "lsAsk": "Ask our team",
+  "lsRequest": "Make a request",
+  "lsDirect": "Direct",
+  "lsStops": "{n} stops",
+  "@lsStops": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "lsDeparts": "Departs {date}",
+  "@lsDeparts": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "cuTitle": "Customers",
+  "cuCardNote": "Who is online, last seen and activity",
+  "cuSearchHint": "Name, email or phone",
+  "cuOnline": "Online",
+  "cuOffline": "Offline",
+  "cuLastSeen": "Last seen {when}",
+  "@cuLastSeen": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "cuNeverSeen": "Never seen",
+  "cuLastScreen": "Last screen: {screen}",
+  "@cuLastScreen": {
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "cuOpenRequests": "{n} open requests",
+  "@cuOpenRequests": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "cuSignIns": "{n} sign-ins",
+  "@cuSignIns": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "cuVerified": "Verified",
+  "cuSuspended": "Suspended",
+  "cuDeleted": "Deleted",
+  "cuEmpty": "No customers match.",
+  "cuActivity": "Activity",
+  "cuActivityEmpty": "No activity recorded.",
+  "cuSessions": "{active} active of {total} sessions",
+  "@cuSessions": {
+    "placeholders": {
+      "active": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "cuTrackingOff": "This customer turned activity tracking off, so new screens are not recorded.",
+  "cuRetention": "Screen names only, kept for {days} days.",
+  "@cuRetention": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "cuKindSignIn": "Signed in",
+  "cuKindSignOut": "Signed out",
+  "cuKindView": "Viewed {screen}",
+  "@cuKindView": {
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "scrHome": "Home",
+  "scrSearch": "Search",
+  "scrResults": "Results",
+  "scrItinerary": "Itinerary",
+  "scrFlights": "Flights",
+  "scrHotels": "Hotels",
+  "scrStays": "Stays",
+  "scrTrains": "Trains",
+  "scrBuses": "Buses",
+  "scrVisa": "Visa",
+  "scrTours": "Tours",
+  "scrCip": "CIP lounge",
+  "scrInsurance": "Insurance",
+  "scrCargo": "Cargo",
+  "scrShipments": "Shipments",
+  "scrRequestNew": "New request",
+  "scrRequests": "Requests",
+  "scrRequestDetail": "Request",
+  "scrTrack": "Tracking",
+  "scrAccount": "Account",
+  "scrDetails": "My details",
+  "scrTravellers": "Travellers",
+  "scrBilling": "Billing",
+  "scrInvoice": "Invoice",
+  "scrPay": "Payment",
+  "scrInbox": "Inbox",
+  "scrSupport": "Support",
+  "scrSupportTicket": "Support message",
+  "scrClub": "Club",
+  "scrSettings": "Settings",
+  "scrFaq": "FAQ",
+  "scrGuides": "Guides",
+  "scrBlog": "Blog",
+  "scrGlossary": "Glossary",
+  "scrSignIn": "Sign in"
 }

@@ -101,7 +101,7 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
     <section className="rounded-md border border-rule-strong bg-surface-raised" data-testid={`option-${index}`}>
       <header className="flex flex-wrap items-center gap-2 border-b border-rule bg-ledger px-3 py-2">
         <span className="num text-steel">Option {index + 1}</span>
-        <input aria-label="Option label" className="field-input max-w-md flex-1 font-medium" value={o.label} onChange={(e) => onChange({ ...o, label: e.target.value })} />
+        <input aria-label="Option label" className="field-input max-w-md flex-1 font-medium" dir="auto" value={o.label} onChange={(e) => onChange({ ...o, label: e.target.value })} />
         <Tag value={o.source} />
         {unk.length > 0 ? <span className="text-meta font-semibold text-danger" data-testid="unknown-count">{unk.length} unknown</span> : <span className="text-meta font-semibold text-success">all facts confirmed</span>}
         <span className="ms-auto flex gap-1">

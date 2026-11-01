@@ -8,7 +8,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { EmptyState, TileError } from "@/components/bento"
 import { ListSkeleton, StateChip, TableScroll } from "@/components/case"
 import { ListCard, tableClass } from "@/components/data-list"
-import { Field, PageHead, Panel, useAct } from "@/components/ui"
+import { Arrow, Field, PageHead, Panel, RouteText, useAct } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDateTime, rel } from "@/lib/format"
 import { type MsgKey, useT } from "@/lib/i18n"
@@ -54,9 +54,9 @@ export default function ListsPage() {
             </form>
             {res && (
               <div className="mt-3 space-y-1" role="status">
-                <p><StateChip value={res.result} /> {res.hits.length} candidate{res.hits.length === 1 ? "" : "s"}</p>
+                <p><StateChip value={res.result} /> {t(res.hits.length === 1 ? "cl.candidate.one" : "cl.candidates", { n: res.hits.length })}</p>
                 <ul className="ledger-rows">{res.hits.slice(0, 10).map((h, i) => <li key={i} className="py-1"><span dir="auto">{h.matchedName}</span> <span className="num text-steel">{Math.round(h.score * 100)}% · {h.listId}</span></li>)}</ul>
-                <p className="text-caption break-words text-steel">Tokens: {res.tokens.map((t) => `${t.token}→${t.phonetic}`).join(" · ")}</p>
+                <p className="text-caption break-words text-steel">{t("cl.tokens")}: {res.tokens.map((k, i) => <RouteText key={i}>{i > 0 && " · "}{k.token}<Arrow />{k.phonetic}</RouteText>)}</p>
               </div>
             )}
           </Panel>

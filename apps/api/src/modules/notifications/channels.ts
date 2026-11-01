@@ -130,18 +130,28 @@ export class EmailSender {
 
   constructor(private readonly creds: VendorCredentialsService, @Inject(REDIS) private readonly redis: Redis) {}
 
-  private async transporter(): Promise<{ t: Transporter; provider: string }> {
+  /**
+   * Developer Panel credentials first (`email:smtp`, then `email:brevo`), the SMTP_URL environment value last (Mailpit locally
+   * and on the staging stack). A deployed host is meant to run on the Developer Panel credential (ADR-0020); the environment
+   * value stays only as the fallback that staging's mail catcher uses.
+   */
+  private async transporter(): Promise<{ t: Transporter; provider: string; from: string }> {
+    const smtp = await this.creds.get("email:smtp")
+    if (smtp?.host && smtp.port && smtp.user && smtp.pass) {
+      const port = Number(smtp.port)
+      return { t: nodemailer.createTransport({ host: smtp.host, port, secure: smtp.secure ? smtp.secure === "true" : port === 465, auth: { user: smtp.user, pass: smtp.pass } }), provider: "smtp", from: smtp.from || env().MAIL_FROM }
+    }
     const c = await this.creds.get("email:brevo")
-    if (c?.smtpUser && c.smtpKey) return { t: nodemailer.createTransport({ host: "smtp-relay.brevo.com", port: 587, auth: { user: c.smtpUser, pass: c.smtpKey } }), provider: "brevo" }
+    if (c?.smtpUser && c.smtpKey) return { t: nodemailer.createTransport({ host: "smtp-relay.brevo.com", port: 587, auth: { user: c.smtpUser, pass: c.smtpKey } }), provider: "brevo", from: env().MAIL_FROM }
     this.transport ??= nodemailer.createTransport(env().SMTP_URL)
-    return { t: this.transport, provider: env().APP_ENV === "production" ? "smtp" : "mailpit" }
+    return { t: this.transport, provider: env().APP_ENV === "production" ? "smtp" : "mailpit", from: env().MAIL_FROM }
   }
 
   async send(to: string, subject: string, text: string, locale: "en" | "fa"): Promise<SendResult> {
-    const { t, provider } = await this.transporter()
+    const { t, provider, from } = await this.transporter()
     const dir = locale === "fa" ? "rtl" : "ltr"
     const html = `<!doctype html><html dir="${dir}" lang="${locale}"><body style="font-family:Vazirmatn,Inter,Arial,sans-serif;background:#f5f1ea;padding:24px"><div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:24px;color:#13263f"><p style="font-size:12px;letter-spacing:.2em;color:#b07a45">UNI TRAVEL</p><h1 style="font-size:20px">${escapeHtml(subject)}</h1><p style="font-size:15px;line-height:1.6">${escapeHtml(text).replace(/\n/g, "<br>")}</p></div></body></html>`
-    const info = await t.sendMail({ from: env().MAIL_FROM, to, subject, text, html })
+    const info = await t.sendMail({ from, to, subject, text, html })
     // Mailpit also holds it, but the sign-in screens read this sink to fill email codes in test sessions.
     if (isLocal()) {
       await this.redis.lpush("dev:email", JSON.stringify({ id: info.messageId, to, subject, body: text, at: new Date().toISOString() }))

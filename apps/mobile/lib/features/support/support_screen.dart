@@ -35,7 +35,7 @@ class SupportScreen extends ConsumerWidget {
             final hours = lang == 'fa' ? (cfg.hoursFa ?? cfg.hoursEn) : (cfg.hoursEn ?? cfg.hoursFa);
             final none = cfg.phone == null && cfg.email == null;
             return ListView(
-              padding: const EdgeInsets.all(16),
+              padding: navInset(context, const EdgeInsets.all(16)),
               children: [
                 Text(l.spLead),
                 const SizedBox(height: 16),
@@ -79,6 +79,26 @@ class SupportScreen extends ConsumerWidget {
                   trailing: const Icon(Icons.open_in_new, size: 18),
                   onTap: () => open(helpPageUri(lang, '/faq')),
                 ),
+                ListTile(
+                  key: const Key('support-write'),
+                  contentPadding: EdgeInsets.zero,
+                  minTileHeight: 56,
+                  leading: const Icon(Icons.edit_outlined),
+                  title: Text(l.stWrite),
+                  subtitle: Text(l.stWriteNote),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/support/new'),
+                ),
+                if (signedIn)
+                  ListTile(
+                    key: const Key('support-tickets'),
+                    contentPadding: EdgeInsets.zero,
+                    minTileHeight: 56,
+                    leading: const Icon(Icons.forum_outlined),
+                    title: Text(l.stMyTickets),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/support/tickets'),
+                  ),
                 if (signedIn)
                   ListTile(
                     key: const Key('support-requests'),

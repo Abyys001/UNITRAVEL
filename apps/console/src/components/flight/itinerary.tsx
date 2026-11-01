@@ -3,6 +3,7 @@
 import type { Itinerary, Slice, TruthItem } from "@unitravel/contracts"
 import { cn } from "@unitravel/ui/lib/utils"
 
+import { Arrow } from "@/components/ui"
 import { fmtDateTime, minutes } from "@/lib/format"
 
 /** Truth badges are text first, never colour alone (DESIGN.md). */
@@ -14,14 +15,14 @@ export function TruthBadge({ t }: { t: Pick<TruthItem, "rung" | "fake" | "provid
 export function SliceView({ slice, index }: { slice: Slice; index?: number }) {
   return (
     <div className="space-y-1">
-      <p className="flex items-baseline gap-2"><span className="num font-medium">{slice.origin} → {slice.destination}</span><span className="text-steel">· {minutes(slice.durationMin)}{index !== undefined ? ` · slice ${index + 1}` : ""}</span></p>
+      <p className="flex items-baseline gap-2"><span className="num font-medium">{slice.origin} <Arrow /> {slice.destination}</span><span className="text-steel">· {minutes(slice.durationMin)}{index !== undefined ? ` · slice ${index + 1}` : ""}</span></p>
       <ol className="ledger-rows border-s-2 border-line ps-3">
         {slice.segments.map((g, i) => (
           <li key={i} className="grid grid-cols-[5.5rem_1fr] gap-x-2 py-1 text-meta">
             <span className="num">{g.marketing.carrier}{g.marketing.flightNumber}</span>
             <span>
               <span className="num">{g.origin.iata}{g.origin.terminal ? ` T${g.origin.terminal}` : ""} {g.departure.local.slice(5).replace("T", " ")}</span>
-              <span className="text-steel"> → </span>
+              <span className="text-steel"> <Arrow /> </span>
               <span className="num">{g.destination.iata}{g.destination.terminal ? ` T${g.destination.terminal}` : ""} {g.arrival.local.slice(5).replace("T", " ")}</span>
               <span className="block text-caption text-steel">{g.cabin.toLowerCase().replace("_", " ")}{g.bookingClass ? ` · class ${g.bookingClass}` : ""}{g.fareBasis ? ` · ${g.fareBasis}` : ""}{g.operating.carrier !== g.marketing.carrier ? ` · operated by ${g.operating.carrier}` : ""}{g.aircraft ? ` · ${g.aircraft}` : ""}</span>
             </span>
@@ -50,7 +51,7 @@ export function ItineraryView({ it }: { it: Itinerary }) {
       ))}
       {it.connections.length > 0 && (
         <ul className="text-meta text-steel">
-          {it.connections.map((c, i) => <li key={i}>Layover {c.at}{c.departAirport !== c.at ? ` → ${c.departAirport}` : ""}: <span className="num">{minutes(c.layoverMin)}</span> (needs {c.requiredMin} m){c.protected ? " · protected" : " · self-transfer"}{c.overnight ? " · overnight" : ""}{c.advisory ? ` · ${c.advisory}` : ""}</li>)}
+          {it.connections.map((c, i) => <li key={i}>Layover {c.at}{c.departAirport !== c.at && <> <Arrow /> {c.departAirport}</>}: <span className="num">{minutes(c.layoverMin)}</span> (needs {c.requiredMin} m){c.protected ? " · protected" : " · self-transfer"}{c.overnight ? " · overnight" : ""}{c.advisory ? ` · ${c.advisory}` : ""}</li>)}
         </ul>
       )}
       {it.gateway && <p className="text-meta text-steel">Gateway access: {it.gateway.access}</p>}

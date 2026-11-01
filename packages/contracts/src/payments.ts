@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { IsoDateTime, Money, Reference, Uuid } from "./common"
+import { CustomerInvoiceStatus, InvoiceLine } from "./invoices"
 
 // ADR-0007: Stripe Embedded Checkout, test mode only. Cards never touch our systems; the browser gets a client secret.
 export const PAYMENT_PROVIDERS = ["STRIPE", "FAKE"] as const
@@ -128,3 +129,46 @@ export type PaymentsConfigView = z.infer<typeof PaymentsConfigView>
 
 export const PaymentHealthView = z.object({ ok: z.boolean(), provider: PaymentProviderId, latencyMs: z.number(), detail: z.string() })
 export type PaymentHealthView = z.infer<typeof PaymentHealthView>
+
+// ---- payment page and "available for purchase" (ADR-0020) ----
+/**
+ * Everything the invoice payment page shows, in one response (web and mobile). `payUrl` exists only while online payment is
+ * offered for this very invoice; otherwise `offlineInstructions` carries the text from settings (null while UNKNOWN). Payment
+ * success never implies a booking: the page shows an invoice, and the request has its own status.
+ */
+export const PaymentPageView = z.object({
+  invoiceNumber: z.string(),
+  status: CustomerInvoiceStatus,
+  requestRef: Reference,
+  productType: z.enum(["FLIGHT", "CARGO", "SERVICE"]),
+  issuer: z.object({ name: z.string(), address: z.string(), phone: z.string(), email: z.string(), registration: z.string(), vatNumber: z.string().nullable(), registeredAddress: z.string().nullable() }),
+  customerName: z.string(),
+  issuedAt: IsoDateTime,
+  dueAt: IsoDateTime,
+  currency: z.string(),
+  lines: z.array(InvoiceLine),
+  total: Money,
+  paidAt: IsoDateTime.nullable(),
+  pdfDocumentId: Uuid.nullable(),
+  /** Relative API path of the PDF (`GET`, own documents only), or null while none exists. */
+  pdfUrl: z.string().nullable(),
+  online: OnlinePaymentEligibility,
+  payUrl: z.string().nullable(),
+  offlineInstructions: z.string().nullable(),
+})
+export type PaymentPageView = z.infer<typeof PaymentPageView>
+
+export const PurchasableItem = z.object({
+  kind: z.enum(["INVOICE", "QUOTE"]),
+  /** PAY for an issued invoice, ACCEPT for a sent quote the customer can still accept. */
+  action: z.enum(["PAY", "ACCEPT"]),
+  requestRef: Reference,
+  /** Invoice number or quotation number. */
+  number: z.string(),
+  title: z.string(),
+  productType: z.enum(["FLIGHT", "CARGO", "SERVICE"]),
+  amount: Money,
+  /** Invoice expiry, or the quote's validity. */
+  dueAt: IsoDateTime,
+})
+export type PurchasableItem = z.infer<typeof PurchasableItem>
