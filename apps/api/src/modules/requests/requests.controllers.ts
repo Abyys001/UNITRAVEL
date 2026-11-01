@@ -10,7 +10,7 @@ import {
 
 import { AppError } from "../../core/errors"
 import { UnitOfWork } from "../../core/infra.module"
-import { type Actor, Ctx, CurrentActor, Idempotent, RateLimit, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
+import { type Actor, Ctx, CurrentActor, Idempotent, Passive, RateLimit, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
 import { zbody } from "../../core/http/zod"
 import { AccessService } from "../access/access.service"
 import { BookingsService } from "../bookings/bookings.service"
@@ -122,6 +122,7 @@ export class AdminFlightRequestsController {
    * reconnects through the auth guard again (permissions, idle timeout).
    */
   @Get("events")
+  @Passive()
   @ApiOperation({ summary: "Staff live events (SSE)", description: "text/event-stream. `queue-counts` carries the queue summary; `request-changed` carries StaffRequestChangedEvent {requestType, ref, version, status, statusLabel}." })
   @RequirePermission("flight_request.read.any", "cargo_request.read.any")
   async events(@CurrentActor() actor: Actor, @Req() req: Request, @Res() res: Response) {

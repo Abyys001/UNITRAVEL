@@ -20,6 +20,8 @@ export function proxy(req: NextRequest) {
   const surface = surfaceOf(req.headers.get("host") ?? "")
   if (pathname.startsWith("/_next/") || pathname === "/icon.svg" || pathname === "/favicon.ico") return NextResponse.next()
   if (!surface) return notFound()
+  // The installable app's public files (ADR-0022): none of them holds data, and the manifest reads the host itself.
+  if (pathname === "/manifest.webmanifest" || pathname === "/sw.js" || pathname === "/offline.html" || pathname.startsWith("/icons/") || pathname.startsWith("/flags/")) return NextResponse.next()
   if (pathname.startsWith("/api/")) {
     // Defence in depth only: the API itself answers 404 for /v1/dev/* unless the forwarded host is the dev host.
     if (surface === "admin" && pathname.startsWith("/api/v1/dev/")) return notFound()
@@ -33,7 +35,7 @@ export function proxy(req: NextRequest) {
   const csp = [
     "default-src 'none'", `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ""}`, "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:", "font-src 'self'", `connect-src 'self'${dev ? " ws:" : ""}`, "manifest-src 'self'", "frame-ancestors 'none'", "frame-src 'none'",
-    "base-uri 'none'", "form-action 'self'", "object-src 'none'", "worker-src 'none'",
+    "base-uri 'none'", "form-action 'self'", "object-src 'none'", "worker-src 'self'",
   ].join("; ")
   const headers = new Headers(req.headers)
   headers.set("x-nonce", nonce)

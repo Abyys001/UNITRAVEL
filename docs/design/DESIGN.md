@@ -38,6 +38,13 @@ web utilities `liquid`, `liquid-dark`, `glass`, scoped to the customer site (`ht
 Flutter `GlassPanel` / `GlassBackdrop` (`widgets.dart`). Text stays on >= 0.6 white or >= 0.78 navy panes (AA). Fallbacks:
 no backdrop-filter, `prefers-reduced-transparency`, forced colours (web) and high contrast (Flutter) give opaque panes;
 blur drops to 14 px under 640 px. Form fields and booking totals stay on solid fields.
+**Update 2026-11-01 (owner request, Flutter):** cards carry a hairline edge and a 0.92 tint, because a white specular edge alone left sections without a visible boundary on the pale page. On the test sign-in panel only the Owner / Admin card is dark, so it reads as separate from the customer app.
+
+**Update 2026-11-01 (owner request, web `/flights`):** "In the air now" is a dark night-sky band with glass cards, a radar sweep and staggered entry, loaded 10 at a time (`.sky*` in `apps/web/src/app/globals.css`). Cards do not blur; all motion stops under reduced motion and looping motion stops in `data-lite`.
+
+**Update 2026-11-01 (owner request, web `/trains`, `/buses`):** a brand hero holds the route card (native From and To selects, frequently chosen cities first); glass stays on the dark band and the card and its fields are solid white. The service scene sits on a white tile because its navy artwork disappears on the band.
+
+**Update 2026-11-01 (owner request, web `/stays`):** the page has its own night hero and a photo grid of Iranian destinations (`lib/iran-destinations.ts`). Destinations are places to ask about, never stock or availability, and the page says so; photos show the city, not a property. Dates use one range control (`date-range-field.tsx`) in the visitor's calendar, with the other calendar's months under each title; Saturday starts the Jalali week, Monday the Gregorian week. Its popover is a solid pane, because glass let the form show through the dates. The note box is a fixed size.
 
 ## Tokens pipeline (Phase F, 2026-10-24)
 One source: `packages/ui/tokens/tokens.json` (palette, status tints, radii, shadows, light and dark semantic variables, Flutter night
@@ -82,8 +89,10 @@ The first build's names (`ink, copper, sand, …`) were swept and removed on 202
 - Truth badge tones: LIVE = cyan-tinted outline, CACHED = steel outline, PRICED/CONFIRMED = success solid,
   MANUAL = orange-700 outline, FAKE = danger striped, SEPARATE TICKETS = danger outline, GATEWAY = royal outline.
   Always text, never colour alone.
-- Type: **Montserrat** (Latin display 800 / UI 400–700), **Vazirmatn** (Persian display 800 and UI),
-  **JetBrains Mono** (references, codes, dev values). All self-hosted via `next/font/local` and Flutter assets
+- Type (ADR-0023, customer web and mobile): **Montserrat** (Latin display 800, logo), **Figtree** (Latin text and UI),
+  **Alexandria** (Persian display 700), **Vazirmatn** (Persian text and UI, logo), **JetBrains Mono** (references, codes,
+  dev values). Page and section titles use `font-display`; card titles and body use the text face. The console keeps ADR-0011
+  (Inter text, Vazirmatn for all Persian). All self-hosted via `next/font/local` and Flutter assets
   (no Google Fonts — ch. 28.4); sources in kit `fonts/`.
 - Radius 16 px cards and buttons, 12 px controls, 999 px pills; shadows `--shadow-card` / `--shadow-lift`.
 - Buttons: `btn-orange` (primary CTA), `btn-glass` (on dark), shadcn `Button` (navy) inside content.

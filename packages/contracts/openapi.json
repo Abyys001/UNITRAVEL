@@ -399,6 +399,48 @@
         ]
       }
     },
+    "/v1/auth/device/resume": {
+      "post": {
+        "operationId": "AuthController_resumeDevice",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/device/forget": {
+      "post": {
+        "operationId": "AuthController_forgetDevice",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/activity": {
+      "post": {
+        "operationId": "AuthController_activity",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/auth/refresh": {
       "post": {
         "operationId": "AuthController_refresh",
@@ -659,6 +701,7 @@
                           "customer.read.pii",
                           "customer.read.documents",
                           "service.assign",
+                          "invoice.direct",
                           "support.read",
                           "support.reply",
                           "call.log",
@@ -877,6 +920,43 @@
     "/v1/me/sessions/{id}": {
       "delete": {
         "operationId": "MeController_revokeSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/trusted-devices": {
+      "get": {
+        "operationId": "MeController_listTrustedDevices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/trusted-devices/{id}": {
+      "delete": {
+        "operationId": "MeController_revokeTrustedDevice",
         "parameters": [
           {
             "name": "id",
@@ -3884,7 +3964,7 @@
                       },
                       "requestRef": {
                         "type": "string",
-                        "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                        "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                       },
                       "number": {
                         "type": "string"
@@ -3982,9 +4062,234 @@
         "tags": [
           "admin-invoices"
         ]
+      },
+      "post": {
+        "operationId": "AdminInvoicesController_createDirect",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customerUserId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  },
+                  "lines": {
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serviceType": {
+                          "type": "string",
+                          "enum": [
+                            "VISA",
+                            "BUS",
+                            "TRAIN",
+                            "HOTEL",
+                            "STAY",
+                            "CIP",
+                            "INSURANCE",
+                            "TOUR",
+                            "TRANSFER",
+                            "OTHER",
+                            "DISCOUNT"
+                          ]
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 200
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 999
+                        },
+                        "unitAmountMinor": {
+                          "type": "integer",
+                          "minimum": -100000000,
+                          "maximum": 100000000
+                        }
+                      },
+                      "required": [
+                        "serviceType",
+                        "description",
+                        "quantity",
+                        "unitAmountMinor"
+                      ]
+                    }
+                  },
+                  "dueDays": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 365
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "notes": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "customerUserId",
+                  "currency",
+                  "lines"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
       }
     },
     "/v1/admin/invoices/{id}": {
+      "put": {
+        "operationId": "AdminInvoicesController_updateDirect",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  },
+                  "lines": {
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serviceType": {
+                          "type": "string",
+                          "enum": [
+                            "VISA",
+                            "BUS",
+                            "TRAIN",
+                            "HOTEL",
+                            "STAY",
+                            "CIP",
+                            "INSURANCE",
+                            "TOUR",
+                            "TRANSFER",
+                            "OTHER",
+                            "DISCOUNT"
+                          ]
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 2,
+                          "maxLength": 200
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 999
+                        },
+                        "unitAmountMinor": {
+                          "type": "integer",
+                          "minimum": -100000000,
+                          "maximum": 100000000
+                        }
+                      },
+                      "required": [
+                        "serviceType",
+                        "description",
+                        "quantity",
+                        "unitAmountMinor"
+                      ]
+                    }
+                  },
+                  "dueDays": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 365
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "notes": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "currency",
+                  "lines"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-invoices"
+        ]
+      },
       "get": {
         "operationId": "AdminInvoicesController_detail",
         "parameters": [
@@ -4132,7 +4437,7 @@
                     },
                     "requestRef": {
                       "type": "string",
-                      "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                      "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                     },
                     "productType": {
                       "type": "string",
@@ -4205,6 +4510,30 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "serviceType": {
+                            "default": null,
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "VISA",
+                                  "BUS",
+                                  "TRAIN",
+                                  "HOTEL",
+                                  "STAY",
+                                  "CIP",
+                                  "INSURANCE",
+                                  "TOUR",
+                                  "TRANSFER",
+                                  "OTHER",
+                                  "DISCOUNT"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "description": {
                             "type": "string"
                           },
@@ -4253,6 +4582,7 @@
                           }
                         },
                         "required": [
+                          "serviceType",
                           "description",
                           "quantity",
                           "unitAmount",
@@ -4429,6 +4759,27 @@
       }
     },
     "/v1/admin/invoices/{id}/payments": {
+      "post": {
+        "operationId": "AdminPaymentsController_recordOffline",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-payments"
+        ]
+      },
       "get": {
         "operationId": "AdminPaymentsController_view",
         "parameters": [
@@ -4738,7 +5089,7 @@
                           },
                           "linkedFlightRequestRef": {
                             "type": "string",
-                            "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                            "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                           },
                           "note": {
                             "type": "string",
@@ -5507,7 +5858,7 @@
                     "properties": {
                       "ref": {
                         "type": "string",
-                        "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                        "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                       },
                       "type": {
                         "type": "string",
@@ -5593,7 +5944,7 @@
                   "properties": {
                     "ref": {
                       "type": "string",
-                      "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                      "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                     },
                     "type": {
                       "type": "string",
@@ -5957,7 +6308,7 @@
                   "properties": {
                     "ref": {
                       "type": "string",
-                      "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                      "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                     },
                     "type": {
                       "type": "string",
@@ -6358,7 +6709,7 @@
                   "properties": {
                     "ref": {
                       "type": "string",
-                      "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                      "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                     },
                     "type": {
                       "type": "string",
@@ -6702,7 +7053,7 @@
                         "properties": {
                           "ref": {
                             "type": "string",
-                            "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                            "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                           },
                           "type": {
                             "type": "string",
@@ -6825,7 +7176,7 @@
                   "properties": {
                     "ref": {
                       "type": "string",
-                      "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                      "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                     },
                     "type": {
                       "type": "string",
@@ -7505,7 +7856,7 @@
                   "properties": {
                     "ref": {
                       "type": "string",
-                      "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                      "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                     },
                     "type": {
                       "type": "string",
@@ -13512,7 +13863,7 @@
                   },
                   "requestRef": {
                     "type": "string",
-                    "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                    "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                   },
                   "message": {
                     "type": "string",
@@ -15819,7 +16170,7 @@
                   "properties": {
                     "ref": {
                       "type": "string",
-                      "pattern": "^UT-[FCAS]-[0-9A-HJKMNP-TV-Z]{6}$"
+                      "pattern": "^UT-[FCASD]-[0-9A-HJKMNP-TV-Z]{6}$"
                     },
                     "type": {
                       "type": "string",
@@ -16161,6 +16512,173 @@
         },
         "tags": [
           "listings"
+        ]
+      }
+    },
+    "/v1/live-flights": {
+      "get": {
+        "operationId": "LiveFlightsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "const": "LIVE_POSITION"
+                          },
+                          "hex": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{6}$"
+                          },
+                          "callsign": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}[0-9][A-Z0-9]{0,3}$"
+                          },
+                          "aircraftType": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 8
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "region": {
+                            "type": "string",
+                            "enum": [
+                              "EUROPE",
+                              "TURKEY",
+                              "UAE",
+                              "IRAN"
+                            ]
+                          },
+                          "altitudeFt": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "groundSpeedKt": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "seenAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "hex",
+                          "callsign",
+                          "aircraftType",
+                          "region",
+                          "altitudeFt",
+                          "groundSpeedKt",
+                          "seenAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "regions": {
+                      "type": "object",
+                      "properties": {
+                        "EUROPE": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "TURKEY": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "UAE": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "IRAN": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "EUROPE",
+                        "TURKEY",
+                        "UAE",
+                        "IRAN"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "notice": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "OFF",
+                            "NO_DATA"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "regions",
+                    "updatedAt",
+                    "notice"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "live-flights"
         ]
       }
     },

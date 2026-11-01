@@ -90,7 +90,7 @@ describe("fail-closed route declarations", () => {
     expect(routes.filter((r) => r.path.includes("payments") && r.isPublic).map((r) => r.path).sort()).toEqual(["/v1/dev-sink/payments/:sessionId/deliver", "/v1/dev-sink/payments/:sessionId/sign"])
   })
 
-  it("service requests (ADR-0015): customer routes are own-scoped, admin routes need service_request.read.any / write, site and track lookups are public", () => {
+  it("service requests (ADR-0015): customer routes are own-scoped, admin routes need service_request.read.any / write, the site is public, track lookups need sign-in (ADR-0025)", () => {
     const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
     expect(find("POST", "/v1/service-requests")).toMatchObject({ permissions: ["service_request.create.own"], staff: false })
     for (const [m, p] of [["GET", "/v1/service-requests"], ["GET", "/v1/service-requests/:ref"], ["POST", "/v1/service-requests/:ref/cancel"], ["POST", "/v1/service-requests/:ref/messages"], ["POST", "/v1/service-requests/:ref/quote/accept"]] as const) {
@@ -101,7 +101,7 @@ describe("fail-closed route declarations", () => {
     expect(find("POST", "/v1/admin/service-requests/:ref/messages")).toMatchObject({ permissions: ["service_request.write"], staff: true })
     expect(find("GET", "/v1/site")).toMatchObject({ isPublic: true, staff: false })
     expect(find("GET", "/v1/track")).toMatchObject({ permissions: ["flight_request.read.own"], staff: false })
-    for (const p of ["/v1/track/lookup", "/v1/track/verify"]) expect(find("POST", p)).toMatchObject({ isPublic: true, staff: false })
+    for (const p of ["/v1/track/lookup", "/v1/track/verify"]) expect(find("POST", p)).toMatchObject({ permissions: ["flight_request.read.own"], staff: false })
   })
 
   it("customer activity (ADR-0018): telemetry is for any signed-in user, the customer list and activity timeline need customer.read", () => {
@@ -126,6 +126,16 @@ describe("fail-closed route declarations", () => {
     const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
     expect(find("POST", "/v1/admin/customers/:id/assignments")).toMatchObject({ permissions: ["service.assign"], staff: true })
     for (const p of ["/v1/billing/purchasable", "/v1/billing/invoices/:number/payment-page"]) expect({ p, perms: find("GET", p)?.permissions, staff: find("GET", p)?.staff }).toEqual({ p, perms: ["flight_request.read.own", "cargo_request.read.own"], staff: false })
+  })
+
+  it("direct invoices (ADR-0028): creating and editing need invoice.direct; offline payment on an invoice needs payment.record", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    for (const [m, p] of [["POST", "/v1/admin/invoices"], ["PUT", "/v1/admin/invoices/:id"]] as const) expect(find(m, p)).toMatchObject({ permissions: ["invoice.direct"], staff: true })
+    expect(find("POST", "/v1/admin/invoices/:id/payments")).toMatchObject({ permissions: ["payment.record"], staff: true })
+  })
+
+  it("live flights (ADR-0027): a public read with no staff surface", () => {
+    expect(routes.find((r) => r.method === "GET" && r.path === "/v1/live-flights")).toMatchObject({ isPublic: true, staff: false })
   })
 
   it("listings (ADR-0021): public reads are public, staff curation needs listings.write", () => {

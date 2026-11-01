@@ -207,7 +207,7 @@ describe("cargo tracking customer views (Phase E)", () => {
 
 describe("billing customer views (ADR-0006, Phase C)", () => {
   const INTERNAL_INVOICE = ["id", "createdBy", "customerUserId", "quoteId", "requestId", "rowVersion", "actorUserId", "reasonText", "history", "actions", "storageKey", "internalNote"]
-  const svc = new InvoicesService(...(Array(10).fill({}) as ConstructorParameters<typeof InvoicesService>))
+  const svc = new InvoicesService(...(Array(13).fill({}) as ConstructorParameters<typeof InvoicesService>))
   const ref = "UT-C-7Q2K9M"
   const row = (status: string) => ({
     id: "0b6a1f7e-3c1d-4f7a-9b2e-5d4c3b2a1f00", number: "INV-2026-000001", requestType: "CARGO", requestId: "1c7b2a8f-4d2e-4a8b-8c3f-6e5d4c3b2a10", requestRef: ref, customerUserId: "2d8c3b9a-5e3f-4b9c-9d4a-7f6e5d4c3b20",
@@ -245,7 +245,7 @@ describe("billing customer views (ADR-0006, Phase C)", () => {
   })
 
   it("staff views without pricing.read.internal carry null amounts and the schema accepts them", () => {
-    const hidden = { id: row("DRAFT").id, number: null, status: "DRAFT", requestRef: ref, productType: "CARGO", currency: "GBP", lines: [{ description: "Freight", quantity: 1, unitAmount: null, amount: null }], total: null, issuedAt: null, expiresAt: null, paidAt: null, cancelledAt: null, cancelReason: null, documentId: null, createdAt: "2026-11-01T10:00:00.000Z", history: [], actions: [{ command: "issue", allowed: false, reason: "no" }] }
+    const hidden = { id: row("DRAFT").id, number: null, status: "DRAFT", origin: "QUOTE", customer: { id: row("DRAFT").customerUserId, name: "Customer", emailDeliverable: false }, notes: null, dueDays: null, requestRef: ref, productType: "CARGO", currency: "GBP", lines: [{ description: "Freight", quantity: 1, unitAmount: null, amount: null }], total: null, issuedAt: null, expiresAt: null, paidAt: null, cancelledAt: null, cancelReason: null, documentId: null, createdAt: "2026-11-01T10:00:00.000Z", history: [], actions: [{ command: "issue", allowed: false, reason: "no" }] }
     expect(amountPaths(StaffInvoice.parse(hidden))).toEqual([])
   })
 })

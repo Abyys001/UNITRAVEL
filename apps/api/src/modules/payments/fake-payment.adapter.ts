@@ -25,6 +25,7 @@ interface FakeState { status: "open" | "complete" | "expired"; paymentStatus: "p
 export class FakePaymentAdapter implements PaymentProvider {
   readonly id = "FAKE" as const
   readonly publishableKey = null
+  readonly connectedAccountId = null
 
   constructor(private readonly redis: Redis) {
     if (!sandboxAllowed()) throw new Error("The FAKE payment adapter only runs with APP_ENV=local (ADR-0007 P12, ADR-0014)")

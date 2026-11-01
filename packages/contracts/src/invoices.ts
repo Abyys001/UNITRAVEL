@@ -18,7 +18,13 @@ export type InvoiceCancelCode = z.infer<typeof InvoiceCancelCode>
 export const InvoiceCancelBody = z.object({ reasonCode: InvoiceCancelReason, note: z.string().trim().max(500).optional() })
   .refine((b) => b.reasonCode !== "OTHER" || !!b.note, { message: "Explain why", path: ["note"] })
 
+export const INVOICE_LINE_TYPES = ["VISA", "BUS", "TRAIN", "HOTEL", "STAY", "CIP", "INSURANCE", "TOUR", "TRANSFER", "OTHER", "DISCOUNT"] as const
+export const InvoiceLineType = z.enum(INVOICE_LINE_TYPES)
+export type InvoiceLineType = z.infer<typeof InvoiceLineType>
+
 export const InvoiceLine = z.object({
+  /** Direct invoices only (ADR-0028). */
+  serviceType: InvoiceLineType.nullable().default(null),
   description: z.string(),
   quantity: z.number().int().min(1),
   unitAmount: Money,
@@ -39,6 +45,8 @@ export const CustomerInvoice = z.object({
   cancelledAt: IsoDateTime.nullable(),
   cancelReason: InvoiceCancelCode.nullable(),
   documentId: Uuid.nullable(),
+  /** Written by staff for the customer on a direct invoice. */
+  notes: z.string().nullable().default(null),
 })
 export type CustomerInvoice = z.infer<typeof CustomerInvoice>
 
@@ -73,6 +81,11 @@ export const StaffInvoice = z.object({
   id: Uuid,
   number: z.string().nullable(),
   status: InvoiceStatus,
+  origin: z.enum(["QUOTE", "DIRECT"]),
+  /** `emailDeliverable` is false when the customer has no verified email, so the invoice goes by SMS and inbox only. */
+  customer: z.object({ id: Uuid, name: z.string(), emailDeliverable: z.boolean() }),
+  notes: z.string().nullable(),
+  dueDays: z.number().int().nullable(),
   requestRef: Reference,
   productType: z.enum(["FLIGHT", "CARGO", "SERVICE"]),
   currency: z.string(),
@@ -93,6 +106,36 @@ export type StaffInvoice = z.infer<typeof StaffInvoice>
 
 export const StaffInvoiceListItem = StaffInvoice.omit({ lines: true, history: true, actions: true })
 export type StaffInvoiceListItem = z.infer<typeof StaffInvoiceListItem>
+
+const DirectInvoiceLine = z.object({
+  serviceType: InvoiceLineType,
+  description: z.string().trim().min(2).max(200),
+  quantity: z.number().int().min(1).max(999),
+  /** Negative only on a DISCOUNT line. */
+  unitAmountMinor: z.number().int().min(-100_000_000).max(100_000_000),
+})
+export type DirectInvoiceLine = z.infer<typeof DirectInvoiceLine>
+
+/** The server recomputes every amount and the total from these (ADR-0028). */
+export const directInvoiceTotal = (lines: readonly Pick<DirectInvoiceLine, "quantity" | "unitAmountMinor">[]): number => lines.reduce((s, l) => s + l.quantity * l.unitAmountMinor, 0)
+
+const directInvoiceFields = {
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  lines: z.array(DirectInvoiceLine).min(1).max(50),
+  dueDays: z.number().int().min(1).max(365).nullable().default(null),
+  notes: z.string().trim().max(1000).nullable().default(null),
+}
+const checkDirectLines = (b: { lines: z.infer<typeof DirectInvoiceLine>[] }, ctx: z.RefinementCtx) => {
+  b.lines.forEach((l, i) => {
+    const discount = l.serviceType === "DISCOUNT"
+    if (discount ? l.unitAmountMinor >= 0 : l.unitAmountMinor <= 0) ctx.addIssue({ code: "custom", path: ["lines", i, "unitAmountMinor"], message: discount ? "A discount must be negative" : "The price must be above zero" })
+  })
+  if (directInvoiceTotal(b.lines) <= 0) ctx.addIssue({ code: "custom", path: ["lines"], message: "The total must be above zero" })
+}
+export const DirectInvoiceUpdateBody = z.strictObject(directInvoiceFields).superRefine(checkDirectLines)
+export type DirectInvoiceUpdateBody = z.infer<typeof DirectInvoiceUpdateBody>
+export const DirectInvoiceCreateBody = z.strictObject({ customerUserId: Uuid, ...directInvoiceFields }).superRefine(checkDirectLines)
+export type DirectInvoiceCreateBody = z.infer<typeof DirectInvoiceCreateBody>
 
 /** Company particulars and numbering for documents; every particular is UNKNOWN (null) until the accountant answers (decision 5). */
 export const CommercialDocumentSettings = z.object({

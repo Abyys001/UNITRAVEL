@@ -7,7 +7,7 @@ import { Client } from "pg"
 /** Tables the application role may only INSERT into and SELECT from (ch. 23.2). */
 export const IMMUTABLE_TABLES = ["offer_snapshots", "request_status_history", "compliance_decisions", "audit_log", "verification_reviews", "tracking_events", "invoice_status_history", "request_amendments", "loyalty_ledger", "cms_revisions"]
 /** Tables app_ro may not read: secrets and encrypted personal data. */
-const SENSITIVE_TABLES = ["provider_credentials", "traveller_documents", "mfa_factors", "otp_challenges", "refresh_tokens", "sessions"]
+const SENSITIVE_TABLES = ["provider_credentials", "traveller_documents", "mfa_factors", "otp_challenges", "refresh_tokens", "sessions", "trusted_devices"]
 
 async function main() {
   const ownerUrl = process.env.DATABASE_MIGRATE_URL ?? process.env.DATABASE_URL ?? "postgres://unitravel:unitravel@localhost:5462/unitravel"

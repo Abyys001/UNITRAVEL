@@ -8,7 +8,7 @@ const LOCALES = ["en", "fa"]
  */
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
-  if (pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname.startsWith("/fonts/") || pathname.startsWith("/media/") || pathname === "/favicon.ico" || pathname.startsWith("/s/") || /\.(png|svg|jpg|webp|avif|webm|mp4|txt|xml)$/.test(pathname)) return NextResponse.next()
+  if (pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname.startsWith("/fonts/") || pathname.startsWith("/media/") || pathname.startsWith("/flags/") || pathname === "/favicon.ico" || pathname.startsWith("/s/") || /\.(png|svg|jpg|webp|avif|webm|mp4|txt|xml)$/.test(pathname)) return NextResponse.next()
   const seg = pathname.split("/")[1]
   if (!seg || !LOCALES.includes(seg)) {
     const pref = req.cookies.get("ut_locale")?.value ?? (req.headers.get("accept-language")?.toLowerCase().startsWith("fa") ? "fa" : "en")

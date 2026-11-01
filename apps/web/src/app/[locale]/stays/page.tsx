@@ -1,7 +1,7 @@
 "use client"
 
-import { GroundListing } from "@/components/listings"
+import { StayListing } from "@/components/stays"
 
 export default function Page() {
-  return <GroundListing vertical="STAY" />
+  return <StayListing />
 }

@@ -220,7 +220,7 @@ describe("ADR-0013 A7 — payment emails (FAKE provider, signed webhooks)", () =
     const requested = (await mailsTo(email, 4)).find((m) => m.Subject.includes("payment required"))!
     expect(requested.Subject).toBe(`Your booking request ${ref} - payment required`)
     expect(requested.Text).toContain(number)
-    expect(requested.Text).not.toMatch(/£|GBP|50\.00/) // no amounts in a mailbox (ADR-0004)
+    expect(requested.Text).toContain("GBP 50.00") // the request to pay carries the total and the services (ADR-0028 D8)
 
     // An asynchronous card payment that fails: the customer is told; the invoice stays payable.
     await until(async () => (await c.get(`/v1/billing/invoices/${number}/payment`)).body, (v) => v.offered === true)

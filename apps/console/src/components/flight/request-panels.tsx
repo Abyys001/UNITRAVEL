@@ -6,6 +6,7 @@ import type { SearchQuery } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 
+import { Country } from "@unitravel/ui/product/country"
 import { StateChip } from "@/components/case"
 import { codeLabel } from "@/components/club"
 import { fmtDate, fmtDateTime, money } from "@/lib/format"
@@ -88,7 +89,7 @@ export function TravellerCard({ t: trav, index, revealed, canReveal, onReveal, v
         <div className="mt-2 flex items-center justify-between gap-2 border-t border-rule pt-2 text-meta">
           <span className="min-w-0 text-steel">
             {codeLabel(t, "rp.doctype", trav.document.type)} <span className="num text-ink" data-testid="doc-number">{revealed ?? `•••• ${trav.document.last4}`}</span>
-            <span className="block text-caption">{trav.document.issuingCountry} · {t("rp.expires", { d: fmtDate(trav.document.expiryDate) })}</span>
+            <span className="block text-caption"><Country code={trav.document.issuingCountry} /> · {t("rp.expires", { d: fmtDate(trav.document.expiryDate) })}</span>
           </span>
           {canReveal && !revealed && <Button size="xs" variant="ghost" className="text-link" onClick={onReveal} title={t("rp.reveal.title")}>{t("rp.reveal")}</Button>}
         </div>

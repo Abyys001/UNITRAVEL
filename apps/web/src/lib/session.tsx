@@ -5,7 +5,7 @@ import { createContext, useContext, useState } from "react"
 
 import type { Me } from "@unitravel/contracts"
 
-import { api, ApiError } from "./api"
+import { api, ApiError, forgetSessionCookie, hasSessionCookie } from "./api"
 
 const SessionCtx = createContext<{ me: Me | null; loading: boolean; reload: () => Promise<void> }>({ me: null, loading: true, reload: async () => {} })
 
@@ -14,7 +14,12 @@ function SessionInner({ children }: { children: React.ReactNode }) {
   const q = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      try { return await api<Me>("/v1/me") } catch (e) { if (e instanceof ApiError && (e.problem.status === 401 || e.problem.status === 403)) return null; throw e }
+      if (!hasSessionCookie()) return null
+      try { return await api<Me>("/v1/me") } catch (e) {
+        if (e instanceof ApiError && e.problem.status === 401) forgetSessionCookie()
+        if (e instanceof ApiError && (e.problem.status === 401 || e.problem.status === 403)) return null
+        throw e
+      }
     },
     staleTime: 60_000,
   })

@@ -159,6 +159,9 @@ export const AuthConfig = z.object({
   refreshTtlDays: z.number().int().min(1),
   staffSessionHours: z.number().int().min(1),
   staffIdleMinutes: z.number().int().min(1),
+  /** ADR-0022: a remembered console device lapses after this many days unused, and at the hard cap regardless. */
+  staffDeviceIdleDays: z.number().int().min(1).max(90).default(30),
+  staffDeviceMaxDays: z.number().int().min(1).max(365).default(90),
   staffSecondFactor: z.boolean(),
   stepUpWindowMinutes: z.number().int().min(1),
   ipAllowlistDev: z.array(z.string()).default([]),

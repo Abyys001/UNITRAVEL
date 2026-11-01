@@ -13,31 +13,59 @@ import '../../l10n/app_localizations.dart';
 import '../../models/json.dart';
 import '../../models/services.dart';
 import '../../ui/patterns.dart';
+import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import '../services/service_labels.dart';
 
-/// Purchase tracking (spec §4.5). Signed in: one list of the customer's own flights, cargo, services and invoices. Signed
-/// out, or with a reference from someone else's message: reference + phone, a code to that phone, then the status timeline
-/// only. The lookup never says whether the reference matched.
-class TrackScreen extends ConsumerWidget {
+/// Purchase tracking (spec §4.5, ADR-0025). Signed in only, enforced by the router: one list of the customer's own flights,
+/// cargo, services and invoices, plus a lookup for a reference from someone else's message. The lookup never says whether
+/// the reference matched and shows the status timeline only.
+class TrackScreen extends StatelessWidget {
   const TrackScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l = context.l;
-    final signedIn = ref.watch(sessionProvider).status == AuthStatus.signedIn;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.tkTitle),
-        leading: signedIn || context.canPop() ? null : IconButton(tooltip: l.back, icon: const BackButtonIcon(), onPressed: () => context.go('/signin')),
-      ),
+      appBar: AppBar(title: Text(l.tkTitle)),
       body: PageBody(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (signedIn) ...[const _Mine(), const SizedBox(height: 24)],
-            const TrackLookup(),
+            const _Intro(),
             const SizedBox(height: 24),
+            const _Mine(),
+            const SizedBox(height: 24),
+            const TrackLookup(),
+            const SizedBox(height: 16),
+            Text(l.tkStatusNote, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Intro extends StatelessWidget {
+  const _Intro();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: Brand.gradient, borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Brand.orange, width: 2)),
+              child: const Icon(Icons.manage_search, color: Colors.white),
+            ),
+            const SizedBox(width: 14),
+            Expanded(child: Text(context.l.tkLead, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, height: 1.5))),
           ],
         ),
       ),
@@ -66,6 +94,8 @@ class _MineState extends ConsumerState<_Mine> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l.tkMine, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        Text(l.tkMineLead, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -85,7 +115,16 @@ class _MineState extends ConsumerState<_Mine> {
               children: [
                 if (cached.staleSince != null) StaleBanner(savedAt: cached.staleSince!),
                 if (items.isEmpty)
-                  Padding(padding: const EdgeInsets.symmetric(vertical: 24), child: Text(l.tkEmpty, textAlign: TextAlign.center))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Column(
+                      children: [
+                        Text(l.tkEmpty, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall),
+                        const SizedBox(height: 4),
+                        Text(l.tkEmptyBody, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+                      ],
+                    ),
+                  )
                 else
                   for (final i in items)
                     Padding(
@@ -113,11 +152,14 @@ class _TrackTile extends StatelessWidget {
     final kind = switch (item.kind) { 'FLIGHT' => l.tkFlights, 'CARGO' => l.tkCargo, 'SERVICE' => l.tkServices, _ => l.tkInvoices };
     final title = item.kind == 'SERVICE' && item.serviceType != null ? serviceTypeLabel(l, item.serviceType!) : item.title;
     final date = item.updatedAt == null ? '' : formatDate(item.updatedAt!, lang: lang, jalali: jalali);
+    final icon = switch (item.kind) { 'FLIGHT' => Icons.flight_takeoff, 'CARGO' => Icons.inventory_2_outlined, 'SERVICE' => Icons.room_service_outlined, _ => Icons.receipt_long_outlined };
     return AppCard(
       semanticLabel: '$title, $kind, ${item.ref}, ${item.statusLabel}',
       onTap: () => context.push(item.route),
       child: Row(
         children: [
+          Icon(icon, color: Brand.royal, size: 22),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +180,7 @@ class _TrackTile extends StatelessWidget {
 
 enum _Stage { form, code, done }
 
-/// Reference + phone -> 6-digit code -> status timeline. Public endpoints: rate limited and proof-of-work protected.
+/// Reference + phone -> 6-digit code -> status timeline. Signed-in endpoints: rate limited and proof-of-work protected.
 class TrackLookup extends ConsumerStatefulWidget {
   const TrackLookup({super.key});
 
@@ -185,14 +227,14 @@ class _TrackLookupState extends ConsumerState<TrackLookup> {
     });
     try {
       try {
-        await api.post('/v1/track/lookup', body: body, auth: false);
+        await api.post('/v1/track/lookup', body: body);
       } on ApiException catch (e) {
         final pow = e.body?['challenge'];
         if (e.code != 'CHALLENGE_REQUIRED' || pow is! Map<String, dynamic>) rethrow;
         if (mounted) setState(() => _busy = 'pow');
         final solution = await solvePow(pow);
         if (solution == null) rethrow;
-        await api.post('/v1/track/lookup', body: {...body, 'challenge': solution}, auth: false);
+        await api.post('/v1/track/lookup', body: {...body, 'challenge': solution});
       }
       if (mounted) setState(() => _stage = _Stage.code);
     } catch (e) {
@@ -212,7 +254,6 @@ class _TrackLookupState extends ConsumerState<TrackLookup> {
       final res = await ref.read(apiClientProvider).post(
         '/v1/track/verify',
         body: {'ref': _ref.text.trim().toUpperCase(), 'phone': _phone.text.trim(), 'code': _code.text, 'deviceId': ref.read(deviceIdProvider)},
-        auth: false,
       ) as Json;
       if (mounted) {
         setState(() {

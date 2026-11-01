@@ -20,7 +20,13 @@ export const invoices = pgTable("invoices", {
   requestId: uuid().notNull(),
   requestRef: varchar({ length: 12 }).notNull(),
   customerUserId: uuid().notNull().references(() => users.id),
-  quoteId: uuid().notNull().references(() => quotes.id),
+  /** DIRECT invoices (ADR-0028) are typed by staff and have no quote; a CHECK ties this to `origin`. */
+  origin: text({ enum: ["QUOTE", "DIRECT"] }).notNull().default("QUOTE"),
+  quoteId: uuid().references(() => quotes.id),
+  /** Direct invoices: days from issue to expiry; null uses `invoiceValidityDays`. */
+  dueDays: integer(),
+  /** Customer-facing, printed on the PDF. */
+  notes: text(),
   status: text({ enum: ["DRAFT", "ISSUED", "PAID", "CANCELLED", "REFUNDED"] }).notNull().default("DRAFT"),
   currency: varchar({ length: 3 }).notNull(),
   /** Frozen by trigger once the invoice leaves DRAFT (ADR-0006 C4). */
@@ -46,6 +52,8 @@ export const invoiceLines = pgTable("invoice_lines", {
   id: id(),
   invoiceId: uuid().notNull().references(() => invoices.id),
   position: integer().notNull(),
+  /** Direct invoices only (ADR-0028 D4); null on lines built from a quote. */
+  serviceType: varchar({ length: 20 }),
   description: varchar({ length: 200 }).notNull(),
   quantity: integer().notNull().default(1),
   unitAmountMinor: bigint({ mode: "number" }).notNull(),

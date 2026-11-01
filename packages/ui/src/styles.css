@@ -27,7 +27,7 @@
   --color-input: var(--border);
   --color-ring: var(--ring);
 
-  --font-sans: var(--font-montserrat), var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-figtree), var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-montserrat), var(--font-vazirmatn), ui-sans-serif, sans-serif;
   --font-fa: var(--font-vazirmatn), ui-sans-serif, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;

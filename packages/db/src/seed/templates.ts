@@ -73,20 +73,20 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     smsEn: "Uni Travel: quotation {number} for {ref} is ready until {expires_at_local}. {link}", smsFa: "یونی‌تراول: پیش‌فاکتور {number} برای {ref} تا {expires_at_local} معتبر است. {link}",
   },
   "invoice.issued": {
-    vars: ["ref", "number", "expires_at_local", "link"],
+    vars: ["ref", "number", "expires_at_local", "link", "services", "total"],
     en: { title: "Invoice {number} · {ref}", body: "Invoice {number} for {ref} has been issued. If it is still unpaid it expires on {expires_at_local}." },
     fa: { title: "فاکتور {number} · {ref}", body: "فاکتور {number} برای {ref} صادر شد. اگر پرداخت نشده باشد در {expires_at_local} منقضی می‌شود." },
-    emailEn: { title: "Your Uni Travel invoice {number}", body: "Invoice {number} for request {ref} has been issued. If it is still unpaid it expires on {expires_at_local}.\n\nSign in to view it and download the PDF:\n{link}" },
-    emailFa: { title: "فاکتور یونی‌تراول {number}", body: "فاکتور {number} برای درخواست {ref} صادر شد. اگر پرداخت نشده باشد در {expires_at_local} منقضی می‌شود.\n\nبرای مشاهده و دریافت PDF وارد شوید:\n{link}" },
+    emailEn: { title: "Your Uni Travel invoice {number}", body: "Invoice {number} ({ref}) has been issued.\n\nServices:\n{services}\n\nTotal: {total}\nPay by: {expires_at_local}\n\nThe PDF is attached. Sign in to view and pay this invoice:\n{link}" },
+    emailFa: { title: "فاکتور یونی‌تراول {number}", body: "فاکتور {number} ({ref}) صادر شد.\n\nخدمات:\n{services}\n\nمبلغ کل: {total}\nمهلت پرداخت: {expires_at_local}\n\nفایل PDF پیوست است. برای دیدن و پرداخت این فاکتور وارد شوید:\n{link}" },
     smsEn: "Uni Travel: invoice {number} for {ref} issued; unpaid it expires {expires_at_local}. {link}", smsFa: "یونی‌تراول: فاکتور {number} برای {ref} صادر شد؛ در صورت عدم پرداخت {expires_at_local} منقضی می‌شود. {link}",
   },
   // ADR-0013 A7: payment messages carry no amounts (ADR-0004); the link opens the invoice after sign-in.
   "payment.requested": {
-    vars: ["ref", "number", "expires_at_local", "link"],
+    vars: ["ref", "number", "expires_at_local", "link", "services", "total"],
     en: { title: "Payment required · {ref}", body: "Invoice {number} for {ref} is awaiting payment. If it is still unpaid it expires on {expires_at_local}." },
     fa: { title: "نیاز به پرداخت · {ref}", body: "فاکتور {number} برای {ref} در انتظار پرداخت است. اگر پرداخت نشود در {expires_at_local} منقضی می‌شود." },
-    emailEn: { title: "Your booking request {ref} - payment required", body: "Invoice {number} for request {ref} is awaiting payment. If it is still unpaid it expires on {expires_at_local}.\n\nSign in to see the invoice and the ways to pay:\n{link}\n\nIf you have already paid, you can ignore this message." },
-    emailFa: { title: "درخواست {ref} - نیاز به پرداخت", body: "فاکتور {number} برای درخواست {ref} در انتظار پرداخت است. اگر پرداخت نشود در {expires_at_local} منقضی می‌شود.\n\nبرای دیدن فاکتور و روش‌های پرداخت وارد شوید:\n{link}\n\nاگر پرداخت کرده‌اید، این پیام را نادیده بگیرید." },
+    emailEn: { title: "Your booking request {ref} - payment required", body: "Invoice {number} ({ref}) is awaiting payment.\n\nServices:\n{services}\n\nTotal: {total}\nPay by: {expires_at_local}\n\nThe PDF is attached. Sign in to view and pay this invoice:\n{link}" },
+    emailFa: { title: "درخواست {ref} - نیاز به پرداخت", body: "فاکتور {number} ({ref}) در انتظار پرداخت است.\n\nخدمات:\n{services}\n\nمبلغ کل: {total}\nمهلت پرداخت: {expires_at_local}\n\nفایل PDF پیوست است. برای دیدن و پرداخت این فاکتور وارد شوید:\n{link}" },
     smsEn: "Uni Travel: invoice {number} for {ref} awaits payment; unpaid it expires {expires_at_local}. {link}", smsFa: "یونی‌تراول: فاکتور {number} برای {ref} در انتظار پرداخت است؛ مهلت تا {expires_at_local}. {link}",
   },
   "invoice.paid": {

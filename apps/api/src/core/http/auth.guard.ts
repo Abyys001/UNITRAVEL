@@ -13,7 +13,7 @@ import { TokensService } from "../../modules/identity/tokens.service"
 import { env } from "../env"
 import { AppError } from "../errors"
 import {
-  type Actor, AUTHENTICATED_KEY, DEV_SURFACE_KEY, PERMISSIONS_KEY, PUBLIC_KEY, RATE_LIMIT_KEY, type RateLimitSpec, type RequestContext, STAFF_KEY, STEP_UP_KEY,
+  type Actor, AUTHENTICATED_KEY, DEV_SURFACE_KEY, PASSIVE_KEY, PERMISSIONS_KEY, PUBLIC_KEY, RATE_LIMIT_KEY, type RateLimitSpec, type RequestContext, STAFF_KEY, STEP_UP_KEY,
 } from "./decorators"
 import { RateLimiter } from "./rate-limit"
 
@@ -21,6 +21,7 @@ export const COOKIE_ACCESS = "ut_at"
 export const COOKIE_REFRESH = "ut_rt"
 export const COOKIE_CSRF = "ut_csrf"
 export const COOKIE_ANON = "ut_anon"
+export const COOKIE_DEVICE = "ut_dt"
 
 const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"])
 
@@ -66,7 +67,7 @@ export class AuthGuard implements CanActivate {
     const token = bearer ?? cookieToken
     if (token) {
       try {
-        req.ctx.actor = await this.resolveActor(token, req, !!bearer)
+        req.ctx.actor = await this.resolveActor(token, req, !!bearer, this.meta<boolean>(PASSIVE_KEY, ctx) ?? false)
       } catch (err) {
         if (!isPublic) throw err
       }
@@ -105,7 +106,7 @@ export class AuthGuard implements CanActivate {
     return true
   }
 
-  private async resolveActor(token: string, req: Request, isBearer: boolean): Promise<Actor> {
+  private async resolveActor(token: string, req: Request, isBearer: boolean, passive: boolean): Promise<Actor> {
     const claims = await this.tokens.verifyAccess(token)
     if (isBearer && claims.aud !== "mobile") throw new AppError("UNAUTHENTICATED", "Bearer tokens are for the mobile app")
     if (!isBearer && claims.aud === "mobile") throw new AppError("UNAUTHENTICATED")
@@ -119,7 +120,8 @@ export class AuthGuard implements CanActivate {
     // Demotions take effect on the very next request: a stale perm_version is refused (ch. 10.5).
     const current = await this.access.currentPermVersion(claims.sub)
     if (current !== claims.pv) throw new AppError("PERMISSIONS_CHANGED", "Refresh your session")
-    await this.sessions.touch(claims.sid)
+    // Polling and open streams must not keep an unattended console signed in (ADR-0022).
+    if (!passive && req.header("x-ut-background") !== "1") await this.sessions.touch(claims.sid)
     const permissions = new Set(claims.perms)
     return {
       userId: claims.sub, sessionId: claims.sid, audience: claims.aud, permissions, roles: [], permVersion: claims.pv,

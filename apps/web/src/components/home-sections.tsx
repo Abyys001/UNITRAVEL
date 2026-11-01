@@ -83,7 +83,7 @@ export function ServiceExplorer() {
             </>
           )
           if (!open) {
-            return <Reveal as="li" key={s.key} delay={i * 60}><div className={`${base} opacity-80`} data-testid={`svc-${s.key}`} data-open="false">{head}<span className="mt-auto text-sm font-semibold text-steel">{t("home.svcSoon")}</span></div></Reveal>
+            return <Reveal as="li" key={s.key} delay={i * 60}><div className={base} data-testid={`svc-${s.key}`} data-open="false">{head}<span className="mt-auto text-sm font-semibold text-steel">{t("home.svcSoon")}</span></div></Reveal>
           }
           if (s.pattern === "track") {
             return (

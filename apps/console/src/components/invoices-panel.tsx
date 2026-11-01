@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import Link from "next/link"
 import { useState } from "react"
 
 import { INVOICE_CANCEL_REASONS, type StaffInvoice } from "@unitravel/contracts"
@@ -48,7 +49,7 @@ export function InvoicesPanel({ requestRef }: { requestRef: string }) {
             const cancelAction = i.actions.find((a) => a.command === "cancel")
             return (
               <li key={i.id} className="space-y-1 py-2" data-testid="invoice-item">
-                <p className="flex items-center justify-between gap-2"><span className="ref font-medium">{i.number ?? t("invp.draft")}</span><StateChip value={i.status} /></p>
+                <p className="flex items-center justify-between gap-2"><Link href={`/invoices/${i.id}`} className="ref font-medium text-link hover:underline">{i.number ?? t("invp.draft")}</Link><StateChip value={i.status} /></p>
                 <p className="flex justify-between text-meta text-steel"><span>{t(i.lines.length === 1 ? "invp.line.one" : "invp.lines", { n: i.lines.length })}{i.expiresAt && i.status === "ISSUED" && <> · {t("invp.expires", { t: fmtDateTime(i.expiresAt) })}</>}{i.cancelReason && <> · {codeLabel(t, "invp.reason", i.cancelReason)}</>}</span><span className="num">{money(i.total)}</span></p>
                 {issuer && (
                   <div className="flex flex-wrap gap-1.5">

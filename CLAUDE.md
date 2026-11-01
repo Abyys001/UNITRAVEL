@@ -27,3 +27,15 @@ Read `docs/PLAN.md` first (scope, stack, ports, progress). The full specificatio
 - Never commit unless the user asks. Docs live under `docs/`; do not scatter notes elsewhere.
 - Operations: `docs/runbooks/`. Data protection: `docs/compliance/DPIA-draft.md`. Open external items: `docs/stages/STAGE-0.md`.
 - UI work follows `docs/design/DESIGN.md` (and the kit UI policy referenced there); no Google services (fonts, maps, reCAPTCHA) on user-facing paths; fonts are self-hosted.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- Mandatory for every session and subagent: run `graphify query "<question>"` before your first grep, search or source-file read, and put this rule in every subagent prompt. A hook (`scripts/graphify-gate.py`) denies code searches and reads until the agent has queried. Read raw files only for lines the graph or an earlier read already located. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- A background watcher rebuilds the graph from code changes, including uncommitted edits, within a few minutes of files going quiet. Run `graphify update .` yourself only if you need your edit in the graph sooner.
+- When the session-start message reports changed documents, run `/graphify . --update` before other work, then `rm graphify-out/needs_update`.
+- Use grep for exact strings once the graph has located the area. How the graph stays current: `docs/runbooks/graphify.md`.

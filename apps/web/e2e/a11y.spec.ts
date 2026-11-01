@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 
 // WCAG 2.2 AA automated pass (ch. 32.1); manual screen-reader passes stay a per-release task.
-const PAGES = ["/en", "/fa", "/en/sign-in", "/fa/sign-in", "/en/cargo", "/en/terms", "/en/privacy", "/en/credits", "/fa/credits"]
+const PAGES = ["/en", "/fa", "/en/sign-in", "/fa/sign-in", "/en/cargo", "/en/terms", "/en/privacy", "/en/credits", "/fa/credits", "/en/trains", "/fa/trains", "/en/buses", "/fa/buses"]
 
 for (const path of PAGES) {
   test(`no serious accessibility violations on ${path} @mobile`, async ({ page }) => {

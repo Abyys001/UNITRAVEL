@@ -28,7 +28,8 @@ Use `scripts/svc.sh start|stop|restart <api|worker|web|console|mobile>...`. It k
 | Web (customer, `/en` and `/fa`) | http://localhost:4000 |
 | Console, Admin Panel | http://admin.localhost:4200 |
 | Console, Developer Panel | http://dev.localhost:4200 |
-| Flutter web build | http://localhost:4300 |
+| Flutter web build (paused, ADR-0026; start with `scripts/svc.sh start mobile` when needed) | http://localhost:4300 |
+| App Coming Soon page | http://localhost:4000/en/app |
 | PostgreSQL | localhost:5462 |
 | Valkey (Redis protocol) | localhost:6390 |
 | RustFS (S3) | localhost:9010 |
@@ -53,6 +54,11 @@ Seeded demo users:
 | Customer (no email, cannot sign in through the UIs) | none | +989120000001 |
 
 The demo staff TOTP secret (local only, seeded only when `APP_ENV=local`) is `KVXGSVDSMF3GK3CEMVWW6VCPKRIDEMBSGY`. The test box makes it unnecessary in the browser. Never reuse it anywhere else.
+
+## Staff sessions and the installable console (ADR-0022)
+Console sessions end after 30 minutes without input and at 12 hours. A remembered device then opens a new session silently, so staff only sign in again after signing out, after 30 days unused, or at the 90-day cap. A session opened this way asks for the second factor again on step-up actions. Remembered devices are listed under Account, with Revoke.
+
+Install: open http://admin.localhost:4200 or http://dev.localhost:4200 in Chrome or Edge and use the browser's install icon, or **Install app** in the user menu when the browser offers it. Each host installs as its own app. To clear the worker while developing: DevTools, Application, Service workers, Unregister.
 
 ## Tests
 | Layer | Command |

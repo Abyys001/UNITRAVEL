@@ -11,6 +11,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { Textarea } from "@unitravel/ui/components/textarea"
 import { ErrorState, LoadingState } from "@unitravel/ui/product/states"
 
+import { Country } from "@unitravel/ui/product/country"
 import { Auto, Ltr } from "@/components/badges"
 import { StatusTimeline } from "@/components/status-timeline"
 import { api, ApiError } from "@/lib/api"
@@ -27,7 +28,7 @@ function DetailRows({ r }: { r: CustomerServiceRequestView }) {
   const day = (k: string) => (s(k) ? date(s(k), { dateOnly: true, year: true }) : "")
   const rows: [MessageKey, React.ReactNode][] = []
   const add = (k: MessageKey, v: React.ReactNode) => { if (v) rows.push([k, v]) }
-  add("services.destinationCountry", s("destinationCountry") && countryName(s("destinationCountry"), locale))
+  add("services.destinationCountry", s("destinationCountry") && <Country code={s("destinationCountry")}>{countryName(s("destinationCountry"), locale)}</Country>)
   add("services.purpose", s("purpose") && t(`services.purposes.${s("purpose")}` as MessageKey))
   add("services.intendedTravelDate", day("intendedTravelDate"))
   add("services.linkedFlight", s("linkedFlightRequestRef") && <Ltr className="font-mono">{s("linkedFlightRequestRef")}</Ltr>)

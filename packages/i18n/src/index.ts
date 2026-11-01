@@ -1,6 +1,8 @@
+import { calendarLocale } from "./calendar"
 import { en } from "./en"
 import { type DeepString, fa } from "./fa"
 
+export * from "./calendar"
 export type Locale = "en" | "fa"
 export type Messages = DeepString<typeof en>
 export const messages: Record<Locale, Messages> = { en, fa }
@@ -33,7 +35,7 @@ export const toAsciiDigits = (s: string) => s.replace(/[۰-۹٠-٩]/g, (d) => St
 export function formatDate(iso: string | Date, opts: { locale: Locale; calendar?: "GREGORIAN" | "JALALI"; timeZone?: string; withTime?: boolean; weekday?: boolean; dateOnly?: boolean; year?: boolean }) {
   const d = typeof iso === "string" ? new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso) : iso
   const cal = opts.calendar ?? (opts.locale === "fa" ? "JALALI" : "GREGORIAN")
-  const loc = `${opts.locale === "fa" ? "fa-IR" : "en-GB"}-u-ca-${cal === "JALALI" ? "persian" : "gregory"}`
+  const loc = calendarLocale(opts.locale, cal)
   return new Intl.DateTimeFormat(loc, {
     timeZone: opts.timeZone ?? (iso.toString().length === 10 ? "UTC" : undefined), day: "numeric", month: "short", ...(opts.year ? { year: "numeric" } : {}),
     ...(opts.weekday ? { weekday: "short" } : {}), ...(opts.dateOnly ? {} : opts.withTime ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" } : {}),

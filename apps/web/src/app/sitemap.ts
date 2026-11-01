@@ -5,7 +5,7 @@ import { siteMenu } from "@/lib/site-server"
 
 const SITE = process.env.PUBLIC_WEB_URL ?? "http://localhost:4000"
 const LOCALES = ["en", "fa"] as const
-const STATIC = ["", "/blog", "/destinations", "/glossary", "/faq", "/travel-rules", "/flights/guide", "/track", "/support", "/terms", "/privacy"]
+const STATIC = ["", "/blog", "/destinations", "/glossary", "/faq", "/travel-rules", "/flights/guide", "/app", "/track", "/support", "/terms", "/privacy"]
 const SERVICES: Record<string, string> = { hotels: "/hotels", trains: "/trains", buses: "/buses", stays: "/stays", visa: "/visa", tours: "/tours", cip: "/cip", cargo: "/cargo", insurance: "/insurance", card: "/card", club: "/club" }
 
 /** Static routes, switched-on service pages, and published CMS entries only (the API never returns drafts). */

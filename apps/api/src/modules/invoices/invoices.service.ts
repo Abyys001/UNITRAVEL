@@ -1,26 +1,29 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
-import { and, asc, desc, eq, inArray, ne } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm"
 
 import {
-  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type InvoiceCancelCode, type InvoiceStatus, type PriceBreakdown, type PurchasableItem, type ServiceQuoteLine, serviceQuoteTotal, type StaffInvoice, type StaffInvoiceListItem,
+  type BillingDocuments, CargoQuoteLines, type CustomerInvoice, type DirectInvoiceCreateBody, type DirectInvoiceUpdateBody, directInvoiceTotal, type InvoiceCancelCode, type InvoiceLineType, STAFF_SURFACE_PERMISSIONS, type InvoiceStatus, type PriceBreakdown, type PurchasableItem, type ServiceQuoteLine, serviceQuoteTotal, type StaffInvoice, type StaffInvoiceListItem,
 } from "@unitravel/contracts"
 import {
-  cargoRequests, customerProfiles, type Db, type DbOrTx, flightRequests, invoiceLines, invoices, invoiceStatusHistory, paymentRecords, quoteOptions, quotes, serviceRequests, tickets, type Tx, users,
+  cargoRequests, complianceCases, customerProfiles, type Db, type DbOrTx, flightRequests, invoiceLines, invoices, invoiceStatusHistory, paymentRecords, quoteOptions, quotes, serviceRequests, tickets, type Tx, userIdentities, users,
 } from "@unitravel/db"
-import { evaluate, INVOICE_TRANSITIONS, type InvoiceCommand, type InvoiceFacts, invoiceExpiry, type MachineActor, normaliseReference } from "@unitravel/domain"
+import { evaluate, generateReference, INVOICE_TRANSITIONS, type InvoiceCommand, type InvoiceFacts, invoiceExpiry, type MachineActor, normaliseReference } from "@unitravel/domain"
 
 import { AppError, notFound } from "../../core/errors"
 import type { Actor } from "../../core/http/decorators"
 import { DB, UnitOfWork } from "../../core/infra.module"
 import { Queues } from "../../core/queues"
 import { WorkerRegistry } from "../../core/workers"
+import { AccessService } from "../access/access.service"
 import { AuditService } from "../audit/audit.service"
+import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
 import { DocumentsService } from "../documents/documents.service"
+import { NotificationsService } from "../notifications/notifications.service"
 import { OutboxService } from "../platform/outbox.service"
 import { TimersService } from "../platform/timers.service"
 import { staffActor, SYSTEM } from "../requests/requests.service"
-import { renderInvoicePdf } from "./commercial-pdf"
+import { pdfMoney, renderInvoicePdf } from "./commercial-pdf"
 import { DocumentNumbersService } from "./document-numbers.service"
 import { serviceTitle } from "../services/service-labels"
 import { productOf } from "./product"
@@ -32,6 +35,14 @@ interface Draft { currency: string; lines: { description: string; quantity: numb
 const TIMER = "invoice.expire"
 const timerKey = (id: string) => `inv:${id}`
 const iso = (d: Date | null) => d?.toISOString() ?? null
+
+const LINE_LABEL: Record<InvoiceLineType, string> = { VISA: "Visa", BUS: "Bus", TRAIN: "Train", HOTEL: "Hotel", STAY: "Stay", CIP: "CIP", INSURANCE: "Insurance", TOUR: "Tour", TRANSFER: "Transfer", OTHER: "", DISCOUNT: "Discount" }
+/** Line types that are not services, so no SERVICE policy can apply to them. */
+const NOT_A_SERVICE: readonly string[] = ["OTHER", "DISCOUNT"]
+const documentLine = (l: { serviceType: string | null; description: string }) => {
+  const label = l.serviceType ? LINE_LABEL[l.serviceType as InvoiceLineType] : ""
+  return label ? `${label}: ${l.description}` : l.description
+}
 
 /**
  * Invoices (ADR-0006). The server builds an invoice from the accepted quote; the domain machine decides every
@@ -51,9 +62,18 @@ export class InvoicesService implements OnModuleInit {
     private readonly timers: TimersService,
     private readonly queues: Queues,
     private readonly workers: WorkerRegistry,
+    private readonly compliance: ComplianceService,
+    private readonly access: AccessService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async onModuleInit() {
+    this.notifications.onAttachment(async (documentId, userId) => {
+      const d = await this.docs.get(documentId)
+      // The attachment goes to the notification's own recipient, never to anyone else.
+      if (!d || d.ownerUserId !== userId) return null
+      return { filename: d.filename, content: await this.docs.readBytes(d), contentType: "application/pdf" }
+    })
     this.timers.onTimer(TIMER, (d) => this.expire(String(d.invoiceId)))
     this.timers.onReconcile(() => this.reconcileTimers())
     this.workers.registerJob("maintenance", "invoices.expire-due", () => this.expireDue())
@@ -123,7 +143,7 @@ export class InvoicesService implements OnModuleInit {
 
   async createDraft(ref: string, actor: Actor) {
     const norm = normaliseReference(ref)
-    if (!norm || norm.startsWith("UT-A-")) throw notFound("Request")
+    if (!norm || norm.startsWith("UT-A-") || norm.startsWith("UT-D-")) throw notFound("Request")
     const type: ReqType = norm.startsWith("UT-C-") ? "CARGO" : norm.startsWith("UT-S-") ? "SERVICE" : "FLIGHT"
     const id = await this.uow.run(async (tx) => {
       const [r] = type === "FLIGHT" ? await tx.select().from(flightRequests).where(eq(flightRequests.ref, norm)).for("update")
@@ -143,6 +163,103 @@ export class InvoicesService implements OnModuleInit {
       return inv!.id
     })
     return this.staffById(id, actor)
+  }
+
+  // ---------------- direct invoices (ADR-0028) ----------------
+
+  private async assertCustomer(customerId: string) {
+    const [u] = await this.db.select().from(users).where(eq(users.id, customerId))
+    if (!u || u.status !== "ACTIVE" || u.mergedInto) throw notFound("Customer")
+    // Staff are not customers (as in ADR-0020).
+    if ((await this.access.load(customerId)).permissions.some((p) => STAFF_SURFACE_PERMISSIONS.includes(p as never))) throw notFound("Customer")
+  }
+
+  private async uniqueDirectRef(tx: DbOrTx): Promise<string> {
+    for (let i = 0; i < 8; i++) {
+      const ref = generateReference("D")
+      const [hit] = await tx.select({ id: invoices.id }).from(invoices).where(eq(invoices.requestRef, ref)).limit(1)
+      if (!hit) return ref
+    }
+    throw new Error("Could not allocate a unique reference")
+  }
+
+  private directLineRows(invoiceId: string, lines: DirectInvoiceCreateBody["lines"]) {
+    return lines.map((l, position) => ({ invoiceId, position, serviceType: l.serviceType, description: l.description, quantity: l.quantity, unitAmountMinor: l.unitAmountMinor, amountMinor: l.quantity * l.unitAmountMinor }))
+  }
+
+  async createDirect(body: DirectInvoiceCreateBody, actor: Actor) {
+    await this.assertCustomer(body.customerUserId)
+    const id = await this.uow.run(async (tx) => {
+      const invoiceId = crypto.randomUUID()
+      const ref = await this.uniqueDirectRef(tx)
+      const totalMinor = directInvoiceTotal(body.lines)
+      await tx.insert(invoices).values({ id: invoiceId, origin: "DIRECT", requestType: "SERVICE", requestId: invoiceId, requestRef: ref, customerUserId: body.customerUserId, currency: body.currency, totalMinor, dueDays: body.dueDays, notes: body.notes, createdBy: actor.userId })
+      await tx.insert(invoiceLines).values(this.directLineRows(invoiceId, body.lines))
+      await this.history(tx, invoiceId, null, "DRAFT", "create", actor.userId, "STAFF")
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "invoice.draft_created", entityType: "invoice", entityId: invoiceId, contextRef: ref, after: { origin: "DIRECT", customerUserId: body.customerUserId, totalMinor, currency: body.currency, lines: body.lines.map((l) => l.serviceType) } })
+      return invoiceId
+    })
+    return this.staffById(id, actor)
+  }
+
+  async updateDirect(id: string, body: DirectInvoiceUpdateBody, actor: Actor) {
+    await this.uow.run(async (tx) => {
+      const inv = await this.lock(tx, id)
+      if (inv.origin !== "DIRECT") throw new AppError("INVALID_TRANSITION", "Only a direct invoice can be edited; a quote-based invoice takes its lines from the quote")
+      if (inv.status !== "DRAFT") throw new AppError("INVALID_TRANSITION", "Only a draft can be edited; cancel an issued invoice and create a new one")
+      const [screened] = await tx.select({ id: complianceCases.id }).from(complianceCases).where(and(eq(complianceCases.requestType, "SERVICE"), eq(complianceCases.requestId, inv.id))).limit(1)
+      // The decision covered these services; changing them afterwards would slip past it.
+      if (screened) throw new AppError("INVALID_TRANSITION", "This draft has a compliance decision; cancel it and create a new invoice to change it")
+      const totalMinor = directInvoiceTotal(body.lines)
+      await tx.delete(invoiceLines).where(eq(invoiceLines.invoiceId, inv.id))
+      await tx.insert(invoiceLines).values(this.directLineRows(inv.id, body.lines))
+      await tx.update(invoices).set({ currency: body.currency, totalMinor, dueDays: body.dueDays, notes: body.notes, rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "invoice.draft_updated", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, before: { totalMinor: inv.totalMinor, currency: inv.currency }, after: { totalMinor, currency: body.currency, lines: body.lines.map((l) => l.serviceType) } })
+    })
+    return this.staffById(id, actor)
+  }
+
+  private async caseStatuses(tx: DbOrTx, invoiceId: string): Promise<string[]> {
+    const rows = await tx.select({ status: complianceCases.status }).from(complianceCases).where(and(eq(complianceCases.requestType, "SERVICE"), eq(complianceCases.requestId, invoiceId)))
+    return rows.map((r) => r.status)
+  }
+
+  private complianceBlock(statuses: string[]): string | null {
+    if (statuses.includes("DECLINED")) return "Compliance declined this invoice; it cannot be issued"
+    if (statuses.some((s) => s === "OPEN" || s === "ESCALATED")) return "Waiting for a compliance decision"
+    return null
+  }
+
+  /** ADR-0028 D5. Returns true when a new case was opened, so the caller commits it and then refuses. */
+  private async directComplianceGate(tx: Tx, inv: Inv, lines: (typeof invoiceLines.$inferSelect)[]): Promise<boolean> {
+    const statuses = await this.caseStatuses(tx, inv.id)
+    const blocked = this.complianceBlock(statuses)
+    if (blocked) throw new AppError("COMPLIANCE_REVIEW_REQUIRED", blocked)
+    if (statuses.includes("RELEASED")) return false
+    const types = [...new Set(lines.map((l) => l.serviceType).filter((t): t is string => !!t && !NOT_A_SERVICE.includes(t)))]
+    const policies = types.length ? await this.compliance.servicePoliciesForTypes(types) : []
+    const blocking = policies.find((p) => p.action === "BLOCK")
+    if (blocking) throw new AppError("COMPLIANCE_REVIEW_REQUIRED", `A compliance policy does not allow this service (${blocking.key})`)
+    const evidence: { kind: string; label: string; detail: string; score?: number }[] = policies.map((p) => ({ kind: "SERVICE_POLICY", label: `Policy ${p.key}`, detail: p.reason }))
+    const [name] = await this.billTo(tx, inv.customerUserId)
+    const screeningIds: string[] = []
+    if (name && name !== "Customer") {
+      const s = await this.compliance.screen(tx, { subjectType: "CUSTOMER", subjectRef: inv.customerUserId, name, contextRef: inv.requestRef })
+      if (s.result !== "CLEAR") {
+        screeningIds.push(s.screeningId)
+        for (const h of s.hits) evidence.push({ kind: "PARTY_MATCH", label: `Customer ${name} ↔ ${h.matchedName}`, detail: h.reasons.join("; "), score: h.score })
+      }
+    }
+    if (!evidence.length) return false
+    await this.compliance.openCase(tx, { requestType: "SERVICE", requestId: inv.id, requestRef: inv.requestRef, trigger: screeningIds.length ? "SCREENING" : "POLICY", summary: `Direct invoice: ${evidence.length} item(s) need a compliance decision`, evidence, screeningIds })
+    return true
+  }
+
+  /** What the invoice email shows (ADR-0028 D8); the same text for the issue email and a resent link. */
+  async emailSummary(tx: DbOrTx, inv: Inv) {
+    const lines = await tx.select().from(invoiceLines).where(eq(invoiceLines.invoiceId, inv.id)).orderBy(asc(invoiceLines.position))
+    const money = (amountMinor: number) => pdfMoney({ amountMinor, currency: inv.currency })
+    return { services: lines.map((l) => `- ${documentLine(l)}${l.quantity > 1 ? ` x ${l.quantity}` : ""}: ${money(l.amountMinor)}`).join("\n"), total: money(inv.totalMinor), documentId: inv.documentId }
   }
 
   // ---------------- transitions ----------------
@@ -175,25 +292,28 @@ export class InvoicesService implements OnModuleInit {
     const status = await this.uow.run(async (tx) => {
       const inv = await this.lock(tx, id)
       this.run(inv, "issue", await this.ticketedAt(tx, inv), staffActor(actor))
+      if (inv.origin === "DIRECT" && (await this.directComplianceGate(tx, inv, await tx.select().from(invoiceLines).where(eq(invoiceLines.invoiceId, inv.id))))) return "HELD"
       const cfg = this.config.settings()
       const number = await this.numbers.allocate(tx, "INVOICE", now)
-      const expiresAt = invoiceExpiry({ productType: productOf(inv.requestType), atolMode: this.config.get("WORKFLOW").atolMode, now, validityDays: cfg.commercialDocuments.invoiceValidityDays })
+      const expiresAt = invoiceExpiry({ productType: productOf(inv.requestType), atolMode: this.config.get("WORKFLOW").atolMode, now, validityDays: inv.dueDays ?? cfg.commercialDocuments.invoiceValidityDays })
       const paid = (await this.unallocatedPaymentMinor(tx, inv)) >= inv.totalMinor
       const lines = await tx.select().from(invoiceLines).where(eq(invoiceLines.invoiceId, inv.id)).orderBy(asc(invoiceLines.position))
       const pdf = await renderInvoicePdf({
         number, requestRef: inv.requestRef, issuedAt: now, expiresAt, paid, currency: inv.currency, totalMinor: inv.totalMinor,
-        lines: lines.map((l) => ({ description: l.description, quantity: l.quantity, unitAmountMinor: l.unitAmountMinor, amountMinor: l.amountMinor })),
+        lines: lines.map((l) => ({ description: documentLine(l), quantity: l.quantity, unitAmountMinor: l.unitAmountMinor, amountMinor: l.amountMinor })),
         billTo: await this.billTo(tx, inv.customerUserId), company: cfg.company, cfg: cfg.commercialDocuments,
-        notes: this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" && inv.requestType === "FLIGHT" ? ["Flights are sold as an airline ticket agent; payment is taken when tickets are issued (ATOL wording pending counsel review)."] : [],
+        notes: this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" && inv.requestType === "FLIGHT" ? ["Flights are sold as an airline ticket agent; payment is taken when tickets are issued (ATOL wording pending counsel review)."] : inv.notes ? [inv.notes] : [],
       })
       const doc = await this.docs.storeGenerated(tx, { ownerUserId: inv.customerUserId, requestType: productOf(inv.requestType), requestId: inv.requestId, type: "INVOICE", filename: `invoice-${number}.pdf`, body: pdf, createdBy: actor.userId, visibility: "CUSTOMER" })
       await tx.update(invoices).set({ status: "ISSUED", number, issuedAt: now, expiresAt, documentId: doc.id, rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
       await this.history(tx, inv.id, "DRAFT", "ISSUED", "issue", actor.userId, "STAFF")
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "invoice.issued", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number, totalMinor: inv.totalMinor, currency: inv.currency, expiresAt: expiresAt.toISOString() } })
-      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType } })
+      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType, ...(await this.emailSummary(tx, { ...inv, documentId: doc.id })) } })
       if (paid) await this.markPaid(tx, inv.id, "Payment already verified for this request")
       return paid ? "PAID" : "ISSUED"
     })
+    // Thrown after the commit so the case that was just opened survives.
+    if (status === "HELD") throw new AppError("COMPLIANCE_REVIEW_REQUIRED", "This invoice needs a compliance decision before it can be issued")
     if (status === "ISSUED") await this.scheduleExpiry(id)
     return this.staffById(id, actor)
   }
@@ -298,7 +418,7 @@ export class InvoicesService implements OnModuleInit {
     const m = (amountMinor: number) => ({ amountMinor, currency: inv.currency })
     return {
       number: inv.number!, status: inv.status as CustomerInvoice["status"], requestRef: inv.requestRef as CustomerInvoice["requestRef"], productType: productOf(inv.requestType),
-      lines: lines.map((l) => ({ description: l.description, quantity: l.quantity, unitAmount: m(l.unitAmountMinor), amount: m(l.amountMinor) })), total: m(inv.totalMinor),
+      lines: lines.map((l) => ({ serviceType: l.serviceType as InvoiceLineType | null, description: l.description, quantity: l.quantity, unitAmount: m(l.unitAmountMinor), amount: m(l.amountMinor) })), total: m(inv.totalMinor), notes: inv.notes,
       issuedAt: iso(inv.issuedAt)!, expiresAt: iso(inv.expiresAt)!, paidAt: iso(inv.paidAt), cancelledAt: iso(inv.cancelledAt), cancelReason: (inv.cancelReason as InvoiceCancelCode | null) ?? null, documentId: inv.documentId,
     }
   }
@@ -324,8 +444,9 @@ export class InvoicesService implements OnModuleInit {
   async purchasable(userId: string, locale: "en" | "fa"): Promise<PurchasableItem[]> {
     const now = new Date()
     const open = await this.db.select().from(invoices).where(and(eq(invoices.customerUserId, userId), eq(invoices.status, "ISSUED")))
+    const openLines = await this.linesOf(open.filter((i) => i.origin === "DIRECT").map((i) => i.id))
     const items: PurchasableItem[] = open.filter((i) => i.expiresAt && i.expiresAt > now).map((i) => ({
-      kind: "INVOICE", action: "PAY", requestRef: i.requestRef as PurchasableItem["requestRef"], number: i.number!, title: i.requestRef, productType: productOf(i.requestType),
+      kind: "INVOICE", action: "PAY", requestRef: i.requestRef as PurchasableItem["requestRef"], number: i.number!, title: openLines.get(i.id)?.[0]?.description ?? i.requestRef, productType: productOf(i.requestType),
       amount: { amountMinor: i.totalMinor, currency: i.currency }, dueAt: i.expiresAt!.toISOString(),
     }))
     const sent = await this.db.select({ q: quotes, ref: serviceRequests.ref, type: serviceRequests.type, status: serviceRequests.status }).from(quotes)
@@ -354,18 +475,25 @@ export class InvoicesService implements OnModuleInit {
     const rows = all.filter((r) => this.readable(r, actor))
     const see = actor.permissions.has("pricing.read.internal")
     const lines = detail ? await this.linesOf(rows.map((r) => r.id)) : new Map<string, (typeof invoiceLines.$inferSelect)[]>()
+    const customerIds = [...new Set(rows.map((r) => r.customerUserId))]
+    const names = customerIds.length ? await this.db.select({ id: users.id, name: users.displayName }).from(users).where(inArray(users.id, customerIds)) : []
+    const emails = customerIds.length ? await this.db.select({ id: userIdentities.userId }).from(userIdentities).where(and(inArray(userIdentities.userId, customerIds), eq(userIdentities.type, "EMAIL"), isNotNull(userIdentities.verifiedAt), isNull(userIdentities.revokedAt))) : []
     const hist = detail && rows.length ? await this.db.select({ h: invoiceStatusHistory, name: users.displayName }).from(invoiceStatusHistory).leftJoin(users, eq(users.id, invoiceStatusHistory.actorUserId)).where(inArray(invoiceStatusHistory.invoiceId, rows.map((r) => r.id))).orderBy(asc(invoiceStatusHistory.createdAt)) : []
     return Promise.all(rows.map(async (inv) => {
       const m = (amountMinor: number) => (see ? { amountMinor, currency: inv.currency } : null)
       const ticketedAt = detail && inv.status === "DRAFT" ? await this.ticketedAt(this.db, inv) : null
+      const held = detail && inv.origin === "DIRECT" && inv.status === "DRAFT" ? this.complianceBlock(await this.caseStatuses(this.db, inv.id)) : null
       const acts = detail ? (["issue", "cancel"] as const).flatMap((command) => {
         if (!INVOICE_TRANSITIONS[command].from.includes(inv.status)) return []
         const ev = evaluate(INVOICE_TRANSITIONS, command, this.facts(inv, ticketedAt), staffActor(actor))
+        if (command === "issue" && held) return [{ command, allowed: false, reason: held }]
         return [ev.ok ? { command, allowed: true } : { command, allowed: false, reason: ev.reason }]
       }) : []
       return {
-        id: inv.id, number: inv.number, status: inv.status, requestRef: inv.requestRef as StaffInvoice["requestRef"], productType: productOf(inv.requestType), currency: inv.currency,
-        lines: (lines.get(inv.id) ?? []).map((l) => ({ description: l.description, quantity: l.quantity, unitAmount: m(l.unitAmountMinor), amount: m(l.amountMinor) })), total: m(inv.totalMinor),
+        id: inv.id, number: inv.number, status: inv.status, origin: inv.origin, notes: inv.notes, dueDays: inv.dueDays,
+        customer: { id: inv.customerUserId, name: names.find((n) => n.id === inv.customerUserId)?.name ?? "", emailDeliverable: emails.some((e) => e.id === inv.customerUserId) },
+        requestRef: inv.requestRef as StaffInvoice["requestRef"], productType: productOf(inv.requestType), currency: inv.currency,
+        lines: (lines.get(inv.id) ?? []).map((l) => ({ serviceType: l.serviceType as InvoiceLineType | null, description: l.description, quantity: l.quantity, unitAmount: m(l.unitAmountMinor), amount: m(l.amountMinor) })), total: m(inv.totalMinor),
         issuedAt: iso(inv.issuedAt), expiresAt: iso(inv.expiresAt), paidAt: iso(inv.paidAt), cancelledAt: iso(inv.cancelledAt), cancelReason: (inv.cancelReason as InvoiceCancelCode | null) ?? null, documentId: inv.documentId, createdAt: inv.createdAt.toISOString(),
         history: hist.filter((x) => x.h.invoiceId === inv.id).map(({ h, name }) => ({ fromStatus: h.fromStatus, toStatus: h.toStatus, command: h.command, reasonCode: h.reasonCode, reasonText: h.reasonText, actorKind: h.actorKind, actorName: name ?? null, createdAt: h.createdAt.toISOString() })),
         actions: acts,

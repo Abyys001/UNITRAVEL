@@ -1,5 +1,7 @@
 # UniTravel mobile (Flutter)
 
+**Paused (ADR-0026):** development has stopped and the app is not offered publicly. The code stays here for when work resumes.
+
 One app, two modes. **Customer mode** (search, request, track, cargo, inbox, account) and **admin mode**
 (triage queue, my cases, inbox, account) are chosen from `GET /v1/me` -> `surfaces.admin` (booklet ch. 10.5).
 English and Persian (RTL), Gregorian or Jalali dates, bearer-token auth. ADR-0002.
@@ -8,14 +10,14 @@ English and Persian (RTL), Gregorian or Jalali dates, bearer-token auth. ADR-000
 
 Flutter 3.47 / Dart 3.13, Riverpod 3, go_router, Dio, `kit_ui` (copied from the engineering kit into
 `packages/kit_ui`), `flutter_secure_storage` (refresh token), `shared_preferences` (offline JSON cache),
-`shamsi_date` (Jalali), `crypto` (proof of work), `url_launcher` (`tel:`). Fonts: Montserrat, Vazirmatn
+`shamsi_date` (Jalali), `crypto` (proof of work), `url_launcher` (`tel:`). Fonts: Figtree, Montserrat (display), Vazirmatn, Alexandria (Persian display)
 (self-hosted in `assets/fonts`, no CDN; the web build is made with `--no-web-resources-cdn`).
 
 ```
 lib/core        api client (401 recovery), session, token store, cache, formatting (Jalali), repos
 lib/models      hand-written JSON views of the contract (packages/contracts)
 lib/features    auth, search (form/results/itinerary), requests, cargo, inbox, account, admin
-lib/l10n        ARB files, generated from tool/gen_arb.py (one table, so EN and FA cannot drift)
+lib/l10n        ARB files, edited directly. tool/gen_arb.py is out of date (it lacks 300+ keys): do not run it, it would delete them
 packages/kit_ui shared UI kit (not edited here)
 e2e/            Playwright smoke test against the web build
 ```
@@ -35,7 +37,7 @@ e2e/            Playwright smoke test against the web build
 cd apps/mobile
 export PATH=$PATH:/home/siavash/applications/development/flutter/bin
 flutter pub get
-python3 tool/gen_arb.py && flutter gen-l10n      # only after editing tool/gen_arb.py
+flutter gen-l10n                                 # after editing lib/l10n/*.arb
 flutter analyze
 flutter test
 flutter build web --release --no-web-resources-cdn
@@ -46,6 +48,16 @@ The API must run at `http://localhost:4100` (`scripts/svc.sh start api worker`);
 
 ```sh
 scripts/svc.sh start mobile          # python http.server on build/web, port 4300
+```
+
+On desktop browsers (mouse pointer, window at least 500px wide at load) the app renders inside a phone frame:
+`web/flutter_bootstrap.js` embeds it in a host element and `web/frame.css` draws the frame. Touch devices and narrow
+windows keep Flutter's full-page mode.
+
+Android test APK (Gradle ignores the proxy environment variables, so behind a proxy pass it through `JAVA_TOOL_OPTIONS`). It is debug-signed: fine for testers, not for Play:
+
+```sh
+flutter build apk --release --dart-define=API_URL=https://mobile.unitravels.co.uk --dart-define=WEB_URL=https://demo.unitravels.co.uk
 ```
 
 The app uses hash URLs so any static host works without a history fallback. Deep link for an SMS short link:

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Patch, Post, Req } from "@nestjs/common"
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post, Req } from "@nestjs/common"
 import { ApiTags } from "@nestjs/swagger"
 import { and, eq, isNull } from "drizzle-orm"
 import type { Request } from "express"
@@ -110,7 +110,24 @@ export class MeController {
   async revokeSession(@Param("id") id: string, @CurrentActor() actor: Actor) {
     const s = await this.sessions.get(id)
     if (!s || s.userId !== actor.userId) throw new AppError("NOT_FOUND")
-    await this.sessions.revoke(id, "USER_REVOKED")
+    await this.sessions.revoke(id, "USER_REVOKED", { ip: actor.ip })
+  }
+
+  /** ADR-0022: remembered console devices outlive any one session, so they are listed and revoked separately. */
+  @Get("trusted-devices")
+  @Authenticated()
+  async listTrustedDevices(@CurrentActor() actor: Actor) {
+    const [rows, current] = await Promise.all([this.sessions.listDevices(actor.userId), this.sessions.get(actor.sessionId)])
+    return rows.map((d) => ({ id: d.id, host: d.host, userAgent: d.userAgent, createdAt: d.createdAt.toISOString(), lastUsedAt: d.lastUsedAt.toISOString(), expiresAt: d.expiresAt.toISOString(), current: d.id === current?.trustedDeviceId }))
+  }
+
+  @Delete("trusted-devices/:id")
+  @Authenticated()
+  @HttpCode(204)
+  async revokeTrustedDevice(@Param("id", new ParseUUIDPipe()) id: string, @CurrentActor() actor: Actor) {
+    const d = await this.sessions.getDevice(id)
+    if (!d || d.userId !== actor.userId) throw new AppError("NOT_FOUND")
+    await this.sessions.revokeDevice(id, "USER_REVOKED", { ip: actor.ip })
   }
 
   @Post("devices")

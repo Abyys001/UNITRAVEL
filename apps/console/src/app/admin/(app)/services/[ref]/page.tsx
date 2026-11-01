@@ -8,8 +8,10 @@ import { toast } from "sonner"
 
 import type { StaffServiceRequestView } from "@unitravel/contracts"
 
+import { Country } from "@unitravel/ui/product/country"
 import { TileError } from "@/components/bento"
 import { ActionBar, CaseHeader, CaseTabs, CommandBar, ListSkeleton, paneClass, paneProps, SlaChip, SummaryItem, Timeline } from "@/components/case"
+import { InvoicesPanel } from "@/components/invoices-panel"
 import { isConflict, QuotesList, SERVICE_DIALOG_COMMANDS, ServiceCommandDialog, ServiceDetails, ServiceStatus, useServiceLabels } from "@/components/service-request"
 import { Composer, MessagesList } from "@/components/thread"
 import { Arrow, Loading, Panel } from "@/components/ui"
@@ -79,7 +81,7 @@ export default function ServiceRequestPage() {
           </Panel>
           {d.travellers.length > 0 && (
             <Panel title={t("svc.travellers")}>
-              <ul className="ledger-rows">{d.travellers.map((p) => <li key={p.id} className="py-1"><span dir="auto">{p.name}</span>{p.nationality && <span className="text-steel"> · {p.nationality}</span>}</li>)}</ul>
+              <ul className="ledger-rows">{d.travellers.map((p) => <li key={p.id} className="py-1"><span dir="auto">{p.name}</span>{p.nationality && <span className="text-steel"> · <Country code={p.nationality} /></span>}</li>)}</ul>
             </Panel>
           )}
         </div>
@@ -93,6 +95,7 @@ export default function ServiceRequestPage() {
         </div>
         <div {...paneProps("records")} className={`${paneClass(tab, "records")} lg:col-span-2 xl:col-span-1`}>
           <Panel title={t("svc.quotes")}><QuotesList d={d} /></Panel>
+          {d.quotes.some((x) => x.status === "ACCEPTED") && <InvoicesPanel requestRef={d.ref} />}
           <Panel title={t("case.activity")}><Timeline data-testid="service-timeline" items={timeline.map((x, i) => ({ id: i, at: x.at, title: x.toStatus ? <>{x.label} <span className="text-steel"><Arrow /></span> {L.status(x.toStatus)}</> : x.label, detail: x.detail, meta: x.actor, tone: x.kind === "STATUS" ? "strong" : "muted" }))} /></Panel>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { faq } from "@unitravel/i18n"
 import { FlightPath, GlobeLines, IconBadge, Ribbon } from "@unitravel/ui/brand/art"
 import { Reveal } from "@unitravel/ui/brand/reveal"
 
+import { AppShowcase, WatchTeaserLink } from "@/components/phone-3d"
 import { FaqAccordion } from "@/components/faq-accordion"
 import { HeroVideo } from "@/components/hero-video"
 import { Benefits, FeaturedDestinations, ServiceExplorer, SupportBand } from "@/components/home-sections"
@@ -176,23 +177,19 @@ export default function Home() {
         </Reveal>
       </section>
 
-      {/* 7 · App promo with a real screenshot from the Flutter build. */}
+      {/* 7 · App promo: Coming Soon only (ADR-0026). */}
       <section className="mx-auto max-w-7xl px-4 pt-20 md:px-6 md:pt-28">
         <Reveal className="relative overflow-hidden rounded-[28px] bg-brand px-6 pt-10 text-white md:px-14 md:pt-0">
           <div aria-hidden className="bg-dots absolute inset-0 opacity-50" />
-          <div className="relative grid items-center gap-10 md:grid-cols-[1.2fr_1fr]">
+          <div className="relative grid items-center gap-10 md:grid-cols-[1.05fr_1fr]">
             <div className="md:py-16">
               <IconBadge tone="onDark"><Smartphone aria-hidden /></IconBadge>
               <h2 className="font-display mt-6 text-3xl md:text-5xl">{t("home.appTitle")}</h2>
               <p className="mt-4 max-w-lg text-lg text-white/80">{t("home.appBody")}</p>
               <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold"><span className="size-2 rounded-full bg-orange" />{t("home.appSoon")}</p>
+              <p className="mt-6"><WatchTeaserLink href={href("/app#teaser")} label={t("home.appCta")} testId="app-cta" /></p>
             </div>
-            <div className="relative mx-auto w-[240px] md:mt-12 md:w-[270px]">
-              <div className="animate-float rounded-[38px] border-[10px] border-navy-950 bg-navy-950 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.7)]">
-                {/* eslint-disable-next-line @next/next/no-img-element -- real app screenshot */}
-                <img src={`/media/app/${locale === "fa" ? "search-fa" : "search-en"}.png`} alt="" loading="lazy" className="block w-full rounded-[28px]" />
-              </div>
-            </div>
+            <AppShowcase className="pb-10 md:py-10" />
           </div>
         </Reveal>
       </section>

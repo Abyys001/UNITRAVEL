@@ -3,7 +3,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
 import { DEV_SURFACE_PERMISSIONS, isPermission, type Permission, PRIVILEGED_ROLES, STAFF_SURFACE_PERMISSIONS } from "@unitravel/contracts"
-import { type Db, type DbOrTx, rolePermissions, roles, sessions, type Tx, userRoles, users } from "@unitravel/db"
+import { type Db, type DbOrTx, rolePermissions, roles, sessions, trustedDevices, type Tx, userRoles, users } from "@unitravel/db"
 
 import { AppError } from "../../core/errors"
 import { DB, REDIS } from "../../core/infra.module"
@@ -118,6 +118,8 @@ export class AccessService {
   async revokeAllSessions(tx: Tx, userId: string, reason: string) {
     const rows = await tx.update(sessions).set({ revokedAt: new Date(), revokedReason: reason }).where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt))).returning({ id: sessions.id })
     for (const r of rows) await this.redis.set(`sess:${r.id}:revoked`, "1", "EX", 13 * 3600)
+    // A remembered device must not reopen what was just ended (ADR-0022).
+    await tx.update(trustedDevices).set({ revokedAt: new Date(), revokedReason: reason }).where(and(eq(trustedDevices.userId, userId), isNull(trustedDevices.revokedAt)))
     return rows.length
   }
 }

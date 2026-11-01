@@ -57,8 +57,7 @@ String? redirectFor(SessionState s, Uri uri) {
     case AuthStatus.booting:
       return loc == '/splash' ? null : '/splash?from=${Uri.encodeComponent(full)}';
     case AuthStatus.signedOut:
-      // Reference + phone tracking is public (spec §4.5): no account needed.
-      if (loc == '/signin' || loc == '/track') return null;
+      if (loc == '/signin') return null;
       return loc == '/' || loc == '/splash' ? '/signin' : '/signin?from=${Uri.encodeComponent(full)}';
     case AuthStatus.signedIn:
       final me = s.me!;

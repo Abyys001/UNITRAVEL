@@ -11,6 +11,7 @@ export const DEV_SURFACE_KEY = "ut:dev"
 export const RATE_LIMIT_KEY = "ut:ratelimit"
 export const IDEMPOTENT_KEY = "ut:idempotent"
 export const AUDIENCE_KEY = "ut:audience"
+export const PASSIVE_KEY = "ut:passive"
 
 /** Routes without a declaration fail closed: a test enumerates all routes and asserts one of these (ch. 25.6). */
 export const Public = () => SetMetadata(PUBLIC_KEY, true)
@@ -25,6 +26,8 @@ export const StaffOnly = () => SetMetadata(STAFF_KEY, true)
 /** Developer Panel endpoints are reachable only through the dev host (ch. 16.1). */
 export const DevSurface = () => SetMetadata(DEV_SURFACE_KEY, true)
 export const Idempotent = () => SetMetadata(IDEMPOTENT_KEY, true)
+/** A connection the browser keeps open by itself: it is not user activity, so it never extends an idle session (ADR-0022). */
+export const Passive = () => SetMetadata(PASSIVE_KEY, true)
 
 export interface RateLimitSpec {
   name: string

@@ -276,7 +276,7 @@ void main() {
       expect(find.text('service UT-S-BBBBBB'), findsOneWidget);
     });
 
-    testWidgets('signed out: reference + phone, a code, then only the status timeline', (tester) async {
+    testWidgets('someone else\'s reference: reference + phone, a code, then only the status timeline', (tester) async {
       final adapter = FakeAdapter((o) {
         if (o.path == '/v1/track/lookup') return json({'accepted': true}, status: 202);
         if (o.path == '/v1/track/verify') {
@@ -284,7 +284,7 @@ void main() {
         }
         return problem(404, 'NOT_FOUND');
       });
-      await tester.pumpWidget(await app(const TrackScreen(), adapter: adapter, signedOut: true));
+      await tester.pumpWidget(await app(const Material(child: SingleChildScrollView(child: TrackLookup())), adapter: adapter));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('track-lookup')), findsOneWidget);
       expect(tester.widget<FilledButton>(find.byKey(const Key('track-submit'))).onPressed, isNull);
@@ -319,7 +319,7 @@ void main() {
         }
         return problem(404, 'NOT_FOUND');
       });
-      await tester.pumpWidget(await app(const TrackScreen(), adapter: adapter, signedOut: true));
+      await tester.pumpWidget(await app(const Material(child: SingleChildScrollView(child: TrackLookup())), adapter: adapter));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('track-ref')), 'UT-S-BBBBBB');
       await tester.enterText(find.byKey(const Key('track-phone')), '+989120000001');

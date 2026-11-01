@@ -29,6 +29,7 @@ Delayed OTP, notifications and SLA timers; stale search progress; delayed compli
 ## Mitigation
 - Restart the stuck process. Scale workers only if the host has capacity; there is no autoscaling in this build.
 - Retry a dead job after fixing the cause: `POST /v1/dev/jobs/{queue}/{id}/retry`. Discard poison jobs: `POST /v1/dev/jobs/{queue}/{id}/discard` (audited).
+- Document scans recover on their own: `documents.scan-requeue` re-queues uploads still PENDING after 10 minutes, every 10 minutes, so after a ClamAV outage only restart ClamAV. If `clamd` was killed the container can still show Up (health: unhealthy); restart it with compose. The original job stays in the dead letters after the file is scanned and can be discarded.
 - Never flush Valkey: it holds SLA timers (BullMQ delayed jobs) and rate-limit state. If Valkey data was lost, SLA timers must be rebuilt (see recovery).
 
 ## Recovery

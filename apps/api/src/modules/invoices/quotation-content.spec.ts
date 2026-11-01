@@ -3,7 +3,7 @@ import { inflateSync } from "node:zlib"
 import { DEFAULT_COMMERCIAL_DOCUMENTS } from "@unitravel/contracts"
 import { describe, expect, it } from "vitest"
 
-import { renderQuotationPdf } from "./commercial-pdf"
+import { renderInvoicePdf, renderQuotationPdf } from "./commercial-pdf"
 import { baggageText, conditionText, flightOptionSections, formatValidity, type QuotationOptionRow } from "./quotation-content"
 
 const content = (pdf: Buffer) => [...pdf.toString("latin1").matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)].map((m) => { try { return inflateSync(Buffer.from(m[1]!, "latin1")).toString("latin1") } catch { return "" } }).join("\n")
@@ -69,5 +69,13 @@ describe("quotation PDF", () => {
     const pdf = await renderQuotationPdf({ ...base, locale: "fa", subtitle: `اعتبار تا ${formatValidity(new Date("2026-07-01T19:36:00Z"), fa)}`, sections: flightOptionSections([option], [traveller], fa) })
     expect(pdf.toString("latin1").startsWith("%PDF")).toBe(true)
     expect(content(pdf)).toContain("Vazirmatn")
+  })
+
+  it("keeps Persian that staff typed on an otherwise English invoice (ADR-0028)", async () => {
+    const args = { number: "INV-2026-000001", requestRef: "UT-D-7Q2K9M", issuedAt: new Date(), expiresAt: new Date(), paid: false, billTo: ["نگار احمدی"], currency: "GBP", totalMinor: 1000, company: base.company, cfg: base.cfg, notes: ["با تشکر"] }
+    const persian = await renderInvoicePdf({ ...args, lines: [{ description: "ویزای شینگن", quantity: 1, unitAmountMinor: 1000, amountMinor: 1000 }] })
+    expect(content(persian)).toContain("Vazirmatn")
+    const english = await renderInvoicePdf({ ...args, billTo: ["Negar Ahmadi"], notes: [], lines: [{ description: "Schengen visa", quantity: 1, unitAmountMinor: 1000, amountMinor: 1000 }] })
+    expect(content(english)).not.toContain("Vazirmatn")
   })
 })

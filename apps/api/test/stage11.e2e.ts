@@ -89,7 +89,7 @@ describe("Phase D — Stripe Embedded Checkout, test mode (ADR-0007; booklet ch.
     expect(a.status).toBe(200)
     expect(a.body).toMatchObject({ provider: "FAKE", invoiceNumber: inv.number, publishableKey: null })
     expect(a.body.clientSecret).toContain("_secret_")
-    expect(Object.keys(a.body).sort()).toEqual(["clientSecret", "expiresAt", "invoiceNumber", "provider", "publishableKey"])
+    expect(Object.keys(a.body).sort()).toEqual(["clientSecret", "connectedAccountId", "expiresAt", "invoiceNumber", "provider", "publishableKey"])
     // One reusable open session: the second call returns the same secret and no second row.
     const b = await checkout(inv.c, inv.number)
     expect(b.body.clientSecret).toBe(a.body.clientSecret)

@@ -96,7 +96,7 @@ describe("permission matrix", () => {
   it("includes the Phase J routes, so the role sweeps cover them; only admin and owner hold the new permissions (ADR-0018 to 0021)", () => {
     const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
     for (const [m, p] of [["GET", "/v1/admin/customers"], ["GET", "/v1/admin/customers/:id/activity"], ["GET", "/v1/admin/support/tickets"], ["GET", "/v1/admin/support/tickets/:ref"], ["POST", "/v1/admin/support/tickets/:ref/replies"], ["POST", "/v1/admin/support/tickets/:ref/commands"], ["GET", "/v1/admin/calls"], ["POST", "/v1/admin/customers/:id/assignments"], ["GET", "/v1/admin/listings"], ["PATCH", "/v1/admin/listings/:id"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
-    const phaseJ: Permission[] = ["customer.read", "service.assign", "support.read", "support.reply", "call.log", "listings.write"]
+    const phaseJ: Permission[] = ["customer.read", "service.assign", "invoice.direct", "support.read", "support.reply", "call.log", "listings.write"]
     for (const role of ["admin", "owner"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).toEqual(expect.arrayContaining(phaseJ))
     for (const role of ["customer", "cargo_admin", "compliance_officer", "developer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => phaseJ.includes(p))).toEqual([])
   })

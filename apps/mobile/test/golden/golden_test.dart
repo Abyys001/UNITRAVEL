@@ -29,7 +29,7 @@ import 'package:unitravel_mobile/ui/widgets.dart';
 import '../support/fake_api.dart';
 
 // Phase F: golden images of the major screens in en and fa at phone and tablet/desktop widths. Fonts are the app's own
-// (Montserrat, Vazirmatn) so Persian shapes are real; data is fixed (fixtures recorded from the API, see
+// (Figtree, Montserrat, Vazirmatn, Alexandria) so Persian shapes are real; data is fixed (fixtures recorded from the API, see
 // apps/web/e2e/visual-capture.spec.ts). Update on purpose:  flutter test test/golden --update-goldens
 
 const sizes = {'phone': Size(390, 844), 'tablet': Size(1024, 768)};
@@ -109,8 +109,9 @@ void main() {
     await initializeDateFormatting('fa');
     final root = Platform.environment['FLUTTER_ROOT'];
     if (root != null) await loadFont('MaterialIcons', ['$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf']);
-    await loadFont('Montserrat', ['assets/fonts/montserrat/Montserrat-Regular.ttf']);
-    await loadFont('Montserrat', ['assets/fonts/montserrat/Montserrat-Medium.ttf', 'assets/fonts/montserrat/Montserrat-SemiBold.ttf', 'assets/fonts/montserrat/Montserrat-Bold.ttf', 'assets/fonts/montserrat/Montserrat-ExtraBold.ttf']);
+    await loadFont('Figtree', ['assets/fonts/figtree/Figtree-Regular.ttf', 'assets/fonts/figtree/Figtree-Medium.ttf', 'assets/fonts/figtree/Figtree-SemiBold.ttf', 'assets/fonts/figtree/Figtree-Bold.ttf', 'assets/fonts/figtree/Figtree-ExtraBold.ttf']);
+    await loadFont('Montserrat', ['assets/fonts/montserrat/Montserrat-ExtraBold.ttf']);
+    await loadFont('Alexandria', ['assets/fonts/alexandria/Alexandria-Bold.ttf']);
     await loadFont('Vazirmatn', ['assets/fonts/vazirmatn/Vazirmatn-Regular.ttf', 'assets/fonts/vazirmatn/Vazirmatn-Medium.ttf', 'assets/fonts/vazirmatn/Vazirmatn-SemiBold.ttf', 'assets/fonts/vazirmatn/Vazirmatn-Bold.ttf', 'assets/fonts/vazirmatn/Vazirmatn-ExtraBold.ttf']);
   });
 

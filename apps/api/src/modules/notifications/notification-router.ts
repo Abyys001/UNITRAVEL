@@ -51,10 +51,12 @@ export class NotificationRouter {
     }
     // Payment documents (ADR-0013 A7): same delivery as invoices, no amounts in the message.
     if (e.type === "invoice.issued" || e.type === "invoice.cancelled" || e.type === "invoice.expired" || e.type === "invoice.paid" || e.type === "payment.requested" || e.type === "payment.failed" || e.type === "payment.refunded") {
-      const v = e.payload as unknown as { number: string; ref: string; customerUserId: string; expiresAt?: string }
+      const v = e.payload as unknown as { number: string; ref: string; customerUserId: string; expiresAt?: string; services?: string; total?: string; documentId?: string | null }
       return this.n.notify({
         eventId: e.id, eventType: e.type, audience: "CUSTOMER", userIds: [v.customerUserId], documentDelivery: true, requestKey: v.ref,
-        vars: { ref: v.ref, number: v.number, expires_at: v.expiresAt }, linkPath: `/billing/${v.number}`, data: { ref: v.ref, number: v.number },
+        // ADR-0028 D8: only the EMAIL templates use `services` and `total`; the PDF goes with those two events alone.
+        vars: { ref: v.ref, number: v.number, expires_at: v.expiresAt, services: v.services ?? "", total: v.total ?? "" }, linkPath: `/billing/${v.number}`,
+        data: { ref: v.ref, number: v.number, ...((e.type === "invoice.issued" || e.type === "payment.requested") && v.documentId ? { attachDocumentId: v.documentId } : {}) },
       })
     }
     const p = e.payload as unknown as RequestPayload

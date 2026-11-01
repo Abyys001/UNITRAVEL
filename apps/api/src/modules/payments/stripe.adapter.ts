@@ -24,7 +24,12 @@ export function toProviderSession(s: Stripe.Checkout.Session): ProviderSession {
   }
 }
 
-export interface StripeKeys { secretKey: string; publishableKey: string | null; webhookSecret: string }
+export interface StripeKeys { secretKey: string; publishableKey: string | null; webhookSecret: string; connectedAccountId?: string | null }
+
+/** A valid signature only proves Stripe sent it: an event from any other connected account of the platform is not ours (ADR-0028 D11). */
+export function assertEventAccount(event: Stripe.Event, connectedAccountId: string | null): void {
+  if ((event.account ?? null) !== connectedAccountId) throw new AppError("SIGNATURE_INVALID", "The event belongs to another Stripe account")
+}
 
 /** Test mode only: live keys are refused at construction (ADR-0007 P1). The secret key never leaves this class. */
 export class StripeAdapter implements PaymentProvider {
@@ -37,6 +42,8 @@ export class StripeAdapter implements PaymentProvider {
   }
 
   get publishableKey() { return this.keys.publishableKey }
+  get connectedAccountId() { return this.keys.connectedAccountId ?? null }
+  private get onAccount() { return this.connectedAccountId ? { stripeAccount: this.connectedAccountId } : {} }
 
   async createSession(i: CreateSessionInput): Promise<ProviderSession> {
     const s = await this.stripe.checkout.sessions.create({
@@ -49,13 +56,13 @@ export class StripeAdapter implements PaymentProvider {
       client_reference_id: i.invoiceNumber,
       metadata: { invoiceId: i.invoiceId, invoiceNumber: i.invoiceNumber },
       payment_intent_data: { metadata: { invoiceId: i.invoiceId, invoiceNumber: i.invoiceNumber } },
-    }, { idempotencyKey: i.idempotencyKey })
+    }, { idempotencyKey: i.idempotencyKey, ...this.onAccount })
     return toProviderSession(s)
   }
 
   async retrieveSession(id: string): Promise<ProviderSession | null> {
     try {
-      return toProviderSession(await this.stripe.checkout.sessions.retrieve(id))
+      return toProviderSession(await this.stripe.checkout.sessions.retrieve(id, undefined, this.onAccount))
     } catch (err) {
       if (err instanceof Stripe.errors.StripeInvalidRequestError && err.statusCode === 404) return null
       throw err
@@ -63,18 +70,20 @@ export class StripeAdapter implements PaymentProvider {
   }
 
   async createRefund(i: RefundInput): Promise<{ id: string }> {
-    const r = await this.stripe.refunds.create({ payment_intent: i.paymentIntentId, amount: i.amountMinor, metadata: { refundRequestId: i.refundId } }, { idempotencyKey: i.idempotencyKey })
+    const r = await this.stripe.refunds.create({ payment_intent: i.paymentIntentId, amount: i.amountMinor, metadata: { refundRequestId: i.refundId } }, { idempotencyKey: i.idempotencyKey, ...this.onAccount })
     return { id: r.id }
   }
 
   verifyWebhook(rawBody: Buffer, signature: string | undefined): Stripe.Event {
-    return verifyStripeSignature(rawBody, signature, this.keys.webhookSecret)
+    const event = verifyStripeSignature(rawBody, signature, this.keys.webhookSecret)
+    assertEventAccount(event, this.connectedAccountId)
+    return event
   }
 
   async health() {
     const t = Date.now()
     try {
-      await this.stripe.balance.retrieve()
+      await this.stripe.balance.retrieve(undefined, this.onAccount)
       return { ok: true, latencyMs: Date.now() - t, detail: "Stripe test API reachable" }
     } catch (err) {
       // The message of a Stripe error never contains the key; only its type and status are shown.

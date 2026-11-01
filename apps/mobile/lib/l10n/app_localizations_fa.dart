@@ -1311,7 +1311,7 @@ class AppL10nFa extends AppL10n {
   String get preferences => 'تنظیمات';
 
   @override
-  String get calendarLabel => 'تقویم';
+  String get calendarLabel => 'تقویم اصلی';
 
   @override
   String get myTravellers => 'مسافران ذخیره‌شده';
@@ -2041,7 +2041,7 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get testSignInHint =>
-      'فقط با ایمیل وارد می‌شود، بدون کد. در محیط عملیاتی غیرفعال است.';
+      'برای ورود روی یک حساب بزنید. کد لازم نیست. در محیط عملیاتی غیرفعال است.';
 
   @override
   String get testSignInEmail => 'ایمیلی که با آن وارد می‌شوید';
@@ -2472,11 +2472,27 @@ class AppL10nFa extends AppL10n {
   String get tkEmpty => 'هنوز موردی برای پیگیری نیست.';
 
   @override
-  String get tkLookupTitle => 'پیگیری با شمارهٔ پیگیری';
+  String get tkLead =>
+      'درخواست‌های پرواز، بار، درخواست‌های خدمات و فاکتورهای خود را یک‌جا و با آخرین وضعیت هر کدام دنبال کنید.';
+
+  @override
+  String get tkStatusNote =>
+      'وضعیت همان چیزی را نشان می‌دهد که تیم ما ثبت کرده است. درخواست یا فاکتور پرداخت‌شده به معنای رزرو نیست: سفر شما فقط وقتی قطعی است که رزرو یا بلیت در پرونده دیده شود.';
+
+  @override
+  String get tkMineLead =>
+      'تازه‌ترین تغییرها بالاتر است. برای دیدن جزئیات، هر ردیف را باز کنید.';
+
+  @override
+  String get tkEmptyBody =>
+      'وقتی درخواستی بفرستید یا برایتان فاکتوری صادر کنیم، اینجا دیده می‌شود.';
+
+  @override
+  String get tkLookupTitle => 'پیگیری شمارهٔ پیگیری دیگران';
 
   @override
   String get tkLookupLead =>
-      'به حساب کاربری دسترسی ندارید؟ شمارهٔ پیگیری و شماره تلفن ثبت‌شده در درخواست را وارد کنید. کدی به همان تلفن می‌فرستیم.';
+      'شمارهٔ پیگیری را از یکی از بستگان یا همکاران گرفته‌اید؟ آن را با شماره تلفن ثبت‌شده در همان درخواست وارد کنید. کدی به همان تلفن می‌فرستیم و سپس فقط روند وضعیت را نشان می‌دهیم: بدون نام، قیمت یا مدرک.';
 
   @override
   String get tkRef => 'شمارهٔ پیگیری';
@@ -2522,9 +2538,6 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get tkAgain => 'پیگیری مورد دیگر';
-
-  @override
-  String get tkSignInLink => 'پیگیری با شمارهٔ پیگیری';
 
   @override
   String get clUnavailable => 'باشگاه مشتریان هنوز در دسترس نیست.';
@@ -3056,4 +3069,52 @@ class AppL10nFa extends AppL10n {
 
   @override
   String get scrSignIn => 'ورود';
+
+  @override
+  String get calendarHelp =>
+      'تاریخ‌ها با هر دو تقویم نمایش داده می‌شوند. این یکی اول می‌آید.';
+
+  @override
+  String get accountSection => 'حساب شما';
+
+  @override
+  String get adminModeHelp => 'ابزارهای کارکنان برای این حساب.';
+
+  @override
+  String get roleOwner => 'مالک / مدیر';
+
+  @override
+  String get testSignInOther => 'استفاده از ایمیل دیگر';
+
+  @override
+  String get testRoleCustomer => 'مشتری';
+
+  @override
+  String get testRoleCustomerHelp => 'برنامهٔ مشتری را باز می‌کند.';
+
+  @override
+  String get testRoleOwnerBadge => 'پنل مالک';
+
+  @override
+  String get testRoleOwnerHelp =>
+      'جدا از برنامهٔ مشتری. حالت مدیر را با تأییدهای مالک باز می‌کند.';
+
+  @override
+  String get testRoleOtherStaff => 'سایر کارکنان';
+
+  @override
+  String get testRoleDeveloper => 'توسعه‌دهنده';
+
+  @override
+  String get testRoleDeveloperHelp =>
+      'اینجا برنامهٔ مشتری باز می‌شود. پنل توسعه‌دهنده در وب است.';
+
+  @override
+  String get testStaffSara => 'سارا';
+
+  @override
+  String get testStaffCargo => 'بار';
+
+  @override
+  String get testStaffCompliance => 'انطباق';
 }

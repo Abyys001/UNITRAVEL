@@ -3,12 +3,13 @@ import { ApiTags } from "@nestjs/swagger"
 import type { Request } from "express"
 import { z } from "zod"
 
-import { PaymentConfigPatchBody, PaymentPageView, RefundRejectBody, RefundRequestBody, StripeCredentialsBody, StripeModeRequestBody } from "@unitravel/contracts"
+import { PaymentBody, PaymentConfigPatchBody, PaymentPageView, RefundRejectBody, RefundRequestBody, StripeCredentialsBody, StripeModeRequestBody } from "@unitravel/contracts"
 import { isLocal } from "../../core/env"
 
 import { AppError } from "../../core/errors"
-import { type Actor, CurrentActor, DevSurface, Public, RateLimit, RequirePermission, StaffOnly, StepUp } from "../../core/http/decorators"
+import { type Actor, CurrentActor, DevSurface, Idempotent, Public, RateLimit, RequirePermission, StaffOnly, StepUp } from "../../core/http/decorators"
 import { ApiZodResponse, zbody } from "../../core/http/zod"
+import { BookingsService } from "../bookings/bookings.service"
 import { InvoicesService } from "../invoices/invoices.service"
 import type { FakeEventKind } from "./fake-payment.adapter"
 import { PaymentConfigService } from "./payment-config.service"
@@ -54,7 +55,15 @@ const READ = ["flight_request.read.any", "cargo_request.read.any", "commercial_d
 @Controller("v1/admin")
 @StaffOnly()
 export class AdminPaymentsController {
-  constructor(private readonly payments: PaymentsService, private readonly refunds: RefundsService, private readonly invoices: InvoicesService) {}
+  constructor(private readonly payments: PaymentsService, private readonly refunds: RefundsService, private readonly invoices: InvoicesService, private readonly bookings: BookingsService) {}
+
+  /** Offline money on a service invoice (ADR-0028 D9); flight and cargo payments stay on their request routes. */
+  @Post("invoices/:id/payments")
+  @RequirePermission("payment.record")
+  @Idempotent()
+  recordOffline(@Param("id", zbody(z.uuid())) id: string, @Body(zbody(PaymentBody)) body: z.infer<typeof PaymentBody>, @CurrentActor() actor: Actor) {
+    return this.bookings.recordServiceInvoicePayment(id, body, actor)
+  }
 
   @Get("invoices/:id/payments")
   @RequirePermission(...READ)

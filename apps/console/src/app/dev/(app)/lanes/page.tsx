@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { CargoService } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 
+import { Country } from "@unitravel/ui/product/country"
 import { FormDialog } from "@/components/form-dialog"
 import { EmptyState } from "@/components/bento"
 import { Chips, ListCard, Toolbar } from "@/components/data-list"
@@ -42,7 +43,7 @@ export default function LanesPage() {
               const iran = l.originCountry === "IR" || l.destinationCountry === "IR"
               return (
                 <tr key={l.id} className="align-top">
-                  <td className="num font-medium whitespace-nowrap" dir="ltr">{l.originCountry} <Arrow /> {l.destinationCountry}{iran && <span className="ms-2 rounded-full bg-danger-subtle px-1.5 text-2xs font-semibold text-danger">IRAN</span>}</td>
+                  <td className="num font-medium whitespace-nowrap" dir="ltr"><Country code={l.originCountry} /> <Arrow /> <Country code={l.destinationCountry} />{iran && <span className="ms-2 rounded-full bg-danger-subtle px-1.5 text-2xs font-semibold text-danger">IRAN</span>}</td>
                   <td><span className="flex flex-wrap gap-1">{l.services.map((x) => <span key={x} className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-caption" dir="ltr">{x}</span>)}</span></td>
                   <td className="num">{l.volumetricDivisor}</td>
                   <td className="text-meta">{l.requiresComplianceApproval ? t("lanes.casePer") : "—"}{l.counselReference && <span className="block text-caption text-steel">{t("lanes.counsel")} <span dir="ltr">{l.counselReference}</span></span>}</td>

@@ -772,7 +772,7 @@ abstract class AppL10n {
   /// No description provided for @calendarJalali.
   ///
   /// In en, this message translates to:
-  /// **'Jalali'**
+  /// **'Solar Hijri'**
   String get calendarJalali;
 
   /// No description provided for @resultsTitle.
@@ -2314,7 +2314,7 @@ abstract class AppL10n {
   /// No description provided for @calendarLabel.
   ///
   /// In en, this message translates to:
-  /// **'Calendar'**
+  /// **'Primary calendar'**
   String get calendarLabel;
 
   /// No description provided for @myTravellers.
@@ -3574,7 +3574,7 @@ abstract class AppL10n {
   /// No description provided for @testSignInHint.
   ///
   /// In en, this message translates to:
-  /// **'Signs in with the email only — no code. Disabled in production.'**
+  /// **'Tap an account to sign in. No code needed. Disabled in production.'**
   String get testSignInHint;
 
   /// No description provided for @testSignInEmail.
@@ -4393,16 +4393,40 @@ abstract class AppL10n {
   /// **'Nothing to track yet.'**
   String get tkEmpty;
 
+  /// No description provided for @tkLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow your flight requests, cargo, service requests and invoices in one place, each with its latest status.'**
+  String get tkLead;
+
+  /// No description provided for @tkStatusNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A status shows what our team has recorded. A request or a paid invoice is not a booking: your trip is confirmed only when the reservation or ticket appears on the record.'**
+  String get tkStatusNote;
+
+  /// No description provided for @tkMineLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest changes first. Open a row to see its details.'**
+  String get tkMineLead;
+
+  /// No description provided for @tkEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When you send a request or we issue you an invoice, it will appear here.'**
+  String get tkEmptyBody;
+
   /// No description provided for @tkLookupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Track with a reference'**
+  /// **'Track someone else\'s reference'**
   String get tkLookupTitle;
 
   /// No description provided for @tkLookupLead.
   ///
   /// In en, this message translates to:
-  /// **'No account at hand? Enter the reference and the phone number on the request. We send a code to that phone.'**
+  /// **'Have a reference from a relative or colleague? Enter it with the phone number on that request. We send a code to that phone, then show the status timeline only: no names, prices or documents.'**
   String get tkLookupLead;
 
   /// No description provided for @tkRef.
@@ -4488,12 +4512,6 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Track another'**
   String get tkAgain;
-
-  /// No description provided for @tkSignInLink.
-  ///
-  /// In en, this message translates to:
-  /// **'Track with a reference'**
-  String get tkSignInLink;
 
   /// No description provided for @clUnavailable.
   ///
@@ -5430,6 +5448,96 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Sign in'**
   String get scrSignIn;
+
+  /// No description provided for @calendarHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Dates show both calendars. This one comes first.'**
+  String get calendarHelp;
+
+  /// No description provided for @accountSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account'**
+  String get accountSection;
+
+  /// No description provided for @adminModeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff tools for this account.'**
+  String get adminModeHelp;
+
+  /// No description provided for @roleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner / Admin'**
+  String get roleOwner;
+
+  /// No description provided for @testSignInOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Use another email'**
+  String get testSignInOther;
+
+  /// No description provided for @testRoleCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get testRoleCustomer;
+
+  /// No description provided for @testRoleCustomerHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the customer app.'**
+  String get testRoleCustomerHelp;
+
+  /// No description provided for @testRoleOwnerBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner panel'**
+  String get testRoleOwnerBadge;
+
+  /// No description provided for @testRoleOwnerHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Separate from the customer app. Opens Admin mode with owner approvals.'**
+  String get testRoleOwnerHelp;
+
+  /// No description provided for @testRoleOtherStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Other staff'**
+  String get testRoleOtherStaff;
+
+  /// No description provided for @testRoleDeveloper.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get testRoleDeveloper;
+
+  /// No description provided for @testRoleDeveloperHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer app here. The Developer Panel is on the web.'**
+  String get testRoleDeveloperHelp;
+
+  /// No description provided for @testStaffSara.
+  ///
+  /// In en, this message translates to:
+  /// **'Sara'**
+  String get testStaffSara;
+
+  /// No description provided for @testStaffCargo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cargo'**
+  String get testStaffCargo;
+
+  /// No description provided for @testStaffCompliance.
+  ///
+  /// In en, this message translates to:
+  /// **'Compliance'**
+  String get testStaffCompliance;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

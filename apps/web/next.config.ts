@@ -6,6 +6,8 @@ const config: NextConfig = {
   transpilePackages: ["@unitravel/ui", "@unitravel/i18n", "@unitravel/contracts"],
   output: "standalone",
   experimental: { globalNotFound: true },
+  // Browsers ask for /favicon.ico on their own; the only icon is app/icon.svg.
+  async rewrites() { return [{ source: "/favicon.ico", destination: "/icon.svg" }] },
   async headers() {
     return [{ source: "/(.*)", headers: [
       { key: "X-Content-Type-Options", value: "nosniff" },

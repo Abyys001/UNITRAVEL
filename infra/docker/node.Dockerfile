@@ -52,6 +52,8 @@ CMD ["node", "apps/web/server.js"]
 
 FROM runtime-base AS console
 COPY --from=build --chown=app /repo/apps/console/.next/standalone ./
+# Standalone output leaves out public/ (app icons, service worker, offline page: ADR-0022).
+COPY --from=build --chown=app /repo/apps/console/public ./apps/console/public
 COPY --from=build --chown=app /repo/apps/console/.next/static ./apps/console/.next/static
 USER app
 ENV PORT=4200 HOSTNAME=0.0.0.0

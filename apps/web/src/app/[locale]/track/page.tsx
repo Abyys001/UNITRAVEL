@@ -1,12 +1,15 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import { ConciergeBell, Lock, type LucideIcon, Package, Plane, ReceiptText, SearchCheck } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useState } from "react"
 
 import type { PublicTrackView, TrackItem } from "@unitravel/contracts"
 import type { MessageKey } from "@unitravel/i18n"
-import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
+import { IconBadge } from "@unitravel/ui/brand/art"
+import { EmptyState, ErrorState, LoadingState } from "@unitravel/ui/product/states"
 import { Timeline } from "@unitravel/ui/product/timeline"
 
 import { Auto, Ltr } from "@/components/badges"
@@ -17,6 +20,37 @@ import { type PowChallenge, solvePow } from "@/lib/pow"
 import { useSession } from "@/lib/session"
 
 const KINDS = ["ALL", "FLIGHT", "CARGO", "SERVICE", "INVOICE"] as const
+const ICONS: Record<TrackItem["kind"], LucideIcon> = { FLIGHT: Plane, CARGO: Package, SERVICE: ConciergeBell, INVOICE: ReceiptText }
+
+/** Signed out (ADR-0025): why an account is needed and what it opens. No tracking form or data. */
+function SignInGate() {
+  const { t, href } = useI18n()
+  const path = usePathname()
+  return (
+    <>
+      <section aria-labelledby="gate-h" className="card-brand flex flex-col items-center p-6 text-center md:p-10" data-testid="track-gate">
+        <IconBadge><Lock /></IconBadge>
+        <h2 id="gate-h" className="mt-4 font-display text-2xl">{t("track.gateTitle")}</h2>
+        <p className="mt-2 max-w-xl leading-7 text-steel">{t("track.gateBody")}</p>
+        <Link href={href(`/sign-in?next=${encodeURIComponent(path)}`)} className="btn-orange mt-5 inline-flex">{t("track.gateCta")}</Link>
+      </section>
+      <section aria-labelledby="covers-h">
+        <h2 id="covers-h" className="font-display text-2xl">{t("track.coversTitle")}</h2>
+        <ul className="mt-4 grid gap-4 sm:grid-cols-2">
+          {(["FLIGHT", "CARGO", "SERVICE", "INVOICE"] as const).map((k) => {
+            const Icon = ICONS[k]
+            return (
+              <li key={k} className="card-brand flex gap-4 p-5">
+                <Icon aria-hidden className="mt-0.5 size-6 shrink-0 text-royal" />
+                <span><span className="block font-semibold">{t(`track.kinds.${k}`)}</span><span className="mt-1 block text-sm leading-6 text-steel">{t(`track.covers.${k}`)}</span></span>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    </>
+  )
+}
 
 /** Signed in: one list of the customer's own requests and invoices (GET /v1/track). */
 function Mine() {
@@ -29,28 +63,34 @@ function Mine() {
   return (
     <section aria-labelledby="mine-h">
       <h2 id="mine-h" className="font-display text-2xl">{t("track.mineTitle")}</h2>
+      <p className="mt-1 text-sm text-steel">{t("track.mineLead")}</p>
       <div role="group" aria-label={t("track.mineTitle")} className="mt-4 flex flex-wrap gap-2">
         {KINDS.map((k) => <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)} className={`rounded-full border px-4 py-1.5 text-sm font-semibold pointer-coarse:min-h-11 ${kind === k ? "border-navy-950 bg-navy-950 text-white" : "border-line bg-white text-navy-900 hover:bg-cloud"}`}>{t(`track.kinds.${k}`)}</button>)}
       </div>
       {q.isLoading && <LoadingState className="mt-4" label={t("common.loading")} rows={2} />}
-      {!q.isLoading && !items.length && <EmptyState className="mt-4" compact title={t("track.empty")} />}
+      {q.isError && <ErrorState className="mt-4" title={t("common.error")} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} />}
+      {!q.isLoading && !q.isError && !items.length && <EmptyState className="mt-4" icon={<SearchCheck />} title={t("track.empty")} body={t("track.emptyBody")} action={<Link href={href("/")} className="btn-orange inline-flex">{t("track.emptyCta")}</Link>} />}
       {items.length > 0 && (
         <ul className="card-brand mt-4 divide-y divide-line overflow-hidden" data-testid="track-list">
-          {items.map((i) => (
+          {items.map((i) => {
+            const Icon = ICONS[i.kind]
+            return (
             <li key={`${i.kind}:${i.ref}`}>
-              <Link href={link(i)} className="flex items-center justify-between gap-4 px-4 py-3.5 hover:bg-cloud focus-visible:outline-2 focus-visible:outline-orange sm:px-5">
-                <span><span className="block font-semibold">{i.kind === "SERVICE" && i.serviceType ? t(`services.types.${i.serviceType}`) : <Auto>{i.title}</Auto>}</span><span className="text-xs text-steel">{t(`track.kinds.${i.kind}`)}{sep}<Ltr className="font-mono">{i.ref}</Ltr>{sep}{date(i.updatedAt, { dateOnly: true })}</span></span>
-                <span className="rounded-full border border-navy-900/30 bg-cloud px-3 py-1 text-xs font-semibold text-navy-900">{label(i)}</span>
+              <Link href={link(i)} className="flex items-center gap-4 px-4 py-3.5 hover:bg-cloud focus-visible:outline-2 focus-visible:outline-orange sm:px-5">
+                <Icon aria-hidden className="size-5 shrink-0 text-royal" />
+                <span className="min-w-0 flex-1"><span className="block font-semibold">{i.kind === "SERVICE" && i.serviceType ? t(`services.types.${i.serviceType}`) : <Auto>{i.title}</Auto>}</span><span className="text-xs text-steel">{t(`track.kinds.${i.kind}`)}{sep}<Ltr className="font-mono">{i.ref}</Ltr>{sep}{date(i.updatedAt, { dateOnly: true })}</span></span>
+                <span className="shrink-0 rounded-full border border-navy-900/30 bg-cloud px-3 py-1 text-xs font-semibold text-navy-900">{label(i)}</span>
               </Link>
             </li>
-          ))}
+            )
+          })}
         </ul>
       )}
     </section>
   )
 }
 
-/** Signed out (spec §4.5): reference + phone → a code to that phone → the status timeline only. Never says whether they matched. */
+/** A reference from someone else's request (spec §4.5, ADR-0025): reference + phone → a code to that phone → the status timeline only. Never says whether they matched. */
 function Lookup() {
   const { t, date } = useI18n()
   const [ref, setRef] = useState("")
@@ -121,9 +161,17 @@ export default function TrackPage() {
   const { me, loading } = useSession()
   return (
     <div className="mx-auto max-w-4xl space-y-10 px-4 py-8 md:py-10">
-      <h1 className="font-display text-3xl md:text-4xl">{t("track.title")}</h1>
-      {!loading && me && <Mine />}
-      <Lookup />
+      <header className="flex items-center gap-5">
+        <IconBadge className="hidden sm:grid"><SearchCheck /></IconBadge>
+        <div>
+          <h1 className="font-display text-3xl md:text-4xl">{t("track.title")}</h1>
+          <p className="mt-2 max-w-2xl leading-7 text-steel">{t("track.lead")}</p>
+        </div>
+      </header>
+      {loading && <LoadingState label={t("common.loading")} rows={3} />}
+      {!loading && !me && <SignInGate />}
+      {!loading && me && <><Mine /><Lookup /></>}
+      {!loading && <p className="border-s-2 border-orange ps-4 text-sm leading-6 text-steel" data-testid="track-note">{t("track.statusNote")}</p>}
     </div>
   )
 }

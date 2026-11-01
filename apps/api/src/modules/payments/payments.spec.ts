@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { AppError } from "../../core/errors"
 import { FakePaymentAdapter } from "./fake-payment.adapter"
-import { StripeAdapter, verifyStripeSignature } from "./stripe.adapter"
+import { assertEventAccount, StripeAdapter, verifyStripeSignature } from "./stripe.adapter"
 
 // No real keys anywhere: the secret is generated here and only ever signs a local payload (ADR-0007 P13).
 const secret = `whsec_${randomBytes(24).toString("hex")}`
@@ -53,5 +53,32 @@ describe("adapters are gated (ADR-0007 P1, P12)", () => {
     expect(event.type).toBe("checkout.session.completed")
     expect(() => fake.verifyWebhook(Buffer.from(e.payload + " "), e.signature)).toThrow()
     expect((await fake.retrieveSession(s.id))).toMatchObject({ status: "complete", paymentStatus: "paid", amountTotal: 12_345, currency: "GBP" })
+  })
+})
+
+describe("Stripe Connect (ADR-0028 D11)", () => {
+  const keys = { secretKey: `sk_test_${randomBytes(12).toString("hex")}`, publishableKey: null, webhookSecret: secret }
+  const session = { id: "cs_test_1", status: "open", payment_status: "unpaid", client_secret: "cs_secret", amount_total: 100, currency: "gbp", payment_intent: null, expires_at: 1, customer_details: null }
+  const input = { invoiceId: "i", invoiceNumber: "INV-1", amountMinor: 100, currency: "GBP", expiresAt: new Date(Date.now() + 3600_000), returnUrl: "https://x.test/r", idempotencyKey: "k" }
+  const spy = (a: StripeAdapter) => vi.spyOn((a as unknown as { stripe: Stripe }).stripe.checkout.sessions, "create").mockResolvedValue(session as never)
+
+  it("charges on the connected account when one is set, and on the platform's own account otherwise", async () => {
+    const onAccount = new StripeAdapter({ ...keys, connectedAccountId: "acct_abc123" })
+    const s1 = spy(onAccount)
+    await onAccount.createSession(input)
+    expect(s1.mock.calls[0]![1]).toMatchObject({ stripeAccount: "acct_abc123", idempotencyKey: "k" })
+    const plain = new StripeAdapter(keys)
+    const s2 = spy(plain)
+    await plain.createSession(input)
+    expect(s2.mock.calls[0]![1]).not.toHaveProperty("stripeAccount")
+  })
+
+  it("refuses a correctly signed event from any other account", () => {
+    const ev = (account?: string) => ({ account }) as Stripe.Event
+    expect(() => assertEventAccount(ev("acct_abc123"), "acct_abc123")).not.toThrow()
+    expect(() => assertEventAccount(ev(), null)).not.toThrow()
+    expect(() => assertEventAccount(ev("acct_other"), "acct_abc123")).toThrow(AppError)
+    expect(() => assertEventAccount(ev(), "acct_abc123")).toThrow(AppError)
+    expect(() => assertEventAccount(ev("acct_other"), null)).toThrow(AppError)
   })
 })

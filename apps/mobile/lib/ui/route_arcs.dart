@@ -1,6 +1,7 @@
 import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'theme.dart';
 
@@ -15,22 +16,42 @@ class RouteArcsHeader extends StatelessWidget {
   static const ribbonDepth = 34.0;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: height,
-    width: double.infinity,
-    child: Stack(
-      children: [
-        Positioned.fill(child: ExcludeSemantics(child: CustomPaint(painter: _HeaderPainter()))),
-        Positioned.fill(child: Padding(padding: const EdgeInsets.fromLTRB(20, 20, 20, 20 + ribbonDepth * 0.6), child: child)),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    // Edge-to-edge on Android: the band grows under the status bar so its content and artwork keep their layout.
+    final topInset = MediaQuery.paddingOf(context).top;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Light status-bar icons on the dark header.
+      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      child: SizedBox(
+        height: height + topInset,
+        width: double.infinity,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ExcludeSemantics(
+                child: Transform.flip(
+                  flipX: Directionality.of(context) == TextDirection.rtl,
+                  child: CustomPaint(painter: _HeaderPainter(topInset)),
+                ),
+              ),
+            ),
+            Positioned.fill(child: Padding(padding: const EdgeInsets.fromLTRB(20, 20, 20, 20 + ribbonDepth * 0.6), child: child)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _HeaderPainter extends CustomPainter {
+  const _HeaderPainter(this.topInset);
+  final double topInset;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
+    // Artwork sits by fractions of the band below the status bar.
+    double y(double f) => topInset + (h - topInset) * f;
     const depth = RouteArcsHeader.ribbonDepth;
     final body = Path()
       ..moveTo(0, 0)
@@ -47,7 +68,7 @@ class _HeaderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     for (var i = 1; i < 6; i++) {
-      canvas.drawCircle(Offset(w * 0.88, h * 0.3), i * 46.0, faint);
+      canvas.drawCircle(Offset(w * 0.88, y(0.3)), i * 46.0, faint);
     }
     // Decoration stays in the upper-right band, clear of the logo and headline copy.
     final arc = Paint()
@@ -57,8 +78,8 @@ class _HeaderPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     canvas.drawPath(
       Path()
-        ..moveTo(w * 0.68, h * 0.5)
-        ..quadraticBezierTo(w * 0.84, h * 0.2, w * 0.99, h * 0.34),
+        ..moveTo(w * 0.68, y(0.5))
+        ..quadraticBezierTo(w * 0.84, y(0.2), w * 0.99, y(0.34)),
       arc,
     );
     canvas.restore();
@@ -73,11 +94,11 @@ class _HeaderPainter extends CustomPainter {
     canvas.drawPath(ribbon, Paint()..color = Brand.orange);
 
     // Dashed flight path with an orange pin at its end.
-    final start = Offset(w * 0.68, h * 0.5);
-    final tip = Offset(w * 0.88, h * 0.42);
+    final start = Offset(w * 0.68, y(0.5));
+    final tip = Offset(w * 0.88, y(0.42));
     final path = Path()
       ..moveTo(start.dx, start.dy)
-      ..quadraticBezierTo(w * 0.78, h * 0.55, tip.dx, tip.dy);
+      ..quadraticBezierTo(w * 0.78, y(0.55), tip.dx, tip.dy);
     final dash = Paint()
       ..color = Brand.orange.withValues(alpha: 0.9)
       ..style = PaintingStyle.stroke
@@ -103,5 +124,5 @@ class _HeaderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _HeaderPainter oldDelegate) => oldDelegate.topInset != topInset;
 }

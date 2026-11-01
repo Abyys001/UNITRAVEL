@@ -245,7 +245,7 @@ class SessionNotifier extends Notifier<SessionState> implements AuthDelegate {
 
 final sessionProvider = NotifierProvider<SessionNotifier, SessionState>(SessionNotifier.new);
 
-/// Calendar preference of the signed-in user (Gregorian before sign-in).
+/// Whether Solar Hijri is the primary calendar: the signed-in user's preference, otherwise the UI language (ADR-0024).
 final calendarJalaliProvider = Provider<bool>(
-  (ref) => ref.watch(sessionProvider.select((s) => s.me?.isJalali ?? false)),
+  (ref) => ref.watch(sessionProvider.select((s) => s.me?.isJalali)) ?? ref.watch(localeProvider).languageCode == 'fa',
 );

@@ -23,3 +23,34 @@ test("visa: the form fills without an account; sending asks to sign in and keeps
   await expect(page.getByTestId("remember-note")).toBeVisible()
   expect(await page.evaluate(() => sessionStorage.getItem("ut_draft:svc:VISA"))).toContain("keep me")
 })
+
+for (const [path, testCity, draftKey] of [["/en/trains", "Mashhad", "TRAIN"], ["/en/buses", "Shiraz", "BUS"]] as const) {
+  test(`${path}: hero with From and To dropdowns, no listing section, route survives sign-in`, async ({ page }) => {
+    await page.goto(path)
+    await expect(page.getByTestId("ground-hero").getByRole("heading", { level: 1 })).toBeVisible()
+    await expect(page.getByPlaceholder("Filter by destination")).toHaveCount(0)
+    await expect(page.getByTestId("listing-grid")).toHaveCount(0)
+
+    const from = page.getByLabel("From", { exact: true })
+    const to = page.getByLabel("To", { exact: true })
+    const ids = await from.locator("option").evaluateAll((els) => els.map((e) => (e as HTMLOptionElement).value).filter(Boolean))
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(await from.locator("optgroup").first().locator("option").count()).toBe(10)
+
+    await from.selectOption({ label: "Tehran" })
+    await to.selectOption({ label: "Tehran" })
+    await expect(page.getByRole("alert").filter({ hasText: "must be different" })).toBeVisible()
+    await to.selectOption({ label: testCity })
+
+    await page.getByRole("checkbox").nth(0).check()
+    await page.getByRole("checkbox").nth(1).check()
+    await page.getByRole("button", { name: "Sign in to send request" }).click()
+    await expect(page).toHaveURL(/sign-in\?next=/)
+    const draft = await page.evaluate((k) => sessionStorage.getItem(`ut_draft:svc:${k}`), draftKey)
+    expect(draft).toContain(testCity.toLowerCase())
+
+    await page.goto(path)
+    await expect(page.getByLabel("From", { exact: true })).toHaveValue("tehran")
+    await expect(page.getByLabel("To", { exact: true })).toHaveValue(testCity.toLowerCase())
+  })
+}

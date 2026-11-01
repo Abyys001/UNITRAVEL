@@ -4,13 +4,15 @@ import { useQueryClient } from "@tanstack/react-query"
 import { AlertTriangle, Bell, CalendarClock, ChevronRight, Circle, Ellipsis, Inbox, KeyRound, Keyboard, LogOut, Monitor, Moon, PanelLeftClose, PanelLeftOpen, Search, ShieldAlert, Sun, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { cn } from "@unitravel/ui/lib/utils"
 
 import { Logo, LogoMark } from "@unitravel/ui/brand/logo"
 
-import { api } from "@/lib/api"
+import { setSignedIn } from "@/lib/activity"
+import { api, forgetDevice } from "@/lib/api"
 import { type MsgKey, type T, useT } from "@/lib/i18n"
 import { useCrumbLabels } from "@/lib/crumb"
 import { useLive } from "@/lib/live"
@@ -18,6 +20,7 @@ import { applyPrefs, type Density, type Locale, type Theme, useDensity, useLocal
 import { type Surface, useSession } from "@/lib/session"
 
 import { CommandPalette, type PaletteItem } from "./command-palette"
+import { InstallMenuItem } from "./install"
 import { Segmented, Tip } from "./controls"
 import { StepUpProvider, TotpEnrol, TotpVerify } from "./mfa"
 
@@ -196,10 +199,13 @@ export function Shell({ surface, items, children, onGoTo, goToHint, alerts }: { 
     return () => window.removeEventListener("keydown", onKey)
   }, [setCollapsed])
   const signOut = useCallback(async () => {
+    setSignedIn(false)
     try { await api("/v1/auth/logout", { method: "POST", body: {} }) } catch { /* the session may already be gone */ }
+    // Staying on this screen beats implying a sign-out that a remembered device would quietly undo (ADR-0022).
+    if (!(await forgetDevice())) { setSignedIn(true); toast.error(t("session.signoutFailed")); return }
     qc.clear()
     router.replace("/sign-in")
-  }, [qc, router])
+  }, [qc, router, t])
 
   const themeName = (v: Theme) => t(`theme.${v}`)
   const densityName = (v: Density) => t(`density.${v}`)
@@ -334,6 +340,7 @@ export function Shell({ surface, items, children, onGoTo, goToHint, alerts }: { 
                     </div>
                     <div className="border-t border-rule pt-1.5">
                       <Link href="/account" onClick={close} className="menu-item"><KeyRound className="size-4 text-steel" aria-hidden />{t("user.account")}</Link>
+                      <InstallMenuItem onDone={close} />
                       <button type="button" onClick={() => void signOut()} className="menu-item" data-testid="sign-out"><LogOut className="size-4 text-steel" aria-hidden />{t("action.signout")}</button>
                     </div>
                   </div>

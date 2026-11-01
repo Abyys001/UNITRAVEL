@@ -52,10 +52,13 @@ export function Unavailable({ title }: { title: string }) {
  * Shared frame for every service request form (ADR-0015): flag gate, sign-in, contact phone, travellers (when the type
  * needs them), the two acknowledgements and the submit. The page owns its own fields and passes the `details` object.
  */
-export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, details, valid, embedded, children }: {
+export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, details, valid, embedded, hero, children }: {
   type: ServiceRequestType; menuKey: MenuKey; title: string; lead: string; withTravellers?: boolean; details: Record<string, unknown>; valid: boolean
   /** Inside a landing page (hotels, ADR-0017): no page redirect to sign-in, an h2 heading, and nothing when the service is off. */
-  embedded?: boolean; children: React.ReactNode
+  embedded?: boolean
+  /** Full-bleed page header (trains, buses) with its own h1. It sits inside the form so its fields survive the sign-in round trip. */
+  hero?: React.ReactNode
+  children: React.ReactNode
 }) {
   const { t, href, locale } = useI18n()
   const router = useRouter()
@@ -85,8 +88,9 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
     setAck(d.ack)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formShown])
-  if (loaded && !enabled) return embedded ? null : <Unavailable title={title} />
-  if (!loaded || loading) return <div className="mx-auto max-w-3xl px-4 py-8"><LoadingState label={t("common.loading")} rows={3} /></div>
+  // A page with its own hero has no shell band, so these states must clear the fixed header themselves.
+  if (loaded && !enabled) return embedded ? null : <div className={hero ? "pt-20" : ""}><Unavailable title={title} /></div>
+  if (!loaded || loading) return <div className={`mx-auto max-w-3xl px-4 py-8 ${hero ? "pt-28" : ""}`}><LoadingState label={t("common.loading")} rows={3} /></div>
 
   const ready = valid && ack.notABooking && ack.privacy && (!me || (!!contact && (!withTravellers || chosen.length > 0)))
   const submit = async () => {
@@ -108,17 +112,10 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
   }
   const name = (x: TravellerView) => (locale === "fa" && x.nameFa ? x.nameFa : `${x.givenNames} ${x.surname}`)
 
-  return (
-    <div className={embedded ? "" : "mx-auto max-w-5xl px-4 py-8 md:py-10"}>
-      <div className="grid items-center gap-6 md:grid-cols-[1fr_16rem]">
-        <div>
-          {embedded ? <h2 className="font-display text-3xl md:text-4xl">{title}</h2> : <h1 className="font-display text-3xl md:text-4xl">{title}</h1>}
-          <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
-        </div>
-        <ServiceScene kind={SCENE[type]} className="hidden aspect-[5/3] md:block" />
-      </div>
-      <form ref={formRef} className="mt-6 max-w-3xl space-y-6" onSubmit={(e) => { e.preventDefault(); if (ready && !busy) void submit() }} noValidate>
-        <fieldset className="card-brand grid gap-4 p-5 sm:grid-cols-2">{children}</fieldset>
+  const onSubmit = (e: React.FormEvent) => { e.preventDefault(); if (ready && !busy) void submit() }
+  const fields = (
+    <>
+        <fieldset className="card-brand grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 p-5 sm:grid-cols-2">{children}</fieldset>
 
         {withTravellers && !!me && (
           <fieldset className="card-brand p-5">
@@ -160,7 +157,31 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
           </div>
         )}
         <button type="submit" className="btn-orange" disabled={!ready || busy} aria-disabled={!ready || busy}>{me ? t("services.submit") : t("services.signInToSend")}</button>
+    </>
+  )
+
+  if (hero) {
+    return (
+      <form ref={formRef} onSubmit={onSubmit} noValidate>
+        {hero}
+        <div id="ground-details" className="mx-auto max-w-3xl scroll-mt-24 space-y-6 px-4 pb-14 pt-6 md:px-6">
+          <h2 className="font-display text-2xl md:text-3xl">{t("services.groundDetailsTitle")}</h2>
+          {fields}
+        </div>
       </form>
+    )
+  }
+
+  return (
+    <div className={embedded ? "" : "mx-auto max-w-5xl px-4 py-8 md:py-10"}>
+      <div className="grid items-center gap-6 md:grid-cols-[1fr_16rem]">
+        <div>
+          {embedded ? <h2 className="font-display text-3xl md:text-4xl">{title}</h2> : <h1 className="font-display text-3xl md:text-4xl">{title}</h1>}
+          <p className="mt-3 max-w-2xl leading-7 text-steel">{lead}</p>
+        </div>
+        <ServiceScene kind={SCENE[type]} className="hidden aspect-[5/3] md:block" />
+      </div>
+      <form ref={formRef} className="mt-6 max-w-3xl space-y-6" onSubmit={onSubmit} noValidate>{fields}</form>
     </div>
   )
 }

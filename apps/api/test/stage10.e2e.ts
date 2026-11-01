@@ -98,7 +98,7 @@ describe("Phase C — quotations and invoices (ADR-0006; booklet ch. 13.6, 13.7,
     const mail = await until(async () => { const m = await mailTo(email, 2); return m }, (m) => m.Subject.includes(number))
     expect(mail.Subject).toContain(number)
     const link = shortCode(mail.Text)
-    expect(mail.Text).not.toMatch(/5000|50\.00/) // no amount in the mailbox
+    expect(mail.Text).toContain("GBP 50.00") // the invoice email carries the total and the services (ADR-0028 D8)
     const resolved = await (await fetch(`${API}/v1/s/${link}`)).json() as { target: string }
     expect(resolved.target).toBe(`/billing/${number}`)
     expect((await new Session("WEB").get(`/v1/billing/invoices/${number}`)).status).toBe(401)

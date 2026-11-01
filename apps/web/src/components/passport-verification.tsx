@@ -5,6 +5,7 @@ import { useState } from "react"
 import type { TravellerView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 
+import { Country } from "@unitravel/ui/product/country"
 import { VerificationBadge } from "@/components/verification-badge"
 import { api, ApiError } from "@/lib/api"
 import { countryName } from "@/lib/countries"
@@ -45,7 +46,7 @@ export function PassportVerification({ traveller, onChanged }: { traveller: Trav
     } finally { setBusy(null) }
   }
   // Values are shown as they appear in the passport (ISO dates, Latin names), so they are compared like for like.
-  const row = (label: string, value: string, dir: "ltr" | "auto" = "ltr") => <div className="flex justify-between gap-4 py-1"><dt className="text-steel">{label}</dt><dd className="font-medium" dir={dir}>{value}</dd></div>
+  const row = (label: string, value: React.ReactNode, dir: "ltr" | "auto" = "ltr") => <div className="flex justify-between gap-4 py-1"><dt className="text-steel">{label}</dt><dd className="font-medium" dir={dir}>{value}</dd></div>
 
   return (
     <div className="space-y-4" data-testid="passport-verification">
@@ -74,9 +75,9 @@ export function PassportVerification({ traveller, onChanged }: { traveller: Trav
           <dl className="mt-2 text-sm">
             {row(t("identity.fieldName"), `${traveller.givenNames} ${traveller.surname}`)}
             {row(t("identity.fieldDob"), traveller.dateOfBirth)}
-            {row(t("identity.fieldNationality"), countryName(traveller.nationality, locale), "auto")}
+            {row(t("identity.fieldNationality"), <Country code={traveller.nationality}>{countryName(traveller.nationality, locale)}</Country>, "auto")}
             {row(t("identity.fieldNumber"), `••••${doc.last4}`)}
-            {row(t("identity.fieldIssuing"), countryName(doc.issuingCountry, locale), "auto")}
+            {row(t("identity.fieldIssuing"), <Country code={doc.issuingCountry}>{countryName(doc.issuingCountry, locale)}</Country>, "auto")}
             {row(t("identity.fieldExpiry"), doc.expiryDate)}
           </dl>
           <Button className="mt-3" disabled={busy !== null} onClick={() => void confirm()}>{t("identity.confirm")}</Button>

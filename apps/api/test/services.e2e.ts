@@ -221,7 +221,7 @@ describe("Site configuration (spec 4.1, 4.6)", () => {
 })
 
 describe("Purchase tracking (spec 4.5)", () => {
-  it("signed in: one list of own requests; signed out: lookup never enumerates, verify returns the timeline only", async () => {
+  it("one list of own requests; lookups need sign-in, never enumerate, and verify returns the timeline only", async () => {
     await setFlag("services.tours.enabled", true)
     const u = await customer("Leila")
     const ref = (await u.c.post("/v1/service-requests", tourBody(u))).body.ref as string
@@ -231,8 +231,10 @@ describe("Purchase tracking (spec 4.5)", () => {
     expect(mine[0]).toMatchObject({ kind: "SERVICE", ref, serviceType: "TOUR_CALLBACK", status: "SUBMITTED", statusLabel: "Received" })
     expect((await anon.get("/v1/track")).status).toBe(401)
 
+    for (const p of ["/v1/track/lookup", "/v1/track/verify"]) expect((await anon.post(p, { ref, phone: u.phone, code: "000000", deviceId: anon.deviceId })).status).toBe(401)
+
     // Lookups: matching and non-matching pairs answer identically (202, same body) and only the match sends an SMS.
-    const stranger = new Session("WEB")
+    const stranger = (await customer("Stranger")).c
     const noPhone = randomPhone("+98912")
     const miss = await stranger.post("/v1/track/lookup", { ref, phone: noPhone, deviceId: stranger.deviceId })
     const unknownRef = await stranger.post("/v1/track/lookup", { ref: "UT-S-ZZZZZZ", phone: randomPhone("+98912"), deviceId: stranger.deviceId })
@@ -262,7 +264,7 @@ describe("Purchase tracking (spec 4.5)", () => {
   })
 
   it("lookups from one address face the proof-of-work challenge like OTP sign-in", async () => {
-    const s = new Session("WEB")
+    const s = (await customer("Pow")).c
     const post = (phone: string, extra: Record<string, unknown> = {}) => s.post("/v1/track/lookup", { ref: "UT-S-ZZZZZZ", phone, deviceId: s.deviceId, ...extra })
     for (let i = 0; i < 3; i++) expect((await post(randomPhone("+98912"))).status).toBe(202)
     const phone = randomPhone("+98912")

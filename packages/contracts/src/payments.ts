@@ -18,7 +18,7 @@ export const OnlinePaymentReason = z.enum(ONLINE_PAYMENT_REASONS)
 export type OnlinePaymentReason = z.infer<typeof OnlinePaymentReason>
 
 /** Keys a policy of type ONLINE_PAYMENT may carry. */
-export const OnlinePaymentPolicyKey = z.string().regex(/^(product:(FLIGHT|CARGO)|currency:[A-Z]{3}|max_minor:\d{1,12}|customer:[0-9a-f-]{36})$/)
+export const OnlinePaymentPolicyKey = z.string().regex(/^(product:(FLIGHT|CARGO|SERVICE)|currency:[A-Z]{3}|max_minor:\d{1,12}|customer:[0-9a-f-]{36})$/)
 
 export const OnlinePaymentPolicy = z.object({ key: OnlinePaymentPolicyKey, action: z.enum(["ALLOW", "BLOCK"]) })
 export type OnlinePaymentPolicy = z.infer<typeof OnlinePaymentPolicy>
@@ -33,6 +33,8 @@ export type PaymentSessionStatus = z.infer<typeof PaymentSessionStatus>
 /** Returned to the browser: the client secret and the publishable key only, never a secret key (ADR-0007 P3). */
 export const CheckoutSessionView = z.object({
   provider: PaymentProviderId,
+  /** Stripe.js must be told the account when the session lives on a connected account (ADR-0028 D11). */
+  connectedAccountId: z.string().nullable().default(null),
   clientSecret: z.string().min(1),
   publishableKey: z.string().nullable(),
   expiresAt: IsoDateTime,
@@ -105,11 +107,19 @@ export const StripeCredentialsBody = z.object({
   secretKey: z.string().regex(/^(sk|rk)_(test|live)_[A-Za-z0-9_]{8,200}$/).optional(),
   publishableKey: z.string().regex(/^pk_(test|live)_[A-Za-z0-9_]{8,200}$/).optional(),
   webhookSecret: z.string().regex(/^whsec_[A-Za-z0-9_+/=]{8,200}$/).optional(),
-}).refine((b) => !!(b.secretKey || b.publishableKey || b.webhookSecret), { message: "Provide at least one value" })
+  /** Stripe Connect (ADR-0028 D11): charges go on this account. Not a secret. `null` removes it. */
+  connectedAccountId: z.string().regex(/^acct_[A-Za-z0-9]{6,64}$/).nullable().optional(),
+}).refine((b) => !!(b.secretKey || b.publishableKey || b.webhookSecret || b.connectedAccountId !== undefined), { message: "Provide at least one value" })
 export type StripeCredentialsBody = z.infer<typeof StripeCredentialsBody>
 
 export const PaymentConfigPatchBody = z.object({ provider: PaymentProviderId })
 export const StripeModeRequestBody = z.object({ mode: StripeMode, note: z.string().trim().min(3).max(300).optional() })
+
+/** The events the webhook handles (`PaymentsService.dispatch`), shown so the owner subscribes to exactly these. */
+export const STRIPE_WEBHOOK_EVENTS = [
+  "checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "checkout.session.expired", "charge.refunded",
+  "charge.dispute.created", "charge.dispute.updated", "charge.dispute.closed", "charge.dispute.funds_withdrawn", "charge.dispute.funds_reinstated",
+] as const
 
 export const PaymentsConfigView = z.object({
   provider: PaymentProviderId,
@@ -119,6 +129,12 @@ export const PaymentsConfigView = z.object({
   flagEnabled: z.boolean(),
   fakeAvailable: z.boolean(),
   webhookUrl: z.string(),
+  /** False on a deployed host: the form then explains that test keys are refused there (ADR-0014). */
+  keysAccepted: z.boolean(),
+  /** What must be true before customers see Pay on a service invoice; nothing here switches anything on. */
+  setup: z.object({ keys: z.boolean(), webhook: z.boolean(), flag: z.boolean(), servicePolicy: z.boolean(), currencyPolicy: z.boolean() }),
+  webhookEvents: z.array(z.string()),
+  connectedAccountId: z.string().nullable(),
   credentials: z.object({ secretKey: z.boolean(), publishableKey: z.boolean(), webhookSecret: z.boolean(), rotatedAt: IsoDateTime.nullable() }),
   pendingModeRequest: z.object({ mode: StripeMode, requestedBy: z.string(), requestedAt: IsoDateTime }).nullable(),
   events: z.array(StripeEventView),

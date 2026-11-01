@@ -53,6 +53,8 @@ export function bidiRuns(text: string): { text: string; rtl: boolean }[] {
 /** Persian keeps its own letters; bidi marks have no glyph in the font and are dropped. */
 const persian = (s: string) => ascii(s).normalize("NFC").replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").replace(/[^\x20-\x7E\u00A0\u0600-\u06FF\u0750-\u077F\u200c\u200d£€]/g, "").replace(/£/g, "GBP ").replace(/€/g, "EUR ")
 
+const PERSIAN_TEXT = /[\u0600-\u06FF\u0750-\u077F]/
+
 // apps/api/assets/fonts, from both src/modules/documents (tests) and dist/modules/documents (runtime).
 const fontBytes = new Map<string, Buffer>()
 const vazirmatn = (weight: "Regular" | "Bold") => {
@@ -64,11 +66,15 @@ const vazirmatn = (weight: "Regular" | "Bold") => {
 export async function renderPdf(title: string, subtitle: string, sections: PdfSection[], footer: string[], options: PdfOptions = {}): Promise<Buffer> {
   const doc = await PDFDocument.create()
   const fa = options.locale === "fa"
-  if (fa) doc.registerFontkit(fontkit)
+  // An English document can still hold Persian that staff or customers typed (an invoice line, a name); dropping it would lose the text.
+  const mixed = !fa && PERSIAN_TEXT.test(JSON.stringify([title, subtitle, sections, footer]))
+  if (fa || mixed) doc.registerFontkit(fontkit)
   const font = fa ? await doc.embedFont(vazirmatn("Regular"), { subset: true }) : await doc.embedFont(StandardFonts.Helvetica)
   const bold = fa ? await doc.embedFont(vazirmatn("Bold"), { subset: true }) : await doc.embedFont(StandardFonts.HelveticaBold)
   const brand = fa ? await doc.embedFont(StandardFonts.HelveticaBold) : bold
-  const clean = fa ? persian : latin
+  const faFont = mixed ? await doc.embedFont(vazirmatn("Regular"), { subset: true }) : null
+  const faBold = mixed ? await doc.embedFont(vazirmatn("Bold"), { subset: true }) : null
+  const clean = fa ? persian : (s: string) => (PERSIAN_TEXT.test(s) ? s : latin(s))
   /** Draws text ending at `xr`, first logical run rightmost. fontkit reverses whatever it draws as Persian, so Persian digits are handed over pre-reversed to read left to right. */
   const drawRtl = (pg: PDFPage, text: string, xr: number, yy: number, size: number, f: typeof font, color: ReturnType<typeof rgb>) => {
     let x = xr
@@ -89,6 +95,7 @@ export async function renderPdf(title: string, subtitle: string, sections: PdfSe
   const line = (text: string, opts: { size?: number; f?: typeof font; color?: ReturnType<typeof rgb>; x?: number } = {}) => {
     if (y < 80) { page = doc.addPage([595, 842]); y = 790 }
     if (fa) drawRtl(page, clean(text).slice(0, 110), 545, y, opts.size ?? 10, opts.f ?? font, opts.color ?? NAVY)
+    else if (faFont && faBold && PERSIAN_TEXT.test(text)) drawRtl(page, persian(text).slice(0, 110), 545, y, opts.size ?? 10, opts.f === bold ? faBold : faFont, opts.color ?? NAVY)
     else page.drawText(latin(text).slice(0, 110), { x: opts.x ?? 50, y, size: opts.size ?? 10, font: opts.f ?? font, color: opts.color ?? NAVY })
     y -= (opts.size ?? 10) + 6
   }
@@ -120,13 +127,21 @@ export async function renderPdf(title: string, subtitle: string, sections: PdfSe
       const draw = (cells: string[], f: typeof font, size: number) => {
         if (y < 80) { page = doc.addPage([595, 842]); y = 790 }
         t.columns.forEach((c, i) => {
-          const v = latin(cells[i] ?? "").slice(0, 70)
+          const raw = cells[i] ?? ""
+          if (faFont && faBold && PERSIAN_TEXT.test(raw)) {
+            // Right-aligned within its column: the next column's left edge bounds it.
+            const next = t.columns[i + 1]
+            const xr = c.right ? c.x : next ? next.x - 75 : 545
+            drawRtl(page, persian(raw).slice(0, 60), xr, y, size, f === bold ? faBold : faFont, NAVY)
+            return
+          }
+          const v = latin(raw).slice(0, 70)
           page.drawText(v, { x: c.right ? c.x - f.widthOfTextAtSize(v, size) : c.x, y, size, font: f, color: NAVY })
         })
         y -= size + 7
       }
       draw(t.columns.map((c) => c.label.toUpperCase()), bold, 8)
-      page.drawLine({ start: { x: 50, y: y + 5 }, end: { x: 545, y: y + 5 }, thickness: 0.6, color: LINE })
+      page.drawLine({ start: { x: 50, y: y + 11 }, end: { x: 545, y: y + 11 }, thickness: 0.6, color: LINE })
       t.rows.forEach((r, i) => draw(r, t.emphasis && i === t.rows.length - 1 ? bold : font, 10))
     }
     for (const p of s.paragraphs ?? []) for (const chunk of wrap(clean(p), 95)) line(chunk)

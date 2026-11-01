@@ -4,7 +4,7 @@ import type { Request } from "express"
 
 import { PublicTrackView, TrackItem, TrackLookupBody, TrackLookupResult, TrackVerifyBody } from "@unitravel/contracts"
 
-import { type Actor, Ctx, CurrentActor, Public, RateLimit, type RequestContext, RequirePermission } from "../../core/http/decorators"
+import { type Actor, Ctx, CurrentActor, RateLimit, type RequestContext, RequirePermission } from "../../core/http/decorators"
 import { ApiZodBody, ApiZodResponse, zbody } from "../../core/http/zod"
 import { TrackService } from "./track.service"
 
@@ -21,9 +21,9 @@ export class TrackController {
     return this.track.mine(actor.userId, ctx.locale)
   }
 
-  /** Always 202 with the same body, whether or not the reference and phone matched. Limits and proof of work as OTP sign-in. */
+  /** Signed in only (ADR-0025). Always 202 with the same body, whether or not the reference and phone matched. Limits and proof of work as OTP sign-in. */
   @Post("lookup")
-  @Public()
+  @RequirePermission("flight_request.read.own")
   @HttpCode(202)
   @RateLimit({ name: "track-lookup", limit: 120, windowSeconds: 600, key: "ip" })
   @ApiZodBody(TrackLookupBody)
@@ -34,7 +34,7 @@ export class TrackController {
 
   /** The status timeline only: no names, passport data, amounts or documents. */
   @Post("verify")
-  @Public()
+  @RequirePermission("flight_request.read.own")
   @HttpCode(200)
   @RateLimit({ name: "track-verify", limit: 120, windowSeconds: 600, key: "ip" })
   @ApiZodBody(TrackVerifyBody)

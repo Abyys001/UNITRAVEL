@@ -123,7 +123,7 @@ T = {
  'problemDateOrder': ('Dates must be in order.', 'تاریخ‌ها باید به ترتیب باشند.'),
  'problemInfants': ('Each infant needs an adult on the same booking.', 'برای هر نوزاد یک بزرگسال لازم است.'),
  'calendarGregorian': ('Gregorian', 'میلادی'),
- 'calendarJalali': ('Jalali', 'شمسی'),
+ 'calendarJalali': ('Solar Hijri', 'شمسی'),
  # results
  'resultsTitle': ('Results', 'نتایج'),
  'searchingSources': ('Searching {total} sources · {done} of {total}', 'در حال جستجوی {total} منبع، {done} از {total}', {'total': 'int', 'done': 'int'}),
@@ -390,7 +390,7 @@ T = {
  'accountTitle': ('Account', 'حساب'),
  'profileSection': ('Profile', 'مشخصات'),
  'preferences': ('Preferences', 'تنظیمات'),
- 'calendarLabel': ('Calendar', 'تقویم'),
+ 'calendarLabel': ('Primary calendar', 'تقویم اصلی'),
  'myTravellers': ('Saved travellers', 'مسافران ذخیره‌شده'),
  'signOut': ('Sign out', 'خروج'),
  'signOutConfirm': ('Sign out of this device?', 'از این دستگاه خارج می‌شوید؟'),

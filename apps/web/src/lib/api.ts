@@ -12,6 +12,12 @@ function cookie(name: string) {
   return document.cookie.split("; ").find((c) => c.startsWith(`${name}=`))?.slice(name.length + 1)
 }
 
+/** A visitor with no session cookie has nothing to check: browsers log every 401 as an error, and browsing is open to everyone. */
+export const hasSessionCookie = () => !!cookie("ut_csrf")
+
+/** The API has refused this browser's session cookies, which stay HttpOnly; dropping the readable one stops the next page asking again. */
+export const forgetSessionCookie = () => { document.cookie = "ut_csrf=; Max-Age=0; Path=/" }
+
 let refreshing: Promise<boolean> | null = null
 async function refresh(): Promise<boolean> {
   refreshing ??= fetch("/api/v1/auth/refresh", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).then((r) => r.ok).finally(() => setTimeout(() => (refreshing = null), 0))

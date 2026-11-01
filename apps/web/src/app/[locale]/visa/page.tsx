@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { CountrySelect } from "@unitravel/ui/product/country"
 import { Field, inDays, inputCls, ServiceFormFrame, today } from "@/components/service-form"
 import { COUNTRIES, countryName } from "@/lib/countries"
 import { useI18n } from "@/lib/i18n"
@@ -16,7 +17,7 @@ export default function VisaPage() {
   return (
     <ServiceFormFrame type="VISA" menuKey="visa" title={t("services.visaTitle")} lead={t("services.visaLead")} withTravellers details={details} valid={!!f.intendedTravelDate}>
       <Field id="v-dest" label={t("services.destinationCountry")}>
-        <select id="v-dest" className={inputCls} value={f.destinationCountry} onChange={(e) => setF({ ...f, destinationCountry: e.target.value })}>{COUNTRIES.filter((c) => c !== "IR").map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</select>
+        <CountrySelect id="v-dest" className={inputCls} value={f.destinationCountry} onChange={(e) => setF({ ...f, destinationCountry: e.target.value })}>{COUNTRIES.filter((c) => c !== "IR").map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</CountrySelect>
       </Field>
       <Field id="v-purpose" label={t("services.purpose")}>
         <select id="v-purpose" className={inputCls} value={f.purpose} onChange={(e) => setF({ ...f, purpose: e.target.value as typeof f.purpose })}>{PURPOSES.map((p) => <option key={p} value={p}>{t(`services.purposes.${p}`)}</option>)}</select>

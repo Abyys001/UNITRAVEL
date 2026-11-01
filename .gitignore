@@ -17,5 +17,9 @@ media/raw/
 media/teaser/.state/
 
 # local tooling output
-graphify-out/
+graphify-out/.gate/
+graphify-out/.graphify_*
+graphify-out/needs_update
+graphify-out/20[0-9][0-9]-*/
+apps/mobile/test/golden/failures/
 .playwright-mcp/

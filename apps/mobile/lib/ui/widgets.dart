@@ -101,7 +101,7 @@ class LtrText extends StatelessWidget {
     child: Text(
       text,
       style: (style ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
-        fontFamily: mono ? 'Montserrat' : null,
+        fontFamily: mono ? 'Figtree' : null,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
     ),
@@ -123,6 +123,7 @@ class GlassPanel extends StatelessWidget {
     this.padding,
     this.blur = BrandTokens.glassBlur,
     this.fill,
+    this.edge,
   });
   final Widget child;
   final BorderRadius? radius;
@@ -131,6 +132,9 @@ class GlassPanel extends StatelessWidget {
 
   /// Overrides the tint alpha for panes that carry text over arbitrary content (sheets, the tab bar).
   final double? fill;
+
+  /// Overrides the specular edge colour.
+  final Color? edge;
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +146,7 @@ class GlassPanel extends StatelessWidget {
     final fillColor = dark
         ? Brand.navy950.withValues(alpha: tint)
         : Colors.white.withValues(alpha: tint);
-    final edge = Colors.white.withValues(
+    final edgeColor = edge ?? Colors.white.withValues(
       alpha: dark ? 0.16 : BrandTokens.glassEdge,
     );
     final decorated = DecoratedBox(
@@ -161,7 +165,7 @@ class GlassPanel extends StatelessWidget {
                 ],
                 stops: const [0, 0.5, 1],
               ),
-        border: Border.all(color: opaque ? (dark ? Brand.inkLine : Brand.line) : edge),
+        border: Border.all(color: opaque ? (dark ? Brand.inkLine : Brand.line) : edgeColor),
         boxShadow: dark ? null : Brand.cardShadow,
       ),
       child: padding == null ? child : Padding(padding: padding!, child: child),
@@ -288,8 +292,11 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Cards repeat in lists: tint and specular edge only, no BackdropFilter per card (blur is kept for bars and sheets).
+    // A hairline and a denser tint: on the pale page background a white specular edge alone left cards without a visible boundary.
     final card = GlassPanel(
       blur: 0,
+      fill: isDark(context) ? null : 0.92,
+      edge: isDark(context) ? null : Brand.line,
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(onTap: onTap, child: Padding(padding: padding, child: child)),

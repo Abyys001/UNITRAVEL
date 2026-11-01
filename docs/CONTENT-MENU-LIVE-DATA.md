@@ -527,7 +527,8 @@ v1 stays request-based (D-02). One generic request type instead of four modules:
 
 - `/track` signed in: one list of flight requests, cargo requests, service requests and invoices, with status chips and
   filters, linking to the existing detail pages.
-- Signed out: reference + phone number. `POST /v1/track/lookup` always answers 202 (no enumeration) and sends an OTP to
+- **Changed by ADR-0025:** tracking needs sign-in. Signed out, `/track` only explains this and links to sign-in; the lookup below is for signed-in customers holding someone else's reference.
+- Reference + phone number. `POST /v1/track/lookup` always answers 202 (no enumeration) and sends an OTP to
   the phone on record only when both match; `POST /v1/track/verify` returns the status timeline only (no names,
   passport data or prices). Rate-limited and PoW-protected like OTP sign-in.
 

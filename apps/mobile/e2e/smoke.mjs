@@ -90,6 +90,10 @@ try {
     await byRole('button', 'ارسال کد').click()
     await field(/کد تأیید/).waitFor()
     const code = await latestEmailCode(email, since)
+    // The local dev-code box autofills this field a moment later; typing during that would interleave with it.
+    await settle(2500)
+    await field(/کد تأیید/).click()
+    await page.keyboard.press('Control+A')
     await type(field(/کد تأیید/), code)
     await shot('03-otp-fa')
     await byRole('button', 'تأیید').click()

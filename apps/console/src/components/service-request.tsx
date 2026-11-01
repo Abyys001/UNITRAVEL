@@ -10,6 +10,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { cn } from "@unitravel/ui/lib/utils"
 
+import { Country } from "@unitravel/ui/product/country"
 import { StatusChip } from "@/components/bento"
 import { statusTone } from "@/components/case"
 import { benefitValue, CURRENCIES, inDays } from "@/components/club"
@@ -65,10 +66,11 @@ export function ServiceDetails({ d }: { d: StaffServiceRequestView }) {
   entries.sort(([a], [b]) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99))
   const value = (k: string, v: unknown): React.ReactNode => {
     if (k === "travellerIds" && Array.isArray(v)) {
-      return <ul>{v.map((id) => { const p = d.travellers.find((x) => x.id === id); return <li key={String(id)} dir="auto">{p ? <>{p.name}{p.nationality && <span className="text-steel"> · {p.nationality}</span>}</> : <span className="ref text-steel">{String(id).slice(0, 8)}</span>}</li> })}</ul>
+      return <ul>{v.map((id) => { const p = d.travellers.find((x) => x.id === id); return <li key={String(id)} dir="auto">{p ? <>{p.name}{p.nationality && <span className="text-steel"> · <Country code={p.nationality} /></span>}</> : <span className="ref text-steel">{String(id).slice(0, 8)}</span>}</li> })}</ul>
     }
     if (k === "linkedFlightRequestRef" && typeof v === "string") return can("flight_request.read.any") ? <Link href={`/requests/${v}`} className="ref text-link hover:underline">{v}</Link> : <span className="ref">{v}</span>
-    if (k === "offerSnapshotId" || k === "flightNumber" || k === "airport" || k === "destinationCountry") return <span className="ref" dir="ltr">{String(v)}</span>
+    if (k === "destinationCountry") return <span className="ref" dir="ltr"><Country code={String(v)} /></span>
+    if (k === "offerSnapshotId" || k === "flightNumber" || k === "airport") return <span className="ref" dir="ltr">{String(v)}</span>
     if (ENUM_FIELDS.has(k) && typeof v === "string") return label(t, "svc.v", v)
     if (PREF_FIELDS[k] && typeof v === "string") return <>{label(t, PREF_FIELDS[k], v)}{k === "mealPlan" && <span className="ref text-steel" dir="ltr"> {v}</span>}</>
     if (k === "minStars" && typeof v === "number") return <span className="num">{t("svc.v.stars", { n: v })}</span>

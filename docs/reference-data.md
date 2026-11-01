@@ -42,3 +42,16 @@ The booklet's licensing note (ch. 23.5) requires reference data to be sourced un
 - Add new reference rows through a migration or the seed, never through hand edits in production.
 - A new airport needs its IANA time zone. A new airline needs its accounting code when known; leave it null otherwise.
 - Policy rows are data (D-01 and others). Changing them in production is a staff action with the approvals defined in the compliance module; do not weaken seeds in code.
+
+## Train and bus cities
+
+`apps/web/src/lib/ground-places.ts` holds the From and To options on `/trains` and `/buses` (owner request, 1 Nov 2026). It is a static list of Iranian cities, not a timetable: the request still goes to staff, who confirm route, times and price. Nothing was fetched from RAI or Raja: `raja.ir` refused the request (403), so **no list here is checked against a current timetable (UNKNOWN)**. Staff should review it before relying on it. Retrieved 1 Nov 2026.
+
+| List | Evidence | Source |
+|---|---|---|
+| Train, frequently chosen | DOCUMENTED, ticket seller and travel guide route lists; not sales statistics | [Alibaba train tickets](https://www.alibaba.ir/train-ticket), [Trenopedia](https://trenopedia.com/?p=637) (updated 19 Jan 2024) |
+| Train, all cities | DOCUMENTED, but the main list is about 2020 | [iranrail.net station finder](https://iranrail.net/old/stations.php), [Rail transport in Iran](https://en.wikipedia.org/wiki/Rail_transport_in_Iran) (Bandar-e Mahshahr) |
+| Bus, frequently chosen | INFERRED: a "most popular domestic tickets" list seen in a web search summary; the exact page was not recorded or opened, and these are not sales statistics | Search results included [Zoomit on busy routes](https://www.zoomit.ir/iran-news/465003-how-to-find-bus-tickets-busy-routes/) and [Flytoday, Tabriz to Tehran](https://www.flytoday.ir/bus/tabriz-tehran) |
+| Bus, all cities | Mixed: terminals named by a seller are DOCUMENTED; the remaining provincial capitals are INFERRED (all 31 are included) | [Alibaba bus terminals](https://www.alibaba.ir/bus/payaneha); Baneh, Birjand, Ramsar and Mehran from seller route lists |
+
+Left out of the train list on purpose: Sanandaj, Ardabil and Khash (line built or reported, passenger service not confirmed); Ankara and Van (outside Iran; trains here are Iran only); small junctions and stops in the station finder (Abyek, Azadur, Badrud, Pishva, Razi, Zavareh, Qom-Mohammadiye). Persian names were written for this project and need a native check by staff.

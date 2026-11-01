@@ -58,8 +58,9 @@ ThemeData buildAppTheme(Locale locale, {Brightness brightness = Brightness.light
   final bg = colors.bg;
   final line = colors.border;
   final onBrand = dark ? Brand.sky : Brand.navy900;
-  // Montserrat 800 carries Latin display type; Persian stays on Vazirmatn (DESIGN.md).
-  TextStyle? display(TextStyle? s) => s?.copyWith(fontWeight: FontWeight.w800);
+  // ADR-0023: Montserrat 800 carries Latin display type, Alexandria 700 Persian; the theme's body family stays the fallback.
+  final fa = locale.languageCode == 'fa';
+  TextStyle? display(TextStyle? s) => s?.copyWith(fontFamily: fa ? 'Alexandria' : 'Montserrat', fontWeight: fa ? FontWeight.w700 : FontWeight.w800);
   final card = RoundedRectangleBorder(borderRadius: BorderRadius.circular(Brand.radius));
   final field = BorderRadius.circular(12);
   return base.copyWith(

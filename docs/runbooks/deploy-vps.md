@@ -67,3 +67,9 @@ Postgres (`pg` volume) and object storage (`storage` volume) are the state; Valk
 
 - Demo users (`owner@unitravel.example` and the others in `docs/LOCAL-DEV.md`) exist only on local stacks (ADR-0013). Keep `SEED_DEMO=0` on every deployed host; if an older deploy already seeded them, deactivate them in Developer Panel > Users.
 - Pre-signed uploads go to `https://$STORAGE_HOST`, which Caddy routes to the bundled `storage` service. With managed S3, set `OBJECT_STORAGE_ENDPOINT` and `OBJECT_STORAGE_PUBLIC_ENDPOINT` instead.
+
+## Installable console and remembered devices (ADR-0022)
+- Installing needs HTTPS on `ADMIN_HOST` and `DEV_HOST`. Check `curl -fsSI https://$ADMIN_HOST/manifest.webmanifest` and `/sw.js` both answer 200 after deploying; the console image must contain `apps/console/public`.
+- Apply migration `0018_trusted_devices` before the new API starts.
+- To end every remembered device for a user, use revoke-all sessions in the Developer Panel, or suspend the user. Lifetimes are `AUTH.staffDeviceIdleDays` and `AUTH.staffDeviceMaxDays`.
+- Audit actions to watch: `security.device_reuse` (a remembered-device token was replayed, treat as possible theft), `session.device_resumed`, `session.device_revoked`.

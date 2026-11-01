@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { cn } from "@unitravel/ui/lib/utils"
 
+import { Country } from "@unitravel/ui/product/country"
 import { codeLabel, CURRENCIES, inDays } from "@/components/club"
 import { FormDialog } from "@/components/form-dialog"
 import { ServiceStatus, useServiceLabels } from "@/components/service-request"
@@ -143,7 +144,7 @@ export function AssignServiceDialog({ customerId, travellers, onOpenChange }: { 
                   <li key={p.id}>
                     <label className="flex min-h-control cursor-pointer items-center gap-2 rounded-lg border border-rule px-3 py-1.5 pointer-coarse:min-h-11">
                       <input type="checkbox" checked={people.includes(p.id)} onChange={(e) => setPeople((x) => e.target.checked ? [...x, p.id] : x.filter((i) => i !== p.id))} />
-                      <span dir="auto">{p.givenNames} {p.surname}</span><span className="text-meta text-steel">{p.nationality}</span>
+                      <span dir="auto">{p.givenNames} {p.surname}</span><Country code={p.nationality} className="text-meta text-steel" />
                     </label>
                   </li>
                 ))}

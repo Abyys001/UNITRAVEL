@@ -256,9 +256,10 @@ class _DateField extends ConsumerWidget {
     final jalali = ref.watch(calendarJalaliProvider);
     final leg = ref.watch(searchFormProvider.select((f) => f.legs[index]));
     final date = leg.date;
-    final primary = date == null ? l.chooseDate : formatDate(date, lang: lang, jalali: jalali);
+    // This field lays the two calendars out itself, so it takes them one at a time rather than formatDate's combined text.
+    final primary = date == null ? l.chooseDate : (jalali ? formatJalaliDate(date, lang) : formatGregorianDate(date, lang));
     // Show the other calendar too, so a Jalali user can still read the Gregorian date airlines use.
-    final secondary = date == null ? null : formatDate(date, lang: lang, jalali: !jalali);
+    final secondary = date == null ? null : (jalali ? formatGregorianDate(date, lang) : formatJalaliDate(date, lang));
     return Semantics(
       button: true,
       label: '$label: $primary',

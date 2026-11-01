@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/api_error.dart';
 import '../../core/errors_l10n.dart';
@@ -11,6 +10,7 @@ import '../../core/format.dart';
 import '../../core/providers.dart';
 import '../../core/session.dart';
 import '../../models/me.dart';
+import '../../ui/bento.dart';
 import '../../ui/brand_logo.dart';
 import '../../ui/route_arcs.dart';
 import '../../ui/theme.dart';
@@ -109,6 +109,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         top: false,
         child: PageBody(
           child: ListView(
+            padding: EdgeInsets.zero,
             children: [
               RouteArcsHeader(
                 height: 270,
@@ -138,10 +139,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   children: [
                     Text(l.signInTitle, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 16),
-                    if (notice != null) ...[
-                      Text(notice, style: TextStyle(color: Brand.danger)),
-                      const SizedBox(height: 12),
-                    ],
+                    if (notice != null) ...[Text(notice, style: TextStyle(color: Brand.danger)), const SizedBox(height: 12)],
                     if (!awaitingCode) ...[
                       TextField(
                         controller: _email,
@@ -155,11 +153,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         onSubmitted: (_) => _sendCode(),
                       ),
                       const _TestSignInBox(),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: TextButton.icon(key: const Key('signin-track'), onPressed: () => context.go('/track'), icon: const Icon(Icons.manage_search), label: Text(l.tkSignInLink)),
-                      ),
                     ] else ...[
                       Text(l.codeSentTo(ltr(_challenge!.normalised))),
                       const SizedBox(height: 12),
@@ -312,7 +305,11 @@ class _DevCodeBoxState extends ConsumerState<_DevCodeBox> {
               Expanded(
                 child: _code == null
                     ? Text(l.devCodeWaiting)
-                    : Text(_code!, textDirection: TextDirection.ltr, style: const TextStyle(fontFamily: 'monospace', fontSize: 18, letterSpacing: 4)),
+                    : Text(
+                        _code!,
+                        textDirection: TextDirection.ltr,
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 18, letterSpacing: 4),
+                      ),
               ),
               if (_code != null) TextButton(onPressed: () => widget.onCode(_code!), child: Text(l.devCodeRefill)),
             ],
@@ -333,19 +330,20 @@ class _TestSignInBox extends ConsumerStatefulWidget {
 
 class _TestSignInBoxState extends ConsumerState<_TestSignInBox> {
   static const _storeKey = 'ut.test_sign_in_email';
-  static const _suggestions = [
-    'neda@student.example',
-    'owner@unitravel.example',
-    'sara@unitravel.example',
-    'cargo@unitravel.example',
-    'compliance@unitravel.example',
-    'dev@unitravel.example',
-  ];
+  static const _customer = 'neda@student.example';
+  static const _owner = 'owner@unitravel.example';
+  static const _developer = 'dev@unitravel.example';
+  static const _sara = 'sara@unitravel.example';
+  static const _cargo = 'cargo@unitravel.example';
+  static const _compliance = 'compliance@unitravel.example';
 
-  final _email = TextEditingController(text: _suggestions.first);
+  final _email = TextEditingController();
   bool _on = false;
-  bool _busy = false;
+  bool _showOther = false;
+  String? _busyEmail;
   bool _failed = false;
+
+  bool get _busy => _busyEmail != null;
 
   @override
   void initState() {
@@ -371,11 +369,11 @@ class _TestSignInBoxState extends ConsumerState<_TestSignInBox> {
     }
   }
 
-  Future<void> _submit() async {
-    final value = _email.text.trim();
+  Future<void> _signIn(String email) async {
+    final value = email.trim();
     if (value.isEmpty || _busy) return;
     setState(() {
-      _busy = true;
+      _busyEmail = value;
       _failed = false;
     });
     try {
@@ -386,7 +384,7 @@ class _TestSignInBoxState extends ConsumerState<_TestSignInBox> {
     } catch (_) {
       if (mounted) setState(() => _failed = true);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _busyEmail = null);
     }
   }
 
@@ -394,59 +392,209 @@ class _TestSignInBoxState extends ConsumerState<_TestSignInBox> {
   Widget build(BuildContext context) {
     if (!_on) return const SizedBox.shrink();
     final l = context.l;
+    final theme = Theme.of(context);
+    Widget staff(String label, String email) => Semantics(
+      label: '$label, $email',
+      button: true,
+      excludeSemantics: true,
+      child: ActionChip(key: ValueKey('test-sign-in-$email'), label: Text(label), onPressed: _busy ? null : () => _signIn(email)),
+    );
     return Container(
       key: const ValueKey('test-sign-in'),
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Brand.orange.withValues(alpha: 0.06),
-        border: Border.all(color: Brand.orange.withValues(alpha: 0.6)),
-        borderRadius: BorderRadius.circular(12),
+        color: xc(context).surfaceSunken,
+        borderRadius: BorderRadius.circular(Brand.radius),
+        border: Border.all(color: xc(context).border),
       ),
       child: AutofillGroup(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l.testSignInTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(l.testSignInHint, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 10),
-            TextField(
-              key: const ValueKey('test-sign-in-email'),
-              controller: _email,
-              enabled: !_busy,
-              keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.email],
-              autocorrect: false,
-              textDirection: TextDirection.ltr,
-              textAlign: context.lang == 'fa' ? TextAlign.right : TextAlign.left,
-              decoration: InputDecoration(labelText: l.testSignInEmail),
-              onSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 0,
+            Row(
               children: [
-                for (final s in _suggestions)
-                  ActionChip(
-                    label: Text(s, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 12)),
-                    onPressed: _busy ? null : () => setState(() => _email.text = s),
-                  ),
+                Icon(Icons.science_outlined, size: 20, color: accentText(context)),
+                const SizedBox(width: 8),
+                Expanded(child: Text(l.testSignInTitle, style: theme.textTheme.titleSmall)),
               ],
             ),
+            const SizedBox(height: 4),
+            Text(l.testSignInHint, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 12),
+            _TestRoleCard(
+              email: _customer,
+              icon: Icons.person_outline,
+              title: l.testRoleCustomer,
+              help: l.testRoleCustomerHelp,
+              busy: _busyEmail == _customer,
+              onTap: _busy ? null : () => _signIn(_customer),
+            ),
+            const SizedBox(height: 8),
+            _TestRoleCard(
+              email: _owner,
+              icon: Icons.admin_panel_settings_outlined,
+              title: l.roleOwner,
+              badge: l.testRoleOwnerBadge,
+              help: l.testRoleOwnerHelp,
+              owner: true,
+              busy: _busyEmail == _owner,
+              onTap: _busy ? null : () => _signIn(_owner),
+            ),
+            const SizedBox(height: 8),
+            _TestRoleCard(
+              email: _developer,
+              icon: Icons.code,
+              title: l.testRoleDeveloper,
+              help: l.testRoleDeveloperHelp,
+              busy: _busyEmail == _developer,
+              onTap: _busy ? null : () => _signIn(_developer),
+            ),
+            const SizedBox(height: 12),
+            Text(l.testRoleOtherStaff, style: theme.textTheme.labelMedium),
+            const SizedBox(height: 4),
+            Wrap(spacing: 6, children: [staff(l.testStaffSara, _sara), staff(l.testStaffCargo, _cargo), staff(l.testStaffCompliance, _compliance)]),
             if (_failed) ...[
               const SizedBox(height: 8),
-              Semantics(liveRegion: true, child: Text(l.testSignInError, style: const TextStyle(color: Brand.danger))),
+              Semantics(
+                liveRegion: true,
+                child: Text(l.testSignInError, style: const TextStyle(color: Brand.danger)),
+              ),
             ],
-            const SizedBox(height: 10),
-            OutlinedButton(
-              onPressed: _busy ? null : _submit,
-              child: _busy
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(l.testSignInSubmit),
-            ),
+            const Divider(height: 20),
+            if (!_showOther)
+              TextButton(
+                key: const ValueKey('test-sign-in-other'),
+                onPressed: () => setState(() => _showOther = true),
+                child: Text(l.testSignInOther),
+              )
+            else ...[
+              const SizedBox(height: 4),
+              TextField(
+                key: const ValueKey('test-sign-in-email'),
+                controller: _email,
+                enabled: !_busy,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                autocorrect: false,
+                textDirection: TextDirection.ltr,
+                textAlign: context.lang == 'fa' ? TextAlign.right : TextAlign.left,
+                decoration: InputDecoration(labelText: l.testSignInEmail),
+                onSubmitted: _signIn,
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: _busy ? null : () => _signIn(_email.text),
+                child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(l.testSignInSubmit),
+              ),
+            ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One tap signs in as this role. The owner card is the only dark one, so it cannot be mistaken for a customer account.
+class _TestRoleCard extends StatelessWidget {
+  const _TestRoleCard({
+    required this.email,
+    required this.icon,
+    required this.title,
+    required this.help,
+    required this.busy,
+    required this.onTap,
+    this.badge,
+    this.owner = false,
+  });
+
+  final String email;
+  final IconData icon;
+  final String title;
+  final String help;
+  final String? badge;
+  final bool owner;
+  final bool busy;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = xc(context);
+    final radius = BorderRadius.circular(14);
+    final fg = owner ? Colors.white : colors.fg;
+    final muted = owner ? Brand.onDarkMuted : colors.fgMuted;
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: [title, ?badge, help, email].join(', '),
+      excludeSemantics: true,
+      onTap: onTap,
+      // Ink paints on the nearest Material; without this one, the panel's own background would hide the card's.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Ink(
+          key: ValueKey('test-sign-in-$email'),
+          decoration: BoxDecoration(
+            gradient: owner ? Brand.gradient : null,
+            color: owner ? null : colors.surface,
+            borderRadius: radius,
+            border: owner ? Border.all(color: Brand.orange, width: 1.5) : Border.all(color: colors.border),
+          ),
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: owner ? Brand.orange : colors.surfaceSunken,
+                    child: Icon(icon, size: 22, color: owner ? Brand.navy950 : colors.fg),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(title, style: theme.textTheme.titleSmall?.copyWith(color: fg)),
+                            if (badge != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(color: Brand.orange, borderRadius: BorderRadius.circular(999)),
+                                child: Text(
+                                  badge!,
+                                  style: theme.textTheme.labelSmall?.copyWith(color: Brand.navy950, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(help, style: theme.textTheme.bodySmall?.copyWith(color: muted)),
+                        const SizedBox(height: 2),
+                        Text(
+                          email,
+                          textDirection: TextDirection.ltr,
+                          style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (busy)
+                    SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: fg))
+                  else
+                    Icon(chevronIcon(context), color: muted),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -472,21 +620,18 @@ class _LanguageToggle extends ConsumerWidget {
             constraints: const BoxConstraints(minHeight: 40, minWidth: 56),
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: selected ? Brand.orange : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-            ),
+            decoration: BoxDecoration(color: selected ? Brand.orange : Colors.transparent, borderRadius: BorderRadius.circular(8)),
             child: ExcludeSemantics(
-              child: Text(label, style: TextStyle(color: selected ? Brand.navy950 : Colors.white, fontWeight: FontWeight.w600)),
+              child: Text(
+                label,
+                style: TextStyle(color: selected ? Brand.navy950 : Colors.white, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
         ),
       );
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [option('en', 'English'), const SizedBox(width: 4), option('fa', 'فارسی')],
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: [option('en', 'English'), const SizedBox(width: 4), option('fa', 'فارسی')]);
   }
 }

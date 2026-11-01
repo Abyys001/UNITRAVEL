@@ -1,0 +1,35 @@
+# Keep the graph to code and project documents. Binary assets and generated
+# outputs add LLM cost on doc updates and no navigable structure.
+
+# Images and media (screenshots, goldens, icons, teaser footage)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+*.mp4
+*.webm
+*.mp3
+*.wav
+*.m4a
+media/
+
+# Booklet: docs/booklet.txt is the extracted source of the PDF
+*.pdf
+
+# Third-party notices and static shells with no project knowledge
+**/OFL.txt
+**/AUTHORS.txt
+**/LICENSE-*.txt
+apps/console/public/offline.html
+apps/mobile/web/index.html
+infra/mobile-shell/index.html
+
+# Point-in-time capture of the live site
+unitravels-co-uk/
+
+# Tool output
+graphify-out/
+.playwright-mcp/

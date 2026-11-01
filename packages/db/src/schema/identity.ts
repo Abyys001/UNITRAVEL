@@ -60,10 +60,28 @@ export const otpChallenges = pgTable("otp_challenges", {
   createdAt: createdAt(),
 }, (t) => [index("otp_identity_idx").on(t.identityValue, t.createdAt)])
 
+/** ADR-0022: a console device remembered after a verified sign-in; it can open new sessions until it lapses or is revoked. */
+export const trustedDevices = pgTable("trusted_devices", {
+  id: id(),
+  userId: uuid().notNull().references(() => users.id),
+  host: varchar({ length: 255 }).notNull(),
+  userAgent: varchar({ length: 400 }),
+  tokenHash: varchar({ length: 128 }).notNull().unique(),
+  previousTokenHash: varchar({ length: 128 }),
+  rotatedAt: tstz(),
+  lastUsedAt: tstz().notNull().defaultNow(),
+  expiresAt: tstz().notNull(),
+  maxExpiresAt: tstz().notNull(),
+  revokedAt: tstz(),
+  revokedReason: varchar({ length: 80 }),
+  createdAt: createdAt(),
+}, (t) => [index("trusted_devices_user_idx").on(t.userId)])
+
 export const sessions = pgTable("sessions", {
   id: id(),
   userId: uuid().notNull().references(() => users.id),
   deviceId: varchar({ length: 128 }),
+  trustedDeviceId: uuid().references(() => trustedDevices.id),
   client: clientKind().notNull(),
   ip: varchar({ length: 64 }),
   userAgent: varchar({ length: 400 }),

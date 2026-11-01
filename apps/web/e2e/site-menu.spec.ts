@@ -169,9 +169,17 @@ test("support never shows placeholder contacts; club page follows its flag", asy
   await axeClean(page)
 })
 
-test("track: signed-out lookup never says whether the reference matched", async ({ page }) => {
+test("track: signed out sees only the sign-in gate", async ({ page }) => {
   await page.goto("/fa/track")
-  await expect(page.getByRole("heading", { name: "پیگیری خرید" })).toBeVisible()
+  await expect(page.getByRole("heading", { level: 1, name: "پیگیری خرید" })).toBeVisible()
+  await expect(page.getByRole("link", { name: "ورود و ادامه" })).toHaveAttribute("href", /sign-in\?next=%2Ffa%2Ftrack/)
+  await expect(page.getByLabel("شمارهٔ پیگیری", { exact: true })).toHaveCount(0)
+  await axeClean(page)
+})
+
+test("track: signed-in lookup never says whether the reference matched", async ({ page }) => {
+  await signIn(page, `track-${Date.now()}@example.test`)
+  await page.goto("/fa/track")
   await page.getByLabel("شمارهٔ پیگیری", { exact: true }).fill("UT-S-NOPE00")
   await page.getByLabel("شماره تلفن ثبت‌شده در درخواست").fill(randomPhone("+4477009"))
   await page.getByRole("button", { name: "ارسال کد" }).click()

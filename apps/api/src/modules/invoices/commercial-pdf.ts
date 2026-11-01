@@ -48,7 +48,7 @@ export interface InvoicePdfInput {
 
 export function renderInvoicePdf(i: InvoicePdfInput): Promise<Buffer> {
   const money = (minor: number) => pdfMoney({ amountMinor: minor, currency: i.currency })
-  return renderPdf(`Invoice ${i.number}`, `Request ${i.requestRef} · issued ${i.issuedAt.toISOString().slice(0, 10)}`, [
+  return renderPdf(`Invoice ${i.number}`, `Reference ${i.requestRef} · issued ${i.issuedAt.toISOString().slice(0, 10)}`, [
     particularsSection(i.company, i.cfg),
     { heading: "Billed to", paragraphs: i.billTo },
     {

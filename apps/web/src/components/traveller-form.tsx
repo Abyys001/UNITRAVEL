@@ -9,6 +9,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { Input } from "@unitravel/ui/components/input"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { CountrySelect } from "@unitravel/ui/product/country"
 import { Auto } from "@/components/badges"
 import { api, ApiError } from "@/lib/api"
 import { COUNTRIES, countryName } from "@/lib/countries"
@@ -45,11 +46,11 @@ export function TravellerForm({ initial, onSaved, withDocument = false, prefill 
       <label className="text-sm">{t("auth.nameFa")}<Input className={field} dir="rtl" lang="fa" value={f.nameFa} onChange={(e) => set("nameFa", e.target.value)} /></label>
       <label className="text-sm">{t("account.dob")}<Input className={field} type="date" lang={locale} required value={f.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} />{preview(f.dateOfBirth)}</label>
       <label className="text-sm">{t("account.gender")}<NativeSelect className="field mt-1 h-10 w-full" value={f.genderOnDocument} onChange={(e) => set("genderOnDocument", e.target.value)}>{(["M", "F", "X"] as const).map((x) => <option key={x} value={x}>{t(`genders.${x}`)}</option>)}</NativeSelect></label>
-      <label className="text-sm">{t("account.nationality")}<NativeSelect className="field mt-1 h-10 w-full" value={f.nationality} onChange={(e) => set("nationality", e.target.value)}>{COUNTRIES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</NativeSelect></label>
+      <label className="text-sm">{t("account.nationality")}<CountrySelect wrapperClassName="mt-1" className="field h-10 w-full" value={f.nationality} onChange={(e) => set("nationality", e.target.value)}>{COUNTRIES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</CountrySelect></label>
       <fieldset className="grid gap-3 sm:col-span-2 sm:grid-cols-3">
         <legend className="mb-1 text-sm font-medium">{t("account.passport")} {!withDocument && <span className="font-normal text-steel">({t("common.optional")})</span>}</legend>
         <label className="text-sm">{t("account.passportNumber")}<Input className={field} dir="ltr" required={withDocument} value={doc.number} autoComplete="off" onChange={(e) => setDoc({ ...doc, number: toAsciiDigits(e.target.value).replace(/\s+/g, "").toUpperCase() })} aria-invalid={!!localErr} /></label>
-        <label className="text-sm">{t("account.issuing")}<NativeSelect className="field mt-1 h-10 w-full" value={doc.issuingCountry} onChange={(e) => setDoc({ ...doc, issuingCountry: e.target.value })}>{COUNTRIES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</NativeSelect></label>
+        <label className="text-sm">{t("account.issuing")}<CountrySelect wrapperClassName="mt-1" className="field h-10 w-full" value={doc.issuingCountry} onChange={(e) => setDoc({ ...doc, issuingCountry: e.target.value })}>{COUNTRIES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</CountrySelect></label>
         <label className="text-sm">{t("account.expiry")}<Input className={field} type="date" lang={locale} required={withDocument || !!doc.number} value={doc.expiryDate} onChange={(e) => setDoc({ ...doc, expiryDate: e.target.value })} />{preview(doc.expiryDate)}</label>
       </fieldset>
       {localErr && <p role="alert" className="text-sm text-danger sm:col-span-2">{localErr}</p>}

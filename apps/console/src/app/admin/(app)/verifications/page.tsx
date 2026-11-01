@@ -7,6 +7,7 @@ import { useMemo, useState } from "react"
 
 import type { VerificationQueueItem } from "@unitravel/contracts"
 
+import { Country } from "@unitravel/ui/product/country"
 import { EmptyState, TileError } from "@/components/bento"
 import { ListSkeleton, StateChip, TableScroll } from "@/components/case"
 import { Chips, ListCard, ListPage, Pager, tableClass, Toolbar, usePaged } from "@/components/data-list"
@@ -40,7 +41,7 @@ export default function VerificationQueue() {
               <li key={v.id}>
                 <Link href={`/verifications/${v.id}`} className="block min-h-11 rounded-[var(--radius-card)] border border-rule bg-surface-raised p-3.5 shadow-[var(--tile-shadow)] active:bg-hover">
                   <span className="flex items-center justify-between gap-2"><span className="font-medium" dir="ltr">{v.travellerName}</span><StateChip value="SUBMITTED" /></span>
-                  <span className="mt-1 block text-steel">{v.nationality} · {docLabel(v.documentType)}</span>
+                  <span className="mt-1 block text-steel"><Country code={v.nationality} /> · {docLabel(v.documentType)}</span>
                   <span className="num mt-1 block text-meta text-steel">{t("ver.waiting")} {rel(v.submittedAt)}</span>
                 </Link>
               </li>
@@ -54,7 +55,7 @@ export default function VerificationQueue() {
                   {paged.rows.map((v) => (
                     <tr key={v.id} className="cursor-pointer" onClick={(e) => { if (!(e.target as HTMLElement).closest("a")) router.push(`/verifications/${v.id}`) }}>
                       <td><Link href={`/verifications/${v.id}`} className="inline-block py-1 font-medium hover:underline" dir="ltr">{v.travellerName}</Link></td>
-                      <td>{v.nationality}</td>
+                      <td><Country code={v.nationality} /></td>
                       <td>{docLabel(v.documentType)}</td>
                       <td className="num text-steel" title={fmtDateTime(v.submittedAt)}>{rel(v.submittedAt)}</td>
                     </tr>

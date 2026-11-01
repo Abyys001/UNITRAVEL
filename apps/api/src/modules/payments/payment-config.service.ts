@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { desc, eq } from "drizzle-orm"
 
-import type { PaymentHealthView, PaymentProviderId, PaymentsConfigView, StripeCredentialsBody, StripeMode } from "@unitravel/contracts"
+import { type PaymentHealthView, type PaymentProviderId, type PaymentsConfigView, STRIPE_WEBHOOK_EVENTS, type StripeCredentialsBody, type StripeMode } from "@unitravel/contracts"
 import { type Db, paymentConfig, stripeEvents, users } from "@unitravel/db"
 import { canEnterStripeMode } from "@unitravel/domain"
 
@@ -37,6 +37,8 @@ export class PaymentConfigService {
     return {
       provider: cfg.provider, mode: cfg.mode, liveBlocked: !canEnterStripeMode("live").ok, flagEnabled: this.config.flag("payments.online.enabled"), fakeAvailable: fakeAllowed(),
       webhookUrl: `${env().PUBLIC_API_URL}/v1/webhooks/stripe`,
+      keysAccepted: sandboxAllowed(), webhookEvents: [...STRIPE_WEBHOOK_EVENTS], connectedAccountId: creds?.connectedAccountId ?? null,
+      setup: { keys: !!creds?.secretKey && !!creds?.publishableKey, webhook: !!creds?.webhookSecret, flag: this.config.flag("payments.online.enabled"), ...(await this.payments.servicePaymentPolicies()) },
       credentials: { secretKey: !!creds?.secretKey, publishableKey: !!creds?.publishableKey, webhookSecret: !!creds?.webhookSecret, rotatedAt: meta?.rotatedAt.toISOString() ?? null },
       pendingModeRequest: cfg.pendingMode && cfg.pendingAt ? { mode: cfg.pendingMode, requestedBy: by?.n ?? "unknown", requestedAt: cfg.pendingAt.toISOString() } : null,
       events: events.map((e) => ({ id: e.id, type: e.type, mode: e.mode, outcome: e.outcome, error: e.error, receivedAt: e.receivedAt.toISOString(), processedAt: e.processedAt?.toISOString() ?? null })),
@@ -52,9 +54,10 @@ export class PaymentConfigService {
       await this.audit.record(this.db, { actorUserId: actor.userId, actorKind: "STAFF", action: "payments.live_credentials_refused", entityType: "payment_config", entityId: "stripe", after: { keys: Object.keys(values) }, ip: actor.ip })
       throw new AppError("LIVE_MODE_BLOCKED", canEnterStripeMode("live").ok ? "Live credentials are not accepted" : "Live mode is blocked: Stripe's written approval and counsel's advice are outstanding (ADR-0007 P1)")
     }
-    const existing = (await this.vendors.get(STRIPE_VENDOR)) ?? {}
+    const { connectedAccountId: _old, ...existing } = (await this.vendors.get(STRIPE_VENDOR)) ?? {}
+    const account = body.connectedAccountId === undefined ? _old : body.connectedAccountId
     await this.uow.run(async (tx) => {
-      await this.vendors.set(tx, STRIPE_VENDOR, { ...existing, ...values }, actor.userId)
+      await this.vendors.set(tx, STRIPE_VENDOR, { ...existing, ...values, ...(account ? { connectedAccountId: account } : {}) }, actor.userId)
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payments.credentials_rotated", entityType: "payment_config", entityId: "stripe", after: { mode: "test", keys: Object.keys(values) }, ip: actor.ip })
     })
     this.payments.invalidateProvider()

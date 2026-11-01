@@ -1,0 +1,122 @@
+/* Desktop-only phone frame around the Flutter view; see flutter_bootstrap.js. */
+
+/* A framed window later narrowed below the breakpoint: the app simply fills it. */
+.device,
+.device-screen,
+.device-app {
+  position: fixed;
+  inset: 0;
+}
+
+.device-island,
+.device-home {
+  display: none;
+}
+
+/* Keep this query identical to the one in flutter_bootstrap.js. */
+@media (min-width: 500px) and (hover: hover) and (pointer: fine) {
+  :root {
+    --screen-width: 390px;
+    --screen-height: 844px;
+    --status-strip: 44px;
+    --home-strip: 22px;
+    --bezel: 11px;
+    --outer-radius: 58px;
+    /* navy-950, navy-800, royal from packages/ui/tokens/tokens.json */
+    --backdrop: linear-gradient(145deg, #061f4c 0%, #083575 55%, #0c67b9 100%);
+    --device-edge: #11151c;
+    --app-background: #f4f7fb;
+    --device-width: calc(var(--screen-width) + 2 * var(--bezel));
+    --device-height: min(calc(var(--screen-height) + 2 * var(--bezel)), calc(100dvh - 24px));
+  }
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #061f4c var(--backdrop) no-repeat fixed;
+  }
+
+  .device {
+    /* Whole-pixel offsets: on a half pixel the browser resamples the app canvas and all its text goes soft. */
+    inset: round(down, calc((100dvh - var(--device-height)) / 2), 1px) auto auto
+      round(down, calc((100vw - var(--device-width)) / 2), 1px);
+    width: var(--screen-width);
+    height: calc(var(--device-height) - 2 * var(--bezel));
+    padding: var(--bezel);
+    box-sizing: content-box;
+    border-radius: var(--outer-radius);
+    background: var(--device-edge);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.14),
+      0 32px 64px -16px rgb(0 0 0 / 0.55),
+      0 12px 24px -8px rgb(0 0 0 / 0.35);
+  }
+
+  /* Side buttons: power on the right, volume on the left. */
+  .device::before,
+  .device::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    background: var(--device-edge);
+  }
+
+  .device::before {
+    right: -3px;
+    top: 170px;
+    height: 88px;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .device::after {
+    left: -3px;
+    top: 140px;
+    height: 56px;
+    border-radius: 2px 0 0 2px;
+    box-shadow: 0 72px 0 var(--device-edge);
+  }
+
+  .device-screen {
+    position: absolute;
+    inset: var(--bezel);
+    overflow: hidden;
+    border-radius: calc(var(--outer-radius) - var(--bezel));
+    /* Flutter has no safe-area insets on web, so the island and home bar get their
+       own strips instead of covering app content. */
+    background: linear-gradient(
+      #061f4c var(--status-strip),
+      var(--app-background) var(--status-strip)
+    );
+  }
+
+  .device-app {
+    position: absolute;
+    inset: var(--status-strip) 0 var(--home-strip);
+  }
+
+  .device-island {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    width: 104px;
+    height: 26px;
+    margin-left: -52px;
+    border-radius: 13px;
+    background: #000;
+  }
+
+  .device-home {
+    display: block;
+    position: absolute;
+    bottom: 7px;
+    left: 50%;
+    width: 128px;
+    height: 5px;
+    margin-left: -64px;
+    border-radius: 3px;
+    background: #061f4c;
+  }
+}

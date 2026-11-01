@@ -14,12 +14,13 @@ import { InvoiceStatus } from "@/components/invoice-status"
 import { api, ApiError } from "@/lib/api"
 import { download } from "@/lib/documents"
 import { useI18n } from "@/lib/i18n"
+import { invoiceNoteLabel, lineTypeLabel } from "@/lib/invoice-labels"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
 /** Where the emailed or texted short link lands: sign-in first (useRequireSignIn), then the invoice if it is the signed-in customer's own. */
 export default function InvoicePage() {
   const { number } = useParams<{ number: string }>()
-  const { t, href, date, money, sep } = useI18n()
+  const { t, locale, href, date, money, sep } = useI18n()
   const { me } = useRequireSignIn()
   const q = useQuery({
     queryKey: ["billing", number], enabled: !!me, retry: false,
@@ -57,10 +58,11 @@ export default function InvoicePage() {
           <table className="mt-2 w-full text-sm">
             <thead><tr className="text-start text-xs uppercase tracking-wide text-steel"><th className="py-2 text-start font-bold">{t("billing.description")}</th><th className="py-2 text-end font-bold">{t("billing.qty")}</th><th className="py-2 text-end font-bold">{t("billing.unit")}</th><th className="py-2 text-end font-bold">{t("billing.amount")}</th></tr></thead>
             <tbody className="divide-y divide-line">
-              {inv.lines.map((l, i) => <tr key={i}><td className="py-2">{l.description}</td><td className="py-2 text-end">{l.quantity}</td><td className="py-2 text-end">{money(l.unitAmount)}</td><td className="py-2 text-end">{money(l.amount)}</td></tr>)}
+              {inv.lines.map((l, i) => <tr key={i}><td className="py-2">{lineTypeLabel(locale, l.serviceType) && <span className="me-2 text-xs font-semibold text-steel" data-testid="line-type">{lineTypeLabel(locale, l.serviceType)}</span>}<span dir="auto">{l.description}</span></td><td className="py-2 text-end">{l.quantity}</td><td className="py-2 text-end">{money(l.unitAmount)}</td><td className="py-2 text-end">{money(l.amount)}</td></tr>)}
             </tbody>
             <tfoot><tr className="font-display text-lg"><td className="pt-3" colSpan={3}>{t("billing.total")}</td><td className="pt-3 text-end" data-testid="invoice-total">{money(inv.total)}</td></tr></tfoot>
           </table>
+          {inv.notes && <p className="mt-4 rounded-xl bg-cloud px-4 py-3 text-sm" data-testid="invoice-notes"><span className="font-semibold">{invoiceNoteLabel(locale)}: </span><span className="whitespace-pre-wrap" dir="auto">{inv.notes}</span></p>}
           {inv.status === "ISSUED" && pay.data?.offered && !pay.data.processing && (
             <Link href={href(`/billing/${number}/pay`)} className="mt-5 inline-flex min-h-11 items-center rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground" data-testid="pay-online">{t("billing.pay.payOnline")}</Link>
           )}

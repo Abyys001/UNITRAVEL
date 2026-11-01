@@ -413,7 +413,7 @@ class AppL10nEn extends AppL10n {
   String get calendarGregorian => 'Gregorian';
 
   @override
-  String get calendarJalali => 'Jalali';
+  String get calendarJalali => 'Solar Hijri';
 
   @override
   String get resultsTitle => 'Results';
@@ -1339,7 +1339,7 @@ class AppL10nEn extends AppL10n {
   String get preferences => 'Preferences';
 
   @override
-  String get calendarLabel => 'Calendar';
+  String get calendarLabel => 'Primary calendar';
 
   @override
   String get myTravellers => 'Saved travellers';
@@ -2105,7 +2105,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get testSignInHint =>
-      'Signs in with the email only — no code. Disabled in production.';
+      'Tap an account to sign in. No code needed. Disabled in production.';
 
   @override
   String get testSignInEmail => 'Email to sign in as';
@@ -2534,11 +2534,27 @@ class AppL10nEn extends AppL10n {
   String get tkEmpty => 'Nothing to track yet.';
 
   @override
-  String get tkLookupTitle => 'Track with a reference';
+  String get tkLead =>
+      'Follow your flight requests, cargo, service requests and invoices in one place, each with its latest status.';
+
+  @override
+  String get tkStatusNote =>
+      'A status shows what our team has recorded. A request or a paid invoice is not a booking: your trip is confirmed only when the reservation or ticket appears on the record.';
+
+  @override
+  String get tkMineLead =>
+      'Latest changes first. Open a row to see its details.';
+
+  @override
+  String get tkEmptyBody =>
+      'When you send a request or we issue you an invoice, it will appear here.';
+
+  @override
+  String get tkLookupTitle => 'Track someone else\'s reference';
 
   @override
   String get tkLookupLead =>
-      'No account at hand? Enter the reference and the phone number on the request. We send a code to that phone.';
+      'Have a reference from a relative or colleague? Enter it with the phone number on that request. We send a code to that phone, then show the status timeline only: no names, prices or documents.';
 
   @override
   String get tkRef => 'Reference';
@@ -2585,9 +2601,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get tkAgain => 'Track another';
-
-  @override
-  String get tkSignInLink => 'Track with a reference';
 
   @override
   String get clUnavailable => 'The customer club is not available yet.';
@@ -3119,4 +3132,51 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get scrSignIn => 'Sign in';
+
+  @override
+  String get calendarHelp => 'Dates show both calendars. This one comes first.';
+
+  @override
+  String get accountSection => 'Your account';
+
+  @override
+  String get adminModeHelp => 'Staff tools for this account.';
+
+  @override
+  String get roleOwner => 'Owner / Admin';
+
+  @override
+  String get testSignInOther => 'Use another email';
+
+  @override
+  String get testRoleCustomer => 'Customer';
+
+  @override
+  String get testRoleCustomerHelp => 'Opens the customer app.';
+
+  @override
+  String get testRoleOwnerBadge => 'Owner panel';
+
+  @override
+  String get testRoleOwnerHelp =>
+      'Separate from the customer app. Opens Admin mode with owner approvals.';
+
+  @override
+  String get testRoleOtherStaff => 'Other staff';
+
+  @override
+  String get testRoleDeveloper => 'Developer';
+
+  @override
+  String get testRoleDeveloperHelp =>
+      'Customer app here. The Developer Panel is on the web.';
+
+  @override
+  String get testStaffSara => 'Sara';
+
+  @override
+  String get testStaffCargo => 'Cargo';
+
+  @override
+  String get testStaffCompliance => 'Compliance';
 }

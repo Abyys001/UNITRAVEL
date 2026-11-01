@@ -16,6 +16,22 @@ import { useSession } from "@/lib/session"
 
 interface SessionRow { id: string; client: string; ip: string | null; userAgent: string | null; createdAt: string; lastSeenAt: string; current: boolean; mfaLevel: number }
 
+interface DeviceRow { id: string; host: string; userAgent: string | null; createdAt: string; lastUsedAt: string; expiresAt: string; current: boolean }
+
+/** Remembered devices outlive any one session, so they are listed and revoked on their own (ADR-0022). */
+function RememberedDevices() {
+  const t = useT()
+  const q = useQuery({ queryKey: ["my-devices"], queryFn: () => api<DeviceRow[]>("/v1/me/trusted-devices") })
+  const revoke = useAct((id: string) => api(`/v1/me/trusted-devices/${id}`, { method: "DELETE" }), { success: t("acct.deviceRevoked"), invalidate: [["my-devices"], ["my-sessions"]] })
+  return (
+    <Section title={t("acct.devices")} hint={t("acct.devicesHint")} flush={!!q.data?.length}>
+      {q.error ? <TileError error={q.error} onRetry={() => void q.refetch()} /> : !q.data ? <ListSkeleton rows={2} className="p-0" /> : !q.data.length ? <EmptyState title={t("acct.noDevices")} /> : (
+        <ul className="divide-y divide-rule" data-testid="remembered-devices">{q.data.map((d) => <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 md:px-5"><span className="block min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><span className="num" dir="ltr">{d.host}</span>{d.current && <Tag value={t("acct.thisDevice")} className="border-success text-success" />}</span><span className="mt-0.5 block truncate text-caption text-steel" dir="ltr">{d.userAgent}</span><span className="block text-caption text-steel">{t("ud.seen", { at: fmtDateTime(d.lastUsedAt) })} · {t("acct.deviceUntil", { at: fmtDateTime(d.expiresAt) })}</span></span>{!d.current && <Button size="sm" variant="outline" onClick={() => revoke.mutate(d.id)}>{t("acct.revoke")}</Button>}</li>)}</ul>
+      )}
+    </Section>
+  )
+}
+
 /** Visible list of active sessions with Revoke, and second-factor management (ch. 16.1). */
 export function AccountPage() {
   const { me } = useSession()
@@ -37,6 +53,7 @@ export function AccountPage() {
               <ul className="divide-y divide-rule">{q.data.map((s) => <li key={s.id} className="flex items-center justify-between gap-3 px-4 py-3 md:px-5"><span className="block min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><span className="rounded-md bg-surface-sunk px-1.5 py-px font-mono text-caption">{s.client}</span><span className="num" dir="ltr">{s.ip ?? "—"}</span>{s.current && <Tag value="THIS SESSION" className="border-success text-success" />}</span><span className="mt-0.5 block truncate text-caption text-steel" dir="ltr">{s.userAgent}</span><span className="block text-caption text-steel">{t("acct.since", { at: fmtDateTime(s.createdAt) })} · {t("ud.seen", { at: fmtDateTime(s.lastSeenAt) })} · MFA {s.mfaLevel}</span></span>{!s.current && <Button size="sm" variant="outline" onClick={() => revoke.mutate(s.id)}>{t("acct.revoke")}</Button>}</li>)}</ul>
             )}
           </Section>
+          <div className="grid gap-4 lg:col-start-1 lg:row-start-2"><RememberedDevices /></div>
           <Section title={t("acct.second")} hint={t("acct.secondHint")}>
             <KV className="text-meta">
               <KVRow k={t("acct.enrolled")}><span dir="ltr">{me?.mfa.enrolled.join(", ") || t("acct.none")}</span></KVRow>

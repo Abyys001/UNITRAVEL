@@ -36,7 +36,7 @@ export default function PayPage() {
     if (!session || session.provider !== "STRIPE" || !session.publishableKey || !target.current) return
     let destroy: (() => void) | undefined
     let cancelled = false
-    mountEmbeddedCheckout(session.publishableKey, session.clientSecret, target.current).then((d) => { if (cancelled) d(); else destroy = d }).catch(() => setMountError(true))
+    mountEmbeddedCheckout(session.publishableKey, session.clientSecret, target.current, session.connectedAccountId).then((d) => { if (cancelled) d(); else destroy = d }).catch(() => setMountError(true))
     return () => { cancelled = true; destroy?.() }
   }, [session])
 

@@ -25,15 +25,16 @@ void main() {
       expect(formatJalaliDate(DateTime(2025, 3, 21), 'en'), '1 Farvardin 1404');
     });
 
-    test('formatDate picks the calendar', () {
+    test('formatDate shows both calendars, primary first', () {
       final d = DateTime(2026, 12, 10);
-      expect(formatDate(d, lang: 'en', jalali: true), '19 Azar 1405');
-      expect(formatDate(d, lang: 'en', jalali: false), 'Dec 10, 2026');
-      expect(formatDate(d, lang: 'fa', jalali: false), contains('۲۰۲۶'));
+      expect(formatDate(d, lang: 'en', jalali: true), '19 Azar 1405 (Dec 10, 2026)');
+      expect(formatDate(d, lang: 'en', jalali: false), 'Dec 10, 2026 (19 Azar 1405)');
+      expect(formatDate(d, lang: 'fa', jalali: false), allOf(startsWith('۱۰ '), contains('۲۰۲۶'), endsWith('(۱۹ آذر ۱۴۰۵)')));
+      expect(formatDate(d, lang: 'fa', jalali: true), allOf(startsWith('۱۹ آذر ۱۴۰۵ ('), contains('۲۰۲۶')));
     });
 
     test('ISO date strings from the API', () {
-      expect(formatIsoDate('2026-12-10', lang: 'en', jalali: true), '19 Azar 1405');
+      expect(formatIsoDate('2026-12-10', lang: 'en', jalali: true), '19 Azar 1405 (Dec 10, 2026)');
       expect(formatIsoDate(null, lang: 'en', jalali: true), '');
       expect(formatIsoDate('garbage', lang: 'en', jalali: true), '');
     });

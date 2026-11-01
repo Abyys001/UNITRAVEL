@@ -78,6 +78,7 @@ void main() {
       const out = SessionState(status: AuthStatus.signedOut);
       expect(redirectFor(out, Uri.parse('/requests/UT-F-ABC234')), '/signin?from=${Uri.encodeComponent('/requests/UT-F-ABC234')}');
       expect(redirectFor(out, Uri.parse('/signin')), isNull);
+      expect(redirectFor(out, Uri.parse('/track')), '/signin?from=${Uri.encodeComponent('/track')}');
     });
 
     test('after sign-in the deep link is honoured', () {

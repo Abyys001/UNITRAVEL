@@ -93,7 +93,7 @@ export class PaymentsService implements OnModuleInit {
         if (sandboxAllowed()) adapter = new FakePaymentAdapter(this.redis)
       } else {
         const c = await this.vendors.get(STRIPE_VENDOR)
-        if (c?.secretKey && c.webhookSecret) adapter = new StripeAdapter({ secretKey: c.secretKey, publishableKey: c.publishableKey ?? null, webhookSecret: c.webhookSecret })
+        if (c?.secretKey && c.webhookSecret) adapter = new StripeAdapter({ secretKey: c.secretKey, publishableKey: c.publishableKey ?? null, webhookSecret: c.webhookSecret, connectedAccountId: c.connectedAccountId ?? null })
       }
     }
     this.cached = { at: Date.now(), provider: adapter, id: cfg.provider }
@@ -123,6 +123,12 @@ export class PaymentsService implements OnModuleInit {
     if (inv.expiresAt && !checkoutExpiry(inv.expiresAt, now)) reasons.push("EXPIRES_TOO_SOON")
     if (!(await this.provider()).adapter) reasons.push("NOT_CONFIGURED")
     return { offered: reasons.length === 0, reasons }
+  }
+
+  /** The compliance half of the setup checklist; read-only, a policy stays a compliance decision (rule 5). */
+  async servicePaymentPolicies() {
+    const { reasons } = onlinePaymentEligibility(await this.compliance.onlinePaymentPolicies(), { product: "SERVICE", currency: "GBP", totalMinor: 1, customerUserId: "00000000-0000-4000-8000-000000000000" })
+    return { servicePolicy: !reasons.includes("NO_PRODUCT_POLICY") && !reasons.includes("BLOCKED"), currencyPolicy: !reasons.includes("NO_CURRENCY_POLICY") }
   }
 
   // ---------------- customer ----------------
@@ -202,7 +208,7 @@ export class PaymentsService implements OnModuleInit {
       return { row: row!, secret: created.clientSecret, created: true }
     })
     if (out.created) await this.timers.schedule(TIMER, timerKey(out.row.id), new Date(out.row.expiresAt.getTime() + RECONCILE_GRACE_MS), { sessionId: out.row.id })
-    return { provider: adapter.id, clientSecret: out.secret, publishableKey: adapter.publishableKey, expiresAt: out.row.expiresAt.toISOString(), invoiceNumber: number }
+    return { provider: adapter.id, connectedAccountId: adapter.connectedAccountId, clientSecret: out.secret, publishableKey: adapter.publishableKey, expiresAt: out.row.expiresAt.toISOString(), invoiceNumber: number }
   }
 
   /** Staff resend the payment link: a "payment required" message whose link opens the page with the Pay button (ADR-0007 P18, ADR-0013 A7). */
@@ -212,7 +218,7 @@ export class PaymentsService implements OnModuleInit {
       if (!inv) throw notFound("Invoice")
       if (inv.status !== "ISSUED") throw new AppError("INVALID_TRANSITION", `Only an ISSUED invoice can be paid (this one is ${inv.status})`)
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.link_resent", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number: inv.number }, ip: actor.ip })
-      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "payment.requested", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: inv.expiresAt!.toISOString(), productType: inv.requestType } })
+      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "payment.requested", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: inv.expiresAt!.toISOString(), productType: inv.requestType, ...(await this.invoices.emailSummary(tx, inv)) } })
     })
     return { ok: true }
   }

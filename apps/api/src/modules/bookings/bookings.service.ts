@@ -3,7 +3,7 @@ import { and, desc, eq, inArray } from "drizzle-orm"
 
 import type { PaymentBody, ReservationBody } from "@unitravel/contracts"
 import {
-  afterSalesCases, cargoRequests, creditOverrides, type Db, documents, flightRequests, paymentRecords, quoteOptions, quotes, requestStatusHistory, requestTravellers,
+  afterSalesCases, cargoRequests, creditOverrides, type Db, documents, flightRequests, invoices, paymentRecords, quoteOptions, quotes, requestStatusHistory, requestTravellers,
   reservationSegments, reservations, tickets, type Tx,
 } from "@unitravel/db"
 import { AFTER_SALES_TRANSITIONS, atolAllowsPayment, CARGO_PAYABLE, computePaymentStatus, evaluate, generateReference, needsSecondVerifier, normaliseReference, TRAVELLERS_NOT_VERIFIED, validateTicketNumber } from "@unitravel/domain"
@@ -25,7 +25,7 @@ import { ReferenceService } from "../reference/reference.service"
 import { RequestsService, staffActor, SYSTEM } from "../requests/requests.service"
 
 type Req = typeof flightRequests.$inferSelect
-type Target = { type: "FLIGHT" | "CARGO"; id: string; ref: string }
+type Target = { type: "FLIGHT" | "CARGO" | "SERVICE"; id: string; ref: string }
 const flightTarget = (r: Req): Target => ({ type: "FLIGHT", id: r.id, ref: r.ref })
 
 /**
@@ -111,7 +111,7 @@ export class BookingsService {
       status: four ? "RECORDED" : "VERIFIED", recordedBy: actor.userId, verifiedBy: four ? null : actor.userId, verifiedAt: four ? null : new Date(),
     }).returning()
     await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.recorded", entityType: "payment_record", entityId: row!.id, contextRef: r.ref, after: { amount: p.amount, method: p.method, fourEyes: four } })
-    await this.outbox.add(tx, { aggregateType: r.type === "CARGO" ? "cargo_request" : "flight_request", aggregateId: r.id, eventType: "payment.recorded", payload: { requestId: r.id, ref: r.ref, paymentId: row!.id } })
+    await this.outbox.add(tx, { aggregateType: r.type === "CARGO" ? "cargo_request" : r.type === "SERVICE" ? "service_request" : "flight_request", aggregateId: r.id, eventType: "payment.recorded", payload: { requestId: r.id, ref: r.ref, paymentId: row!.id } })
     return { blocked: false as const, payment: row!, fourEyes: four }
   }
 
@@ -150,6 +150,21 @@ export class BookingsService {
     })
   }
 
+  /** ADR-0028 D9: a SERVICE invoice has no payment route of its own; same payer screening and four-eyes rule as the others. */
+  async recordServiceInvoicePayment(invoiceId: string, body: PaymentBody, actor: Actor) {
+    return this.uow.run(async (tx) => {
+      const [inv] = await tx.select().from(invoices).where(eq(invoices.id, invoiceId)).for("update")
+      if (!inv) throw notFound("Invoice")
+      if (inv.requestType !== "SERVICE") throw new AppError("INVALID_TRANSITION", "Record flight and cargo payments on the request page")
+      if (inv.status !== "ISSUED") throw new AppError("INVALID_TRANSITION", `Only an ISSUED invoice can be paid (this one is ${inv.status})`)
+      if (body.amount.currency !== inv.currency) throw new AppError("VALIDATION_FAILED", "The payment must be in the invoice's currency", [{ path: "amount.currency", code: "INVALID" }])
+      const res = await this.insertPayment(tx, { type: "SERVICE", id: inv.requestId, ref: inv.requestRef }, body, actor)
+      if (res.blocked) throw new AppError("FORBIDDEN", "The payer needs a compliance decision before this payment can be recorded", undefined, { screeningId: res.screeningId })
+      await this.invoices.settleFromPayments(tx, "SERVICE", inv.requestId)
+      return { paymentId: res.payment.id, status: res.payment.status, needsSecondVerifier: res.fourEyes }
+    })
+  }
+
   /** Second-person verification; completes a ticketing step that was waiting for it (PAY_ON_TICKETING above threshold). */
   async verifyPayment(paymentId: string, actor: Actor, requestId: string) {
     return this.uow.run(async (tx) => {
@@ -159,6 +174,11 @@ export class BookingsService {
       if (p.recordedBy === actor.userId) throw new AppError("FOUR_EYES_REQUIRED", "A different staff member must verify this payment")
       await tx.update(paymentRecords).set({ status: "VERIFIED", verifiedBy: actor.userId, verifiedAt: new Date() }).where(eq(paymentRecords.id, p.id))
       if (p.requestType === "CARGO") return this.verifyCargoPayment(tx, p, actor)
+      if (p.requestType === "SERVICE") {
+        await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.verified", entityType: "payment_record", entityId: p.id })
+        await this.invoices.settleFromPayments(tx, "SERVICE", p.requestId)
+        return { ok: true }
+      }
       const [r] = await tx.select().from(flightRequests).where(eq(flightRequests.id, p.requestId)).for("update")
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "payment.verified", entityType: "payment_record", entityId: p.id, contextRef: r?.ref })
       await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: p.requestId, eventType: "payment.verified", payload: { requestId: p.requestId, paymentId: p.id } })

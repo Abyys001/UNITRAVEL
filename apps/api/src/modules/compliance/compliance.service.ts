@@ -295,6 +295,12 @@ export class ComplianceService implements OnModuleInit {
     return rows.filter((r) => r.type === "SERVICE" && r.action !== "ALLOW" && keys.includes(r.key))
   }
 
+  /** ADR-0028 D5: a direct invoice has no request details to evaluate a context, so any policy for the type applies. */
+  async servicePoliciesForTypes(types: string[]) {
+    const rows = await this.activePolicies()
+    return rows.filter((r) => r.type === "SERVICE" && r.action !== "ALLOW" && types.some((t) => r.key === t || r.key.startsWith(`${t}:`)))
+  }
+
   async lanePolicy(origin: string, destination: string) {
     const rows = await this.activePolicies()
     return rows.filter((r) => r.type === "LANE" && (r.key === `${origin}:*` || r.key === `*:${destination}` || r.key === `${origin}:${destination}` || r.key === `${destination}:*`))

@@ -1,15 +1,17 @@
 import "./globals.css"
 
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { headers } from "next/headers"
 
 import { ToastHost } from "@/components/bento"
+import { AppInstallHost } from "@/components/install"
 import { PREFS_BOOT_SCRIPT } from "@/lib/prefs-boot"
 import { Providers } from "@/lib/session"
 
 import { inter, jetbrains, montserrat, vazirmatn } from "./fonts"
 
-export const metadata: Metadata = { title: { default: "Uni Travel console", template: "%s · Uni Travel console" }, robots: { index: false, follow: false } }
+export const metadata: Metadata = { title: { default: "Uni Travel console", template: "%s · Uni Travel console" }, robots: { index: false, follow: false }, manifest: "/manifest.webmanifest", icons: { apple: "/icons/apple-touch-180.png" }, appleWebApp: { capable: true, title: "Uni Travel" } }
+export const viewport: Viewport = { themeColor: "#061f4c" }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
@@ -23,6 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Providers>
           {children}
           <ToastHost />
+          <AppInstallHost />
         </Providers>
       </body>
     </html>

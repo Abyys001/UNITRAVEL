@@ -5,7 +5,7 @@ interface StripeJs {
   initEmbeddedCheckout?: (o: { fetchClientSecret: () => Promise<string> }) => Promise<EmbeddedCheckout>
   initEmbeddedCheckoutPage?: (o: { fetchClientSecret: () => Promise<string> }) => Promise<EmbeddedCheckout>
 }
-declare global { interface Window { Stripe?: (publishableKey: string) => StripeJs } }
+declare global { interface Window { Stripe?: (publishableKey: string, options?: { stripeAccount?: string }) => StripeJs } }
 
 let loading: Promise<NonNullable<Window["Stripe"]>> | null = null
 
@@ -23,8 +23,8 @@ export function loadStripeJs() {
   return loading
 }
 
-export async function mountEmbeddedCheckout(publishableKey: string, clientSecret: string, target: HTMLElement): Promise<() => void> {
-  const stripe = (await loadStripeJs())(publishableKey)
+export async function mountEmbeddedCheckout(publishableKey: string, clientSecret: string, target: HTMLElement, connectedAccountId: string | null = null): Promise<() => void> {
+  const stripe = (await loadStripeJs())(publishableKey, connectedAccountId ? { stripeAccount: connectedAccountId } : undefined)
   // `embedded_page` sessions are mounted with the embedded checkout initialiser of the loaded Stripe.js version.
   const init = stripe.initEmbeddedCheckoutPage ?? stripe.initEmbeddedCheckout
   if (!init) throw new Error("This Stripe.js version has no embedded checkout")

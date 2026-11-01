@@ -1,11 +1,11 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query } from "@nestjs/common"
+import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from "@nestjs/common"
 import { ApiTags } from "@nestjs/swagger"
 import { z } from "zod"
 
-import { InvoiceCancelBody, InvoiceStatus, PurchasableItem } from "@unitravel/contracts"
+import { DirectInvoiceCreateBody, DirectInvoiceUpdateBody, InvoiceCancelBody, InvoiceStatus, PurchasableItem } from "@unitravel/contracts"
 
 import { type Actor, Ctx, CurrentActor, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
-import { ApiZodResponse, zbody } from "../../core/http/zod"
+import { ApiZodBody, ApiZodResponse, zbody } from "../../core/http/zod"
 import { InvoicesService } from "./invoices.service"
 
 /** Documents & billing for the signed-in customer: own invoices and quotations, 404 for anything else (ADR-0006 C9). */
@@ -47,6 +47,21 @@ export class AdminInvoicesController {
   @RequirePermission(...READ)
   list(@Query(zbody(z.object({ status: InvoiceStatus.optional(), limit: z.coerce.number().int().min(1).max(100).default(50) }))) q: { status?: z.infer<typeof InvoiceStatus>; limit: number }, @CurrentActor() actor: Actor) {
     return this.invoices.staffList(q, actor)
+  }
+
+  /** A direct invoice for a chosen customer (ADR-0028): staff type the services and amounts. */
+  @Post("invoices")
+  @RequirePermission("invoice.direct")
+  @ApiZodBody(DirectInvoiceCreateBody)
+  createDirect(@Body(zbody(DirectInvoiceCreateBody)) body: DirectInvoiceCreateBody, @CurrentActor() actor: Actor) {
+    return this.invoices.createDirect(body, actor)
+  }
+
+  @Put("invoices/:id")
+  @RequirePermission("invoice.direct")
+  @ApiZodBody(DirectInvoiceUpdateBody)
+  updateDirect(@Param("id", zbody(z.uuid())) id: string, @Body(zbody(DirectInvoiceUpdateBody)) body: DirectInvoiceUpdateBody, @CurrentActor() actor: Actor) {
+    return this.invoices.updateDirect(id, body, actor)
   }
 
   @Get("invoices/:id")

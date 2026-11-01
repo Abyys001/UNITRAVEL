@@ -11,6 +11,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { Country } from "@unitravel/ui/product/country"
 import { StatusChip, TileError } from "@/components/bento"
 import { ActionBar, CaseTabs, ListSkeleton, paneClass, paneProps, StateChip } from "@/components/case"
 import { Empty, ErrorLine, Field, Loading, PageHead, Panel, Tag } from "@/components/ui"
@@ -98,10 +99,10 @@ export default function VerificationPage() {
               {row("Persian name", t.nameFa ?? "—")}
               {row("Date of birth", <span dir="ltr">{t.dateOfBirth}</span>)}
               {row("Gender on document", t.genderOnDocument)}
-              {row("Nationality", t.nationality)}
+              {row("Nationality", <Country code={t.nationality} />)}
               {row("Document", d.document.type === "PASSPORT" ? "Passport" : "National ID")}
               {row("Number", <span className="num" dir="ltr">{number ?? `••••${d.document.last4}`}{can("customer.read.documents") && number === null && <button type="button" className="ms-3 text-meta font-normal text-royal underline" onClick={() => void reveal()}>Reveal (audited)</button>}</span>)}
-              {row("Issuing country", d.document.issuingCountry)}
+              {row("Issuing country", <Country code={d.document.issuingCountry} />)}
               {row("Expiry date", <span dir="ltr">{d.document.expiryDate}</span>)}
             </dl>
             <ErrorLine error={revealErr} />

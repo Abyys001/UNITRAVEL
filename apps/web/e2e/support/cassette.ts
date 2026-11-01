@@ -33,6 +33,8 @@ export interface ReplayOptions {
 export async function replay(page: Page, cassette: Cassette, opts: ReplayOptions): Promise<string[]> {
   const misses: string[] = []
   await page.clock.setFixedTime(new Date(cassette.capturedAt))
+  // The clients only ask for /v1/me when a session cookie exists.
+  if (opts.signedIn !== false) await page.addInitScript(() => { document.cookie = "ut_csrf=replay; Path=/" })
   await page.route("**/api/**", async (route: Route) => {
     const req = route.request()
     const u = new URL(req.url())

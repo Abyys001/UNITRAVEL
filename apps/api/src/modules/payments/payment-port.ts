@@ -32,6 +32,8 @@ export interface RefundInput { paymentIntentId: string; amountMinor: number; ide
 export interface PaymentProvider {
   readonly id: PaymentProviderId
   readonly publishableKey: string | null
+  /** Stripe Connect: the account charges are made on; null for a plain account (ADR-0028 D11). */
+  readonly connectedAccountId: string | null
   createSession(input: CreateSessionInput): Promise<ProviderSession>
   retrieveSession(providerSessionId: string): Promise<ProviderSession | null>
   createRefund(input: RefundInput): Promise<{ id: string }>

@@ -85,8 +85,6 @@ void main() {
       expect(find.text('Test sign-in (testing phase)'), findsOneWidget);
 
       await tester.tap(find.text('owner@unitravel.example'));
-      await tester.pump();
-      await tester.tap(find.text('Sign in without a code'));
       await tester.pumpAndSettle();
 
       final post = adapter.calls.firstWhere((c) => c.method == 'POST' && c.path == '/v1/auth/test-sign-in');

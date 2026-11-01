@@ -10,6 +10,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { Input } from "@unitravel/ui/components/input"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { Country, CountrySelect } from "@unitravel/ui/product/country"
 import { AddIdentity } from "@/components/add-identity"
 import { PassportVerification } from "@/components/passport-verification"
 import { TravellerForm } from "@/components/traveller-form"
@@ -70,7 +71,7 @@ export default function MyDetailsPage() {
           <label className="sm:col-span-2">{t("identity.line2")}<Input className="mt-1 h-10" autoComplete="address-line2" value={a.line2 ?? ""} onChange={(e) => setAddress({ ...a, line2: e.target.value })} /></label>
           <label>{t("identity.city")}<Input className="mt-1 h-10" required autoComplete="address-level2" value={a.city} onChange={(e) => setAddress({ ...a, city: e.target.value })} /></label>
           <label>{t("identity.postcode")}<Input className="mt-1 h-10" dir="ltr" required autoComplete="postal-code" value={a.postcode} onChange={(e) => setAddress({ ...a, postcode: e.target.value })} /></label>
-          <label>{t("identity.country")}<NativeSelect className="field mt-1 h-10 w-full" value={a.country} onChange={(e) => setAddress({ ...a, country: e.target.value })}>{COUNTRIES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</NativeSelect></label>
+          <label>{t("identity.country")}<CountrySelect wrapperClassName="mt-1" className="field h-10 w-full" value={a.country} onChange={(e) => setAddress({ ...a, country: e.target.value })}>{COUNTRIES.map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)}</CountrySelect></label>
           {err && <p role="alert" className="text-sm text-danger sm:col-span-2">{err}</p>}
           <div className="flex gap-2 sm:col-span-2"><Button type="submit" disabled={save.isPending}>{t("identity.saveDetails")}</Button>{d.address && <Button type="button" variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => { setAddress(null); save.mutate({ address: null }) }}>{t("identity.clearAddress")}</Button>}</div>
         </form>
@@ -80,7 +81,7 @@ export default function MyDetailsPage() {
         <div className="card-brand space-y-4 p-5">
           {self?.document ? (
             <>
-              <p className="text-sm"><bdi dir="ltr" className="font-medium">{self.givenNames} {self.surname}</bdi> · <bdi dir="ltr">••••{self.document.last4}</bdi> · {countryName(self.document.issuingCountry, locale)} · <bdi dir="ltr">{self.document.expiryDate}</bdi></p>
+              <p className="text-sm"><bdi dir="ltr" className="font-medium">{self.givenNames} {self.surname}</bdi> · <bdi dir="ltr">••••{self.document.last4}</bdi> · <Country code={self.document.issuingCountry}>{countryName(self.document.issuingCountry, locale)}</Country> · <bdi dir="ltr">{self.document.expiryDate}</bdi></p>
               <PassportVerification traveller={self} onChanged={refresh} />
               <Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => setEditingPassport((x) => !x)}>{t("common.edit")}</Button>
             </>

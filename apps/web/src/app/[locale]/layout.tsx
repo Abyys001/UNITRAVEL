@@ -12,7 +12,7 @@ import { I18nProvider } from "@/lib/i18n"
 import { ActivityTracker } from "@/components/activity-tracker"
 import { Providers } from "@/lib/session"
 
-import { jetbrains, montserrat, vazirmatn } from "../fonts"
+import { alexandria, figtree, jetbrains, montserrat, vazirmatn } from "../fonts"
 
 export const metadata: Metadata = { metadataBase: new URL(process.env.PUBLIC_WEB_URL ?? "http://localhost:4000"), openGraph: { siteName: "Uni Travel", type: "website" }, title: { default: "Uni Travel", template: "%s · Uni Travel" }, description: "Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people." }
 
@@ -21,7 +21,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   if (locale !== "en" && locale !== "fa") notFound()
   const nonce = (await headers()).get("x-nonce") ?? undefined
   return (
-    <html lang={locale} dir={dir(locale as Locale)} className={`${montserrat.variable} ${vazirmatn.variable} ${jetbrains.variable}`}>
+    <html lang={locale} dir={dir(locale as Locale)} className={`${montserrat.variable} ${figtree.variable} ${vazirmatn.variable} ${alexandria.variable} ${jetbrains.variable}`}>
       <body className="min-h-dvh flex flex-col" nonce={nonce}>
         <I18nProvider locale={locale as Locale}>
           <Providers>

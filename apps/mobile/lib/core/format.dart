@@ -53,11 +53,14 @@ String formatJalaliDate(DateTime date, String lang) {
 String formatGregorianDate(DateTime date, String lang) =>
     digits(DateFormat.yMMMd(lang).format(date), lang);
 
-/// Date in the user's calendar preference.
-String formatDate(DateTime date, {required String lang, required bool jalali}) =>
-    jalali ? formatJalaliDate(date, lang) : formatGregorianDate(date, lang);
+/// Both calendars, the user's primary one first (ADR-0024): "19 Azar 1405 (Dec 10, 2026)".
+String formatDate(DateTime date, {required String lang, required bool jalali}) {
+  final solar = formatJalaliDate(date, lang);
+  final gregorian = formatGregorianDate(date, lang);
+  return jalali ? '$solar ($gregorian)' : '$gregorian ($solar)';
+}
 
-/// ISO `yyyy-MM-dd` (as the API sends dates) in the user's calendar.
+/// ISO `yyyy-MM-dd` (as the API sends dates) in both calendars.
 String formatIsoDate(String? iso, {required String lang, required bool jalali}) {
   final d = iso == null ? null : DateTime.tryParse(iso);
   return d == null ? '' : formatDate(d, lang: lang, jalali: jalali);

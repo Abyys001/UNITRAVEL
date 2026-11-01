@@ -11,6 +11,7 @@ import { Button } from "@unitravel/ui/components/button"
 import { Input } from "@unitravel/ui/components/input"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { CountrySelect } from "@unitravel/ui/product/country"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
 import { COUNTRIES, countryName } from "@/lib/countries"
@@ -37,7 +38,7 @@ function PartyFields({ title, v, set, freight }: { title: string; v: Party; set:
           <Input className="mt-1 h-10" dir={["phone", "email", "postcode"].includes(k) || k === "name" ? "ltr" : "auto"} value={v[k]} onChange={(e) => set({ ...v, [k]: e.target.value })} required={k === "name" || k === "line1" || k === "city" || (k === "company" && freight)} />
         </label>
       ))}
-      <label className="text-sm">{t("cargo.country")}<NativeSelect className="field mt-1 h-10 w-full" value={v.country} onChange={(e) => set({ ...v, country: e.target.value })}>{countryOptions(v.country, locale)}</NativeSelect></label>
+      <label className="text-sm">{t("cargo.country")}<CountrySelect wrapperClassName="mt-1" className="field h-10 w-full" value={v.country} onChange={(e) => set({ ...v, country: e.target.value })}>{countryOptions(v.country, locale)}</CountrySelect></label>
     </fieldset>
   )
 }
@@ -144,7 +145,7 @@ export default function CargoPage() {
             <label className="text-xs text-steel">{t("cargo.quantity")}<Input type="number" min={1} className="mt-1 h-10" value={it.quantity} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, quantity: Number(e.target.value) } : x)))} /></label>
             <label className="text-xs text-steel">{t("cargo.value")} (GBP)<Input type="number" min={0} className="mt-1 h-10" value={it.value} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, value: Number(e.target.value) } : x)))} /></label>
             <label className="text-xs text-steel">{t("cargo.purpose")}<NativeSelect className="mt-1 h-10 w-full field" value={it.purpose} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, purpose: e.target.value } : x)))}>{PURPOSES.map((c) => <option key={c} value={c}>{t(`cargo.purposes.${c}` as never)}</option>)}</NativeSelect></label>
-            <label className="text-xs text-steel">{t("cargo.origin")}<NativeSelect className="mt-1 h-10 w-full field" value={it.originCountry} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, originCountry: e.target.value } : x)))}>{countryOptions(it.originCountry, locale)}</NativeSelect></label>
+            <label className="text-xs text-steel">{t("cargo.origin")}<CountrySelect wrapperClassName="mt-1" className="field h-10 w-full" value={it.originCountry} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, originCountry: e.target.value } : x)))}>{countryOptions(it.originCountry, locale)}</CountrySelect></label>
             <label className="text-xs text-steel">{t("cargo.hs")}{!freight && ` (${t("common.optional")})`}<Input className="mt-1 h-10" dir="ltr" value={it.hsCode} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, hsCode: e.target.value.replace(/\D/g, "") } : x)))} required={freight} /></label>
           </div>
         ))}

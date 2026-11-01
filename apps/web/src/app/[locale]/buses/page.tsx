@@ -1,7 +1,7 @@
 "use client"
 
-import { GroundListing } from "@/components/listings"
+import { GroundRequest } from "@/components/ground-request"
 
 export default function Page() {
-  return <GroundListing vertical="BUS" />
+  return <GroundRequest mode="BUS" />
 }

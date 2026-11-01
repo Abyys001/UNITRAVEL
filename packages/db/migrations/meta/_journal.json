@@ -127,6 +127,20 @@
       "when": 1793080000000,
       "tag": "0017_curated_listings",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793090000000,
+      "tag": "0018_trusted_devices",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793091000000,
+      "tag": "0019_direct_invoices",
+      "breakpoints": true
     }
   ]
 }

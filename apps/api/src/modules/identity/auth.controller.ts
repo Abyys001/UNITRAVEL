@@ -6,10 +6,10 @@ import { MfaVerifyBody, OtpRequestBody, OtpRequestResult, OtpVerifyBody, Refresh
 
 import { isLocal, testSignInEnabled } from "../../core/env"
 import { AppError } from "../../core/errors"
-import { COOKIE_REFRESH } from "../../core/http/auth.guard"
-import { type Actor, Authenticated, Ctx, CurrentActor, OptionalActor, Public, RateLimit, type RequestContext } from "../../core/http/decorators"
+import { COOKIE_DEVICE, COOKIE_REFRESH } from "../../core/http/auth.guard"
+import { type Actor, Authenticated, Ctx, CurrentActor, OptionalActor, Passive, Public, RateLimit, type RequestContext } from "../../core/http/decorators"
 import { ApiZodBody, ApiZodResponse, zbody } from "../../core/http/zod"
-import { clearSessionCookies, setSessionCookies } from "./cookies"
+import { clearDeviceCookie, clearSessionCookies, consoleHost, setDeviceCookie, setSessionCookies } from "./cookies"
 import { MfaService } from "./mfa.service"
 import { OtpService } from "./otp.service"
 import { PowService } from "./pow.service"
@@ -45,7 +45,7 @@ export class AuthController {
   @ApiZodResponse(200, VerifyResult)
   async verify(@Body(zbody(OtpVerifyBody)) body: OtpVerifyBody, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
     const r = await this.otp.verify(body, { ip: req.ip ?? "", userAgent: req.header("user-agent"), requestId: ctx.id, locale: ctx.locale })
-    return this.signedIn(r, body.client, res)
+    return this.signedIn(r, body.client, req, res, ctx)
   }
 
   @Get("test-sign-in")
@@ -65,19 +65,80 @@ export class AuthController {
   async testSignIn(@Body(zbody(TestSignInBody)) body: TestSignInBody, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
     if (!testSignInEnabled()) throw new AppError("NOT_FOUND")
     const r = await this.otp.testSignIn(body, { ip: req.ip ?? "", userAgent: req.header("user-agent"), requestId: ctx.id, locale: ctx.locale })
-    return this.signedIn(r, body.client, res)
+    return this.signedIn(r, body.client, req, res, ctx)
   }
 
-  private signedIn(r: Awaited<ReturnType<OtpService["verify"]>>, client: VerifyBodyClient, res: Response) {
+  private async signedIn(r: Awaited<ReturnType<OtpService["verify"]>>, client: VerifyBodyClient, req: Request, res: Response, ctx: RequestContext) {
     if (r.tokens && client !== "MOBILE") setSessionCookies(res, r.tokens, client)
+    if (r.tokens && client === "CONSOLE" && !r.mfaRequired && !r.mfaEnrolmentRequired) await this.remember(r.tokens.sessionId, req, res, ctx)
     return {
       isNewUser: r.isNewUser, needsProfile: r.needsProfile, mfaRequired: r.mfaRequired, mfaEnrolmentRequired: r.mfaEnrolmentRequired,
       tokens: r.tokens && client === "MOBILE" ? { accessToken: r.tokens.accessToken, accessExpiresAt: r.tokens.accessExpiresAt.toISOString(), refreshToken: r.tokens.refreshToken, refreshExpiresAt: r.tokens.refreshExpiresAt.toISOString() } : undefined,
     }
   }
 
+  /** ADR-0022: called wherever a console session's second factor becomes satisfied. */
+  private async remember(sessionId: string, req: Request, res: Response, ctx: RequestContext) {
+    const host = consoleHost(req)
+    if (!host) return
+    const d = await this.sessions.trustDevice(sessionId, host, { ip: req.ip, userAgent: req.header("user-agent"), requestId: ctx.id })
+    if (d) setDeviceCookie(res, d.token, d.expiresAt)
+  }
+
+  /** Refuses anything a browser would not send for its own console page: wrong host, cross-site origin, or no custom header (which forces a CORS preflight). */
+  private deviceRequestHost(req: Request): string {
+    const host = consoleHost(req)
+    let origin = ""
+    try { origin = new URL(req.header("origin") ?? "").host } catch { /* missing or malformed */ }
+    if (!host || origin !== host || req.header("x-ut-device") !== "1") throw new AppError("UNAUTHENTICATED", "Device not recognised")
+    return host
+  }
+
+  /** ADR-0022: a session has ended; a remembered device opens a new one without a sign-in. */
+  @Post("device/resume")
+  @Public()
+  @Passive()
+  @HttpCode(200)
+  @RateLimit({ name: "device-resume", limit: 120, windowSeconds: 600, key: "ip" })
+  async resumeDevice(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
+    const host = this.deviceRequestHost(req)
+    const presented = req.cookies?.[COOKIE_DEVICE] as string | undefined
+    if (!presented) throw new AppError("UNAUTHENTICATED", "Device not recognised")
+    try {
+      const r = await this.sessions.resumeDevice(presented, host, { ip: req.ip, userAgent: req.header("user-agent"), requestId: ctx.id })
+      setSessionCookies(res, r.tokens, "CONSOLE")
+      if (r.device) setDeviceCookie(res, r.device.token, r.device.expiresAt)
+      return { ok: true }
+    } catch (err) {
+      if (err instanceof AppError && err.code === "UNAUTHENTICATED") clearDeviceCookie(res)
+      throw err
+    }
+  }
+
+  /** Sign-out must work even after the session ended, when logout itself can no longer authenticate. */
+  @Post("device/forget")
+  @Public()
+  @Passive()
+  @HttpCode(204)
+  @RateLimit({ name: "device-forget", limit: 60, windowSeconds: 600, key: "ip" })
+  async forgetDevice(@Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
+    this.deviceRequestHost(req)
+    const presented = req.cookies?.[COOKIE_DEVICE] as string | undefined
+    if (presented) await this.sessions.forgetDevice(presented, { ip: req.ip, requestId: ctx.id })
+    clearDeviceCookie(res)
+  }
+
+  /** The console's heartbeat while someone works without calling the API (a long form); the guard records the activity. */
+  @Post("activity")
+  @Authenticated()
+  @HttpCode(204)
+  activity() {
+    return
+  }
+
   @Post("refresh")
   @Public()
+  @Passive()
   @HttpCode(200)
   @RateLimit({ name: "refresh", limit: 120, windowSeconds: 600, key: "ip" })
   async refresh(@Body(zbody(RefreshBody)) body: { refreshToken?: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
@@ -99,6 +160,7 @@ export class AuthController {
   async logout(@CurrentActor() actor: Actor, @Ctx() ctx: RequestContext, @Res({ passthrough: true }) res: Response) {
     await this.sessions.signOut(actor, ctx.id)
     clearSessionCookies(res)
+    clearDeviceCookie(res)
   }
 
   @Post("mfa/totp/enrol")
@@ -120,8 +182,10 @@ export class AuthController {
   @Authenticated()
   @HttpCode(200)
   @RateLimit({ name: "mfa-verify", limit: 10, windowSeconds: 600, key: "user" })
-  verifyTotp(@Body(zbody(MfaVerifyBody)) body: { code: string }, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
-    return this.mfa.verifyTotp(actor.userId, actor.sessionId, body.code, { ip: actor.ip, requestId: ctx.id })
+  async verifyTotp(@Body(zbody(MfaVerifyBody)) body: { code: string }, @CurrentActor() actor: Actor, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
+    const r = await this.mfa.verifyTotp(actor.userId, actor.sessionId, body.code, { ip: actor.ip, requestId: ctx.id })
+    await this.remember(actor.sessionId, req, res, ctx)
+    return r
   }
 
   @Post("mfa/webauthn/registration-options")
@@ -132,8 +196,10 @@ export class AuthController {
 
   @Post("mfa/webauthn/register")
   @Authenticated()
-  webauthnRegister(@Body(zbody(WebAuthnVerifyBody)) body: { response: Record<string, unknown> }, @CurrentActor() actor: Actor) {
-    return this.mfa.webauthnRegister(actor.userId, actor.sessionId, body.response)
+  async webauthnRegister(@Body(zbody(WebAuthnVerifyBody)) body: { response: Record<string, unknown> }, @CurrentActor() actor: Actor, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
+    const r = await this.mfa.webauthnRegister(actor.userId, actor.sessionId, body.response)
+    await this.remember(actor.sessionId, req, res, ctx)
+    return r
   }
 
   @Post("mfa/webauthn/authentication-options")
@@ -145,7 +211,9 @@ export class AuthController {
   @Post("mfa/webauthn/authenticate")
   @Authenticated()
   @HttpCode(200)
-  webauthnAuthenticate(@Body(zbody(WebAuthnVerifyBody)) body: { response: Record<string, unknown> }, @CurrentActor() actor: Actor) {
-    return this.mfa.webauthnAuthenticate(actor.userId, actor.sessionId, body.response)
+  async webauthnAuthenticate(@Body(zbody(WebAuthnVerifyBody)) body: { response: Record<string, unknown> }, @CurrentActor() actor: Actor, @Req() req: Request, @Res({ passthrough: true }) res: Response, @Ctx() ctx: RequestContext) {
+    const r = await this.mfa.webauthnAuthenticate(actor.userId, actor.sessionId, body.response)
+    await this.remember(actor.sessionId, req, res, ctx)
+    return r
   }
 }

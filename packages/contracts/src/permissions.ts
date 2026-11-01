@@ -38,6 +38,7 @@ export const PERMISSIONS = [
   "customer.read.pii",
   "customer.read.documents",
   "service.assign",
+  "invoice.direct",
   "support.read",
   "support.reply",
   "call.log",
@@ -104,6 +105,8 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "customer.read.documents": { privileged: true },
   // Sets prices on a customer's account (ADR-0020), so it is privileged like pricing.write.
   "service.assign": { privileged: true },
+  // Staff type the amounts on a direct invoice (ADR-0028), so it is privileged for the same reason.
+  "invoice.direct": { privileged: true },
   "support.read": { privileged: false },
   "support.reply": { privileged: false },
   "call.log": { privileged: false },
@@ -148,7 +151,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
     "flight_request.note.internal", "quote.create", "pricing.read.internal", "pricing.write", "commercial_document.issue", "reservation.record", "ticket.record",
     "payment.record", "payment.refund.request", "payment.refund.approve", "customer.read.pii", "customer.read.documents", "identity.verify", "engine.rules.read",
     "service_request.read.any", "service_request.write", "loyalty.read", "loyalty.manage", "loyalty.benefit.approve", "cms.read", "cms.write",
-    "customer.read", "service.assign", "support.read", "support.reply", "call.log", "listings.write",
+    "customer.read", "service.assign", "invoice.direct", "support.read", "support.reply", "call.log", "listings.write",
   ],
   cargo_admin: [
     "flight_search.run", "flight_request.note.internal", "payment.record", "cargo_request.read.any",

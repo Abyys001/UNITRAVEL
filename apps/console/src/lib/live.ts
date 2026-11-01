@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useSyncExternalStore } from "react"
 
+import { usePaused, useSessionEpoch } from "@/lib/activity"
 import { api } from "@/lib/api"
 import type { StaffTicketPage } from "@unitravel/contracts"
 
@@ -66,8 +67,11 @@ export function useSupportOverview(enabled: boolean) {
 
 export function useStaffStream(enabled: boolean) {
   const qc = useQueryClient()
+  const paused = usePaused()
+  // A stream refused with expired cookies does not retry by itself; reconnect once the session's cookies change.
+  const epoch = useSessionEpoch()
   useEffect(() => {
-    if (!enabled || typeof EventSource === "undefined") return
+    if (!enabled || paused || typeof EventSource === "undefined") return
     let lists: ReturnType<typeof setTimeout> | undefined
     const es = new EventSource("/api/v1/admin/events")
     es.onopen = () => {
@@ -97,5 +101,5 @@ export function useStaffStream(enabled: boolean) {
     // Reserved name for a ticket event; harmless until the API sends one.
     es.addEventListener("support-changed", () => { void qc.invalidateQueries({ queryKey: ["support"] }) })
     return () => { es.close(); setLive(false); if (lists) clearTimeout(lists) }
-  }, [enabled, qc])
+  }, [enabled, paused, epoch, qc])
 }

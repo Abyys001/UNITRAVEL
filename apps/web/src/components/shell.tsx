@@ -132,7 +132,8 @@ export function Header() {
           </nav>
         )}
       </header>
-      {!home && (
+      {/* Trains, buses and stays carry their own hero with its ribbon. */}
+      {!home && !/^\/(en|fa)\/(trains|buses|stays)\/?$/.test(path) && (
         <div aria-hidden className="relative bg-brand">
           <div className="bg-dots h-6 md:h-8" />
           <Ribbon className="relative -mt-px" />

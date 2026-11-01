@@ -11,8 +11,7 @@ nginx terminates TLS with certbot certificates and routes by host and path.
 | `demo.unitravels.co.uk` (`WEB_HOST`) | Customer website `/en`, `/fa` | web `:3080` |
 | | `/unitravel-documents*`: pre-signed S3 uploads/downloads (`STORAGE_HOST`) | storage `:3084` |
 | `admin.unitravels.co.uk` (`ADMIN_HOST`) | Admin Panel | console `:3081` |
-| `mobile.unitravels.co.uk` (`MOBILE_HOST`, also `API_HOST`) | `/`: device-frame shell (`infra/mobile-shell`); phones and windows under 640 px are sent straight to `/app/` | mobile `:3083` |
-| | `/app/`: Flutter web build (hash routes) | mobile `:3083` |
+| `mobile.unitravels.co.uk` (`MOBILE_HOST`, also `API_HOST`) | `/` and `/app/`: redirect to the website's `/app` Coming Soon page (mobile paused, ADR-0026) | nginx |
 | | `/v1/*`, `/health`: public API (same origin as the app, so no CORS) | api `:3082` |
 | `dev.unitravels.co.uk` (`DEV_HOST`) | Developer Panel | console `:3081` |
 

@@ -79,6 +79,13 @@ export class NotificationsService {
     return { id: u.id, locale: u.preferredLocale, tz: u.timezone, calendar: u.calendar, prefs: u.notificationPrefs, phone: phone?.valueNormalised ?? null, email: email?.valueNormalised ?? null }
   }
 
+  private attachmentResolver?: (documentId: string, userId: string) => Promise<{ filename: string; content: Buffer; contentType: string } | null>
+
+  /** The documents module sits above this one, so it registers how to read an attachment (ADR-0028 D8). */
+  onAttachment(resolver: NonNullable<NotificationsService["attachmentResolver"]>) {
+    this.attachmentResolver = resolver
+  }
+
   private async template(eventType: string, channel: "INBOX" | "PUSH" | "SMS" | "EMAIL", locale: "en" | "fa") {
     const rows = await this.db.select().from(notificationTemplates).where(and(eq(notificationTemplates.eventType, eventType), eq(notificationTemplates.channel, channel), eq(notificationTemplates.active, true)))
     return rows.find((r) => r.locale === locale) ?? rows.find((r) => r.locale === "en") ?? null
@@ -289,7 +296,10 @@ export class NotificationsService {
     const t = await this.template(n.eventType, "EMAIL", r.locale)
     const vars = (n.data as { vars?: Record<string, string> }).vars ?? {}
     try {
-      const sent = await this.email.send(r.email, renderTemplate(t?.title ?? n.title, vars), renderTemplate(t?.body ?? n.body, vars), r.locale)
+      // A read failure fails the delivery so the job retries: the email says a PDF is attached.
+      const documentId = (n.data as { attachDocumentId?: string }).attachDocumentId
+      const file = documentId && this.attachmentResolver ? await this.attachmentResolver(documentId, n.userId) : null
+      const sent = await this.email.send(r.email, renderTemplate(t?.title ?? n.title, vars), renderTemplate(t?.body ?? n.body, vars), r.locale, file ? [file] : undefined)
       await this.markDelivery(deliveryId, "SENT", sent.provider, null, sent.messageId, r.email)
     } catch (err) {
       await this.markDelivery(deliveryId, "FAILED", null, String(err))

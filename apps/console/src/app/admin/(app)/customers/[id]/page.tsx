@@ -2,14 +2,16 @@
 
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
-import { useParams, useSearchParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 
 import type { TravellerView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 
+import { Country } from "@unitravel/ui/product/country"
 import { AssignServiceDialog } from "@/components/assign-service"
 import { ListSkeleton, PanelTabs, StateChip, SummaryItem, TableScroll } from "@/components/case"
+import { DirectInvoiceDialog } from "@/components/direct-invoice-form"
 import { CustomerActivity } from "@/components/customer-activity"
 import { Empty, ErrorLine, PageHead, Panel, useAct } from "@/components/ui"
 import { api } from "@/lib/api"
@@ -36,12 +38,15 @@ function Customer() {
   const reveal = useAct((tid: string) => api<{ number: string }>(`/v1/admin/customers/travellers/${tid}/reveal-document`, { body: { ref } }).then((r) => ({ tid, n: r.number })), { onDone: ({ tid, n }) => setRevealed((x) => ({ ...x, [tid]: n })) })
   const [tab, setTab] = useState<"overview" | "activity">(() => (params.get("tab") === "activity" ? "activity" : "overview"))
   const [assigning, setAssigning] = useState(false)
+  const [invoicing, setInvoicing] = useState(false)
+  const router = useRouter()
   const c = q.data
   const showActivity = can("customer.read")
   return (
     <div>
       <PageHead kicker={<>{t("cu.detail")}{ref && <> · {t("cd.from")} <Link className="ref hover:underline" href={ref.startsWith("UT-C-") ? `/cargo/${ref}` : `/requests/${ref}`}>{ref}</Link></>}</>} title={<span dir="auto">{!c ? t("cu.detail") : c.profile?.givenNamesLatin ? `${c.profile.givenNamesLatin} ${c.profile.surnameLatin ?? ""}` : c.displayName}</span>}>
         {c?.profile?.nameFa && <span className="font-fa text-lg" dir="rtl" lang="fa">{c.profile.nameFa}</span>}
+        {can("invoice.direct") && c && <Button size="sm" variant="outline" onClick={() => setInvoicing(true)} data-testid="new-invoice">{t("invd.new")}</Button>}
         {can("service.assign") && <Button size="sm" onClick={() => setAssigning(true)} data-testid="assign-service">{t("as.open")}</Button>}
       </PageHead>
       {showActivity && <div className="px-4 md:px-6"><PanelTabs id="cust" label={t("cu.tabs")} value={tab} onChange={setTab} tabs={[{ key: "overview", label: t("cu.tab.overview") }, { key: "activity", label: t("cu.tab.activity") }]} /></div>}
@@ -73,15 +78,15 @@ function Customer() {
                 <li key={x.id} className="rounded-xl border border-rule bg-surface-raised p-3">
                   <p className="flex items-center justify-between gap-2 font-medium"><span>{x.title} {x.givenNames} {x.surname}</span>{x.document && <StateChip value={x.verification.status} />}</p>
                   {x.nameFa && <p className="font-fa" dir="rtl">{x.nameFa}</p>}
-                  <p className="text-steel">{fmtDate(x.dateOfBirth)} · {x.nationality}</p>
-                  {x.document && <p className="num mt-1 text-meta">{revealed[x.id] ?? `•••••${x.document.last4}`} · {x.document.issuingCountry} · {t("cd.exp", { d: x.document.expiryDate })}</p>}
+                  <p className="text-steel">{fmtDate(x.dateOfBirth)} · <Country code={x.nationality} /></p>
+                  {x.document && <p className="num mt-1 text-meta">{revealed[x.id] ?? `•••••${x.document.last4}`} · <Country code={x.document.issuingCountry} /> · {t("cd.exp", { d: x.document.expiryDate })}</p>}
                   {x.document && can("customer.read.documents") && !revealed[x.id] && <button type="button" className="mt-1 min-h-8 font-medium text-link hover:underline" onClick={() => reveal.mutate(x.id)}>{t("cd.reveal")}</button>}
                 </li>
               ))}
             </ul>
             <TableScroll className="hidden md:block"><table className="w-full bg-surface-raised">
               <thead><tr className="border-b border-rule">{(["cd.c.name", "cd.c.persian", "cd.c.born", "cd.c.nationality", "cd.c.verification", "cd.c.document", ""] as const).map((h, i) => <th key={i} className="cap px-2 py-1 text-start font-normal">{h && t(h)}</th>)}</tr></thead>
-              <tbody>{c.travellers.map((x) => <tr key={x.id} className="border-b border-rule/70"><td className="px-2 py-1">{x.title} {x.givenNames} {x.surname}</td><td className="font-fa px-2 py-1" dir="rtl">{x.nameFa ?? "—"}</td><td className="px-2 py-1">{fmtDate(x.dateOfBirth)}</td><td className="px-2 py-1">{x.nationality}</td><td className="px-2 py-1">{x.document ? <StateChip value={x.verification.status} /> : "—"}</td><td className="num px-2 py-1">{x.document ? `${revealed[x.id] ?? `•••••${x.document.last4}`} · ${x.document.issuingCountry} · ${t("cd.exp", { d: x.document.expiryDate })}` : "—"}</td><td className="px-2 py-1">{x.document && can("customer.read.documents") && !revealed[x.id] && <button type="button" className="font-medium text-link hover:underline" onClick={() => reveal.mutate(x.id)}>{t("cd.reveal")}</button>}</td></tr>)}</tbody>
+              <tbody>{c.travellers.map((x) => <tr key={x.id} className="border-b border-rule/70"><td className="px-2 py-1">{x.title} {x.givenNames} {x.surname}</td><td className="font-fa px-2 py-1" dir="rtl">{x.nameFa ?? "—"}</td><td className="px-2 py-1">{fmtDate(x.dateOfBirth)}</td><td className="px-2 py-1"><Country code={x.nationality} /></td><td className="px-2 py-1">{x.document ? <StateChip value={x.verification.status} /> : "—"}</td><td className="num px-2 py-1">{x.document ? <>{revealed[x.id] ?? `•••••${x.document.last4}`} · <Country code={x.document.issuingCountry} /> · {t("cd.exp", { d: x.document.expiryDate })}</> : "—"}</td><td className="px-2 py-1">{x.document && can("customer.read.documents") && !revealed[x.id] && <button type="button" className="font-medium text-link hover:underline" onClick={() => reveal.mutate(x.id)}>{t("cd.reveal")}</button>}</td></tr>)}</tbody>
             </table></TableScroll>
             </>
           )}
@@ -89,6 +94,7 @@ function Customer() {
         </Panel>
       </div>
       </div>)}
+      {invoicing && c && <DirectInvoiceDialog customer={{ id, name: c.displayName }} onClose={() => setInvoicing(false)} onSaved={(iid) => { setInvoicing(false); router.push(`/invoices/${iid}`) }} />}
       {assigning && <AssignServiceDialog customerId={id} travellers={c?.travellers ?? []} onOpenChange={(o) => !o && setAssigning(false)} />}
     </div>
   )

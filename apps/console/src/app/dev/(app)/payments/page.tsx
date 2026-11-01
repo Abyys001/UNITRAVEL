@@ -33,6 +33,7 @@ export default function PaymentsPage() {
   const check = useAct(() => api<PaymentHealthView>("/v1/dev/payments/health-check", { body: {} }), { onDone: setHealth })
   const askLive = useAct(() => api("/v1/dev/payments/mode-requests", { body: { mode: "live" } }), { invalidate: inv })
   const approve = useAct(() => api("/v1/dev/payments/mode-requests/approve", { body: {} }), { invalidate: inv, success: t("paydev.saved") })
+  const clearAccount = useAct(() => api("/v1/dev/payments/credentials", { method: "PUT", body: { mode: "test", connectedAccountId: null } }), { invalidate: inv, success: t("paydev.saved") })
   const d = q.data
   if (q.error) return <div className="p-4 md:p-6"><ErrorLine error={q.error} /></div>
   if (!d) return <Loading />
@@ -70,6 +71,25 @@ export default function PaymentsPage() {
             </div>
           </Section>
         </div>
+        <Section title={t("paydev.setup")} data-testid="stripe-setup">
+          <p className="mb-3 text-meta text-steel">{t("paydev.setup.desc")}</p>
+          {!d.keysAccepted && <p className="mb-3 rounded-md bg-warning-subtle px-3 py-2 text-meta text-warning-subtle-fg" data-testid="keys-refused">{t("paydev.setup.refused")}</p>}
+          <ol className="space-y-2 text-meta">
+            {([["keys", d.setup.keys], ["webhook", d.setup.webhook], ["flag", d.setup.flag], ["servicePolicy", d.setup.servicePolicy], ["currencyPolicy", d.setup.currencyPolicy]] as const).map(([k, done]) => (
+              <li key={k} className="flex items-start gap-2" data-setup={k} data-done={done}>
+                <span aria-hidden className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", done ? "bg-success" : "bg-steel")} />
+                <span className={done ? "text-success" : undefined}>{t(`paydev.setup.${k}`)}<span className="sr-only"> {done ? t("paydev.setup.done") : t("paydev.setup.todo")}</span></span>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-4 border-t border-rule pt-4">
+            <KV><KVRow k={t("paydev.account")}><span className="num inline-flex flex-wrap items-center gap-2" dir="ltr">{d.connectedAccountId ?? t("paydev.account.none")}
+              {d.connectedAccountId && can("payments.configure") && <Button size="xs" variant="ghost" loading={clearAccount.isPending} onClick={() => clearAccount.mutate()} data-command="clear_connected_account">{t("paydev.account.remove")}</Button>}</span></KVRow></KV>
+            <p className="mt-2 text-meta text-steel">{t("paydev.account.hint")}</p>
+            <p className="mt-4 text-meta text-steel">{t("paydev.setup.events")}</p>
+            <ul className="num mt-1 space-y-0.5 rounded-md bg-surface-sunk px-3 py-2 text-meta break-all" dir="ltr" data-testid="webhook-events">{d.webhookEvents.map((e) => <li key={e}>{e}</li>)}</ul>
+          </div>
+        </Section>
         <Section title={t("paydev.events")} aside={<span className="text-steel">{t("paydev.failed", { n: d.failedEvents })} · {t("paydev.open", { n: d.openSessions })}</span>} flush={d.events.length > 0}>
           {!d.events.length ? <p className="text-meta text-steel">{t("paydev.noEvents")}</p> : (
             <DataTable data-testid="stripe-events">
@@ -80,7 +100,7 @@ export default function PaymentsPage() {
         </Section>
       </DevPage>
       {keys && (
-        <SecretDialog open onOpenChange={(o) => !o && setKeys(false)} title={t("paydev.keys")} hintKeys={["secretKey", "publishableKey", "webhookSecret"]}
+        <SecretDialog open onOpenChange={(o) => !o && setKeys(false)} title={t("paydev.keys")} hintKeys={["secretKey", "publishableKey", "webhookSecret", "connectedAccountId"]} fixedKeys plainKeys={["connectedAccountId"]} optionalKeys={["secretKey", "publishableKey", "webhookSecret", "connectedAccountId"]}
           onSave={async (values) => { await api("/v1/dev/payments/credentials", { method: "PUT", body: { mode: "test", ...values } }); await q.refetch() }} />
       )}
     </div>

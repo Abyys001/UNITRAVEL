@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 
+import { Country } from "@unitravel/ui/product/country"
 import { StatusChip, TileError } from "@/components/bento"
 import { ActionBar, CaseHeader, CaseTabs, CommandBar, ListSkeleton, paneClass, paneProps, StateChip, statusTone, SummaryItem, TableScroll, Timeline } from "@/components/case"
 import { CargoCommandDialog, CargoQuoteDialog, EstimateDialog, TrackingCorrectionDialog, TrackingDialog } from "@/components/cargo-dialogs"
@@ -30,7 +31,7 @@ function Party({ title, p }: { title: string; p: CargoPartyView }) {
   return (
     <Panel title={title}>
       <p className="font-medium" dir="auto">{p.name}{p.company && <span className="text-steel"> · {p.company}</span>}</p>
-      <p className="text-steel" dir="auto">{p.address.line1}{p.address.line2 && `, ${p.address.line2}`}, {p.address.city}{p.address.postcode && ` ${p.address.postcode}`}, {p.address.country}</p>
+      <p className="text-steel" dir="auto">{p.address.line1}{p.address.line2 && `, ${p.address.line2}`}, {p.address.city}{p.address.postcode && ` ${p.address.postcode}`}, <Country code={p.address.country} /></p>
       <p className="num" dir="ltr">{p.phone}{p.email && ` · ${p.email}`}</p>
     </Panel>
   )
@@ -108,7 +109,7 @@ export default function CargoPage() {
           <Panel title={`Goods · screening ${reviewLines ? `${reviewLines} line${reviewLines === 1 ? " needs" : "s need"} review` : "all allowed"}`}>
             <TableScroll><table className="w-full bg-surface-raised" data-testid="goods">
               <thead><tr className="border-b border-rule">{["Description", "Category", "Qty", "Value", "Origin", "HS", "Screening"].map((h) => <th key={h} className="cap px-1.5 py-1 text-start font-normal">{h}</th>)}</tr></thead>
-              <tbody>{d.items.map((i) => <tr key={i.id} className={cn("border-b border-rule/70 align-top", i.screeningOutcome === "PROHIBITED" && "bg-danger-subtle")}><td className="px-1.5 py-1" dir="auto">{i.description}</td><td className="px-1.5 py-1 font-mono text-2xs">{i.category}</td><td className="num px-1.5 py-1">{i.quantity}</td><td className="num px-1.5 py-1">{money({ ...i.unitValue, amountMinor: i.unitValue.amountMinor * i.quantity })}</td><td className="px-1.5 py-1">{i.originCountry}</td><td className="num px-1.5 py-1">{i.hsCode ?? "—"}</td><td className="px-1.5 py-1"><Tag value={i.screeningOutcome} />{i.matchedRule && <span className="block text-caption text-steel">{i.matchedRule}</span>}</td></tr>)}</tbody>
+              <tbody>{d.items.map((i) => <tr key={i.id} className={cn("border-b border-rule/70 align-top", i.screeningOutcome === "PROHIBITED" && "bg-danger-subtle")}><td className="px-1.5 py-1" dir="auto">{i.description}</td><td className="px-1.5 py-1 font-mono text-2xs">{i.category}</td><td className="num px-1.5 py-1">{i.quantity}</td><td className="num px-1.5 py-1">{money({ ...i.unitValue, amountMinor: i.unitValue.amountMinor * i.quantity })}</td><td className="px-1.5 py-1"><Country code={i.originCountry} /></td><td className="num px-1.5 py-1">{i.hsCode ?? "—"}</td><td className="px-1.5 py-1"><Tag value={i.screeningOutcome} />{i.matchedRule && <span className="block text-caption text-steel">{i.matchedRule}</span>}</td></tr>)}</tbody>
             </table></TableScroll>
           </Panel>
           <Panel title="Pieces and weight">

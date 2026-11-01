@@ -2,7 +2,7 @@ import { createHash } from "node:crypto"
 import { Socket } from "node:net"
 
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common"
-import { and, eq, inArray, isNull, lt } from "drizzle-orm"
+import { and, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm"
 
 import { IDENTITY_DOCUMENT_TYPES } from "@unitravel/contracts"
 import { type Db, type DbOrTx, documents } from "@unitravel/db"
@@ -26,6 +26,8 @@ export const IDENTITY_UPLOAD_TYPES: Record<string, string[]> = { "image/jpeg": [
 export const isIdentityType = (type: string) => (IDENTITY_DOCUMENT_TYPES as readonly string[]).includes(type)
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 const EICAR = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+/** The queue's own retries (Table 26.2: 3, about 6 s in all) are long over by now, so a pending upload here has been left behind. */
+export const STUCK_SCAN_AFTER_MS = 10 * 60_000
 
 /** clamd INSTREAM over TCP (ch. 30.3 ClamAV container). */
 async function clamScan(host: string, port: number, body: Buffer): Promise<{ clean: boolean; detail: string }> {
@@ -64,6 +66,26 @@ export class DocumentsService implements OnModuleInit {
     this.workers.register("documents.scan", (job) => this.scan((job.data as { payload: { documentId: string } }).payload.documentId), 3)
     this.workers.registerJob("maintenance", "identity.scan-retention", () => this.purgeExpiredScans())
     await this.queues.get("maintenance").upsertJobScheduler("identity-scan-retention-daily", { every: 24 * 3600_000 }, { name: "identity.scan-retention" }).catch(() => undefined)
+    this.workers.registerJob("maintenance", "documents.scan-requeue", () => this.requeueStuckScans())
+    await this.queues.get("maintenance").upsertJobScheduler("documents-scan-requeue-every-10m", { every: STUCK_SCAN_AFTER_MS }, { name: "documents.scan-requeue" }).catch(() => undefined)
+  }
+
+  /**
+   * A ClamAV outage outlasts the scan job's retries, and the upload would then stay PENDING and unavailable for good.
+   * The database is the source of truth: anything still pending gets a fresh job each window until a scan decides it.
+   * A pending file stays unavailable throughout, so this can only delay access, never skip the scan.
+   */
+  async requeueStuckScans(now = new Date()) {
+    const stuck = await this.db.select({ id: documents.id }).from(documents)
+      .where(and(eq(documents.scanStatus, "PENDING"), isNotNull(documents.uploadCompletedAt), isNull(documents.erasedAt), lt(documents.uploadCompletedAt, new Date(now.getTime() - STUCK_SCAN_AFTER_MS))))
+      .limit(50)
+    const window = Math.floor(now.getTime() / STUCK_SCAN_AFTER_MS)
+    for (const { id } of stuck) {
+      // The id changes each window: BullMQ ignores an add whose id already exists, even a failed one.
+      await this.queues.get("documents.scan").add("document.rescan", { payload: { documentId: id } }, { jobId: `documents.scan--rescan-${id}-${window}`, removeOnComplete: true, removeOnFail: true })
+    }
+    if (stuck.length) this.log.warn({ count: stuck.length }, "requeued stuck document scans")
+    return stuck.length
   }
 
   private bucketOf(d: { storageBucket: string | null }) {

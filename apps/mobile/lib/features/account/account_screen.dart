@@ -92,79 +92,87 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       ],
                     ),
                   ),
-                  if (me.admin) ToneChip(l.roleStaff, tone: XfamTone.info),
+                  if (me.admin) ToneChip(me.roles.contains('owner') ? l.roleOwner : l.roleStaff, tone: XfamTone.info),
                 ],
               ),
             ),
             SectionTitle(l.preferences),
-            Text(l.languageLabel, style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
-            SegmentedButton<String>(
-              showSelectedIcon: false,
-              segments: [
-                ButtonSegment(value: 'en', label: Text(l.langEnglish)),
-                ButtonSegment(value: 'fa', label: Text(l.langPersian)),
-              ],
-              selected: {lang},
-              onSelectionChanged: _busy ? null : (s) => _setLanguage(s.first),
-            ),
-            const SizedBox(height: 16),
-            Text(l.calendarLabel, style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
-            SegmentedButton<String>(
-              showSelectedIcon: false,
-              segments: [
-                ButtonSegment(value: 'GREGORIAN', label: Text(l.calendarGregorian)),
-                ButtonSegment(value: 'JALALI', label: Text(l.calendarJalali)),
-              ],
-              selected: {me.calendar},
-              onSelectionChanged: _busy ? null : (s) => _patch({'calendar': s.first}),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l.languageLabel, style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(value: 'en', label: Text(l.langEnglish)),
+                      ButtonSegment(value: 'fa', label: Text(l.langPersian)),
+                    ],
+                    selected: {lang},
+                    onSelectionChanged: _busy ? null : (s) => _setLanguage(s.first),
+                  ),
+                  const Divider(height: 28),
+                  Text(l.calendarLabel, style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 2),
+                  Text(l.calendarHelp, style: theme.textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(value: 'GREGORIAN', label: Text(l.calendarGregorian)),
+                      ButtonSegment(value: 'JALALI', label: Text(l.calendarJalali)),
+                    ],
+                    selected: {me.calendar},
+                    onSelectionChanged: _busy ? null : (s) => _patch({'calendar': s.first}),
+                  ),
+                ],
+              ),
             ),
             if (me.admin) ...[
-              SectionTitle(l.adminMode),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l.onDuty),
-                subtitle: Text(l.onDutyHelp),
-                value: me.onDuty,
-                onChanged: _busy ? null : (v) => _patch({'onDuty': v}),
-              ),
-              ListTile(
-                key: const Key('admin-settings-link'),
-                contentPadding: EdgeInsets.zero,
-                minTileHeight: 56,
-                leading: const Icon(Icons.tune),
-                title: Text(l.settingsTitle),
-                subtitle: Text(l.settingsHelp),
-                trailing: Icon(chevronIcon(context)),
-                onTap: () => showAdminSettings(context),
+              const SizedBox(height: 20),
+              _AdminModeCard(
+                onDuty: me.onDuty,
+                onDutyChanged: _busy ? null : (v) => _patch({'onDuty': v}),
               ),
             ] else ...[
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.badge_outlined),
-                title: Text(l.detailsLink),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/account/details'),
-              ),
-              ListTile(
-                key: const Key('billing-link'),
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.receipt_long_outlined),
-                title: Text(l.billingTitle),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/account/billing'),
+              SectionTitle(l.accountSection),
+              _TileCard(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.badge_outlined),
+                    title: Text(l.detailsLink),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/account/details'),
+                  ),
+                  ListTile(
+                    key: const Key('billing-link'),
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.receipt_long_outlined),
+                    title: Text(l.billingTitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/account/billing'),
+                  ),
+                ],
               ),
               SectionTitle(l.myTravellers),
               const _TravellerList(),
             ],
             const SiteServiceLinks(),
             SectionTitle(l.helpTitle),
-            ListTile(key: const Key('learn-link'), contentPadding: EdgeInsets.zero, minTileHeight: 56, leading: const Icon(Icons.menu_book_outlined), title: Text(l.learnTitle), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/learn')),
-            ListTile(key: const Key('glossary-link'), contentPadding: EdgeInsets.zero, minTileHeight: 56, leading: const Icon(Icons.translate), title: Text(l.glossaryTitle), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/glossary')),
-            const HelpLinks(),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(onPressed: _signOut, icon: const Icon(Icons.logout), label: Text(l.signOut)),
+            _TileCard(
+              children: [
+                ListTile(key: const Key('learn-link'), contentPadding: EdgeInsets.zero, minTileHeight: 56, leading: const Icon(Icons.menu_book_outlined), title: Text(l.learnTitle), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/learn')),
+                ListTile(key: const Key('glossary-link'), contentPadding: EdgeInsets.zero, minTileHeight: 56, leading: const Icon(Icons.translate), title: Text(l.glossaryTitle), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/glossary')),
+                const HelpLinks(),
+              ],
+            ),
+            const SizedBox(height: 20),
+            AppCard(
+              padding: const EdgeInsets.all(12),
+              child: OutlinedButton.icon(onPressed: _signOut, icon: const Icon(Icons.logout), label: Text(l.signOut)),
+            ),
             const SizedBox(height: 12),
             Center(child: Text(l.version('0.1.0'), style: theme.textTheme.bodySmall?.copyWith(color: xc(context).fgSubtle))),
           ],
@@ -210,6 +218,90 @@ class _TravellerList extends ConsumerWidget {
 /// A static content page on the website (FAQ, travel rules, buying guide), in the app's language.
 Uri helpPageUri(String lang, String path) => Uri.parse('${AppConfig.webUrl}/$lang$path');
 
+/// A card of list rows separated by dividers.
+class _TileCard extends StatelessWidget {
+  const _TileCard({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => AppCard(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (i, child) in children.indexed) ...[
+          if (i > 0) const Divider(height: 1),
+          child,
+        ],
+      ],
+    ),
+  );
+}
+
+/// Admin mode as its own block: the heading sits apart from the on-duty switch, so the switch cannot read as
+/// turning admin mode itself on or off.
+class _AdminModeCard extends StatelessWidget {
+  const _AdminModeCard({required this.onDuty, required this.onDutyChanged});
+  final bool onDuty;
+  final ValueChanged<bool>? onDutyChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l;
+    final theme = Theme.of(context);
+    return AppCard(
+      key: const Key('admin-mode-card'),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Brand.navy950,
+                  child: const Icon(Icons.admin_panel_settings_outlined, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(header: true, child: Text(l.adminMode, style: theme.textTheme.titleMedium)),
+                      Text(l.adminModeHelp, style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l.onDuty),
+            subtitle: Text(l.onDutyHelp),
+            value: onDuty,
+            onChanged: onDutyChanged,
+          ),
+          const Divider(height: 1),
+          ListTile(
+            key: const Key('admin-settings-link'),
+            contentPadding: EdgeInsets.zero,
+            minTileHeight: 56,
+            leading: const Icon(Icons.tune),
+            title: Text(l.settingsTitle),
+            subtitle: Text(l.settingsHelp),
+            trailing: Icon(chevronIcon(context)),
+            onTap: () => showAdminSettings(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Account › Help: opens the website's content pages in the browser, like the invoice pay page.
 class HelpLinks extends StatelessWidget {
   const HelpLinks({super.key});
@@ -225,7 +317,8 @@ class HelpLinks extends StatelessWidget {
     ];
     return Column(
       children: [
-        for (final (key, icon, label, path) in entries)
+        for (final (i, (key, icon, label, path)) in entries.indexed) ...[
+          if (i > 0) const Divider(height: 1),
           ListTile(
             key: Key(key),
             contentPadding: EdgeInsets.zero,
@@ -238,6 +331,7 @@ class HelpLinks extends StatelessWidget {
               if (!ok && context.mounted) showMessage(context, l.billingOpenFailed, error: true);
             },
           ),
+        ],
       ],
     );
   }
@@ -270,16 +364,20 @@ class SiteServiceLinks extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionTitle(l.servicesTitle),
-        for (final (key, icon, label, path) in entries)
-          ListTile(
-            key: Key('site-$key'),
-            contentPadding: EdgeInsets.zero,
-            minTileHeight: 56,
-            leading: Icon(icon),
-            title: Text(label),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(path),
-          ),
+        _TileCard(
+          children: [
+            for (final (key, icon, label, path) in entries)
+              ListTile(
+                key: Key('site-$key'),
+                contentPadding: EdgeInsets.zero,
+                minTileHeight: 56,
+                leading: Icon(icon),
+                title: Text(label),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(path),
+              ),
+          ],
+        ),
       ],
     );
   }
