@@ -228,7 +228,7 @@ describe("Phase B — identity, profile, passport, verification", () => {
     const phone = me.identities.find((i: { type: string }) => i.type === "PHONE")
     const submit = await c.post("/v1/flight-requests", {
       kind: "MANUAL", contactIdentityId: phone.id, travellers: [{ travellerId: traveller.id, passengerType: "ADT" }],
-      query: { tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
+      query: { tripType: "ONE_WAY", slices: [{ from: { city: "IST" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
       manual: { flexibility: "Any day", budget: GBP(60000), overlandAcceptable: true, airlinesAvoid: [], airlinesPrefer: [] }, seatPreference: "WINDOW", acknowledgements: { notABooking: true, privacy: true },
     })
     expect(submit.status).toBe(201)

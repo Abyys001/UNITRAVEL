@@ -32,7 +32,7 @@ async function customerWithTraveller(name = { givenNames: "Neda", surname: "Test
 function manualBody(contactIdentityId: string, travellerId: string) {
   return {
     kind: "MANUAL", contactIdentityId, travellers: [{ travellerId, passengerType: "ADT" }],
-    query: { tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
+    query: { tripType: "ONE_WAY", slices: [{ from: { city: "IST" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
     manual: { flexibility: "Any day that week", budget: GBP(60000), overlandAcceptable: true, airlinesAvoid: [], airlinesPrefer: [] },
     seatPreference: "WINDOW", bestTimeToCall: "10:00–14:00 Tehran", note: "Student, first time travelling to the UK",
     acknowledgements: { notABooking: true, privacy: true },

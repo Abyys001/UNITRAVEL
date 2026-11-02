@@ -190,7 +190,7 @@ describe("Phase C — quotations and invoices (ADR-0006; booklet ch. 13.6, 13.7,
     const phone = me.identities.find((i: { type: string }) => i.type === "PHONE")
     const sub = await c.post("/v1/flight-requests", {
       kind: "MANUAL", contactIdentityId: phone.id, travellers: [{ travellerId: t.body.id, passengerType: "ADT" }],
-      query: { tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
+      query: { tripType: "ONE_WAY", slices: [{ from: { city: "IST" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
       manual: { flexibility: "Any day", budget: GBP(60000), overlandAcceptable: true, airlinesAvoid: [], airlinesPrefer: [] }, seatPreference: "WINDOW", bestTimeToCall: "10:00-14:00 Tehran", note: "Phase C", acknowledgements: { notABooking: true, privacy: true },
     }, { "idempotency-key": randomUUID() })
     expect(sub.status).toBe(201)

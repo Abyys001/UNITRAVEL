@@ -43,7 +43,7 @@ const option = (priceBreakdown: Record<string, unknown>) => ({
   conditions: { change: { status: "KNOWN", value: { allowed: true, penalty: GBP(5000) } }, refund: { status: "KNOWN", value: { allowed: false } } },
   ticketingModel: "SINGLE_TICKET", internalCostMinor: 30000,
 })
-const query = (date: string, pax: { type: string; age?: number }[] = [{ type: "ADT" }]) => ({ tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date, flexDays: 2 }], passengers: pax, cabin: "ECONOMY" })
+const query = (date: string, pax: { type: string; age?: number }[] = [{ type: "ADT" }]) => ({ tripType: "ONE_WAY", slices: [{ from: { city: "IST" }, to: { city: "LON" }, date, flexDays: 2 }], passengers: pax, cabin: "ECONOMY" })
 
 async function customer(name = { givenNames: "Sima", surname: "Testamend" }) {
   const c = new Session("MOBILE")

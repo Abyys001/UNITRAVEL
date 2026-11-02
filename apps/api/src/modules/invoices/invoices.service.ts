@@ -30,7 +30,7 @@ import { productOf } from "./product"
 
 type Inv = typeof invoices.$inferSelect
 type ReqType = "FLIGHT" | "CARGO" | "SERVICE"
-interface Draft { currency: string; lines: { description: string; quantity: number; unitAmountMinor: number; amountMinor: number }[]; totalMinor: number }
+interface Draft { currency: string; lines: { description: string; quantity: number; unitAmountMinor: number; amountMinor: number; serviceType?: InvoiceLineType }[]; totalMinor: number }
 
 const TIMER = "invoice.expire"
 const timerKey = (id: string) => `inv:${id}`
@@ -120,7 +120,11 @@ export class InvoicesService implements OnModuleInit {
       const pb = o.priceBreakdown as PriceBreakdown
       // Extras are their own lines; a discount is a negative line, so the lines still add up to the total (ADR-0013 A6).
       lines = [line(`Airfare - ${o.label}`, pb.fare.amountMinor), ...(pb.taxes.amountMinor > 0 ? [line("Taxes, fees and carrier charges", pb.taxes.amountMinor)] : []), ...(pb.serviceFee.amountMinor > 0 ? [line("Uni Travel service fee", pb.serviceFee.amountMinor)] : []),
-        ...(pb.extras ?? []).map((e) => line(e.label, e.amount.amountMinor)), ...(pb.discount ? [line(`Discount - ${pb.discount.label}`, -pb.discount.amount.amountMinor)] : [])]
+        ...(pb.extras ?? []).map((e) =>
+          // Catalogue extras keep their type and quantity x unit (STAGE-23); only use them when they reconcile with the amount.
+          e.lineType && e.quantity && e.unitAmountMinor !== undefined && e.quantity * e.unitAmountMinor === e.amount.amountMinor
+            ? { description: e.label, quantity: e.quantity, unitAmountMinor: e.unitAmountMinor, amountMinor: e.amount.amountMinor, serviceType: e.lineType }
+            : line(e.label, e.amount.amountMinor)), ...(pb.discount ? [line(`Discount - ${pb.discount.label}`, -pb.discount.amount.amountMinor)] : [])]
       totalMinor = pb.total.amountMinor
     } else if (type === "SERVICE") {
       // ADR-0015: the lines staff sent, with a club discount as its own negative line.

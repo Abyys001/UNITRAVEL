@@ -25,7 +25,7 @@ describe("ADR-0008 workflow fixes", () => {
     const phone = me.identities.find((i: { type: string }) => i.type === "PHONE")
     const body = (travellers: { travellerId: string; passengerType: string }[]) => ({
       kind: "MANUAL", contactIdentityId: phone.id, travellers,
-      query: { tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
+      query: { tripType: "ONE_WAY", slices: [{ from: { city: "IST" }, to: { city: "LON" }, date: "2026-12-14", flexDays: 2 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" },
       manual: { airlinesAvoid: [], airlinesPrefer: [], overlandAcceptable: false }, seatPreference: "NONE", acknowledgements: { notABooking: true, privacy: true },
     })
     const bad = await c.post("/v1/flight-requests", body([{ travellerId: a, passengerType: "ADT" }, { travellerId: b, passengerType: "ADT" }]), { "idempotency-key": randomUUID() })
