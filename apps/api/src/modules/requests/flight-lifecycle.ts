@@ -90,6 +90,12 @@ export class FlightLifecycle implements OnModuleInit {
         const countries = [...new Set(segs.flatMap((g) => [this.reference.airport(g.origin.iata)?.country, this.reference.airport(g.destination.iata)?.country]).filter(Boolean) as string[])]
         for (const k of await this.compliance.routeReview(countries)) evidence.push({ kind: "ROUTE_POLICY", label: `Route touches ${k}`, detail: "Country route policy requires review" })
       }
+      // ADR-0031 I4: any request touching Iran is held for staff, taken from the itinerary or the manual query, not from policy rows alone.
+      const place = (p: (typeof r.query.slices)[number]["from"]) => ("airport" in p ? p.airport : p.city)
+      const queryCountries = r.query.slices.flatMap((x) => [this.reference.countryOfPlace(place(x.from)), this.reference.countryOfPlace(place(x.to))])
+      if (queryCountries.includes("IR") && !evidence.some((e) => e.kind === "IRAN_AIRPORT")) {
+        evidence.push({ kind: "IRAN_AIRPORT", label: "Trip touches an Iranian airport", detail: "ADR-0031 I4: held for staff review before any quote, invoice, payment or reservation" })
+      }
       if (evidence.length) {
         await this.compliance.openCase(tx, { requestType: "FLIGHT", requestId: r.id, requestRef: r.ref, trigger: screeningIds.length ? "SCREENING" : "POLICY", summary: `${evidence.length} item(s) need a compliance decision`, evidence, screeningIds, requiresFourEyes })
         await this.requests.transition(tx, r, "screen_flag", SYSTEM)

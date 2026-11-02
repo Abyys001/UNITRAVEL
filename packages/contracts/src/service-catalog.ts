@@ -33,7 +33,9 @@ export const CreateServiceCatalogItemBody = ServiceCatalogItem.omit({ id: true, 
 export type CreateServiceCatalogItemBody = z.infer<typeof CreateServiceCatalogItemBody>
 
 /** The code is the stable key other records point at, so it cannot be edited. */
+/** `showPriceToCustomer` is redeclared without its default, or a patch that omits it would silently hide or reset the flag. */
 export const UpdateServiceCatalogItemBody = ServiceCatalogItem.omit({ id: true, code: true, createdAt: true, updatedAt: true })
+  .extend({ showPriceToCustomer: z.boolean() })
   .partial()
   .refine((b) => Object.keys(b).length > 0, { message: "Nothing to update" })
 export type UpdateServiceCatalogItemBody = z.infer<typeof UpdateServiceCatalogItemBody>

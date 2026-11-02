@@ -58,7 +58,7 @@ const aggregate = fc.record({
   query: fc.constant({ tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date: "2026-11-20", flexDays: 0 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" }),
   routeLabel: fc.string(), firstTravelDate: fc.constant("2026-11-20"), submittedAt: iso, updatedAt: iso, snapshot: fc.constant(snapshot),
   travellers: fc.array(traveller, { maxLength: 4 }), timeline: fc.array(timeline, { maxLength: 5 }), messages: fc.array(message, { maxLength: 5 }),
-  quotes: fc.constant([sentQuote]), reservation: fc.constant(null), tickets: fc.constant([]), documents: fc.constant([]),
+  quotes: fc.constant([sentQuote]), reservation: fc.constant(null), tickets: fc.constant([]), documents: fc.constant([]), serviceInterests: fc.constant([]),
   actions: fc.subarray(["RESPOND", "CANCEL", "MESSAGE"]), truthBadge: fc.constant("REQUEST"),
 })
 

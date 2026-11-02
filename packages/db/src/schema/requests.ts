@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm"
-import { bigint, boolean, char, date, index, integer, jsonb, pgEnum, pgTable, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
+import { bigint, boolean, char, check, date, index, integer, jsonb, pgEnum, pgTable, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
 
 import type { SearchQuery } from "@unitravel/contracts"
 
@@ -182,7 +182,10 @@ export const reservations = pgTable("reservations", {
   id: id(),
   requestId: uuid().notNull().references(() => flightRequests.id),
   system: text({ enum: ["AMADEUS_TERMINAL", "DUFFEL_API", "PARTNER", "AIRLINE_DIRECT"] }).notNull(),
-  recordLocator: varchar({ length: 6 }).notNull(),
+  /** ADR-0030: null when the external panel gave only its own reference. */
+  recordLocator: varchar({ length: 6 }),
+  externalReference: varchar({ length: 64 }),
+  note: text(),
   airlineLocators: jsonb().$type<Record<string, string>>().notNull().default({}),
   status: text({ enum: ["HELD", "CONFIRMED", "CANCELLED", "LAPSED"] }).notNull(),
   ticketingDeadline: tstz().notNull(),
@@ -192,7 +195,10 @@ export const reservations = pgTable("reservations", {
   mismatchReason: text(),
   recordedBy: uuid().notNull().references(() => users.id),
   ...timestamps,
-}, (t) => [index("reservations_request_idx").on(t.requestId)])
+}, (t) => [
+  index("reservations_request_idx").on(t.requestId),
+  check("reservations_ref_chk", sql`${t.recordLocator} is not null or ${t.externalReference} is not null`),
+])
 
 export const reservationSegments = pgTable("reservation_segments", {
   id: id(),

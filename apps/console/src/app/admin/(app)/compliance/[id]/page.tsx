@@ -102,6 +102,7 @@ export default function CasePage() {
                   <Field label="Reason code"><NativeSelect className="field-input" value={f.reasonCode} onChange={(e) => setF({ ...f, reasonCode: e.target.value })}>{DEFAULT_WORKFLOW.declineReasons.map((r) => <option key={r.code} value={r.code}>{r.code}</option>)}</NativeSelect></Field>
                   <Field label="Neutral message to the customer"><textarea className="field-input min-h-16" value={f.customerMessage} onChange={(e) => setF({ ...f, customerMessage: e.target.value })} dir="auto" placeholder="We are unable to arrange this request." /></Field>
                 </>}
+                {f.decision === "RELEASE" && c.evidence.some((e) => e.kind === "IRAN_AIRPORT" || e.kind === "ROUTE_POLICY") && <p className="rounded-md border border-warning-border bg-warning-subtle text-warning-subtle-fg px-3 py-2 text-meta" role="note" data-testid="iran-counsel-warning">{t("comp.iran.counsel")}</p>}
                 {(f.decision === "OVERRIDE" || f.decision === "RELEASE") && <Field label="Counsel reference (optional)"><input className="field-input font-mono" value={f.counselReference} onChange={(e) => setF({ ...f, counselReference: e.target.value })} /></Field>}
                 <ErrorLine error={err} />
                 <ActionBar edge="bottom" className="-mx-1 px-1"><Button type="submit" size="sm" loading={busy} variant={f.decision === "DECLINE" ? "destructive" : "default"}>Record decision</Button></ActionBar>

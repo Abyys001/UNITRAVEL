@@ -70,7 +70,8 @@ const arbFacts: fc.Arbitrary<FlightFacts> = fc.record({
     options: fc.array(fc.record({ id: fc.constantFrom("o1", "o2"), unknownFields: fc.array(fc.constantFrom("conditions.refund"), { maxLength: 1 }) }), { maxLength: 3 }),
   }), { nil: undefined }),
   reservation: fc.option(fc.record({
-    recordLocator: fc.stringMatching(/^[A-Z0-9]{4,7}$/),
+    recordLocator: fc.option(fc.stringMatching(/^[A-Z0-9]{4,7}$/), { nil: null }),
+    externalReference: fc.option(fc.string({ maxLength: 12 }), { nil: null }),
     ticketingDeadline: fc.option(fc.date({ min: new Date("2026-10-01"), max: new Date("2026-12-01"), noInvalidDate: true }), { nil: null }),
     passengersMatch: fc.boolean(), segmentsMatch: fc.boolean(), mismatchReason: fc.option(fc.string(), { nil: undefined }),
   }), { nil: undefined }),
@@ -92,11 +93,13 @@ describe("flight request state machine (property)", () => {
       }
     }), { numRuns: 5000 })
   })
-  it("never reaches RESERVED without a valid record locator and a future deadline", () => {
+  it("never reaches RESERVED without a valid record locator or an external reference, and a future deadline (ADR-0030)", () => {
     fc.assert(fc.property(arbFacts, fc.constantFrom(...commands), fc.constantFrom(...actors), (facts, cmd, actor) => {
       const r = evaluate(FLIGHT_TRANSITIONS, cmd, facts, actor)
       if (r.ok && r.to === "RESERVED") {
-        expect(facts.reservation?.recordLocator).toMatch(/^[A-Z0-9]{6}$/)
+        const res = facts.reservation!
+        if (res.recordLocator) expect(res.recordLocator).toMatch(/^[A-Z0-9]{6}$/)
+        else expect(res.externalReference?.trim()).toBeTruthy()
         expect(facts.reservation!.ticketingDeadline!.getTime()).toBeGreaterThan(facts.now.getTime())
       }
     }), { numRuns: 5000 })

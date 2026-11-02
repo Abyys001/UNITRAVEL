@@ -35,6 +35,8 @@ import { LiveFlightsService } from "./live-flights/live-flights.service"
 import { NotificationsModule } from "./notifications/notifications.module"
 import { AdminAssignmentsController, AdminServiceRequestsController, CustomerServiceRequestsController } from "./services/services.controller"
 import { ServicesService } from "./services/services.service"
+import { AdminServicesCatalogController, PublicServicesCatalogController } from "./services-catalog/services-catalog.controller"
+import { ServicesCatalogService } from "./services-catalog/services-catalog.service"
 import { SiteController } from "./site/site.controller"
 import { SiteService } from "./site/site.service"
 import { TrackController } from "./track/track.controller"
@@ -56,9 +58,10 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
   CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
   MeActivityController, AdminCustomerListController, SupportTicketsController, AdminSupportController, AdminCallsController, BonlineWebhookController, AdminAssignmentsController, PublicListingsController, LiveFlightsController, AdminListingsController,
+  PublicServicesCatalogController, AdminServicesCatalogController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, LiveFlightsService, SupportService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, LiveFlightsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

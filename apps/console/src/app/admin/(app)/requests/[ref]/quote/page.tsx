@@ -128,7 +128,7 @@ function Builder() {
         </div>
         {!w.options.length && <p className="rounded-md border border-dashed border-rule-strong p-6 text-center text-steel">Add an option from the customer&apos;s snapshot, a staff search, or type it in manually.</p>}
         {w.options.map((o, i) => (
-          <OptionEditor key={o.key} o={o} index={i} count={w.options.length} currency={w.currency}
+          <OptionEditor key={o.key} o={o} index={i} count={w.options.length} currency={w.currency} passengers={detail.data?.query.passengers.length ?? 1}
             onChange={(n) => set({ options: w.options.map((x) => (x.key === o.key ? n : x)) })}
             onRemove={() => set({ options: w.options.filter((x) => x.key !== o.key) })}
             onMove={(dir) => { const a = [...w.options]; const j = i + dir; [a[i], a[j]] = [a[j]!, a[i]!]; set({ options: a }) }} />

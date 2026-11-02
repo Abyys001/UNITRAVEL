@@ -11,6 +11,7 @@ import { AIRCRAFT, AIRLINES, AIRPORTS, CITIES, COUNTRIES } from "./reference-dat
 import { TEMPLATES } from "./templates"
 import { DEMO_TOTP_SECRET_HEX, devEncrypt } from "./dev-crypto"
 import { seedContent } from "./content"
+import { seedServiceCatalog } from "./service-catalog"
 import { providerSeedRows, shouldSeedDemo } from "./providers"
 
 const FLAG_META: Record<string, { owner: string; removeBy: string | null; description: string }> = {
@@ -232,6 +233,7 @@ async function main() {
   }
   const content = await seedContent(db)
   console.log(content ? `content: ${content.entries} entries, ${content.terms} glossary terms added` : "content: skipped (no owner user yet)")
+  await seedServiceCatalog(db)
   await pool.end()
   console.log("seed complete")
 }

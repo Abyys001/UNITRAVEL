@@ -52,13 +52,15 @@ export interface FlightDetail {
   notes: { id: string; body: string; author: string | null; createdAt: string }[]
   contacts: { id: string; channel: string; outcome: string; note: string | null; callBackAt: string | null; staff: string | null; createdAt: string }[]
   quotes: StaffQuote[]
-  reservations: { id: string; system: string; recordLocator: string; airlineLocators: Record<string, string>; status: string; ticketingDeadline: string; quoteOptionId: string | null; mismatchReason: string | null; recordedBy: string; createdAt: string }[]
+  reservations: { id: string; system: string; recordLocator: string | null; externalReference: string | null; note: string | null; airlineLocators: Record<string, string>; status: string; ticketingDeadline: string; quoteOptionId: string | null; mismatchReason: string | null; recordedBy: string; createdAt: string }[]
   tickets: { id: string; travellerId: string; travellerName: string; ticketNumber: string; validatingCarrier: string; issueDate: string; status: string; documentId: string | null }[]
   payments: { id: string; amount: Money; method: string; receivedAt: string; externalReference: string; payerName: string; status: string; recordedBy: string; verifiedBy: string | null; needsSecondVerifier: boolean }[]
   documents: { id: string; type: string; filename: string; visibility: string; createdAt: string }[]
   afterSales: StaffAfterSalesItem[]
   creditOverrides: CreditOverrideView[]
   compliance: CaseView[]
+  /** Add-on services the customer ticked at submit (codes and names only). */
+  serviceInterests: { code: string; nameEn: string; nameFa: string }[]
   actions: AllowedCommand[]
   paymentRecording: PaymentRecordingState
   /** Whether staff may amend the trip now, and whether a quote is out (ADR-0013). */

@@ -1,16 +1,20 @@
 "use client"
 
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
-import type { Condition, Tri } from "@unitravel/contracts"
+import type { Condition, ServiceCatalogItem, Tri } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { SliceView } from "@/components/flight/itinerary"
 import { Field, Tag } from "@/components/ui"
-import { fmtDateTime, money } from "@/lib/format"
+import { api } from "@/lib/api"
+import { fmtDateTime, money, toMajor } from "@/lib/format"
+import { useT } from "@/lib/i18n"
+import { useLocale } from "@/lib/prefs"
 import { useSession } from "@/lib/session"
 
 import { type DraftOption, draftTotal, emptySeg, type ManualSeg, manualSlice, badAmounts, normaliseBaggage, segCount, unknowns, ZONES } from "./model"
@@ -88,7 +92,52 @@ function ManualSegments({ onDone }: { onDone: (s: ReturnType<typeof manualSlice>
   )
 }
 
-export function OptionEditor({ o, index, count, currency, onChange, onRemove, onMove }: { o: DraftOption; index: number; count: number; currency: string; onChange: (o: DraftOption) => void; onRemove: () => void; onMove: (d: -1 | 1) => void }) {
+/** Attach catalogue services to an option (STAGE-23). Price defaults to the catalogue price and can be overridden for this quote; the server turns each line into a priced extra. */
+function CatalogueLines({ o, currency, passengers, onChange, bad }: { o: DraftOption; currency: string; passengers: number; onChange: (o: DraftOption) => void; bad: Set<string> }) {
+  const t = useT()
+  const [locale] = useLocale()
+  const [pick, setPick] = useState("")
+  const items = useQuery({ queryKey: ["svc-catalog", "options"], queryFn: () => api<ServiceCatalogItem[]>("/v1/admin/services-catalog/options"), staleTime: 60_000 })
+  const lines = o.catalogue ?? []
+  const set = (i: number, patch: Partial<NonNullable<DraftOption["catalogue"]>[number]>) => onChange({ ...o, catalogue: lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) })
+  const name = (x: Pick<ServiceCatalogItem, "nameEn" | "nameFa">) => (locale === "fa" ? x.nameFa : x.nameEn)
+  const add = () => {
+    const it = items.data?.find((x) => x.id === pick)
+    if (!it) return
+    onChange({ ...o, catalogue: [...lines, { catalogueItemId: it.id, name: it.nameEn, lineType: it.lineType, unit: toMajor(it.defaultPriceMinor, it.currency), quantity: String(it.perPassenger ? Math.max(1, passengers) : 1) }] })
+    setPick("")
+  }
+  const available = (items.data ?? []).filter((x) => x.currency === currency && !lines.some((l) => l.catalogueItemId === x.id))
+  return (
+    <div className="mt-2 space-y-1.5" data-testid="catalogue-lines">
+      <p className="cap">{t("svc.cat.attach")}</p>
+      {lines.map((l, i) => {
+        const qty = Math.max(1, Math.round(Number(l.quantity) || 1))
+        const lineTotal = Math.round(Number(l.unit || 0) * 100) * qty
+        return (
+          <div key={l.catalogueItemId} className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,1fr)_auto] items-end gap-1.5" data-testid={`catalogue-line-${i}`}>
+            <Field label={l.name}><output className="field-input flex items-center bg-ledger text-steel" dir="auto">{(items.data ?? []).find((x) => x.id === l.catalogueItemId) ? name((items.data ?? []).find((x) => x.id === l.catalogueItemId)!) : l.name}</output></Field>
+            <Field label={t("svc.cat.unit")}><input className={`field-input num${bad.has(`catalogue.${i}`) ? " border-danger" : ""}`} aria-invalid={bad.has(`catalogue.${i}`) || undefined} inputMode="decimal" value={l.unit} onChange={(e) => set(i, { unit: e.target.value })} dir="ltr" /></Field>
+            <Field label={t("svc.cat.qty")}><input className={`field-input num${bad.has(`catalogue.${i}`) ? " border-danger" : ""}`} aria-invalid={bad.has(`catalogue.${i}`) || undefined} inputMode="numeric" value={l.quantity} onChange={(e) => set(i, { quantity: e.target.value })} dir="ltr" /></Field>
+            <Field label={t("svc.cat.line")}><output className="field-input num flex items-center bg-ledger">{bad.has(`catalogue.${i}`) ? "—" : money({ amountMinor: lineTotal, currency })}</output></Field>
+            <Button type="button" size="icon-xs" variant="ghost" aria-label={t("svc.cat.remove", { n: l.name })} onClick={() => onChange({ ...o, catalogue: lines.filter((_, j) => j !== i) })}><Trash2 /></Button>
+          </div>
+        )
+      })}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-1.5">
+        <Field label={t("svc.cat.pick")} hint={items.data && !available.length && !lines.length ? t("svc.cat.none") : t("svc.cat.hint")}>
+          <NativeSelect className="field-input" value={pick} onChange={(e) => setPick(e.target.value)} data-testid="catalogue-pick">
+            <option value="">—</option>
+            {available.map((x) => <option key={x.id} value={x.id}>{name(x)} · {money({ amountMinor: x.defaultPriceMinor, currency: x.currency })}</option>)}
+          </NativeSelect>
+        </Field>
+        <Button type="button" size="xs" variant="outline" disabled={!pick || lines.length >= 10} onClick={add} data-testid="catalogue-add">{t("svc.cat.add")}</Button>
+      </div>
+    </div>
+  )
+}
+
+export function OptionEditor({ o, index, count, currency, passengers = 1, onChange, onRemove, onMove }: { o: DraftOption; index: number; count: number; currency: string; passengers?: number; onChange: (o: DraftOption) => void; onRemove: () => void; onMove: (d: -1 | 1) => void }) {
   const { can } = useSession()
   const unk = unknowns(o)
   const bad = new Set(badAmounts(o))
@@ -138,6 +187,7 @@ export function OptionEditor({ o, index, count, currency, onChange, onRemove, on
               <Field label="Discount"><input {...amt("discount")} inputMode="decimal" value={o.discount} onChange={(e) => onChange({ ...o, discount: e.target.value })} /></Field>
               <Button type="button" size="xs" variant="outline" disabled={o.extras.length >= 10} onClick={() => onChange({ ...o, extras: [...o.extras, { label: "", amount: "" }] })}>Add extra service</Button>
             </div>
+            <CatalogueLines o={o} currency={currency} passengers={passengers} onChange={onChange} bad={bad} />
             {!bad.size && total <= 0 && <p className="mt-1 text-caption text-danger" role="alert">The total must be greater than zero.</p>}
             {o.supplierExpiresAt && Date.parse(o.supplierExpiresAt) < Date.now() && <p className="mt-1 rounded-sm bg-danger-subtle px-1.5 py-1 text-caption text-danger" role="alert">The supplier offer expired {fmtDateTime(o.supplierExpiresAt)}. Validity cannot exceed it — re-check the price or add a fresh option from staff search.</p>}
             {o.supplierPrice && <p className="mt-1 text-caption text-steel">Supplier {money(o.supplierPrice)}{o.supplierFetchedAt && ` fetched ${fmtDateTime(o.supplierFetchedAt)}`}{diff !== null && <> · difference <span className={diff < 0 ? "text-danger" : ""}>{diff >= 0 ? "+" : ""}{money({ amountMinor: diff, currency })}</span></>}{o.supplierExpiresAt && ` · offer expires ${fmtDateTime(o.supplierExpiresAt)}`}</p>}

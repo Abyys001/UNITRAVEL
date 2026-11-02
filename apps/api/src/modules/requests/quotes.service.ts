@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { and, asc, desc, eq, isNotNull, max } from "drizzle-orm"
 
-import type { QuoteOptionInput } from "@unitravel/contracts"
+import type { InvoiceLineType, QuoteOptionInput } from "@unitravel/contracts"
 import { type Db, offerSnapshots, quoteOptions, quotes } from "@unitravel/db"
 import { formatMoney, priceBreakdownIssue } from "@unitravel/domain"
 
@@ -11,6 +11,7 @@ import type { Actor } from "../../core/http/decorators"
 import { AuditService } from "../audit/audit.service"
 import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
+import { ServicesCatalogService } from "../services-catalog/services-catalog.service"
 import { optionUnknowns, RequestsService } from "./requests.service"
 
 const EDITABLE = ["IN_REVIEW", "QUOTED", "ACCEPTED"]
@@ -21,7 +22,29 @@ const EDITABLE = ["IN_REVIEW", "QUOTED", "ACCEPTED"]
  */
 @Injectable()
 export class QuotesService {
-  constructor(@Inject(DB) private readonly db: Db, private readonly uow: UnitOfWork, private readonly requests: RequestsService, private readonly config: ConfigService, private readonly compliance: ComplianceService, private readonly audit: AuditService) {}
+  constructor(@Inject(DB) private readonly db: Db, private readonly uow: UnitOfWork, private readonly requests: RequestsService, private readonly config: ConfigService, private readonly compliance: ComplianceService, private readonly audit: AuditService, private readonly catalog: ServicesCatalogService) {}
+
+  /**
+   * Catalogue lines become priced extras (name, quantity x unit price, lineType) on the option, so the existing quote-to-invoice
+   * path carries them. The total the editor sends must already include them; `priceBreakdownIssue` still enforces that.
+   */
+  private async withCatalogueLines(ref: string, options: QuoteOptionInput[], currency: string): Promise<QuoteOptionInput[]> {
+    const ids = [...new Set(options.flatMap((o) => (o.catalogueLines ?? []).map((l) => l.catalogueItemId)))]
+    if (ids.length === 0) return options.map(({ catalogueLines: _c, ...o }) => o)
+    const items = await this.catalog.resolveActiveIds(this.db, ids)
+    const passengers = (await this.requests.byRef(ref)).query.passengers.length
+    return options.map(({ catalogueLines, ...o }, i) => {
+      const lines = (catalogueLines ?? []).map((l) => {
+        const item = items.get(l.catalogueItemId)!
+        const unit = l.priceMinor ?? item.defaultPriceMinor
+        const quantity = l.quantity ?? (item.perPassenger ? passengers : 1)
+        if (unit * quantity <= 0) throw new AppError("VALIDATION_FAILED", `${item.nameEn} needs a price greater than zero`, [{ path: `options[${i}].catalogueLines`, code: "NOT_POSITIVE" }])
+        return { label: item.nameEn, amount: { amountMinor: unit * quantity, currency }, catalogueItemId: item.id, lineType: item.lineType as InvoiceLineType, quantity, unitAmountMinor: unit }
+      })
+      const extras = [...(o.priceBreakdown.extras ?? []).filter((e) => !e.catalogueItemId), ...lines]
+      return { ...o, priceBreakdown: { ...o.priceBreakdown, ...(extras.length ? { extras } : {}) } }
+    })
+  }
 
   private async validateOptions(options: QuoteOptionInput[], currency: string) {
     const wf = this.config.get("WORKFLOW")
@@ -45,7 +68,8 @@ export class QuotesService {
     return v
   }
 
-  async createDraft(ref: string, body: { currency: string; validUntil?: string; options: QuoteOptionInput[] }, actor: Actor) {
+  async createDraft(ref: string, input: { currency: string; validUntil?: string; options: QuoteOptionInput[] }, actor: Actor) {
+    const body = { ...input, options: await this.withCatalogueLines(ref, input.options, input.currency) }
     await this.validateOptions(body.options, body.currency)
     const id = await this.uow.run(async (tx) => {
       const r = await this.requests.byRef(ref, tx, true)
@@ -59,7 +83,8 @@ export class QuotesService {
     return this.view(id, actor)
   }
 
-  async updateDraft(ref: string, quoteId: string, body: { currency: string; validUntil?: string; options: QuoteOptionInput[] }, actor: Actor, expectedRowVersion?: number) {
+  async updateDraft(ref: string, quoteId: string, input: { currency: string; validUntil?: string; options: QuoteOptionInput[] }, actor: Actor, expectedRowVersion?: number) {
+    const body = { ...input, options: await this.withCatalogueLines(ref, input.options, input.currency) }
     await this.validateOptions(body.options, body.currency)
     await this.uow.run(async (tx) => {
       const r = await this.requests.byRef(ref, tx)
