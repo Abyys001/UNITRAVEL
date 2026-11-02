@@ -36,7 +36,7 @@ const TIMER = "invoice.expire"
 const timerKey = (id: string) => `inv:${id}`
 const iso = (d: Date | null) => d?.toISOString() ?? null
 
-const LINE_LABEL: Record<InvoiceLineType, string> = { VISA: "Visa", BUS: "Bus", TRAIN: "Train", HOTEL: "Hotel", STAY: "Stay", CIP: "CIP", INSURANCE: "Insurance", TOUR: "Tour", TRANSFER: "Transfer", OTHER: "", DISCOUNT: "Discount" }
+const LINE_LABEL: Record<InvoiceLineType, string> = { VISA: "Visa", BUS: "Bus", TRAIN: "Train", HOTEL: "Hotel", STAY: "Stay", CIP: "CIP", INSURANCE: "Insurance", TOUR: "Tour", TRANSFER: "Transfer", BAGGAGE: "Baggage", OTHER: "", DISCOUNT: "Discount" }
 /** Line types that are not services, so no SERVICE policy can apply to them. */
 const NOT_A_SERVICE: readonly string[] = ["OTHER", "DISCOUNT"]
 const documentLine = (l: { serviceType: string | null; description: string }) => {

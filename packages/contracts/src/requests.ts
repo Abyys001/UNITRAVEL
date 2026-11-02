@@ -8,6 +8,7 @@ import {
 } from "./enums"
 import { Condition, SegmentBaggage, Slice } from "./offer"
 import { CustomerItinerary, SearchQuery } from "./search"
+import { RequestServiceInterest } from "./service-catalog"
 
 export const SeatPreference = z.enum(["NONE", "WINDOW", "AISLE", "TOGETHER", "EXTRA_LEGROOM"])
 export const SsrCode = z.enum(["WCHR", "WCHS", "WCHC", "VGML", "MOML", "CHML", "DBML", "PETC", "EXST", "UMNR", "MEDA", "OTHER"])
@@ -36,6 +37,7 @@ export const CreateFlightRequestBody = z
     ssrs: z.array(z.object({ travellerId: Uuid, code: SsrCode, note: z.string().max(300).optional() })).default([]),
     bestTimeToCall: z.string().max(80).optional(),
     note: z.string().max(2000).optional(),
+    serviceInterests: RequestServiceInterest.optional(),
     acknowledgements: z.object({
       notABooking: z.literal(true),
       privacy: z.literal(true),
@@ -138,7 +140,10 @@ export type QuoteView = z.infer<typeof QuoteView>
 
 export const ReservationBody = z.object({
   system: ReservationSystem,
-  recordLocator: z.string().regex(/^[A-Z0-9]{6}$/),
+  recordLocator: z.string().regex(/^[A-Z0-9]{6}$/).optional(),
+  /** ADR-0030: some external panels give only their own reference instead of a 6-character PNR. */
+  externalReference: z.string().trim().min(1).max(64).optional(),
+  note: z.string().max(2000).optional(),
   airlineLocators: z.record(z.string(), z.string().regex(/^[A-Z0-9]{5,8}$/)).default({}),
   ticketingDeadline: IsoDateTime,
   quoteOptionId: Uuid,
@@ -146,7 +151,7 @@ export const ReservationBody = z.object({
   slices: z.array(Slice).min(1),
   status: z.enum(["HELD", "CONFIRMED"]).default("HELD"),
   mismatchReason: z.string().max(500).optional(),
-})
+}).refine((b) => !!b.recordLocator || !!b.externalReference, { message: "Give a record locator or an external reference", path: ["recordLocator"] })
 export type ReservationBody = z.infer<typeof ReservationBody>
 
 export const TicketInput = z.object({
@@ -182,7 +187,7 @@ export const PaymentView = z.object({
   status: PaymentRecordStatus, recordedBy: z.string(), verifiedBy: z.string().nullable(), needsSecondVerifier: z.boolean(),
 })
 export const ReservationView = z.object({
-  id: Uuid, system: ReservationSystem, recordLocator: z.string(), status: ReservationStatus, ticketingDeadline: IsoDateTime,
+  id: Uuid, system: ReservationSystem, recordLocator: z.string().nullable(), externalReference: z.string().nullable(), note: z.string().nullable(), status: ReservationStatus, ticketingDeadline: IsoDateTime,
   quoteOptionId: Uuid.nullable(), mismatchReason: z.string().nullable(), recordedBy: z.string(), createdAt: IsoDateTime,
 })
 export const TicketView = z.object({

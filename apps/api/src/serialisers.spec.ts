@@ -9,6 +9,7 @@ import { InvoicesService } from "./modules/invoices/invoices.service"
 import { ServicesService } from "./modules/services/services.service"
 
 import { customerItinerary, customerSeatMaps } from "./modules/search/customer-projection"
+import { findForbiddenKeys } from "./testing/leak"
 
 /** Field names that exist on staff/internal records and must never reach a customer (ch. 25.6, 32.2). */
 const INTERNAL = ["internalCostMinor", "internalNotes", "notes", "assigneeId", "assigneeName", "screening", "screeningScore", "riskScore", "complianceCase", "passportNumber", "documentNumberEnc", "supplierRaw", "createdBy", "customerUserId", "contactIdentityId", "costMinor", "supplierPrice", "supplierFetchedAt", "supplierExpiresAt", "priceAtSubmit", "priceRevalidated", "bookingToken", "googleFlightsUrl", "priceLevel", "typicalPriceLow", "typicalPriceHigh", "providerData"]
@@ -84,8 +85,10 @@ describe("customer serialisers never emit internal fields (property)", () => {
 
   it("flight request detail", () => {
     fc.assert(fc.property(aggregate, picks, (a, p) => {
-      const out = JSON.stringify(FlightRequestCustomerView.parse(contaminate(structuredClone(a), p)))
+      const parsed = FlightRequestCustomerView.parse(contaminate(structuredClone(a), p))
+      const out = JSON.stringify(parsed)
       expect(out).not.toContain("SECRET-")
+      expect(findForbiddenKeys(parsed)).toEqual([])
     }), { numRuns: 300 })
   })
 
@@ -340,6 +343,7 @@ describe("public tracking view (spec 4.5)", () => {
       expect(Object.keys(out).sort()).toEqual(["kind", "ref", "serviceType", "status", "timeline"])
       for (const t of out.timeline) expect(Object.keys(t).sort()).toEqual(["at", "status"])
       expect(JSON.stringify(out)).not.toContain("SECRET-")
+      expect(findForbiddenKeys(out)).toEqual([])
       expect(amountPaths(out)).toEqual([])
     }), { numRuns: 200 })
   })

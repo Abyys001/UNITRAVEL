@@ -53,6 +53,10 @@ export class BookingsService {
   }
 
   async recordReservation(ref: string, body: ReservationBody, actor: Actor, expectedVersion: number | undefined, requestId: string) {
+    // ADR-0030: the contract accepts an external reference, but reservations.record_locator is still NOT NULL and has no
+    // external_reference/note columns, so storing one needs the Stream C migration. Refuse rather than write a made-up PNR.
+    const recordLocator = body.recordLocator
+    if (!recordLocator) throw new AppError("VALIDATION_FAILED", "Recording a reservation by external reference is not available yet", [{ path: "recordLocator", code: "EXTERNAL_REFERENCE_UNSUPPORTED" }])
     return this.uow.run(async (tx) => {
       const r = await this.requests.byRef(ref, tx, true)
       const opt = await this.acceptedOption(tx, r)
@@ -63,12 +67,12 @@ export class BookingsService {
       const segmentsMatch = accepted.map((s) => flightKey(s.segments)).join("#") === body.slices.map((s) => flightKey(s.segments)).join("#")
       const updated = await this.requests.transition(tx, r, "record_reservation", staffActor(actor), {
         expectedVersion, ip: actor.ip, requestId,
-        facts: { reservation: { recordLocator: body.recordLocator, ticketingDeadline: new Date(body.ticketingDeadline), passengersMatch, segmentsMatch, mismatchReason: body.mismatchReason } },
+        facts: { reservation: { recordLocator, ticketingDeadline: new Date(body.ticketingDeadline), passengersMatch, segmentsMatch, mismatchReason: body.mismatchReason } },
       })
-      const [res] = await tx.insert(reservations).values({ requestId: r.id, system: body.system, recordLocator: body.recordLocator, airlineLocators: body.airlineLocators, status: body.status, ticketingDeadline: new Date(body.ticketingDeadline), quoteOptionId: body.quoteOptionId, travellerIds: body.travellerIds, segments: body.slices, mismatchReason: body.mismatchReason ?? null, recordedBy: actor.userId }).returning()
+      const [res] = await tx.insert(reservations).values({ requestId: r.id, system: body.system, recordLocator, airlineLocators: body.airlineLocators, status: body.status, ticketingDeadline: new Date(body.ticketingDeadline), quoteOptionId: body.quoteOptionId, travellerIds: body.travellerIds, segments: body.slices, mismatchReason: body.mismatchReason ?? null, recordedBy: actor.userId }).returning()
       const segRows = body.slices.flatMap((s, si) => s.segments.map((g, gi) => ({ reservationId: res!.id, sliceIndex: si, segmentIndex: gi, carrier: g.marketing.carrier, flightNumber: g.marketing.flightNumber, origin: g.origin.iata, destination: g.destination.iata, departureUtc: new Date(g.departure.utc) })))
       if (segRows.length) await tx.insert(reservationSegments).values(segRows)
-      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "reservation.recorded", entityType: "reservation", entityId: res!.id, contextRef: r.ref, after: { system: body.system, recordLocator: body.recordLocator, deadline: body.ticketingDeadline, passengersMatch, segmentsMatch } })
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "reservation.recorded", entityType: "reservation", entityId: res!.id, contextRef: r.ref, after: { system: body.system, recordLocator, deadline: body.ticketingDeadline, passengersMatch, segmentsMatch } })
       await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: r.id, eventType: "reservation.recorded", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, assigneeUserId: r.assigneeUserId, deadline: body.ticketingDeadline } })
       return updated
     })
