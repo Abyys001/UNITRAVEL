@@ -325,8 +325,9 @@ export class InvoicesService implements OnModuleInit {
       await tx.update(invoices).set({ status: "ISSUED", number, issuedAt: now, expiresAt, documentId: doc.id, rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
       await this.history(tx, inv.id, "DRAFT", "ISSUED", "issue", actor.userId, "STAFF")
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "invoice.issued", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number, totalMinor: inv.totalMinor, currency: inv.currency, expiresAt: expiresAt.toISOString() } })
-      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType, paymentInstructions: this.paymentInstructionBlocks(), ...(await this.emailSummary(tx, { ...inv, documentId: doc.id })) } })
-      if (paid) await this.markPaid(tx, inv.id, "Payment already verified for this request")
+      // Already settled (PAY_ON_TICKETING records the payment at ticketing): a "pay by" email would be wrong, so only the receipt goes, with the PDF.
+      if (!paid) await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType, paymentInstructions: this.paymentInstructionBlocks(), ...(await this.emailSummary(tx, { ...inv, documentId: doc.id })) } })
+      if (paid) await this.markPaid(tx, inv.id, "Payment already verified for this request", { attachDocument: true })
       return paid ? "PAID" : "ISSUED"
     })
     // Thrown after the commit so the case that was just opened survives.
@@ -365,14 +366,14 @@ export class InvoicesService implements OnModuleInit {
   }
 
   /** The seam for payments (ADR-0006 C11): Phase D's verified webhook calls this with its payment record. */
-  async markPaid(tx: Tx, invoiceId: string, via: string): Promise<boolean> {
+  async markPaid(tx: Tx, invoiceId: string, via: string, opts: { attachDocument?: boolean } = {}): Promise<boolean> {
     const inv = await this.lock(tx, invoiceId)
     if (!evaluate(INVOICE_TRANSITIONS, "mark_paid", this.facts(inv, null), SYSTEM).ok) return false
     await tx.update(invoices).set({ status: "PAID", paidAt: new Date(), rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
     await this.history(tx, inv.id, "ISSUED", "PAID", "mark_paid", null, "SYSTEM", { text: via })
     await this.audit.record(tx, { actorUserId: null, actorKind: "SYSTEM", action: "invoice.paid", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, before: { status: "ISSUED" }, after: { number: inv.number, via } })
     // Card and verified offline payments alike; the machine allows ISSUED -> PAID once, so the receipt is sent once (ADR-0013 A7).
-    await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.paid", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, productType: inv.requestType }, dedupeKey: `invoice-paid:${inv.id}` })
+    await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.paid", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, productType: inv.requestType, ...(opts.attachDocument ? { documentId: inv.documentId } : {}) }, dedupeKey: `invoice-paid:${inv.id}` })
     return true
   }
 

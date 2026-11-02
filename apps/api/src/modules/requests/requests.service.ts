@@ -585,7 +585,10 @@ export class RequestsService {
     const [acceptedOpt] = await this.db.select({ total: quoteOptions.totalMinor, breakdown: quoteOptions.priceBreakdown }).from(quotes).innerJoin(quoteOptions, eq(quoteOptions.id, quotes.acceptedOptionId)).where(and(eq(quotes.requestType, "FLIGHT"), eq(quotes.requestId, r.id), eq(quotes.status, "ACCEPTED"))).limit(1)
     const paymentRecording = paymentRecordingState({ product: "FLIGHT", status: r.status, atolMode: this.config.get("WORKFLOW").atolMode, acceptedTotal: acceptedOpt ? { amountMinor: acceptedOpt.total, currency: (acceptedOpt.breakdown as { total: { currency: string } }).total.currency } : null, recordedMinor: pays.filter((x) => x.status === "RECORDED" || x.status === "VERIFIED").reduce((n, x) => n + x.amountMinor, 0) })
     // The assignee is picked in the assign dialog, so its guard cannot be judged here; the command re-checks it.
-    const actions = allowedCommands(FLIGHT_TRANSITIONS, { ...f, assigneeCanTransition: true }, staffActor(actor), ["claim", "assign", "request_info", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "close", "reopen", "cancel", "decline"])
+    // Likewise in PAY_ON_TICKETING the payment is recorded inside the ticketing step (bookings.service recordTickets),
+    // so ticketing is offered before the request is PAID; the command still refuses it without a payment or override.
+    const payOnTicketing = this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" && r.status === "RESERVED"
+    const actions = allowedCommands(FLIGHT_TRANSITIONS, { ...f, assigneeCanTransition: true, ...(payOnTicketing ? { paymentStatus: "PAID" as const } : {}) }, staffActor(actor), ["claim", "assign", "request_info", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "close", "reopen", "cancel", "decline"])
     return {
       ref: r.ref, id: r.id, kind: r.kind, status: r.status, paymentStatus: r.paymentStatus, version: r.version, tripType: r.tripType, query: r.query, manual: r.manual, preferences: r.preferences,
       customerNote: r.customerNote, urgent: r.urgent, firstTravelDate: r.firstTravelDate, submittedAt: r.submittedAt.toISOString(), submittedVia: r.submittedVia, submittedLocale: r.submittedLocale,

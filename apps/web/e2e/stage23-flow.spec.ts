@@ -292,21 +292,22 @@ test.describe("offline flow", () => {
       // 7. Identity verification is its own stage; the traveller is marked VERIFIED in the test database so ticketing can proceed.
       for (const t of detailJson.travellers as { travellerId: string }[]) await markVerifiedForTest(t.travellerId)
 
-      // 8. Ticketing with the payment recorded in the same step. API call, not the console dialog: under PAY_ON_TICKETING the
-      // server's action list marks record_tickets as not allowed ("Payment status must be PAID, or an owner-approved credit
-      // override"), so the dialog that records the payment in this step cannot be opened (product bug, see the report).
+      // 8. Ticketing with the payment recorded in the same step. Under PAY_ON_TICKETING the console now offers record_tickets
+      // before the request is PAID (the command records the payment and re-checks it). The step itself is posted by API.
       await ap.reload()
       detailJson = (await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body
       const actions = detailJson.actions as { command: string; allowed: boolean; reason?: string }[]
       const recordTickets = actions.find((x) => x.command === "record_tickets")!
-      expect(recordTickets.allowed).toBe(false)
-      expect(recordTickets.reason).toMatch(/Payment status must be PAID/)
-      await shots(ap, "28a-console-record-tickets-not-offered", [WIDTHS[1]])
+      expect(recordTickets.allowed, recordTickets.reason).toBe(true)
       const quote = (detailJson.quotes as { status: string; acceptedOptionId: string; options: { id: string; priceBreakdown: { total: { amountMinor: number; currency: string } } }[] }[]).find((q) => q.status === "ACCEPTED")!
       const total = quote.options.find((o) => o.id === quote.acceptedOptionId)!.priceBreakdown.total
-      const carrier = detailJson.reservations.length ? (detailJson.quotes[0].options[0].slices[0].segments[0].marketing.carrier as string) : ""
-      const accounting = (await dbQuery<{ accounting_code: string }>("select accounting_code from airlines where iata = $1", [carrier]))[0]?.accounting_code
-      expect(accounting, `accounting code of ${carrier}`).toBeTruthy()
+      // The validating carrier is the marketing carrier when the reference data has its accounting code; FAKE results can
+      // pick a carrier without one (e.g. VF), so fall back to any airline that has a code.
+      const marketing = detailJson.reservations.length ? (detailJson.quotes[0].options[0].slices[0].segments[0].marketing.carrier as string) : ""
+      const [validating] = await dbQuery<{ iata: string; accounting_code: string }>("select iata, accounting_code from airlines where accounting_code is not null order by (iata = $1) desc, iata limit 1", [marketing])
+      expect(validating, "an airline with an accounting code").toBeTruthy()
+      const carrier = validating!.iata
+      const accounting = validating!.accounting_code
       const tk = await admin.api.post(`/v1/admin/flight-requests/${ref}/tickets`, {
         reservationId: detailJson.reservations[0].id,
         tickets: (detailJson.travellers as { travellerId: string }[]).map((t, i) => ({ travellerId: t.travellerId, ticketNumber: `${accounting}${String(Date.now() + i).slice(-10)}`, validatingCarrier: carrier, issueDate: new Date().toISOString().slice(0, 10), coupons: [{ sliceIndex: 0, segmentIndex: 0 }] })),
@@ -346,13 +347,15 @@ test.describe("offline flow", () => {
       expect(invoiceStatus).toMatch(/PAID/i)
       await shots(ap, "24-console-invoice-issued")
 
-      // 10. Issued email: our total only, no card or provider wording; log what it says in this mode.
-      const mail = await mailWith(email, number)
+      // 10. Already paid at issue: no "pay by" email; the receipt goes instead (with the PDF).
+      const mail = await mailWith(email, "Payment received")
+      expect(mail.Subject).toContain(number)
       observed.push(`issued email: ${JSON.stringify(mail.Text.replace(/\s+/g, " ").slice(0, 700))}`)
-      expect(mail.Text).toMatch(/GBP\s?[\d,]+\.\d{2}/)
       expect(mail.Text).not.toMatch(/\{[a-z_]+\}|sk_(test|live)_|client_secret|stripe|google/i)
-      // OBSERVED: the email of an already-paid invoice still says "How to pay (bank transfer)" and "Pay by"; no ATOL note appears in it.
-      expect(mail.Text).toContain(`Total: GBP ${(total.amountMinor / 100).toFixed(2)}`)
+      expect(mail.Text).not.toMatch(/How to pay|Pay by/)
+      const issuedMails = ((await (await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`)).json()) as { messages?: { Subject: string; Attachments: number }[] }).messages ?? []
+      expect(issuedMails.filter((m) => m.Subject.includes(number) && !m.Subject.startsWith("Payment received"))).toEqual([])
+      expect(issuedMails.find((m) => m.Subject.startsWith("Payment received") && m.Subject.includes(number))?.Attachments).toBe(1)
       console.log(observed.join("\n"))
 
       // 11. Customer panel, then the console, show the final state.
