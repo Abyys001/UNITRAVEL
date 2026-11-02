@@ -262,6 +262,19 @@ export class InvoicesService implements OnModuleInit {
     return { services: lines.map((l) => `- ${documentLine(l)}${l.quantity > 1 ? ` x ${l.quantity}` : ""}: ${money(l.amountMinor)}`).join("\n"), total: money(inv.totalMinor), documentId: inv.documentId }
   }
 
+  /**
+   * Bank-transfer block for the `invoice.issued` email (en and fa), empty while online payment is on. Only the text staff
+   * entered in settings goes in; with none set the email says to ask us for the details (UNKNOWN stays UNKNOWN).
+   */
+  paymentInstructionBlocks(): { en: string; fa: string } {
+    if (this.config.flag("payments.online.enabled")) return { en: "", fa: "" }
+    const t = this.config.settings().payment.offlineInstructions
+    return {
+      en: t?.en.trim() ? `How to pay (bank transfer):\n${t.en.trim()}\n\n` : "To pay by bank transfer, contact us and we will send you the payment details.\n\n",
+      fa: t?.fa.trim() ? `روش پرداخت (انتقال بانکی):\n${t.fa.trim()}\n\n` : "برای پرداخت با انتقال بانکی با ما تماس بگیرید تا اطلاعات پرداخت را برایتان بفرستیم.\n\n",
+    }
+  }
+
   // ---------------- transitions ----------------
 
   private history(tx: DbOrTx, invoiceId: string, from: InvoiceStatus | null, to: InvoiceStatus, command: string, actorUserId: string | null, actorKind: "STAFF" | "SYSTEM", reason?: { code?: string; text?: string }) {
@@ -308,7 +321,7 @@ export class InvoicesService implements OnModuleInit {
       await tx.update(invoices).set({ status: "ISSUED", number, issuedAt: now, expiresAt, documentId: doc.id, rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
       await this.history(tx, inv.id, "DRAFT", "ISSUED", "issue", actor.userId, "STAFF")
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "invoice.issued", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number, totalMinor: inv.totalMinor, currency: inv.currency, expiresAt: expiresAt.toISOString() } })
-      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType, ...(await this.emailSummary(tx, { ...inv, documentId: doc.id })) } })
+      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType, paymentInstructions: this.paymentInstructionBlocks(), ...(await this.emailSummary(tx, { ...inv, documentId: doc.id })) } })
       if (paid) await this.markPaid(tx, inv.id, "Payment already verified for this request")
       return paid ? "PAID" : "ISSUED"
     })

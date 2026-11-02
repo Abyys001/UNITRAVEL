@@ -9,6 +9,7 @@ import { createDb, type Db } from "../index"
 import * as s from "../schema"
 import { AIRCRAFT, AIRLINES, AIRPORTS, CITIES, COUNTRIES } from "./reference-data"
 import { TEMPLATES } from "./templates"
+import { upgradeInvoiceIssuedEmail } from "./template-upgrades"
 import { DEMO_TOTP_SECRET_HEX, devEncrypt } from "./dev-crypto"
 import { seedContent } from "./content"
 import { seedServiceCatalog } from "./service-catalog"
@@ -83,6 +84,7 @@ export async function seedConfig(db: Db) {
     }
     await db.insert(s.notificationTemplates).values(rows).onConflictDoNothing()
   }
+  await upgradeInvoiceIssuedEmail(db)
 
   await db.insert(s.providers).values(providerSeedRows(process.env.APP_ENV)).onConflictDoNothing()
 }

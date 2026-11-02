@@ -222,7 +222,7 @@ export const AppSettings = z.object({
   /** Support hours shown on /support; null until the client confirms staffing (O15). Phone and email come from `company`. */
   support: z.object({ hours: LocalisedText.nullable() }).default({ hours: null }),
   /** ADR-0020: how to pay when online payment is not offered (bank transfer details etc.). null = UNKNOWN, the payment page then says to contact support. */
-  payment: z.object({ offlineInstructions: LocalisedText.nullable() }).default({ offlineInstructions: null }),
+  payment: z.object({ offlineInstructions: z.object({ en: z.string().max(1500), fa: z.string().max(1500) }).nullable() }).default({ offlineInstructions: null }),
   /** ADR-0021: routes the worker keeps warm in the flights listing when a live adapter is enabled. Empty by default. */
   listings: z.object({ flightRoutes: z.array(z.object({ from: z.string().regex(/^[A-Z]{3}$/), to: z.string().regex(/^[A-Z]{3}$/) })).max(30) }).default({ flightRoutes: [] }),
 })
