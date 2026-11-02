@@ -16,6 +16,8 @@ import { Auto, Ltr } from "@/components/badges"
 import { ItineraryView } from "@/components/itinerary-view"
 import { type SearchParamsShape, toQuery } from "@/components/search-form"
 import { AddIdentity } from "@/components/add-identity"
+import { ComplianceReviewNote } from "@/components/compliance-review-note"
+import { ServiceInterests } from "@/components/service-interests"
 import { TravellerForm } from "@/components/traveller-form"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
@@ -44,6 +46,7 @@ function RequestForm() {
   const [adding, setAdding] = useState(false)
   const [contact, setContact] = useState("")
   const [form, setForm] = useState({ seat: sp.get("seat") ? "NONE" : "NONE", bestTime: "", note: "", flexibility: "", budget: "", avoid: "", prefer: "", overland: true, altName: "", altPhone: "", altRel: "" })
+  const [interests, setInterests] = useState<string[]>([])
   const [ssr, setSsr] = useState<Record<string, string>>({})
   const [ack, setAck] = useState({ booking: false, privacy: false, self: false })
   const [err, setErr] = useState<ApiError | null>(null)
@@ -84,6 +87,7 @@ function RequestForm() {
       seatPreference: form.seat, seatChoice: sp.get("seat") && it ? [{ segmentRef: "0", designator: sp.get("seat")! }] : undefined,
       ssrs: Object.entries(ssr).filter(([, c]) => c).map(([travellerId, code]) => ({ travellerId, code })),
       bestTimeToCall: form.bestTime || undefined, note: form.note || undefined,
+      serviceInterests: interests.length ? interests : undefined,
       acknowledgements: { notABooking: ack.booking, privacy: ack.privacy, selfTransfer: separate ? ack.self : undefined },
     }
     try {
@@ -113,6 +117,7 @@ function RequestForm() {
     <div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
       <h1 className="font-display text-3xl md:text-4xl">{kind === "ITINERARY" ? t("request.title") : t("request.manualTitle")}</h1>
       {it && <div className="mt-5"><ItineraryView it={it} /></div>}
+      <ComplianceReviewNote show={!!it?.complianceReview} className="mt-4" />
       {manual && <p className="mt-3 text-steel"><Ltr>{manual.from.code} → {manual.to.code}</Ltr>{sep}{manual.date}</p>}
       <section className="card-brand mt-6 p-5">
         <h2 className="font-display text-xl">{t("request.travellers")}</h2>
@@ -160,6 +165,7 @@ function RequestForm() {
         </fieldset>
         <label className="text-sm font-medium sm:col-span-2">{t("request.note")}<Textarea className="mt-1" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label>
       </section>
+      <ServiceInterests value={interests} onChange={setInterests} />
       <section data-ack className="card-brand mt-6 space-y-3 p-5 text-sm">
         <label className="flex items-start gap-3"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={ack.booking} onChange={(e) => setAck({ ...ack, booking: e.target.checked })} />{t("request.ackBooking")}</label>
         <label className="flex items-start gap-3"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={ack.privacy} onChange={(e) => setAck({ ...ack, privacy: e.target.checked })} /><span>{t("request.ackPrivacy")} <Link className="underline" href={href("/privacy")}>{t("footer.privacy")}</Link></span></label>

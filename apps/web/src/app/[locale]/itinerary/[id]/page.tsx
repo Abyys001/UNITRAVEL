@@ -8,6 +8,7 @@ import { useState } from "react"
 
 import type { CustomerItinerary, CustomerSeatMap, SearchQuery } from "@unitravel/contracts"
 
+import { ComplianceReviewNote } from "@/components/compliance-review-note"
 import { ItineraryView } from "@/components/itinerary-view"
 import { SeatMapView } from "@/components/seat-map"
 import { api, ApiError } from "@/lib/api"
@@ -42,6 +43,7 @@ export default function ItineraryPage() {
         <p className="text-sm text-steel">{t("itinerary.priceInQuote")}</p>
       </div>
       <p className="mb-6 mt-2 text-sm text-steel">{t("itinerary.freshness", { time: date(fetched, { withTime: true }) })}</p>
+      <ComplianceReviewNote show={it.complianceReview} className="mb-5" />
       <ItineraryView it={it} />
       {maps.data?.available && (
         <section className="mt-8">

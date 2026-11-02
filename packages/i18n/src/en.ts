@@ -320,4 +320,7 @@ export const en = {
   },
   card: { title: "Travel card", lead: "A Uni Travel travel card is not available yet.", soonTitle: "Coming soon", soonBody: "We have not launched a card, and nothing on this site can issue, load or charge one. When that changes, this page will say so.", offTitle: "Not available", offBody: "This service is not open.", help: "Questions? Our team can tell you what is planned." },
   credits: { title: "Photo and video credits", lead: "The photographs and video on this site are decorative stock media. They show places only; they are not offers, prices or availability.", item: "Title", creator: "Creator", source: "Source", licence: "Licence", usedOn: "Used on", none: "No credits listed yet." },
+  // STAGE-23 stream B
+  svcInterest: { title: "Also interested in", hint: "Optional. Tick anything you would like our team to include in your quote. This does not add anything to your request.", asked: "You asked about", price: "from {price}" },
+  complianceReview: { note: "Our team reviews trips to or from Iran before confirming anything." },
 } as const

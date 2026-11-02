@@ -17,6 +17,7 @@ import { Auto, Ltr, RouteLabel } from "@/components/badges"
 import { ConfirmAccept } from "@/components/confirm-accept"
 import { InvoiceDue } from "@/components/invoice-due"
 import { BagText, ItineraryView } from "@/components/itinerary-view"
+import { RequestedInterests } from "@/components/service-interests"
 import { StatusTimeline } from "@/components/status-timeline"
 import { TravellerForm } from "@/components/traveller-form"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
@@ -133,6 +134,7 @@ export default function RequestDetail() {
               </form>
             )}
           </section>
+          <RequestedInterests items={r.serviceInterests ?? []} />
           {r.snapshot && <section><h2 className="font-display mb-3 text-xl">{t("requests.snapshot")}</h2><ItineraryView it={r.snapshot.itinerary} /></section>}
         </div>
         <aside className="space-y-6">
