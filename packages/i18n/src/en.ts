@@ -144,7 +144,7 @@ export const en = {
   identity: {
     title: "My details", intro: "Keep your details accurate. Names and passport details must match your passport exactly.", detailsLink: "My details and passport",
     contactTitle: "Phone and email", contactHelp: "A verified phone lets you send requests; a verified email lets us send documents.", addContact: "Add a phone or email", phone: "Phone", email: "Email",
-    sendCode: "Send code", codeSent: "We sent a code to {value}.", code: "Code", verify: "Verify", verifiedNow: "Verified", valuePlaceholderPhone: "+98…", valuePlaceholderEmail: "name@example.com", verifyThisPhone: "Verify a phone number", verifyInline: "Add and verify a phone number to send your request.",
+    sendCode: "Send code", codeSent: "We sent a code to {value}.", code: "Code", verify: "Verify", verifiedNow: "Verified", valuePlaceholderPhone: "+98…", valuePlaceholderEmail: "name@example.com", verifyThisPhone: "Verify a phone number", verifyInline: "Add and verify a phone number to send your request.", inUse: "This number or email already belongs to another account. Contact us and we can merge the accounts.",
     profileTitle: "Profile", contactTime: "Best time to call", addressTitle: "Address", addressHelp: "Optional. We ask for it only when an invoice or a cargo shipment needs it.",
     line1: "Address line 1", line2: "Address line 2", city: "City", postcode: "Postcode", country: "Country", saveDetails: "Save details", saved: "Saved", clearAddress: "Remove address",
     passportTitle: "Passport and verification", passportHelp: "Our team checks your passport details against a scan before tickets are issued.",

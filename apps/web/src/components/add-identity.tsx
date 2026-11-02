@@ -25,6 +25,12 @@ export function AddIdentity({ channels = ["PHONE", "EMAIL"], onDone }: { channel
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // The verify step used to show only the generic title, hiding why it failed (e.g. a number already on another account).
+  const problemText = (x: unknown) => {
+    if (!(x instanceof ApiError)) return String(x)
+    if (x.problem.errors?.some((e) => e.code === "IDENTITY_IN_USE")) return t("identity.inUse")
+    return x.problem.detail ?? x.problem.title
+  }
   const send = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(null); setBusy(true)
     const body = { type: channel, value, deviceId: deviceId(), defaultCountry: channel === "PHONE" && locale === "fa" ? "IR" : undefined }
@@ -35,7 +41,7 @@ export function AddIdentity({ channels = ["PHONE", "EMAIL"], onDone }: { channel
         else throw x
       }
       setChallenge(r)
-    } catch (x) { setErr(x instanceof ApiError ? x.problem.detail ?? x.problem.title : String(x)) } finally { setBusy(false) }
+    } catch (x) { setErr(problemText(x)) } finally { setBusy(false) }
   }
   const verify = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(null); setBusy(true)
@@ -44,7 +50,7 @@ export function AddIdentity({ channels = ["PHONE", "EMAIL"], onDone }: { channel
       await Promise.all([qc.invalidateQueries({ queryKey: ["me"] }), qc.invalidateQueries({ queryKey: ["details"] })])
       setChallenge(null); setValue(""); setCode("")
       onDone?.()
-    } catch (x) { setErr(x instanceof ApiError ? x.problem.title : String(x)) } finally { setBusy(false) }
+    } catch (x) { setErr(problemText(x)) } finally { setBusy(false) }
   }
 
   if (challenge) {
