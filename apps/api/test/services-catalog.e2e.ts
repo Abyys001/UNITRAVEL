@@ -139,8 +139,8 @@ describe("request interests, catalogue lines and external reference", () => {
     const inv = await admin.post(`/v1/admin/requests/${ref}/invoices`)
     expect(inv.status).toBe(201)
     expect(inv.body.total).toEqual(GBP(131000))
-    const lineRows = await dbQuery<{ description: string; amount_minor: string }>("select description, amount_minor from invoice_lines where invoice_id = $1", [inv.body.id])
-    expect(lineRows.find((l) => l.description === `Test ${HIDDEN}`)).toMatchObject({ amount_minor: "6000" })
+    const lineRows = await dbQuery<{ description: string; amount_minor: string; service_type: string | null; quantity: number; unit_amount_minor: string }>("select description, amount_minor, service_type, quantity, unit_amount_minor from invoice_lines where invoice_id = $1", [inv.body.id])
+    expect(lineRows.find((l) => l.description === `Test ${HIDDEN}`)).toMatchObject({ amount_minor: "6000", service_type: "BAGGAGE", quantity: 2, unit_amount_minor: "3000" })
 
     // ADR-0030: a panel reference with no PNR is stored as given; nothing invents a locator.
     d = await admin.get(`/v1/admin/flight-requests/${ref}`)
