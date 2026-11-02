@@ -5,6 +5,7 @@ import { DEFAULT_ENGINE_RULES, DEFAULT_HUBS, type NormalisedOffer, type SearchQu
 
 import { assemble, dedupeOffers } from "./assemble"
 import { joinAtHub } from "./build"
+import { laneKeyMatches } from "./filter"
 import { localToUtc, makeOffer } from "./factory"
 import { plan } from "./plan"
 import { RuleResolver } from "./rules"
@@ -177,5 +178,61 @@ describe("engine invariants (property)", () => {
     expect(localToUtc("2026-03-29T02:30", "Europe/London")).toBe("2026-03-29T01:30:00Z")
     expect(localToUtc("2026-11-14T07:10", "Europe/Istanbul")).toBe("2026-11-14T04:10:00Z")
     expect(fmt(Date.parse("2026-11-14T04:10:00Z"))).toBe("2026-11-14T04:10")
+  })
+})
+
+describe("flight lane policies (ADR-0031 I3)", () => {
+  const withLanes = (lanes: { blocked?: string[]; review?: string[] }, blockedCarriers: string[] = ["IR", "W5"]) => {
+    const c = ctx({ slices: [{ from: { airport: "IKA" }, to: { airport: "IST" }, date: "2026-11-14", flexDays: 0 }] }, blockedCarriers)
+    return { ...c, policy: { ...c.policy, blockedLanes: new Set(lanes.blocked ?? []), reviewLanes: new Set(lanes.review ?? []) } }
+  }
+  const offer = (carrier: string, from: string, to: string) => makeOffer({ provider: "fake", id: `${carrier}${from}${to}`, slices: [[seg(carrier, "100", from, to, "2026-11-14T08:00", "2026-11-15T11:00")]], totalMinor: 10000, fetchedAt })
+  const run = (c: EngineContext, offers: NormalisedOffer[]) => assemble(c, [{ call: call({ kind: "THROUGH" }), offers }], new Map())
+  const ikaTk = () => offer("TK", "IKA", "IST")
+
+  it("laneKeyMatches reads origin, destination, pair and country-touch keys", () => {
+    expect(laneKeyMatches("IR:*", "IR", "TR")).toBe(true)
+    expect(laneKeyMatches("*:IR", "TR", "IR")).toBe(true)
+    expect(laneKeyMatches("IR:TR", "IR", "TR")).toBe(true)
+    expect(laneKeyMatches("IR:*", "TR", "IR")).toBe(true) // destination:* — touching the country either way
+    expect(laneKeyMatches("IR:*", "TR", "GB")).toBe(false)
+    expect(laneKeyMatches("IR:GB", "IR", "TR")).toBe(false)
+  })
+
+  it("a REVIEW lane keeps the itinerary and flags it", () => {
+    const r = run(withLanes({ review: ["IR:*"] }), [ikaTk()])
+    expect(r.results).toHaveLength(1)
+    expect(r.results[0]!.complianceReview).toBe(true)
+    expect(r.stats.removedByPolicy).toBe(0)
+  })
+
+  it("a BLOCK lane removes the itinerary and counts it as removed by policy", () => {
+    const r = run(withLanes({ blocked: ["IR:*"] }), [ikaTk()])
+    expect(r.results).toHaveLength(0)
+    expect(r.stats.removedByPolicy).toBe(1)
+  })
+
+  it("an Iranian carrier is hidden whatever the lane says", () => {
+    expect(run(withLanes({ review: ["IR:*"] }), [offer("W5", "IKA", "IST")]).results).toHaveLength(0)
+  })
+
+  it("no lane policy and no Iran leg leave complianceReview false", () => {
+    expect(run(withLanes({}), [ikaTk()]).results[0]!.complianceReview).toBe(false)
+    const c = ctx({ slices: [{ from: { airport: "IST" }, to: { airport: "LHR" }, date: "2026-11-14", flexDays: 0 }] })
+    const r = run({ ...c, policy: { ...c.policy, reviewLanes: new Set(["IR:*"]) } }, [offer("TK", "IST", "LHR")])
+    expect(r.results).toHaveLength(1)
+    expect(r.results[0]!.complianceReview).toBe(false)
+  })
+
+  it("property: a blocked lane never survives, a review lane flags exactly the Iran-touching itineraries", () => {
+    const airports = ["IKA", "IST", "LHR", "EVN", "VIE", "THR"]
+    const arb = fc.record({ from: fc.constantFrom(...airports), to: fc.constantFrom(...airports) }).filter((x) => x.from !== x.to)
+    fc.assert(fc.property(fc.array(arb, { minLength: 1, maxLength: 12 }), (rows) => {
+      const offers = rows.map((x, i) => makeOffer({ provider: "fake", id: `p${i}`, slices: [[seg("TK", String(100 + i), x.from, x.to, "2026-11-14T08:00", "2026-11-15T11:00")]], totalMinor: 10000 + i, fetchedAt }))
+      const touchesIran = (it: { components: NormalisedOffer[] }) => it.components.some((o) => o.slices.some((s) => s.segments.some((g) => ref.airport(g.origin.iata)!.country === "IR" || ref.airport(g.destination.iata)!.country === "IR")))
+      const blocked = run(withLanes({ blocked: ["IR:*"] }), offers).results
+      expect(blocked.some(touchesIran)).toBe(false)
+      for (const it of run(withLanes({ review: ["IR:*"] }), offers).results) expect(it.complianceReview).toBe(touchesIran(it))
+    }), { numRuns: 200 })
   })
 })

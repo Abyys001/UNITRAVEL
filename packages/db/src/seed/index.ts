@@ -125,6 +125,21 @@ export async function seedServicePolicies(db: Db) {
   if (fresh.length) await db.insert(s.compliancePolicies).values(fresh)
 }
 
+/**
+ * ADR-0031 I3: flight lane policies are LANE rows keyed `FLIGHT:<lane>`. Local only, so a developer sees the REVIEW flow;
+ * deployed hosts set (and approve) the row through the compliance policy screen. Added once; an edited or retired row stays.
+ */
+export async function seedFlightLanePolicies(db: Db, appEnv = process.env.APP_ENV) {
+  if (appEnv !== "local") return
+  const key = "FLIGHT:IR:*"
+  const have = await db.select({ id: s.compliancePolicies.id }).from(s.compliancePolicies).where(and(eq(s.compliancePolicies.type, "LANE"), eq(s.compliancePolicies.key, key))).limit(1)
+  if (have.length) return
+  await db.insert(s.compliancePolicies).values({
+    type: "LANE", key, action: "REVIEW", reason: "ADR-0031: Iran-origin and Iran-destination flights are shown and held for compliance review. seededPendingCounsel: local data only; deployed hosts set this through the policy screen.",
+    status: "ACTIVE", createdBy: SYSTEM_ID, approvedBy: SYSTEM_ID, approvedAt: new Date(), seededPendingCounsel: true,
+  })
+}
+
 export async function seedCargo(db: Db) {
   const all = ["DOCUMENTS", "PARCEL", "EXCESS_BAGGAGE", "AIR_FREIGHT"] as const
   const notice = (en: string, fa: string) => ({ en, fa })
@@ -204,6 +219,7 @@ async function main() {
   const d01 = await db.select({ id: s.compliancePolicies.id }).from(s.compliancePolicies).where(and(eq(s.compliancePolicies.type, "CARRIER"), eq(s.compliancePolicies.key, "country:IR"))).limit(1)
   if (d01.length === 0) await seedCompliance(db)
   await seedServicePolicies(db)
+  await seedFlightLanePolicies(db)
   const lanes = await db.select().from(s.cargoLanes).limit(1)
   if (lanes.length === 0) await seedCargo(db)
   if (shouldSeedDemo(process.env.APP_ENV, process.env.SEED_DEMO)) {

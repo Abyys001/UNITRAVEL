@@ -14,7 +14,7 @@ const SEARCH_ID = "0192f3c0-0000-7000-8000-000000000001"
 const query = SearchQuery.parse({ tripType: "ONE_WAY", slices: [{ from: { airport: "IST" }, to: { airport: "LHR" }, date: "2026-12-10" }], passengers: [{ type: "ADT" }] })
 const offers = normaliseRows(MIXED_DATASET, { reference, fetchedAt: new Date(), ttlSeconds: 10800 }).offers.filter((o) => o.slices[0]!.origin === "IST")
 
-function build(searchBehaviour: () => Promise<{ ok: true; value: typeof offers; meta: { durationMs: number } } | { ok: false; error: SupplierError; meta: { durationMs: number } }>, opts: { query?: SearchQuery; blockedCarriers?: string[] } = {}) {
+function build(searchBehaviour: () => Promise<{ ok: true; value: typeof offers; meta: { durationMs: number } } | { ok: false; error: SupplierError; meta: { durationMs: number } }>, opts: { query?: SearchQuery; blockedCarriers?: string[]; reviewLanes?: string[]; blockedLanes?: string[] } = {}) {
   const row = { id: SEARCH_ID, query: opts.query ?? query, status: "RUNNING" as string, locale: "en", ruleVersion: 1, hubsVersion: 1, engineVersion: "t", expiresAt: new Date(Date.now() + 30 * 60_000), userId: null }
   const redis = new FakeRedis()
   const writes: { op: string; table: unknown; values?: unknown }[] = []
@@ -33,7 +33,7 @@ function build(searchBehaviour: () => Promise<{ ok: true; value: typeof offers; 
     db as never, redis as never, { get: () => ({ add: async (name: string, data: unknown, opts: unknown) => void jobs.push({ name, data, opts }) }) } as never,
     { register: vi.fn() } as never, { get: (d: string) => (d === "ENGINE_RULES" ? DEFAULT_ENGINE_RULES : DEFAULT_HUBS), version: () => 1, flag: () => false } as never,
     { lookup: () => reference, airport: reference.airport } as never,
-    { carrierPolicy: async () => ({ blockedCarriers: new Set(opts.blockedCarriers ?? []), reviewCarriers: new Set(), blockedAirports: new Set(), reviewAirports: new Set() }) } as never,
+    { carrierPolicy: async () => ({ blockedCarriers: new Set(opts.blockedCarriers ?? []), reviewCarriers: new Set(), blockedAirports: new Set(), reviewAirports: new Set(), blockedLanes: new Set(opts.blockedLanes ?? []), reviewLanes: new Set(opts.reviewLanes ?? []) }) } as never,
     suppliers as never, { setSearchPort: vi.fn() } as never, {} as never,
   )
   const state = (): { status: string; version: number; notices: string[] } => JSON.parse(redis.kv.get(`search:${SEARCH_ID}:state`) ?? "{}")
@@ -129,27 +129,34 @@ describe("revalidate (ADR-0029)", () => {
   })
 })
 
-describe("Iran lanes (ADR-0029 A10)", () => {
-  // The seeded carrier policy (packages/db/src/seed/index.ts, D-01): carriers registered in Iran are BLOCKED. No AIRPORT policy is seeded.
+describe("Iran lanes (ADR-0031 I2, I3)", () => {
+  // Seeded carrier policy (packages/db/src/seed/index.ts, D-01): carriers registered in Iran are BLOCKED.
   const SEEDED_BLOCKED_CARRIERS = ["IR", "W5", "EP", "QB", "ZV", "I3"]
   const iranQuery = SearchQuery.parse({ tripType: "ONE_WAY", slices: [{ from: { airport: "IKA" }, to: { airport: "IST" }, date: "2026-12-10" }], passengers: [{ type: "ADT" }] })
   const ikaOffers = normaliseRows([IKA_IST, { ...IKA_IST, flightNumbers: ["W5101"], legs: [{ ...IKA_IST.legs[0]!, flightNumber: "W5101", airlineCode: "W5", airline: "Mahan Air" }] }], { reference, fetchedAt: new Date(), ttlSeconds: 10800 }).offers
-  const run = async () => {
-    const { svc, redis, state } = build(async () => ({ ok: true as const, value: ikaOffers, meta: { durationMs: 1 } }), { query: iranQuery, blockedCarriers: SEEDED_BLOCKED_CARRIERS })
+  const run = async (opts: { reviewLanes?: string[]; blockedLanes?: string[]; query?: SearchQuery; offers?: typeof ikaOffers } = {}) => {
+    const { svc, redis, state } = build(async () => ({ ok: true as const, value: opts.offers ?? ikaOffers, meta: { durationMs: 1 } }), { query: opts.query ?? iranQuery, blockedCarriers: SEEDED_BLOCKED_CARRIERS, ...opts })
     await svc.execute(SEARCH_ID)
     return JSON.parse(redis.kv.get(`search:${SEARCH_ID}:results:v${state().version}`)!) as Itinerary[]
   }
 
-  it("control: an Iranian carrier on the lane is removed by the seeded carrier policy", async () => {
-    const carriers = (await run()).flatMap((it) => it.carriers)
-    expect(carriers).not.toContain("W5")
+  it("a REVIEW lane shows the non-Iranian carrier and flags the itinerary for compliance review", async () => {
+    const results = await run({ reviewLanes: ["IR:*"] })
+    expect(results.flatMap((it) => it.carriers)).toEqual(["TK"])
+    expect(results.every((it) => it.complianceReview)).toBe(true)
   })
 
-  // BLOCKED pending owner/counsel: the seeded policies do not remove a non-Iranian carrier (TK) flying out of Iran. The only
-  // Iran lane policy, LANE `IR:*`, is REVIEW and is read by cargo and service-availability code, not by the flight engine.
-  // Rule 5: policy is data, so no override is hard-coded here. Run this test (change `it.skip` to `it`) once the owner
-  // decides how Iran-origin flights must be handled; as of 2 Nov 2026 it fails with `expected [ 'TK' ] to deeply equal []`.
-  it.skip("an Iran-origin search (IKA to IST) yields no customer results under the seeded policies", async () => {
-    expect((await run()).flatMap((it) => it.carriers)).toEqual([])
+  it("a BLOCK lane hides the itinerary", async () => {
+    expect(await run({ blockedLanes: ["IR:*"] })).toEqual([])
+  })
+
+  it("an Iranian carrier is hidden on an Iran route even with a REVIEW lane", async () => {
+    expect((await run({ reviewLanes: ["IR:*"] })).flatMap((it) => it.carriers)).not.toContain("W5")
+  })
+
+  it("a non-Iran route is not flagged, even with an Iran REVIEW lane", async () => {
+    const results = await run({ reviewLanes: ["IR:*"], query, offers })
+    expect(results.length).toBeGreaterThan(0)
+    expect(results.every((it) => it.complianceReview === false)).toBe(true)
   })
 })

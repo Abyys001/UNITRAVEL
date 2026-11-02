@@ -1,5 +1,6 @@
 import type { Connection, Construction, Itinerary, NormalisedOffer, RiskFlag, Segment, SegmentBaggage, Slice } from "@unitravel/contracts"
 
+import { offerLaneVerdict } from "./filter"
 import type { RuleResolver } from "./rules"
 import { crossesLocalNight, minutesBetween, stableHash } from "./time"
 import type { EngineContext } from "./types"
@@ -171,6 +172,7 @@ export function buildItinerary(solutions: SliceSolution[], ctx: EngineContext, r
       firstDeparture: allSegs[0]!.departure.utc,
       lastArrival: allSegs[allSegs.length - 1]!.arrival.utc,
       carriers: [...new Set(allSegs.map((s) => s.marketing.carrier))],
+      complianceReview: components.some((c) => offerLaneVerdict(c, ctx.policy, ctx.reference) === "REVIEW"),
     },
   }
 }

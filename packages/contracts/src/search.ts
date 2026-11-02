@@ -108,6 +108,8 @@ export const Itinerary = z.object({
   firstDeparture: IsoDateTime,
   lastArrival: IsoDateTime,
   carriers: z.array(z.string()),
+  /** ADR-0031 I3: a REVIEW lane policy applies (for example Iran); staff review the trip before anything is confirmed. Not price-like, so customers receive it. */
+  complianceReview: z.boolean().default(false),
 })
 export type Itinerary = z.infer<typeof Itinerary>
 

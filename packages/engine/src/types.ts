@@ -23,6 +23,9 @@ export interface CarrierPolicy {
   reviewCarriers: Set<string>
   blockedAirports: Set<string>
   reviewAirports: Set<string>
+  /** Flight lane policies (ADR-0031 I3): keys as in `laneKeyMatches`, without the `FLIGHT:` scope prefix. Absent means none. */
+  blockedLanes?: Set<string>
+  reviewLanes?: Set<string>
 }
 
 export interface ProviderPlanInfo {

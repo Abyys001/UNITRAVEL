@@ -8,7 +8,7 @@ import {
   complianceCases, complianceDecisions, auditLog, compliancePolicies, type Db, type DbOrTx, sanctionEntries, sanctionLists, screeningHits, screenings, settings, type Tx, users,
 } from "@unitravel/db"
 import { decide, evaluate, POLICY_PROPOSAL_TRANSITIONS, normaliseLatin, scoreCandidate, searchTokens, tokens, phoneticKey } from "@unitravel/domain"
-import type { CarrierPolicy } from "@unitravel/engine"
+import { type CarrierPolicy, laneKeyMatches } from "@unitravel/engine"
 
 import { env, isLocal } from "../../core/env"
 import { AppError } from "../../core/errors"
@@ -42,6 +42,8 @@ export const DEFAULT_COMPLIANCE: ComplianceSettings = {
 
 /** Most entries read per screening; the rarest token is exempt. Scoring is in-process, so this bounds latency, not recall. */
 const CANDIDATE_BUDGET = 20_000
+/** ADR-0031: a LANE policy key starting with this applies to flight search only; unprefixed lane keys stay cargo and service lanes. */
+const FLIGHT_LANE_SCOPE = "FLIGHT:"
 
 export interface Subject {
   subjectType: "CUSTOMER" | "TRAVELLER" | "PAYER" | "SHIPPER" | "CONSIGNEE" | "PARTNER"
@@ -250,7 +252,8 @@ export class ComplianceService implements OnModuleInit {
     const rows = await this.activePolicies()
     const expand = (key: string) => (key.startsWith("country:") ? this.reference.airlinesInCountry(key.slice(8)) : [key])
     const set = (type: string, action: string) => new Set(rows.filter((r) => r.type === type && r.action === action).flatMap((r) => (type === "CARRIER" ? expand(r.key) : [r.key])))
-    return { blockedCarriers: set("CARRIER", "BLOCK"), reviewCarriers: set("CARRIER", "REVIEW"), blockedAirports: set("AIRPORT", "BLOCK"), reviewAirports: set("AIRPORT", "REVIEW") }
+    const flightLanes = (action: string) => new Set(rows.filter((r) => r.type === "LANE" && r.action === action && r.key.startsWith(FLIGHT_LANE_SCOPE)).map((r) => r.key.slice(FLIGHT_LANE_SCOPE.length)))
+    return { blockedCarriers: set("CARRIER", "BLOCK"), reviewCarriers: set("CARRIER", "REVIEW"), blockedAirports: set("AIRPORT", "BLOCK"), reviewAirports: set("AIRPORT", "REVIEW"), blockedLanes: flightLanes("BLOCK"), reviewLanes: flightLanes("REVIEW") }
   }
 
   /** Eligibility for online card payment is policy data (ADR-0007 P11): ALLOW and BLOCK rows of type ONLINE_PAYMENT. */
@@ -303,7 +306,7 @@ export class ComplianceService implements OnModuleInit {
 
   async lanePolicy(origin: string, destination: string) {
     const rows = await this.activePolicies()
-    return rows.filter((r) => r.type === "LANE" && (r.key === `${origin}:*` || r.key === `*:${destination}` || r.key === `${origin}:${destination}` || r.key === `${destination}:*`))
+    return rows.filter((r) => r.type === "LANE" && !r.key.startsWith(FLIGHT_LANE_SCOPE) && laneKeyMatches(r.key, origin, destination))
   }
 
   async listPolicies(): Promise<PolicyView[]> {

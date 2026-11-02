@@ -43,7 +43,7 @@ const staffOffer = NormalisedOffer.parse({
 const staffItinerary = Itinerary.parse({
   id: "itn_1", construction: "THROUGH", ticketing: "SINGLE_TICKET", tabs: ["BEST", "CHEAPEST", "FASTEST"], price: { total: money, isSumOfTickets: false }, durationMin: 420, components: [staffOffer],
   connections: [], truth: [], baggage: [], riskFlags: [], score: 0.12, explain: { price: 0.5, duration: 0.1, layoverFit: 0, risk: 0, stops: 0, timeOfDay: 0, preferredCarrierBonus: 0 },
-  stops: 0, firstDeparture: "2026-11-20T03:00:00.000Z", lastArrival: "2026-11-20T10:00:00.000Z", carriers: ["TK"],
+  stops: 0, firstDeparture: "2026-11-20T03:00:00.000Z", lastArrival: "2026-11-20T10:00:00.000Z", carriers: ["TK"], complianceReview: true,
 })
 const staffSeatMap = SeatMap.parse({
   segmentRef: "s1", source: { provider: "duffel", fetchedAt: "2026-11-01T09:00:00.000Z" },
@@ -119,6 +119,13 @@ describe("customer serialisers never emit internal fields (property)", () => {
       const maps = customerSeatMaps([structuredClone(staffSeatMap)])
       expect(amountPaths(CustomerSeatMap.array().parse(contaminate(maps, p)))).toEqual([])
     }), { numRuns: 200 })
+  })
+
+  it("complianceReview is not price-like: customers and staff both receive it (ADR-0031)", () => {
+    expect(staffItinerary.complianceReview).toBe(true)
+    expect(customerItinerary(structuredClone(staffItinerary)).complianceReview).toBe(true)
+    const { complianceReview: _c, ...stored } = structuredClone(staffItinerary)
+    expect(customerItinerary(stored as typeof staffItinerary).complianceReview).toBe(false) // itineraries stored before the field existed
   })
 
   it("the guard itself fails on a leaked amount", () => {
