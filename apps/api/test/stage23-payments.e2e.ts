@@ -24,6 +24,8 @@ const mailsTo = async (email: string, n: number): Promise<Mail[]> => {
   const sorted = [...(found.messages ?? [])].sort((a, b) => a.Created.localeCompare(b.Created))
   return Promise.all(sorted.map(async (m) => { const f = (await (await fetch(`${MAILPIT}/api/v1/message/${m.ID}`)).json()) as Mail; return { Subject: f.Subject, Text: f.Text } }))
 }
+/** Mail order is not stable (a sign-in alert can arrive first), so wait for the message whose subject matches. */
+const mailWith = async (email: string, subject: string): Promise<Mail> => (await until(() => mailsTo(email, 1), (ms) => ms.some((m) => m.Subject.includes(subject)))).find((m) => m.Subject.includes(subject))!
 const notes = (userId: string, eventType: string) => dbQuery<{ id: string }>("select id from notifications where user_id = $1 and event_type = $2", [userId, eventType])
 
 async function customer(name: string) {
@@ -73,7 +75,7 @@ describe("offline instructions in the invoice email", () => {
     expect(d.status).toBe(201)
     const issued = await admin.post(`/v1/admin/invoices/${d.body.id}/issue`)
     expect(issued.status).toBe(200)
-    const [issuedMail] = await mailsTo(u.email, 1)
+    const issuedMail = await mailWith(u.email, issued.body.number)
     expect(issuedMail!.Subject).toContain(issued.body.number)
     expect(issuedMail!.Text).toContain("How to pay (bank transfer):")
     expect(issuedMail!.Text).toContain(BANK.en)
@@ -83,7 +85,7 @@ describe("offline instructions in the invoice email", () => {
     const r = await admin.post(`/v1/admin/invoices/${d.body.id}/payments`, { amount: { amountMinor: 5000, currency: "GBP" }, method: "BANK_TRANSFER", receivedAt: new Date().toISOString(), externalReference: `S23-${Date.now()}`, payerName: "Offline Stage23" })
     expect(r.status).toBe(201)
     expect((await admin.get(`/v1/admin/invoices/${d.body.id}`)).body.status).toBe("PAID")
-    const receipt = (await mailsTo(u.email, 2)).find((m) => m.Subject.startsWith("Payment received"))
+    const receipt = await mailWith(u.email, "Payment received")
     expect(receipt?.Subject).toContain(issued.body.number)
   })
 
@@ -91,10 +93,10 @@ describe("offline instructions in the invoice email", () => {
     expect((await owner.put(FLAG, { enabled: true })).status).toBe(200)
     const u = await customer("Online")
     const d = await admin.post("/v1/admin/invoices", invoiceBody(u.id))
-    await admin.post(`/v1/admin/invoices/${d.body.id}/issue`)
-    const [m] = await mailsTo(u.email, 1)
+    const issued = await admin.post(`/v1/admin/invoices/${d.body.id}/issue`)
+    const m = await mailWith(u.email, issued.body.number)
     expect(m!.Text).not.toContain("How to pay (bank transfer):")
-    expect(m!.Text).toContain("/billing/")
+    expect(m!.Text).toMatch(/Sign in to view and pay this invoice:\s+\S+\/s\/\w+/)
   })
 })
 
