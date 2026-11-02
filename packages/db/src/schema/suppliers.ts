@@ -1,6 +1,6 @@
 import { bigint, boolean, index, integer, jsonb, numeric, pgTable, primaryKey, text, uuid, varchar } from "drizzle-orm/pg-core"
 
-import type { Itinerary, NormalisedOffer, SearchQuery } from "@unitravel/contracts"
+import type { Itinerary, NormalisedOffer, ProviderMetering, SearchQuery } from "@unitravel/contracts"
 
 import { createdAt, id, timestamps, tstz, uuidv7 } from "./columns"
 import { users } from "./identity"
@@ -16,6 +16,8 @@ export const providers = pgTable("providers", {
   limits: jsonb().$type<{ timeoutMs: number; maxConcurrent: number; rps: number; dailyBudget: number; lookToBookAlert: number }>().notNull(),
   markets: jsonb().$type<{ pointOfSale: string; currency: string; originRegions: string[]; destinationRegions: string[] }>().notNull(),
   shadowMode: boolean().notNull().default(false),
+  /** ADR-0029 A6: spend control for a pay-per-row provider; null for every other provider. */
+  metering: jsonb().$type<ProviderMetering>(),
   /** ADR-0015: which product the provider serves; existing flight code ignores every other vertical. */
   vertical: text({ enum: ["FLIGHT", "STAY", "RAIL", "BUS"] }).notNull().default("FLIGHT"),
   version: integer().notNull().default(1),
@@ -30,6 +32,8 @@ export const providerCredentials = pgTable("provider_credentials", {
   keyId: varchar({ length: 40 }).notNull(),
   rotatedAt: tstz().notNull().defaultNow(),
   rotatedBy: uuid(),
+  /** ADR-0029 A8: set when the provider answered 401/403; calls stop until the credential is replaced, which clears it. */
+  invalidAt: tstz(),
 }, (t) => [primaryKey({ columns: [t.providerId, t.environment] })])
 
 /** Partitioned by month in the migration; payloads live in object storage for 14 days. */
@@ -47,6 +51,31 @@ export const providerCalls = pgTable("provider_calls", {
   payloadKey: varchar({ length: 300 }),
   createdAt: createdAt(),
 }, (t) => [primaryKey({ columns: [t.id, t.createdAt] }), index("provider_calls_provider_idx").on(t.providerId, t.createdAt)])
+
+/** ADR-0029: one asynchronous run of a metered provider (Apify), its estimated cost and the free notice and error rows. */
+export const providerRuns = pgTable("provider_runs", {
+  id: id(),
+  providerId: varchar({ length: 40 }).notNull().references(() => providers.id),
+  externalRunId: varchar({ length: 64 }),
+  pool: text({ enum: ["customer", "prewarm", "staff"] }).notNull(),
+  purpose: text({ enum: ["SEARCH", "RECHECK", "PREWARM"] }).notNull(),
+  searchId: uuid(),
+  routes: jsonb().$type<{ origin: string; destination: string; departureDate: string; returnDate?: string }[]>().notNull(),
+  /** The actor input without credentials, and the cache key per route, so the collect job can file the rows. */
+  input: jsonb().$type<Record<string, unknown>>().notNull(),
+  legKeys: text().array().notNull().default([]),
+  status: text({ enum: ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "TIMED-OUT", "ABORTED", "DECLINED"] }).notNull().default("QUEUED"),
+  rows: integer().notNull().default(0),
+  estimatedUsd: numeric({ precision: 10, scale: 4 }).notNull().default("0"),
+  reservedUsd: numeric({ precision: 10, scale: 4 }).notNull().default("0"),
+  notices: jsonb().$type<string[]>().notNull().default([]),
+  errors: jsonb().$type<string[]>().notNull().default([]),
+  result: jsonb().$type<Record<string, unknown>>(),
+  payloadKey: varchar({ length: 300 }),
+  startedAt: tstz(),
+  finishedAt: tstz(),
+  ...timestamps,
+}, (t) => [index("provider_runs_provider_idx").on(t.providerId, t.createdAt)])
 
 export const searches = pgTable("searches", {
   id: id(),
@@ -95,6 +124,8 @@ export const offerSnapshots = pgTable("offer_snapshots", {
   priceRevalidatedMinor: bigint({ mode: "number" }),
   currency: varchar({ length: 3 }).notNull(),
   revalidatedAt: tstz(),
+  /** ADR-0029: NOT_REVALIDATABLE when a component's source cannot be repriced; null when revalidation was off or confirmed a price. */
+  revalidationOutcome: varchar({ length: 24 }),
   ruleVersion: integer().notNull(),
   engineVersion: varchar({ length: 40 }).notNull(),
   contentHash: varchar({ length: 64 }).notNull(),

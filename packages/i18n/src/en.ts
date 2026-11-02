@@ -42,7 +42,7 @@ export const en = {
   },
   results: {
     progress: "Searching {total} sources · {done} of {total} done", complete: "Search complete · {count} options", tabs: { BEST: "Best", CHEAPEST: "Cheapest", FASTEST: "Fastest", SINGLE_TICKET: "Single ticket" },
-    policyHidden: "Some results were hidden by our carrier policy.", noSources: "Our flight sources are unavailable right now.", slow: "A source was slow; results may be incomplete.",
+    policyHidden: "Some results were hidden by our carrier policy.", sourcePending: "More options are loading; the list will update by itself.", sourceBudget: "Our indicative flight source has reached its limit for now. Send a request and our team will check for you.", indicativeDisclosure: "Schedules come from public listings; availability and price are confirmed by our team.", noSources: "Our flight sources are unavailable right now.", slow: "A source was slow; results may be incomplete.",
     change: "Change search", talk: "Prefer to talk to someone?", empty: "No suitable flights found.", emptyBody: "Our team can look further — including overland starts and other dates.", askTeam: "Ask our team to find options",
     stops: "{n} stop", stopsMany: "{n} stops", direct: "Direct", layover: "Layover {time} · {at}", from: "from", priceInQuote: "Price confirmed in your quote",
     historical: "These results are older than 30 minutes and may have changed.", searchAgain: "Search again",

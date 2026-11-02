@@ -36,6 +36,8 @@ const Env = z.object({
   /** ADR-0012: email-only sign-in for the testing phase. Never allowed with APP_ENV=production. */
   TEST_SIGN_IN: z.enum(["off", "on"]).default("off"),
   /** ADR-0027: where live aircraft positions come from. Off unless a host opts in. */
+  /** ADR-0029 A9: a local mock of the Apify API. Honoured only when `sandboxAllowed()`; deployed hosts always use api.apify.com. */
+  APIFY_BASE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   LIVE_FLIGHTS_SOURCE: z.enum(["off", "adsblol"]).default("off"),
 })
 

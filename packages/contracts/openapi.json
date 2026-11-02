@@ -1737,6 +1737,52 @@
         ]
       }
     },
+    "/v1/dev/providers/{id}/usage": {
+      "get": {
+        "operationId": "DevProvidersController_usage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/v1/dev/providers/{id}/runs": {
+      "get": {
+        "operationId": "DevProvidersController_runs",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
     "/v1/dev/providers/{id}/credentials": {
       "put": {
         "operationId": "DevProvidersController_credentials",
@@ -1763,16 +1809,7 @@
     "/v1/dev/providers/{id}/test": {
       "post": {
         "operationId": "DevProvidersController_test",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": ""
@@ -3205,6 +3242,60 @@
         "parameters": [
           {
             "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-search"
+        ]
+      }
+    },
+    "/v1/admin/itineraries/{id}/recheck": {
+      "post": {
+        "operationId": "StaffSearchController_recheck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-search"
+        ]
+      }
+    },
+    "/v1/admin/itineraries/{id}/recheck/{jobId}": {
+      "get": {
+        "operationId": "StaffSearchController_recheckStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobId",
             "required": true,
             "in": "path",
             "schema": {

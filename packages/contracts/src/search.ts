@@ -163,7 +163,7 @@ export const SearchStateQuery = z.object({
 })
 
 export const PriceCheckResult = z.object({
-  outcome: z.enum(["CONFIRMED", "PRICE_CHANGED", "OFFER_EXPIRED", "UNAVAILABLE"]),
+  outcome: z.enum(["CONFIRMED", "PRICE_CHANGED", "OFFER_EXPIRED", "UNAVAILABLE", "NOT_REVALIDATABLE"]),
   previousTotal: Money,
   currentTotal: Money.optional(),
   checkedAt: IsoDateTime,
@@ -181,3 +181,17 @@ export const LocationSuggestion = z.object({
   airports: z.array(Iata).optional(),
 })
 export type LocationSuggestion = z.infer<typeof LocationSuggestion>
+
+/** ADR-0029 A7: staff recheck of an indicative itinerary. Asynchronous: the route returns a job id and the console polls. */
+export const RecheckStart = z.object({ jobId: Uuid, status: z.literal("PENDING") })
+export type RecheckStart = z.infer<typeof RecheckStart>
+export const RecheckResult = z.object({
+  stillListed: z.boolean(), priceChanged: z.boolean(), old: Money.nullable(), new: Money.nullable(), fetchedAt: IsoDateTime,
+  /** Per component, so a multi-ticket itinerary shows which ticket disappeared. */
+  components: z.array(z.object({ providerOfferId: z.string(), stillListed: z.boolean(), old: Money.nullable(), new: Money.nullable() })),
+})
+export type RecheckResult = z.infer<typeof RecheckResult>
+export const RecheckStatus = z.object({
+  jobId: Uuid, status: z.enum(["PENDING", "DONE", "FAILED"]), result: RecheckResult.optional(), error: z.string().optional(),
+})
+export type RecheckStatus = z.infer<typeof RecheckStatus>

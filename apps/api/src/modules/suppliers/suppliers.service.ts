@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common"
-import { and, eq, gte, sql } from "drizzle-orm"
+import { and, eq, gte, isNull, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 import { v7 as uuidv7 } from "uuid"
 
@@ -32,6 +32,7 @@ const READS: Operation[] = ["search", "price", "seatMap", "health"]
 export class SuppliersService implements OnModuleInit, OnModuleDestroy {
   private readonly log = new Logger("Suppliers")
   private readonly adapters = new Map<ProviderId, FlightSupplierAdapter>()
+  private readonly budgets = new Map<ProviderId, () => Promise<number>>()
   private rows: ProviderRow[] = []
   private loadedAt = 0
   private sub?: Redis
@@ -40,6 +41,12 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     const list: FlightSupplierAdapter[] = [new DuffelAdapter(), new AmadeusEnterpriseAdapter(), new ManualAdapter()]
     if (sandboxAllowed()) list.push(new FakeAdapter())
     for (const a of list) this.adapters.set(a.id, a)
+  }
+
+  /** Late registration for adapters that need other services (ADR-0029). `budget` replaces the call-count budget with what the source can still afford. */
+  registerAdapter(a: FlightSupplierAdapter, budget?: () => Promise<number>) {
+    this.adapters.set(a.id, a)
+    if (budget) this.budgets.set(a.id, budget)
   }
 
   async onModuleInit() {
@@ -83,20 +90,22 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
       if (row.environment !== this.envName() && this.envName() === "production") continue
       if ((await this.circuit(row.id)).state === "OPEN") continue
       const used = Number((await this.redis.get(`budget:${row.id}:${today()}`)) ?? 0)
-      out.push({ row, budgetRemaining: Math.max(0, row.limits.dailyBudget - used), cityCodes: a.capabilities(row.environment).cityCodes })
+      const money = this.budgets.get(row.id as ProviderId)
+      out.push({ row, budgetRemaining: money ? await money() : Math.max(0, row.limits.dailyBudget - used), cityCodes: a.capabilities(row.environment).cityCodes })
     }
     return out
   }
 
   async shadowProviders(): Promise<ProviderRow[]> {
-    return (await this.list()).filter((r) => r.shadowMode && this.adapters.get(r.id as ProviderId)?.capabilities(r.environment).search)
+    // A metered provider is never called without a customer waiting for the answer (ADR-0029 A6).
+    return (await this.list()).filter((r) => r.shadowMode && !r.metering && this.adapters.get(r.id as ProviderId)?.capabilities(r.environment).search)
   }
 
   async row(id: string) {
     return (await this.list()).find((r) => r.id === id)
   }
 
-  private async credentials(id: string): Promise<Record<string, string> | null> {
+  async credentials(id: string): Promise<Record<string, string> | null> {
     const [c] = await this.db.select().from(providerCredentials).where(and(eq(providerCredentials.providerId, id), eq(providerCredentials.environment, this.envName())))
     return c ? (JSON.parse(decryptField(c.ciphertext)) as Record<string, string>) : null
   }
@@ -106,14 +115,24 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
       throw new AppError("VALIDATION_FAILED", "A Duffel test token cannot be used outside APP_ENV=local (ADR-0014)")
     }
     const enc = encryptField(JSON.stringify(values))
-    await this.db.insert(providerCredentials).values({ providerId: id, environment: this.envName(), ciphertext: enc.ciphertext, keyId: enc.keyId, rotatedBy: actorId, rotatedAt: new Date() })
-      .onConflictDoUpdate({ target: [providerCredentials.providerId, providerCredentials.environment], set: { ciphertext: enc.ciphertext, keyId: enc.keyId, rotatedBy: actorId, rotatedAt: new Date() } })
+    await this.db.insert(providerCredentials).values({ providerId: id, environment: this.envName(), ciphertext: enc.ciphertext, keyId: enc.keyId, rotatedBy: actorId, rotatedAt: new Date(), invalidAt: null })
+      .onConflictDoUpdate({ target: [providerCredentials.providerId, providerCredentials.environment], set: { ciphertext: enc.ciphertext, keyId: enc.keyId, rotatedBy: actorId, rotatedAt: new Date(), invalidAt: null } })
     await this.redis.del(`supplier:${id}:${this.envName()}:token`)
   }
 
   async credentialMeta(id: string) {
-    const [c] = await this.db.select({ rotatedAt: providerCredentials.rotatedAt, rotatedBy: providerCredentials.rotatedBy }).from(providerCredentials).where(and(eq(providerCredentials.providerId, id), eq(providerCredentials.environment, this.envName())))
+    const [c] = await this.db.select({ rotatedAt: providerCredentials.rotatedAt, rotatedBy: providerCredentials.rotatedBy, invalidAt: providerCredentials.invalidAt }).from(providerCredentials).where(and(eq(providerCredentials.providerId, id), eq(providerCredentials.environment, this.envName())))
     return c ?? null
+  }
+
+  /** ADR-0029 A8: a 401/403 from a metered provider stops every call until the credential is replaced (which clears the flag). */
+  async markCredentialInvalid(id: string) {
+    const rows = await this.db.update(providerCredentials).set({ invalidAt: new Date() }).where(and(eq(providerCredentials.providerId, id), eq(providerCredentials.environment, this.envName()), isNull(providerCredentials.invalidAt))).returning({ id: providerCredentials.providerId })
+    if (rows.length) await this.healthChanged(id, "AUTH", "Credentials rejected (401/403); calls stopped until they are replaced")
+  }
+
+  async credentialInvalid(id: string): Promise<boolean> {
+    return !!(await this.credentialMeta(id))?.invalidAt
   }
 
   // ---- circuit breaker ----
@@ -178,6 +197,9 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     if (!row || !adapter) return { ok: false, error: new SupplierError("CONTENT_RESTRICTED", "Unknown provider"), meta: { durationMs: 0 } }
     const cb = await this.circuit(id)
     if (cb.state === "OPEN") return { ok: false, error: new SupplierError("SUPPLIER_UNAVAILABLE", "Circuit open"), meta: { durationMs: 0 } }
+    if (row.metering && op !== "health" && (await this.credentialInvalid(id))) {
+      return { ok: false, error: new SupplierError("SUPPLIER_AUTH", "The credential was rejected; replace it in the Developer Panel"), meta: { durationMs: 0 } }
+    }
     if (op === "search") {
       const used = await this.redis.incr(`budget:${id}:${today()}`)
       await this.redis.expire(`budget:${id}:${today()}`, 36 * 3600)
@@ -194,11 +216,13 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
         release = await this.acquire(row, opts.deadline)
         const timeout = Math.min(remaining, row.limits.timeoutMs || remaining)
         const signal = AbortSignal.timeout(timeout)
-        const ctx: CallContext = { requestId: opts.requestId, deadline: opts.deadline, pointOfSale: { country: row.markets.pointOfSale, currency: row.markets.currency }, reference: this.reference.lookup(), credentials, environment: row.environment, signal }
+        const ctx: CallContext = { requestId: opts.requestId, deadline: opts.deadline, pointOfSale: { country: row.markets.pointOfSale, currency: row.markets.currency }, reference: this.reference.lookup(), credentials, environment: row.environment, signal, searchId: opts.searchId }
         const value = await Promise.race([fn(adapter, ctx), new Promise<never>((_, rej) => signal.addEventListener("abort", () => rej(new SupplierError("SUPPLIER_TIMEOUT", "Provider timeout"))))])
         return this.finish(row, op, opts, started, { ok: true, value, meta: { durationMs: Date.now() - started } })
       } catch (err) {
         const e = err instanceof SupplierError ? err : new SupplierError((err as Error).name === "TimeoutError" ? "SUPPLIER_TIMEOUT" : "SUPPLIER_UNKNOWN", String(err))
+        // Pending is the normal first answer of an asynchronous source: no retry, no call record, no circuit outcome.
+        if (e.code === "SUPPLIER_PENDING") return { ok: false, error: e, meta: { durationMs: Date.now() - started } }
         // Reads retry once on network errors or 5xx if time remains; writes never retry (ch. 21.5).
         if (attempt === 1 && e.retryable && READS.includes(op) && opts.deadline.getTime() - Date.now() > 1500) {
           await new Promise((r) => setTimeout(r, 100 + Math.random() * 200))
@@ -222,7 +246,10 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
       id, providerId: row.id, operation: op, searchId: opts.searchId, requestId: opts.requestId.slice(0, 128), status: r.ok ? "OK" : "ERROR", errorCode: r.ok ? null : r.error.code,
       durationMs: duration, offers: r.ok && Array.isArray(r.value) ? (r.value as unknown[]).length : null, payloadKey,
     }).catch((err) => this.log.warn({ err: String(err) }, "call record failed"))
-    if (!r.ok && r.error.code === "SUPPLIER_AUTH") await this.healthChanged(row.id, "AUTH", "Credentials invalid or expired")
+    if (!r.ok && r.error.code === "SUPPLIER_AUTH") {
+      if (row.metering) await this.markCredentialInvalid(row.id)
+      else await this.healthChanged(row.id, "AUTH", "Credentials invalid or expired")
+    }
     return r
   }
 
@@ -272,7 +299,8 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     const cb = await this.circuit(id)
     return {
       id: row.id, name: row.name, environment: row.environment, enabled: row.enabled, priority: row.priority, capabilities: row.capabilities, limits: row.limits, markets: row.markets,
-      shadowMode: row.shadowMode, version: row.version, credentials: { set: !!cred, rotatedAt: cred?.rotatedAt.toISOString() ?? null, rotatedBy: cred?.rotatedBy ?? null },
+      shadowMode: row.shadowMode, version: row.version, metering: row.metering ?? null,
+      credentials: { set: !!cred, rotatedAt: cred?.rotatedAt.toISOString() ?? null, rotatedBy: cred?.rotatedBy ?? null, invalidAt: cred?.invalidAt?.toISOString() ?? null },
       health: { circuit: cb.state, successRate: s.successRate, p50: s.p50, p95: s.p95, lastError: s.lastError, callsToday: s.callsToday },
       adapterCapabilities: this.adapters.get(row.id as ProviderId)?.capabilities(row.environment) ?? null,
     }

@@ -28,6 +28,16 @@ describe("fail-closed route declarations", () => {
     expect(perms("POST", "/v1/admin/flight-requests/:ref/commands/:command")).toContain("commercial_document.issue")
   })
 
+  it("the indicative-source routes declare their permissions (ADR-0029)", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("POST", "/v1/admin/itineraries/:id/recheck")).toMatchObject({ permissions: ["pricing.read.internal"], staff: true })
+    expect(find("GET", "/v1/admin/itineraries/:id/recheck/:jobId")).toMatchObject({ permissions: ["pricing.read.internal"], staff: true })
+    expect(find("GET", "/v1/dev/providers/:id/usage")).toMatchObject({ permissions: ["provider.config.read"], staff: true, dev: true })
+    expect(find("GET", "/v1/dev/providers/:id/runs")).toMatchObject({ permissions: ["provider.config.read"], staff: true, dev: true })
+    // Metering changes go through the PATCH (provider.config.write, privileged, fresh step-up checked in the handler and audited).
+    expect(find("PATCH", "/v1/dev/providers/:id")).toMatchObject({ permissions: ["provider.config.write"] })
+  })
+
   it("identity verification and identity documents are gated (ADR-0005)", () => {
     const perms = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)?.permissions
     expect(perms("GET", "/v1/admin/verifications")).toEqual(["identity.verify"])

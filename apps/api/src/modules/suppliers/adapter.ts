@@ -23,12 +23,16 @@ export interface CallContext {
   credentials: Record<string, string> | null
   environment: ProviderEnv
   signal: AbortSignal
+  /** The search this call belongs to; asynchronous sources use it to wake the search when their data arrives. */
+  searchId?: string
 }
 
 // Chapter 21.6 — error taxonomy.
 export type SupplierErrorCode =
   | "SUPPLIER_TIMEOUT" | "SUPPLIER_UNAVAILABLE" | "SUPPLIER_AUTH" | "SUPPLIER_RATE_LIMITED" | "SUPPLIER_BAD_REQUEST" | "NO_AVAILABILITY"
   | "OFFER_EXPIRED" | "PRICE_CHANGED" | "CONTENT_RESTRICTED" | "SUPPLIER_UNKNOWN"
+  /** ADR-0029: the data is being fetched and the search will be re-run when it arrives. Not a failure: not retried, not counted by the circuit. */
+  | "SUPPLIER_PENDING"
 
 export class SupplierError extends Error {
   constructor(readonly code: SupplierErrorCode, message: string, readonly raw?: string) { super(message) }

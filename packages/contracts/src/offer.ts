@@ -55,6 +55,8 @@ export const OfferSource = z.object({
   fetchedAt: IsoDateTime,
   expiresAt: IsoDateTime.optional(),
   fake: z.boolean().default(false),
+  /** ADR-0029: schedule data from public listings; availability and price are confirmed by staff. Customers see the label, never an amount. */
+  confidence: z.literal("INDICATIVE").optional(),
 })
 export type OfferSource = z.infer<typeof OfferSource>
 
@@ -71,6 +73,11 @@ export const NormalisedOffer = z.object({
   seatsRemaining: z.number().int().optional(),
   seatMapAvailable: z.boolean().default(false),
   restrictions: z.array(z.string()).default([]),
+  /** ADR-0029 A5: staff-only fields of an indicative source (booking token, Google Flights link, price level and range). Removed from every customer projection. */
+  providerData: z.object({
+    bookingToken: z.string().optional(), googleFlightsUrl: z.string().optional(), priceLevel: z.string().optional(),
+    typicalPriceLow: z.number().optional(), typicalPriceHigh: z.number().optional(),
+  }).optional(),
 })
 export type NormalisedOffer = z.infer<typeof NormalisedOffer>
 
@@ -113,7 +120,7 @@ export const CustomerSeatMap = seatMapOf(CustomerSeatElement)
 export type CustomerSeatMap = z.infer<typeof CustomerSeatMap>
 
 /** The same offer without `price` or fee amounts (ADR-0004). */
-export const CustomerOffer = NormalisedOffer.omit({ price: true, conditions: true }).extend({
+export const CustomerOffer = NormalisedOffer.omit({ price: true, conditions: true, providerData: true }).extend({
   conditions: z.object({ change: tri(z.object({ allowed: z.boolean() })), refund: tri(z.object({ allowed: z.boolean() })) }),
 })
 export type CustomerOffer = z.infer<typeof CustomerOffer>

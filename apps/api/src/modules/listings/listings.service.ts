@@ -112,7 +112,8 @@ export class ListingsService implements OnModuleInit {
     const routes = this.config.settings().listings.flightRoutes
     if (!routes.length) return { warmed: 0, routes: 0, reason: "NO_ROUTES" }
     // Live adapters only; the FAKE adapter exists in this list on a developer machine only (ADR-0014).
-    const sources = (await this.suppliers.searchable()).filter((s) => s.budgetRemaining > routes.length)
+    // Metered providers (ADR-0029) are paid per row and have their own budget pools; the cache warm-up never spends them.
+    const sources = (await this.suppliers.searchable()).filter((s) => s.budgetRemaining > routes.length && !s.row.metering).sort((a, b) => a.row.priority - b.row.priority)
     const source = sources.find((s) => s.row.id !== "fake") ?? (sandboxAllowed() ? sources[0] : undefined)
     if (!source) return { warmed: 0, routes: routes.length, reason: "NO_SOURCES" }
     const date = new Date(now.getTime() + WARM_DAYS_AHEAD * 86400_000).toISOString().slice(0, 10)

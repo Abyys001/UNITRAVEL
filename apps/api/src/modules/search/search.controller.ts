@@ -121,6 +121,20 @@ export class StaffSearchController {
     return this.search.priceCheck(id, staffOwner(actor), ctx.id)
   }
 
+  /** Starts a staff-pool run for the indicative components (ADR-0029 A7). Prices appear only in the result, behind `pricing.read.internal`. */
+  @Post("admin/itineraries/:id/recheck")
+  @RequirePermission("pricing.read.internal")
+  @HttpCode(202)
+  recheck(@Param("id") id: string, @CurrentActor() actor: Actor) {
+    return this.search.recheck(id, staffOwner(actor))
+  }
+
+  @Get("admin/itineraries/:id/recheck/:jobId")
+  @RequirePermission("pricing.read.internal")
+  recheckStatus(@Param("id") id: string, @Param("jobId", zbody(z.uuid())) jobId: string) {
+    return this.search.recheckStatus(id, jobId)
+  }
+
   @Get("admin/itineraries/:id")
   @RequirePermission("flight_search.run")
   async itinerary(@Param("id") id: string, @CurrentActor() actor: Actor) {

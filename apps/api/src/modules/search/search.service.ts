@@ -20,6 +20,7 @@ import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
 import { ReferenceService } from "../reference/reference.service"
 import { RequestsService, type SearchPort } from "../requests/requests.service"
+import { FlightDataService } from "../suppliers/apify/flight-data.service"
 import { SuppliersService } from "../suppliers/suppliers.service"
 import { customerItinerary, customerSeatMaps } from "./customer-projection"
 
@@ -55,10 +56,11 @@ export class SearchService implements OnModuleInit, SearchPort {
     private readonly compliance: ComplianceService,
     private readonly suppliers: SuppliersService,
     private readonly requests: RequestsService,
+    private readonly flightData: FlightDataService,
   ) {}
 
   onModuleInit() {
-    this.workers.register("search.execute", (job) => this.execute((job.data as { searchId: string }).searchId), 20)
+    this.workers.register("search.execute", (job) => this.execute((job.data as { searchId: string; rerun?: boolean }).searchId, { rerun: (job.data as { rerun?: boolean }).rerun }), 20)
     this.requests.setSearchPort(this)
   }
 
@@ -93,9 +95,17 @@ export class SearchService implements OnModuleInit, SearchPort {
   }
 
   /** Worker: plan → fan out (waves in parallel) → assemble after each wave → publish (ch. 22.4). */
-  async execute(searchId: string) {
+  async execute(searchId: string, opts: { rerun?: boolean } = {}) {
     const [row] = await this.db.select().from(searches).where(eq(searches.id, searchId))
-    if (!row || row.status !== "RUNNING") return
+    if (!row) return
+    // A re-run (ADR-0029: asynchronous source data arrived) is allowed on a finished search while it is still live in Redis.
+    if (opts.rerun ? row.expiresAt < new Date() : row.status !== "RUNNING") return
+    // One execution of a search at a time, so a re-run never publishes over the first run.
+    if (!(await this.redis.set(`search:${searchId}:exec`, "1", "PX", 60_000, "NX"))) {
+      if (!opts.rerun) return
+      await this.queues.get("search.execute").add("search", { searchId, rerun: true }, { jobId: `search-${searchId}-retry-${Date.now()}`, delay: 3000 })
+      return
+    }
     const started = Date.now()
     const rules = this.config.get("ENGINE_RULES")
     const ctx = await this.ctxFor(row.query, row.locale)
@@ -107,6 +117,8 @@ export class SearchService implements OnModuleInit, SearchPort {
     let cacheHits = 0
     const state = (JSON.parse((await this.redis.get(`search:${searchId}:state`)) ?? "null") as SearchStateRedis | null) ?? { id: searchId, status: "RUNNING", version: 0, progress: { sourcesTotal: 0, sourcesDone: 0, removedByPolicy: 0, slowSources: [], wave: 0 }, notices: [], expiresAt: row.expiresAt.toISOString() }
     state.progress.sourcesTotal = p.calls.length
+    state.progress.sourcesDone = 0
+    if (opts.rerun) state.status = "RUNNING"
     state.notices = [...p.notes]
     if (providers.length === 0) state.notices.push("NO_SOURCES")
     const deadline = new Date(started + rules.deadlines.totalMs)
@@ -145,7 +157,10 @@ export class SearchService implements OnModuleInit, SearchPort {
           await this.redis.set(key, JSON.stringify(res.value), "EX", rules.cache.legTtlSeconds)
         } else {
           collected.push({ call: c, offers: [], error: res.error.code })
-          if (res.error.code !== "NO_AVAILABILITY" && res.error.code !== "CONTENT_RESTRICTED") {
+          // Not a failure: the source answers later and the search is re-run (ADR-0029).
+          if (res.error.code === "SUPPLIER_PENDING") { if (!state.notices.includes("SOURCE_PENDING")) state.notices.push("SOURCE_PENDING") }
+          else if (res.error.code === "SUPPLIER_RATE_LIMITED" && c.provider === "apify-google-flights") { if (!state.notices.includes("SOURCE_BUDGET")) state.notices.push("SOURCE_BUDGET") }
+          else if (res.error.code !== "NO_AVAILABILITY" && res.error.code !== "CONTENT_RESTRICTED") {
             errors.push(`${c.provider}:${res.error.code}`)
             if (res.error.code === "SUPPLIER_TIMEOUT" && !state.progress.slowSources.includes(c.provider)) state.progress.slowSources.push(c.provider)
           }
@@ -168,9 +183,12 @@ export class SearchService implements OnModuleInit, SearchPort {
     await this.redis.publish(`search.progress.${searchId}`, JSON.stringify({ event: "done", status: state.status, count: final.results.length, durationMs: Date.now() - started }))
     const stats = { ...final.stats, calls: p.calls.length, cacheHits, droppedForBudget: p.droppedForBudget, errors, hubs: p.hubs, gateways: p.gateways, durationMs: Date.now() - started }
     await this.db.transaction(async (tx) => {
+      // A re-run replaces the stored results of the same search.
+      if (opts.rerun) await tx.delete(searchResults).where(eq(searchResults.searchId, searchId))
       await tx.update(searches).set({ status: state.status, stats, collected: collected.map((c) => ({ call: c.call, offers: c.offers, error: c.error })), completedAt: new Date() }).where(eq(searches.id, searchId))
       if (lastResults.length) await tx.insert(searchResults).values(lastResults.map((it, i) => ({ searchId, itineraryKey: it.id, rank: i, tabs: it.tabs, construction: it.construction, itinerary: it, priceTotalMinor: it.price.total.amountMinor, currency: it.price.total.currency, durationMin: it.durationMin, riskFlags: it.riskFlags, score: String(it.score), scoreComponents: it.explain })))
     })
+    await this.redis.del(`search:${searchId}:exec`)
     this.log.log({ searchId, calls: p.calls.length, results: lastResults.length, ms: Date.now() - started }, "search complete")
   }
 
@@ -245,11 +263,24 @@ export class SearchService implements OnModuleInit, SearchPort {
     return { outcome: r.outcome, previousTotal: itinerary.price.total, currentTotal: r.total, checkedAt: new Date().toISOString(), itinerary: r.itinerary }
   }
 
+  /** ADR-0029 A7: staff recheck of an indicative itinerary; asynchronous, the console polls `recheckStatus`. */
+  async recheck(itineraryId: string, owner: SearchOwner) {
+    const { itinerary, query } = await this.itinerary(itineraryId, owner)
+    return this.flightData.startRecheck(itinerary, query)
+  }
+
+  recheckStatus(itineraryId: string, jobId: string) {
+    return this.flightData.recheckStatus(itineraryId, jobId)
+  }
+
   async revalidate(itinerary: Itinerary, requestId: string) {
     const deadline = new Date(Date.now() + 8000)
     const priced: NormalisedOffer[] = []
+    let notRevalidatable = 0
     for (const c of itinerary.components) {
       if (c.source.rung === "MANUAL") { priced.push(c); continue }
+      // ADR-0029: an indicative source cannot be repriced. The component is kept as found and staff recheck it; it must not block the customer.
+      if ((await this.suppliers.row(c.source.provider))?.capabilities.price === false) { priced.push(c); notRevalidatable++; continue }
       const res = await this.suppliers.price({ provider: c.source.provider, providerOfferId: c.source.providerOfferId, offer: c }, { deadline, requestId })
       if (!res.ok) {
         if (res.error.code === "OFFER_EXPIRED") return { outcome: "OFFER_EXPIRED" as const }
@@ -263,6 +294,7 @@ export class SearchService implements OnModuleInit, SearchPort {
       ...itinerary, components: priced, price: { ...itinerary.price, total },
       truth: priced.map((c, i) => ({ component: i + 1, provider: c.source.provider, rung: c.source.rung, fetchedAt: c.source.fetchedAt, expiresAt: c.source.expiresAt, fake: c.source.fake })),
     }
+    if (notRevalidatable && total.amountMinor === itinerary.price.total.amountMinor) return { outcome: "NOT_REVALIDATABLE" as const, itinerary: updated, total }
     return { outcome: total.amountMinor === itinerary.price.total.amountMinor ? "CONFIRMED" as const : "PRICE_CHANGED" as const, itinerary: updated, total }
   }
 

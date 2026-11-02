@@ -38,7 +38,7 @@ export type Locale = "en" | "fa"
 /** Implemented by the search module (Stage 3): itinerary lookup and revalidation for submission. */
 export interface SearchPort {
   itineraryForSubmit(searchId: string, itineraryId: string, actor: Actor): Promise<{ itinerary: Itinerary; query: SearchQuery; ruleVersion: number; engineVersion: string; searchResultId: string | null }>
-  revalidate(itinerary: Itinerary, requestId: string): Promise<{ outcome: "CONFIRMED" | "PRICE_CHANGED" | "OFFER_EXPIRED" | "UNAVAILABLE"; itinerary?: Itinerary; total?: { amountMinor: number; currency: string } }>
+  revalidate(itinerary: Itinerary, requestId: string): Promise<{ outcome: "CONFIRMED" | "PRICE_CHANGED" | "OFFER_EXPIRED" | "UNAVAILABLE" | "NOT_REVALIDATABLE"; itinerary?: Itinerary; total?: { amountMinor: number; currency: string } }>
 }
 
 export function staffActor(a: Actor): MachineActor {
@@ -125,7 +125,7 @@ export class RequestsService {
     const umnr = body.ssrs.some((s) => s.code === "UMNR") || body.travellers.every((t) => t.passengerType === "CHD" || t.passengerType === "INF" || t.passengerType === "INS")
     let kind = body.kind
     let query: SearchQuery
-    let snapshotInput: { itinerary: Itinerary; ruleVersion: number; engineVersion: string; searchResultId: string | null; searchId: string; priceAtSubmit: number; revalidated?: { total: number; at: Date } } | null = null
+    let snapshotInput: { itinerary: Itinerary; ruleVersion: number; engineVersion: string; searchResultId: string | null; searchId: string; priceAtSubmit: number; revalidated?: { total: number; at: Date }; revalidationOutcome?: "NOT_REVALIDATABLE" } | null = null
     if (body.kind === "ITINERARY") {
       if (!this.search) throw new AppError("FEATURE_DISABLED", "Search is not available yet; send a manual request")
       const found = await this.search.itineraryForSubmit(body.searchId!, body.itineraryId!, actor)
@@ -139,7 +139,9 @@ export class RequestsService {
         if (rv.outcome === "OFFER_EXPIRED" || rv.outcome === "UNAVAILABLE") throw new AppError("OFFER_EXPIRED", "This price has expired — search again")
         // ADR-0004: the customer never saw a price, so a change is recorded on the snapshot for staff and never blocks or prompts them.
         if (rv.itinerary) snapshotInput.itinerary = rv.itinerary
-        if (rv.total) snapshotInput.revalidated = { total: rv.total.amountMinor, at: new Date() }
+        // NOT_REVALIDATABLE (ADR-0029) is recorded on the snapshot without a revalidated price; it never blocks the customer.
+        if (rv.outcome === "NOT_REVALIDATABLE") snapshotInput.revalidationOutcome = rv.outcome
+        else if (rv.total) snapshotInput.revalidated = { total: rv.total.amountMinor, at: new Date() }
       }
     } else query = body.query!
     // The snapshot is priced for the searched mix; a different set of travellers would be quoted and invoiced at the wrong price (ADR-0008 W6, ch. 12.4).
@@ -157,7 +159,7 @@ export class RequestsService {
         const [snap] = await tx.insert(offerSnapshots).values({
           searchResultId: snapshotInput.searchResultId, searchId: snapshotInput.searchId, itinerary: snapshotInput.itinerary,
           components: snapshotInput.itinerary.components.map((c) => ({ provider: c.source.provider, offerId: c.source.providerOfferId, rung: c.source.rung, fetchedAt: c.source.fetchedAt })),
-          priceAtSubmitMinor: snapshotInput.priceAtSubmit, priceRevalidatedMinor: snapshotInput.revalidated?.total ?? null, currency: snapshotInput.itinerary.price.total.currency,
+          priceAtSubmitMinor: snapshotInput.priceAtSubmit, priceRevalidatedMinor: snapshotInput.revalidated?.total ?? null, revalidationOutcome: snapshotInput.revalidationOutcome ?? null, currency: snapshotInput.itinerary.price.total.currency,
           revalidatedAt: snapshotInput.revalidated?.at ?? null, ruleVersion: snapshotInput.ruleVersion, engineVersion: snapshotInput.engineVersion, contentHash: sha256(content),
         }).returning()
         snapshotId = snap!.id

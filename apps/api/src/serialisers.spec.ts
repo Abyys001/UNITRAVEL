@@ -11,7 +11,7 @@ import { ServicesService } from "./modules/services/services.service"
 import { customerItinerary, customerSeatMaps } from "./modules/search/customer-projection"
 
 /** Field names that exist on staff/internal records and must never reach a customer (ch. 25.6, 32.2). */
-const INTERNAL = ["internalCostMinor", "internalNotes", "notes", "assigneeId", "assigneeName", "screening", "screeningScore", "riskScore", "complianceCase", "passportNumber", "documentNumberEnc", "supplierRaw", "createdBy", "customerUserId", "contactIdentityId", "costMinor", "supplierPrice", "supplierFetchedAt", "supplierExpiresAt", "priceAtSubmit", "priceRevalidated"]
+const INTERNAL = ["internalCostMinor", "internalNotes", "notes", "assigneeId", "assigneeName", "screening", "screeningScore", "riskScore", "complianceCase", "passportNumber", "documentNumberEnc", "supplierRaw", "createdBy", "customerUserId", "contactIdentityId", "costMinor", "supplierPrice", "supplierFetchedAt", "supplierExpiresAt", "priceAtSubmit", "priceRevalidated", "bookingToken", "googleFlightsUrl", "priceLevel", "typicalPriceLow", "typicalPriceHigh", "providerData"]
 /** Amount carriers that must not appear anywhere outside a sent quote; contaminated separately so a quote's real amounts stay valid. */
 const AMOUNT_FIELDS = ["amountMinor", "price", "priceBreakdown", "penalty", "totalMinor", "score", "explain", "supplierPrice"]
 
@@ -125,6 +125,24 @@ describe("customer serialisers never emit internal fields (property)", () => {
     expect(amountPaths({ results: [{ price: { total: money } }] }).length).toBeGreaterThan(0)
     expect(amountPaths(staffItinerary).length).toBeGreaterThan(0)
     expect(amountPaths(staffSeatMap).length).toBeGreaterThan(0)
+  })
+
+  it("an indicative offer reaches a customer without its booking token, Google link, price level or typical range (ADR-0029 A5)", () => {
+    const indicative = {
+      ...structuredClone(staffItinerary),
+      components: [{ ...structuredClone(staffOffer), source: { ...staffOffer.source, provider: "apify-google-flights", confidence: "INDICATIVE" },
+        providerData: { bookingToken: "SECRET-token", googleFlightsUrl: "https://www.google.com/travel/flights?SECRET", priceLevel: "SECRET-low", typicalPriceLow: 111222, typicalPriceHigh: 333444 } }],
+    }
+    const staffSide = Itinerary.parse(indicative)
+    expect(staffSide.components[0]!.providerData?.bookingToken).toBe("SECRET-token")
+    const projected = customerItinerary(staffSide)
+    expect(projected.components[0]!.source.confidence).toBe("INDICATIVE")
+    const out = JSON.stringify(projected)
+    for (const leaked of ["SECRET", "bookingToken", "googleFlightsUrl", "priceLevel", "typicalPrice", "providerData", "111222", "333444"]) expect(out).not.toContain(leaked)
+    fc.assert(fc.property(picks, (p) => {
+      const state = { id: "3e9d4c0b-6f40-4c0d-8e5b-8a7f6e5d4c30", status: "COMPLETE", version: 1, query: fc.sample(aggregate, 1)[0]!.query, progress: { sourcesTotal: 1, sourcesDone: 1, removedByPolicy: 0, slowSources: [], wave: 1 }, expiresAt: "2026-11-01T10:00:00.000Z", historical: false, ruleVersion: 1, engineVersion: "1", notices: [], results: [structuredClone(projected)], nextCursor: null, total: 1 }
+      expect(JSON.stringify(CustomerSearchState.parse(contaminate(state, p)))).not.toContain("SECRET-")
+    }), { numRuns: 100 })
   })
 
   it("quote options drop supplier cost, offer timestamps and supplier offer ids", () => {
