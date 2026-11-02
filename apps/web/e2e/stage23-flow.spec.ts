@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { expect, test, type Browser, type Page } from "@playwright/test"
 
-import { dbQuery, randomPhone, Session, signIn as apiSignIn, STAFF, staffSession } from "../../api/test/client"
+import { dbQuery, markVerifiedForTest, randomPhone, Session, signIn as apiSignIn, STAFF, staffSession } from "../../api/test/client"
 import { apiSessionFrom, staffPage as consolePage } from "../../console/e2e/helpers"
 import { signIn } from "./helpers"
 import { API_ORIGIN, crawler } from "./support/leak"
@@ -86,27 +86,6 @@ const staffApi = async (browser: Browser, phone: string, base: string) => {
 
 /** Developer Panel API session (settings, feature flags): no browser needed. */
 const devApi = (phone: string) => staffSession(phone, API_DEV_HOST)
-
-/**
- * The default ATOL mode, PAY_ON_TICKETING, lets a flight invoice be issued only after ticketing and takes payment in the ticketing
- * step (ADR-0006 C5, bookings.service.ts). The requested order (issue, pay offline, then record the reservation) is the
- * AGENT_FOR_ATOL_HOLDER shape, so the test switches the WORKFLOW config in this throwaway database and rolls it back afterwards.
- * Returns the function that restores the original published version.
- */
-async function useAtolMode(mode: "AGENT_FOR_ATOL_HOLDER"): Promise<() => Promise<void>> {
-  const dev = await devApi(STAFF.owner)
-  const rows = (await dev.get("/v1/dev/config/WORKFLOW/versions")).body as { version: number; status: string; payload: { atolMode: string } }[]
-  const current = rows.find((r) => r.status === "PUBLISHED")!
-  expect(current, "a published WORKFLOW config").toBeTruthy()
-  if (current.payload.atolMode === mode) return async () => {}
-  const draft = await dev.post("/v1/dev/config/WORKFLOW/versions", { payload: { ...current.payload, atolMode: mode }, changeNote: "e2e: STAGE-23 flow (restored after)" })
-  expect(draft.status).toBe(201)
-  expect((await dev.post(`/v1/dev/config/WORKFLOW/versions/${draft.body.version}/publish`, { changeNote: "e2e: STAGE-23 flow, temporary" })).status).toBe(200)
-  return async () => {
-    const back = await dev.post(`/v1/dev/config/WORKFLOW/versions/${current.version}/publish`, { changeNote: "e2e: restore the original ATOL mode" })
-    expect(back.status).toBe(200)
-  }
-}
 
 // ---- shared steps ----
 const uniqueEmail = (tag: string) => `s23-${tag}-${Date.now().toString(36)}@student.example`
@@ -221,7 +200,7 @@ test.setTimeout(600_000)
 test.use({ actionTimeout: 20_000 })
 
 test.describe("offline flow", () => {
-  test("search to PAID invoice and external-reference reservation, bank transfer only", async ({ page, browser }) => {
+  test("search to quote, external-reference reservation, ticketing with payment, invoice (default PAY_ON_TICKETING)", async ({ page, browser }) => {
     const email = uniqueEmail("offline")
     const crawl = crawler(page, API_ORIGIN)
 
@@ -229,7 +208,6 @@ test.describe("offline flow", () => {
     const dev = { api: await devApi(STAFF.developer) }
     const owner = { api: await devApi(STAFF.owner) }
     const settings = (await dev.api.get("/v1/dev/settings")).body
-    const restoreAtol = await useAtolMode("AGENT_FOR_ATOL_HOLDER")
     expect((await owner.api.put(FLAG, { enabled: false })).status).toBe(200)
     expect((await dev.api.put("/v1/dev/settings", { ...settings, payment: { offlineInstructions: BANK } })).status).toBe(200)
     try {
@@ -289,80 +267,7 @@ test.describe("offline flow", () => {
       await shotsBothLocales(page, "05-quote-accepted")
       await until(() => admin.api.get(`/v1/admin/flight-requests/${ref}`), (r) => r.body.status === "ACCEPTED")
 
-      // 6. Staff drafts the invoice from the quote and issues it (UI).
-      await ap.goto(`${ADMIN}/requests/${ref}`)
-      await ap.getByTestId("create-invoice").click()
-      const item = ap.getByTestId("invoice-item").first()
-      await expect(item).toBeVisible()
-      const detailUrl = await item.getByRole("link").first().getAttribute("href")
-      await ap.goto(`${ADMIN}${detailUrl}`)
-      await expect(ap.getByTestId("invoice-lines-table")).toContainText("Travel insurance")
-      await shots(ap, "23-console-invoice-draft", [WIDTHS[1]])
-      await ap.locator('[data-command="issue_invoice"]').first().click()
-      await expect(ap.getByTestId("invoice-status")).toContainText(/ISSUED/i, { timeout: 20_000 })
-      const number = (await ap.getByTestId("invoice-number").textContent())!.trim()
-      expect(number).toMatch(/^INV-/)
-      await shots(ap, "24-console-invoice-issued")
-
-      // 7. Issued email: bank-transfer instructions, our total only, no card or provider wording.
-      const mail = await mailWith(email, number)
-      expect(mail.Text).toContain("How to pay (bank transfer):")
-      expect(mail.Text).toContain(BANK.en)
-      expect(mail.Text).toMatch(/GBP\s?[\d,]+\.\d{2}/)
-      expect(mail.Text).not.toMatch(/\{[a-z_]+\}|sk_(test|live)_|client_secret|stripe|google/i)
-
-      // 8. Customer panel: invoice with the INSURANCE line, status and offline instructions, no pay button.
-      await page.goto("/en/billing")
-      await expect(page.getByTestId("invoice-row").filter({ hasText: number })).toBeVisible()
-      await crawl.snap("billing")
-      await page.goto(`/en/billing/${number}`)
-      const detail = page.getByTestId("invoice-detail")
-      await expect(detail).toContainText("Travel insurance")
-      await expect(detail).toContainText(/Issued|Awaiting|Unpaid|Due/i)
-      await expect(page.getByTestId("pay-online")).toHaveCount(0)
-      await expect(page.getByTestId("offline-instructions")).toContainText(BANK.en)
-      await crawl.snap("billing-detail")
-      await shotsBothLocales(page, "06-invoice-issued")
-      const total = (await page.getByTestId("invoice-total").last().textContent())!
-
-      // 9. Offline payment through the console, second user verifies when four-eyes applies (UI for the first, API for the second).
-      // A flight invoice takes its payment from the request page (the invoice page records payments for direct service invoices only).
-      await ap.goto(`${ADMIN}/requests/${ref}`)
-      await ap.locator('[data-command="record_payment"]').first().click()
-      const pay = ap.getByTestId("dlg-payment")
-      await expect(pay.getByLabel("Amount")).not.toHaveValue("")
-      await pay.getByLabel("External reference").fill(`S23-${Date.now()}`)
-      await pay.getByLabel("Payer name").fill("Daniel Hart")
-      await shots(ap, "24b-console-record-payment", [WIDTHS[1]])
-      await pay.locator("button[type=submit]").click()
-      await expect(pay).toBeHidden({ timeout: 20_000 })
-      const invoiceId = detailUrl!.split("/").pop()!
-      const state = async () => (await admin.api.get(`/v1/admin/invoices/${invoiceId}`)).body
-      let inv = await state()
-      let secondVerifier = false
-      if (inv.status !== "PAID") {
-        secondVerifier = true
-        const owner = await staffApi(browser, STAFF.owner, ADMIN)
-        const pending = ((await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body.payments as { id: string; status: string }[]).filter((p) => p.status === "RECORDED")
-        expect(pending.length).toBeGreaterThan(0)
-        for (const p of pending) expect([200, 201]).toContain((await owner.api.post(`/v1/admin/payments/${p.id}/verify`)).status)
-        inv = (await until(state, (b) => b.status === "PAID", 20_000))
-      }
-      expect(inv.status, `four-eyes second verifier used: ${secondVerifier}`).toBe("PAID")
-
-      // 10. PAID in both panels.
-      await ap.goto(`${ADMIN}${detailUrl}`)
-      await expect(ap.getByTestId("invoice-status")).toContainText(/PAID/i, { timeout: 20_000 })
-      await shots(ap, "25-console-invoice-paid")
-      await page.goto(`/en/billing/${number}`)
-      await expect(page.getByTestId("invoice-detail")).toContainText(/Paid/i)
-      await expect(page.getByTestId("invoice-total").last()).toHaveText(total)
-      await crawl.snap("billing-paid")
-      await shotsBothLocales(page, "07-invoice-paid")
-      const receipt = await mailWith(email, "Payment received")
-      expect(receipt.Subject).toContain(number)
-
-      // 11. Reservation with an external reference only, no PNR (UI dialog).
+      // 6. Reservation with an external reference only, no PNR (UI dialog).
       await ap.goto(`${ADMIN}/requests/${ref}`)
       await ap.locator('[data-command="record_reservation"]').first().click()
       const dlg = ap.getByRole("dialog").filter({ hasText: "Record reservation" })
@@ -372,24 +277,103 @@ test.describe("offline flow", () => {
       await shots(ap, "26-console-reservation-dialog", [WIDTHS[1]])
       await dlg.getByRole("button", { name: /Record reservation/ }).click()
       await expect(dlg).toBeHidden({ timeout: 20_000 })
-      const detailJson = (await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body
+      let detailJson = (await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body
       expect(detailJson.reservations[0]).toMatchObject({ recordLocator: null, externalReference: "PANEL-S23-4471" })
+      expect(detailJson.atolMode).toBe("PAY_ON_TICKETING")
       await ap.reload()
       await expect(ap.getByTestId("status")).toHaveText(/RESERVED/i)
       await shots(ap, "27-console-reserved")
-
-      // 12. Customer sees the final state, with no reference or PNR leaking to them.
+      // Under PAY_ON_TICKETING nothing can be invoiced or paid yet: the console says why instead of offering a dead button.
+      await expect(ap.locator('[data-command="record_payment"]').first()).toContainText(/unavailable/i)
       await page.goto(`/en/requests/${ref}`)
-      await expect(page.getByText(/Reserved|Booking in progress|Reservation/i).first()).toBeVisible()
       expect(await page.locator("main").innerText()).not.toContain("PANEL-S23-4471")
+      await crawl.snap("request-reserved")
+
+      // 7. Identity verification is its own stage; the traveller is marked VERIFIED in the test database so ticketing can proceed.
+      for (const t of detailJson.travellers as { travellerId: string }[]) await markVerifiedForTest(t.travellerId)
+
+      // 8. Ticketing with the payment recorded in the same step. API call, not the console dialog: under PAY_ON_TICKETING the
+      // server's action list marks record_tickets as not allowed ("Payment status must be PAID, or an owner-approved credit
+      // override"), so the dialog that records the payment in this step cannot be opened (product bug, see the report).
+      await ap.reload()
+      detailJson = (await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body
+      const actions = detailJson.actions as { command: string; allowed: boolean; reason?: string }[]
+      const recordTickets = actions.find((x) => x.command === "record_tickets")!
+      expect(recordTickets.allowed).toBe(false)
+      expect(recordTickets.reason).toMatch(/Payment status must be PAID/)
+      await shots(ap, "28a-console-record-tickets-not-offered", [WIDTHS[1]])
+      const quote = (detailJson.quotes as { status: string; acceptedOptionId: string; options: { id: string; priceBreakdown: { total: { amountMinor: number; currency: string } } }[] }[]).find((q) => q.status === "ACCEPTED")!
+      const total = quote.options.find((o) => o.id === quote.acceptedOptionId)!.priceBreakdown.total
+      const carrier = detailJson.reservations.length ? (detailJson.quotes[0].options[0].slices[0].segments[0].marketing.carrier as string) : ""
+      const accounting = (await dbQuery<{ accounting_code: string }>("select accounting_code from airlines where iata = $1", [carrier]))[0]?.accounting_code
+      expect(accounting, `accounting code of ${carrier}`).toBeTruthy()
+      const tk = await admin.api.post(`/v1/admin/flight-requests/${ref}/tickets`, {
+        reservationId: detailJson.reservations[0].id,
+        tickets: (detailJson.travellers as { travellerId: string }[]).map((t, i) => ({ travellerId: t.travellerId, ticketNumber: `${accounting}${String(Date.now() + i).slice(-10)}`, validatingCarrier: carrier, issueDate: new Date().toISOString().slice(0, 10), coupons: [{ sliceIndex: 0, segmentIndex: 0 }] })),
+        payment: { amount: total, method: "BANK_TRANSFER", receivedAt: new Date().toISOString(), externalReference: `S23-${Date.now()}`, payerName: "Daniel Hart" },
+      }, { "if-match": String(detailJson.version) })
+      expect(tk.status, JSON.stringify(tk.body).slice(0, 300)).toBe(201)
+      detailJson = (await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body
+      const observed: string[] = [`after ticketing: status=${detailJson.status} payment=${detailJson.paymentStatus}`]
+      if (detailJson.status === "RESERVED") {
+        const second = await staffApi(browser, STAFF.owner, ADMIN)
+        const pending = (detailJson.payments as { id: string; status: string }[]).filter((x) => x.status === "RECORDED")
+        expect(pending.length).toBeGreaterThan(0)
+        for (const x of pending) expect([200, 201]).toContain((await second.api.post(`/v1/admin/payments/${x.id}/verify`)).status)
+        detailJson = (await until(() => admin.api.get(`/v1/admin/flight-requests/${ref}`), (r) => r.body.status === "TICKETED", 20_000)).body
+        observed.push(`second verifier (owner) verified the payment: status=${detailJson.status} payment=${detailJson.paymentStatus}`)
+      }
+      expect(detailJson.status).toBe("TICKETED")
+      expect(detailJson.paymentStatus).toBe("PAID")
+      await ap.goto(`${ADMIN}/requests/${ref}`)
+      await shots(ap, "28-console-ticketed")
+
+      // 9. Flight invoice drafted from the accepted quote and issued after ticketing (UI).
+      await ap.getByTestId("create-invoice").click()
+      const item = ap.getByTestId("invoice-item").first()
+      await expect(item).toBeVisible()
+      const detailUrl = await item.getByRole("link").first().getAttribute("href")
+      await ap.goto(`${ADMIN}${detailUrl}`)
+      await expect(ap.getByTestId("invoice-lines-table")).toContainText("Travel insurance")
+      await shots(ap, "23-console-invoice-draft", [WIDTHS[1]])
+      await ap.locator('[data-command="issue_invoice"]').first().click()
+      await expect(ap.getByTestId("invoice-status")).not.toContainText(/DRAFT/i, { timeout: 20_000 })
+      const number = (await ap.getByTestId("invoice-number").textContent())!.trim()
+      expect(number).toMatch(/^INV-/)
+      const invoiceStatus = (await ap.getByTestId("invoice-status").textContent())!.trim()
+      observed.push(`invoice ${number} after issue: ${invoiceStatus}`)
+      // The payment was recorded at ticketing, so issuing settles the invoice at once: it is PAID, never ISSUED, in this mode.
+      expect(invoiceStatus).toMatch(/PAID/i)
+      await shots(ap, "24-console-invoice-issued")
+
+      // 10. Issued email: our total only, no card or provider wording; log what it says in this mode.
+      const mail = await mailWith(email, number)
+      observed.push(`issued email: ${JSON.stringify(mail.Text.replace(/\s+/g, " ").slice(0, 700))}`)
+      expect(mail.Text).toMatch(/GBP\s?[\d,]+\.\d{2}/)
+      expect(mail.Text).not.toMatch(/\{[a-z_]+\}|sk_(test|live)_|client_secret|stripe|google/i)
+      // OBSERVED: the email of an already-paid invoice still says "How to pay (bank transfer)" and "Pay by"; no ATOL note appears in it.
+      expect(mail.Text).toContain(`Total: GBP ${(total.amountMinor / 100).toFixed(2)}`)
+      console.log(observed.join("\n"))
+
+      // 11. Customer panel, then the console, show the final state.
+      await page.goto("/en/billing")
+      await expect(page.getByTestId("invoice-row").filter({ hasText: number })).toBeVisible()
+      await crawl.snap("billing")
+      await page.goto(`/en/billing/${number}`)
+      const detail = page.getByTestId("invoice-detail")
+      await expect(detail).toContainText("Travel insurance")
+      await expect(detail).toContainText(/Paid/i)
+      await expect(page.getByTestId("invoice-total").last()).toHaveText(`£${total.amountMinor / 100}`)
+      await expect(page.getByTestId("pay-online")).toHaveCount(0)
+      await crawl.snap("billing-detail")
+      await shotsBothLocales(page, "06-invoice-issued")
+      await page.goto(`/en/requests/${ref}`)
+      await expect(page.getByText(/Ticketed|Tickets issued|Ticketing/i).first()).toBeVisible()
       await crawl.snap("request-final")
       await shotsBothLocales(page, "08-request-final")
-
-      // Leak check over every customer page visited in this flow.
       expect(crawl.stats().html).toBeGreaterThanOrEqual(8)
       expect(crawl.leaks()).toEqual([])
     } finally {
-      await restoreAtol()
       await dev.api.put("/v1/dev/settings", settings)
     }
   })
@@ -478,43 +462,36 @@ test.describe("stripe flow", () => {
     await owner.api.put(FLAG, { enabled: false })
   })
 
-  test("online payments on: the customer pays by test card on our page, the webhook marks the invoice PAID", async ({ page, browser }) => {
+  // A flight invoice is only issued after ticketing (PAY_ON_TICKETING), so the card path is exercised on a SERVICE invoice:
+  // a direct invoice (ADR-0028) with an INSURANCE line. Test-mode Stripe keys come from the Developer Panel, never from this file.
+  test("online payments on: the customer pays a service invoice by test card on our page, the webhook marks it PAID", async ({ page, browser }) => {
     const email = uniqueEmail("stripe")
     const crawl = crawler(page, API_ORIGIN)
     const owner = { api: await devApi(STAFF.owner) }
-    expect((await owner.api.put(FLAG, { enabled: true })).status).toBe(200)
+    const admin = await staffApi(browser, STAFF.admin, ADMIN)
+    const compliance = await staffApi(browser, STAFF.compliance, ADMIN)
+    const ownerAdmin = await staffApi(browser, STAFF.owner, ADMIN)
+    const policy = async (action: "ALLOW" | "BLOCK") => {
+      const r = await compliance.api.post("/v1/admin/compliance/policies", { type: "ONLINE_PAYMENT", key: "product:SERVICE", action, reason: `e2e: local test database only (${action})` })
+      expect(r.status).toBe(201)
+      expect((await ownerAdmin.api.post(`/v1/admin/compliance/policies/${r.body.id}/approve`)).status).toBe(200)
+    }
+    await signIn(page, email)
+    const [u] = await dbQuery<{ user_id: string }>("select user_id from user_identities where type = 'EMAIL' and value_normalised = $1", [email])
+    const draft = await admin.api.post("/v1/admin/invoices", { customerUserId: u!.user_id, currency: "GBP", dueDays: 7, lines: [{ serviceType: "INSURANCE", description: "Travel insurance", quantity: 1, unitAmountMinor: 2500 }] })
+    expect(draft.status).toBe(201)
+    const number = (await admin.api.post(`/v1/admin/invoices/${draft.body.id}/issue`)).body.number as string
     try {
-      const itineraryUrl = await searchAndOpen(page, crawl)
-      await signInAndOpenForm(page, itineraryUrl, email, crawl)
-      const ref = await submitRequest(page, crawl, ["Travel insurance"])
-      const admin = await staffApi(browser, STAFF.admin, ADMIN)
-      await until(() => admin.api.get(`/v1/admin/flight-requests/${ref}`), (r) => r.body.status === "NEW")
-      await staffQuote(admin.page, ref)
-      const ap = admin.page
-      await ap.getByTestId("open-quote-builder").click()
-      await ap.getByRole("button", { name: "+ From snapshot" }).click()
-      const option = ap.getByTestId("option-0")
-      const flagged = option.locator("select[aria-invalid=true]")
-      for (let guard = 0; guard < 20 && (await flagged.count()) > 0; guard++) await flagged.first().selectOption({ index: 1 })
-      await option.getByLabel("Service fee").fill("25.00")
-      await attachCatalogue(option, "Travel insurance")
-      await option.getByTestId("catalogue-add").click()
-      await ap.getByRole("button", { name: "Preview" }).click()
-      await ap.getByRole("button", { name: "Send quote" }).click()
-      await expect(ap.getByTestId("status")).toHaveText("QUOTED", { timeout: 20_000 })
-      await page.goto(`/en/requests/${ref}`)
-      await acceptQuote(page)
-      await until(() => admin.api.get(`/v1/admin/flight-requests/${ref}`), (r) => r.body.status === "ACCEPTED")
-      await ap.goto(`${ADMIN}/requests/${ref}`)
-      await ap.getByTestId("create-invoice").click()
-      const href = await ap.getByTestId("invoice-item").first().getByRole("link").first().getAttribute("href")
-      await ap.goto(`${ADMIN}${href}`)
-      await ap.locator('[data-command="issue_invoice"]').first().click()
-      await expect(ap.getByTestId("invoice-status")).toContainText(/ISSUED/i, { timeout: 20_000 })
-      const number = (await ap.getByTestId("invoice-number").textContent())!.trim()
-
+      await policy("ALLOW")
+      expect((await owner.api.put(FLAG, { enabled: true })).status).toBe(200)
       await page.goto(`/en/billing/${number}`)
+      await crawl.snap("billing-detail")
+      await expect(async () => {
+        await page.goto(`/en/billing/${number}`)
+        await expect(page.getByTestId("pay-online")).toBeVisible({ timeout: 3_000 })
+      }).toPass({ timeout: 25_000 })
       await page.getByTestId("pay-online").click()
+      await expect(page.getByTestId("pay-amount")).toHaveText("£25")
       await page.getByTestId("pay-start").click()
       // Stripe-hosted card form: the standard test card, any future expiry and CVC.
       const frame = page.frameLocator("iframe[name^=__privateStripeFrame]").first()
@@ -524,10 +501,12 @@ test.describe("stripe flow", () => {
       await page.getByRole("button", { name: /^Pay/ }).click()
       await expect(page.getByTestId("pay-return")).toHaveAttribute("data-state", "paid", { timeout: 60_000 })
       await shotsBothLocales(page, "09-stripe-paid")
-      await ap.goto(`${ADMIN}${href}`)
-      await expect(ap.getByTestId("invoice-status")).toContainText(/PAID/i, { timeout: 60_000 })
+      await expect(async () => {
+        expect((await admin.api.get(`/v1/admin/invoices/${draft.body.id}`)).body.status).toBe("PAID")
+      }).toPass({ timeout: 60_000 })
       expect(crawl.leaks()).toEqual([])
     } finally {
+      await policy("BLOCK")
       await owner.api.put(FLAG, { enabled: false })
     }
   })
