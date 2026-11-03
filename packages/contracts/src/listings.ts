@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { Iata, IsoDateTime, LocalisedText, Money, page, Uuid } from "./common"
+import { Segment } from "./offer"
 
 // ADR-0021: curated listings (bus, train, stay) and cached flight listings. "Real or empty": nothing here is invented, scraped
 // or shown as available; every item says where it comes from and, for flights, when it was fetched.
@@ -85,6 +86,12 @@ export const FlightListingItem = z.object({
   origin: Iata, destination: Iata, departureDate: z.string(),
   carriers: z.array(z.string()), stops: z.number().int().min(0), durationMin: z.number().int().min(0),
   departureLocal: z.string(), arrivalLocal: z.string(),
+  /** ADR-0032 B4: card detail. Layovers are the gaps between consecutive segments' UTC times. Booking class and fare basis are never listed. */
+  segments: z.array(Segment.pick({ marketing: true, operating: true, origin: true, destination: true, departure: true, arrival: true, cabin: true, aircraft: true }).extend({ carrierName: z.string().optional() })).optional(),
+  /** ADR-0032 B5: the stored listing search and itinerary; the existing ITINERARY request flow takes them as they are. */
+  offerRef: z.object({ searchId: Uuid, itineraryId: z.string() }).nullable().optional(),
+  /** ADR-0031 I3: a REVIEW lane policy applies; a request goes to compliance review. */
+  complianceReview: z.boolean().optional(),
 })
 export type FlightListingItem = z.infer<typeof FlightListingItem>
 export const FlightListingsView = z.object({

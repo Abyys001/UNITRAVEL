@@ -64,7 +64,11 @@ export class SearchService implements OnModuleInit, SearchPort {
     this.requests.setSearchPort(this)
   }
 
-  async start(query: SearchQuery, owner: SearchOwner, locale: "en" | "fa") {
+  /**
+   * `listing`: a popular-route search started by the listings worker (ADR-0032 B5). It belongs to no one, so any caller may
+   * read it and request from it, and it is cache-only for metered sources (never starts a paid run).
+   */
+  async start(query: SearchQuery, owner: SearchOwner, locale: "en" | "fa", opts: { listing?: boolean } = {}) {
     const issues = validatePassengerMix(query.passengers.map((p) => p.type))
     if (issues.length) throw new AppError("VALIDATION_FAILED", issues[0], [{ path: "passengers", code: "MIX" }])
     for (const s of query.slices) for (const p of [s.from, s.to]) {
@@ -73,11 +77,12 @@ export class SearchService implements OnModuleInit, SearchPort {
     }
     const expiresAt = new Date(Date.now() + SEARCH_TTL_MS)
     const [row] = await this.db.insert(searches).values({
-      userId: owner.userId ?? null, actorKind: owner.staff ? "STAFF" : owner.userId ? "CUSTOMER" : "ANONYMOUS", anonKey: owner.anonKey ?? null, query, status: "RUNNING",
+      userId: opts.listing ? null : owner.userId ?? null, actorKind: opts.listing ? "SYSTEM" : owner.staff ? "STAFF" : owner.userId ? "CUSTOMER" : "ANONYMOUS", anonKey: opts.listing ? null : owner.anonKey ?? null, query, status: "RUNNING",
       ruleVersion: this.config.version("ENGINE_RULES"), hubsVersion: this.config.version("HUBS"), engineVersion: ENGINE_VERSION, locale, expiresAt,
     }).returning()
     const state: SearchStateRedis = { id: row!.id, status: "RUNNING", version: 0, progress: { sourcesTotal: 0, sourcesDone: 0, removedByPolicy: 0, slowSources: [], wave: 0 }, notices: [], expiresAt: expiresAt.toISOString() }
     await this.redis.set(`search:${row!.id}:state`, JSON.stringify(state), "PX", SEARCH_TTL_MS)
+    if (opts.listing) await this.redis.set(`search:${row!.id}:cache-only`, "1", "PX", SEARCH_TTL_MS)
     await this.queues.get("search.execute").add("search", { searchId: row!.id }, { jobId: `search-${row!.id}` })
     return { id: row!.id, status: "RUNNING" as const, expiresAt: expiresAt.toISOString() }
   }
@@ -196,7 +201,7 @@ export class SearchService implements OnModuleInit, SearchPort {
   private async owned(id: string, owner: SearchOwner) {
     const [row] = await this.db.select().from(searches).where(eq(searches.id, id))
     if (!row) throw notFound("Search")
-    const ok = owner.staff || (row.userId && row.userId === owner.userId) || (!row.userId && ((row.anonKey && row.anonKey === owner.anonKey) || owner.userId))
+    const ok = owner.staff || row.actorKind === "SYSTEM" || (row.userId && row.userId === owner.userId) || (!row.userId && ((row.anonKey && row.anonKey === owner.anonKey) || owner.userId))
     if (!ok) throw notFound("Search")
     return row
   }

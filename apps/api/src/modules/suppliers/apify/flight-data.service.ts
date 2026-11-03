@@ -4,7 +4,7 @@ import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 import { desc, eq } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
-import { type Itinerary, type Money, type NormalisedOffer, type ProviderRunView, ProviderMetering, type ProviderUsageView, type RecheckResult, type RecheckStart, type RecheckStatus, type SearchQuery } from "@unitravel/contracts"
+import { type DevApifyTestResult, type Itinerary, type Money, type NormalisedOffer, type ProviderRunView, ProviderMetering, type ProviderUsageView, type RecheckResult, type RecheckStart, type RecheckStatus, type SearchQuery } from "@unitravel/contracts"
 import { type Db, providerRuns } from "@unitravel/db"
 
 import { AppError } from "../../../core/errors"
@@ -29,6 +29,24 @@ const RUN_START_USD = 0.001
 const RUN_DEADLINE_MS = 300_000
 const NEGATIVE_TTL_S = 300
 const MAX_RERUNS = 3
+
+const HOUR_MS = 3600_000
+/** ADR-0032 B3: never warm more often than this, whatever the pool allows. */
+export const MIN_WARM_INTERVAL_MS = 6 * HOUR_MS
+
+/** Worst-case cost of one batched popular-route warm: every route at `maxResultsPrewarm` rows plus one run start. */
+export const prewarmCostUsd = (routes: number, m: Pick<ProviderMetering, "maxResultsPrewarm">) => usd(routes * m.maxResultsPrewarm * ROW_USD + RUN_START_USD)
+
+/**
+ * ADR-0032 B3: interval = 30 days / ⌊prewarm pool / cost per warm⌋, rounded up to the hour, at least 6 h. A pool that cannot
+ * pay for one warm a month gives null (do not schedule).
+ */
+export function prewarmIntervalMs(routes: number, m: Pick<ProviderMetering, "maxResultsPrewarm" | "monthlyBudgetUsd" | "poolSplit">): number | null {
+  if (routes < 1) return null
+  const warms = Math.floor(usd(m.monthlyBudgetUsd * m.poolSplit.prewarm) / prewarmCostUsd(routes, m) + 1e-9)
+  if (warms < 1) return null
+  return Math.max(MIN_WARM_INTERVAL_MS, Math.ceil((30 * 24 * HOUR_MS) / warms / HOUR_MS) * HOUR_MS)
+}
 
 /** One leg the actor is asked for; everything except the route is shared by the legs of one run. */
 export interface LegSpec {
@@ -107,6 +125,8 @@ export class FlightDataService implements OnModuleInit {
     if (neg) throw new SupplierError((JSON.parse(neg) as { code: SupplierError["code"] }).code, "The indicative source has no data for this leg right now")
     const searchId = ctx.searchId
     if (!searchId) throw new SupplierError("SUPPLIER_UNAVAILABLE", "The indicative source is only searched on behalf of a search")
+    // Popular-route listing searches read what the batched warm fetched and never start a paid customer run (ADR-0032 B3).
+    if (await this.redis.exists(`search:${searchId}:cache-only`)) throw new SupplierError("NO_AVAILABILITY", "Cache-only search: no indicative data for this leg")
     const pending = `apify:pending:${searchId}`
     const member = JSON.stringify(spec)
     if ((await this.redis.scard(pending)) >= m.maxLegsPerSearch && !(await this.redis.sismember(pending, member))) throw new SupplierError("NO_AVAILABILITY", "Per-search cap on indicative legs reached")
@@ -203,7 +223,7 @@ export class FlightDataService implements OnModuleInit {
 
   /** Creates the run row, enforces the guards and starts the actor. Returns false when the run was declined or failed to start. */
   private async launch(legs: LegSpec[], pool: Pool, purpose: "SEARCH" | "RECHECK" | "PREWARM", m: ProviderMetering, token: string, searchId: string | null, result?: Record<string, unknown>): Promise<{ id: string } | null> {
-    const maxResults = pool === "staff" ? m.maxResultsStaff : m.maxResultsCustomer
+    const maxResults = pool === "staff" ? m.maxResultsStaff : pool === "prewarm" ? m.maxResultsPrewarm : m.maxResultsCustomer
     const input: ApifyInput = { routes: legs.map((l) => l.route), maxResults, ...legs[0]!.shared }
     const cost = this.runCost(legs.length, maxResults)
     const legKeys = legs.map((l) => this.legKey(l))
@@ -332,7 +352,33 @@ export class FlightDataService implements OnModuleInit {
     const result = run.purpose === "RECHECK" ? { ...this.recheckResult(run, perLeg.flat(), fetchedAt), itineraryId: (run.result as { itineraryId: string }).itineraryId } : run.result
     await this.db.update(providerRuns).set({ status: "SUCCEEDED", rows: billable, estimatedUsd: String(cost), notices: normalised.notices, errors: normalised.errors, payloadKey, result, finishedAt: fetchedAt }).where(eq(providerRuns.id, run.id))
     await this.release(run.legKeys, null)
+    // The listings worker turns the warmed legs into stored, requestable search results (ADR-0032 B3, B5).
+    if (run.purpose === "PREWARM") await this.queues.get("maintenance").add("listings.prewarmed", { routes }, { jobId: `listings-prewarmed-${run.id}` })
     return { rows: billable, offers: normalised.offers.length }
+  }
+
+  // ---------------- popular-route warm (ADR-0032 B3) ----------------
+
+  /**
+   * One prewarm-pool run for every leg that is neither cached nor in flight. Legs already cached are returned so the caller
+   * can list them straight away; the rest are announced by `listings.prewarmed` when the run is collected.
+   */
+  async prewarm(routes: ApifyRoute[], q: Pick<SliceQuery, "passengers" | "cabin" | "maxConnections">): Promise<{ runId: string | null; cached: ApifyRoute[]; reason?: "CREDENTIAL" | "IN_FLIGHT" | "DECLINED" }> {
+    const m = await this.metering()
+    const token = (await this.suppliers.credentials(APIFY_ID))?.token
+    if (!token || (await this.suppliers.credentialInvalid(APIFY_ID))) return { runId: null, cached: [], reason: "CREDENTIAL" }
+    const cached: ApifyRoute[] = []
+    const todo: LegSpec[] = []
+    for (const route of routes) {
+      const spec = this.specFor(route, q.passengers, q.cabin, q.maxConnections, m)
+      const key = this.legKey(spec)
+      if (await this.redis.exists(`${key}:data`)) { cached.push(route); continue }
+      if ((await this.redis.set(`${key}:lock`, "prewarm", "PX", RUN_DEADLINE_MS + 60_000, "NX")) !== "OK") continue
+      todo.push(spec)
+    }
+    if (!todo.length) return { runId: null, cached, reason: cached.length ? undefined : "IN_FLIGHT" }
+    const started = await this.launch(todo, "prewarm", "PREWARM", m, token, null)
+    return started ? { runId: started.id, cached } : { runId: null, cached, reason: "DECLINED" }
   }
 
   // ---------------- staff recheck (ADR-0029 A7) ----------------
@@ -400,7 +446,10 @@ export class FlightDataService implements OnModuleInit {
     let apify: ProviderUsageView["apify"] = null
     let apifyError: string | null = null
     if (token && !meta?.invalidAt) {
-      try { apify = await new ApifyClient(token).limits() } catch (e) {
+      try {
+        const l = await new ApifyClient(token).limits()
+        apify = { cycle: l.cycle, maxMonthlyUsageUsd: l.maxMonthlyUsageUsd, monthlyUsageUsd: l.monthlyUsageUsd }
+      } catch (e) {
         apifyError = e instanceof SupplierError ? e.code : "SUPPLIER_UNKNOWN"
         if (e instanceof SupplierError && e.code === "SUPPLIER_AUTH") await this.suppliers.markCredentialInvalid(APIFY_ID)
       }
@@ -418,6 +467,29 @@ export class FlightDataService implements OnModuleInit {
       ledger: { budgetUsd: m.monthlyBudgetUsd, staffReserveUsd: m.staffReserveUsd, totalSpentUsd: usd(await this.spent("total")), pools: { customer, prewarm: await pool("prewarm"), staff: await pool("staff") }, customerRunsThisHour: await this.hourlyRuns(), customerRunsPerHour: m.customerRunsPerHour },
       banner: !meta ? "CREDENTIAL_MISSING" : invalidAt ? "CREDENTIAL_INVALID" : customer.remainingUsd < this.runCost(1, m.maxResultsCustomer) ? "CUSTOMER_POOL_EMPTY" : "NONE",
       reconciledAt: reconciled ? (JSON.parse(reconciled) as { at: string }).at : null,
+    }
+  }
+
+  /**
+   * ADR-0032 B2 "Test connection": Apify's free `/users/me/limits` with the stored token. A 401/403 marks the credential invalid
+   * like any other call and answers SUPPLIER_AUTH. `/limits` carries no plan name, so `plan` stays null (UNKNOWN).
+   */
+  async testConnection(): Promise<DevApifyTestResult> {
+    const token = (await this.suppliers.credentials(APIFY_ID))?.token
+    if (!token) throw new AppError("NOT_CONFIGURED", "The Apify credential is not set")
+    const testedAt = new Date()
+    try {
+      const l = await new ApifyClient(token).limits()
+      await this.suppliers.markTested(APIFY_ID, testedAt)
+      return { plan: null, monthlyUsageUsd: l.monthlyUsageUsd, monthlyLimitUsd: l.maxMonthlyUsageUsd, cycleStart: l.cycle, cycleEnd: l.cycleEnd, testedAt: testedAt.toISOString() }
+    } catch (e) {
+      await this.suppliers.markTested(APIFY_ID, testedAt)
+      const err = e instanceof SupplierError ? e : new SupplierError("SUPPLIER_UNKNOWN", "Apify test failed")
+      if (err.code === "SUPPLIER_AUTH") {
+        await this.suppliers.markCredentialInvalid(APIFY_ID)
+        throw new AppError("SUPPLIER_AUTH", "Apify rejected the stored token; replace it")
+      }
+      throw new AppError("SUPPLIER_UNAVAILABLE", `Apify test failed: ${err.code}`)
     }
   }
 

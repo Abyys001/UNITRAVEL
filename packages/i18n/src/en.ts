@@ -2,7 +2,7 @@ export const en = {
   brand: { name: "Uni Travel", tagline: "Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people." },
   faq: { search: "Search questions", expandAll: "Expand all", collapseAll: "Collapse all", noMatch: "No question matches your search. Ask our team on the support page." },
   panel: { nav: "Your account", all: "All", open: "In progress", unread: "New messages", filter: "Filter requests", lead: "Everything you asked us for, in one place." },
-  nav: { search: "Flights", cargo: "Send cargo", shipments: "Shipments", billing: "Documents & billing", requests: "My requests", inbox: "Inbox", account: "Account", signIn: "Sign in", signOut: "Sign out", language: "فارسی", help: "How it works", faq: "FAQ", blog: "Articles", card: "Travel card", destinations: "Destinations", glossary: "Glossary", travelRules: "Travel rules", flightGuide: "Buying guide", flights: "Flights", hotels: "Hotels", trains: "Trains", buses: "Buses", stays: "Villas & stays", visa: "Visa", tours: "Tours", cip: "Airport CIP", insurance: "Travel insurance", club: "Customer club", track: "Track a purchase", support: "Support", services: "Services", groupBook: "Book", groupServices: "Services", groupHelp: "Help" },
+  nav: { search: "Flights", cargo: "Send cargo", cargoShort: "Cargo", shipments: "Shipments", billing: "Documents & billing", requests: "My requests", inbox: "Inbox", account: "Account", signIn: "Sign in", signOut: "Sign out", language: "فارسی", help: "How it works", faq: "FAQ", blog: "Articles", card: "Travel card", destinations: "Destinations", glossary: "Glossary", travelRules: "Travel rules", flightGuide: "Buying guide", flights: "Flights", hotels: "Hotels", trains: "Trains", buses: "Buses", stays: "Villas & stays", visa: "Visa", tours: "Tours", cip: "Airport CIP", insurance: "Travel insurance", club: "Customer club", track: "Track a purchase", support: "Support", services: "Services", groupBook: "Book", groupServices: "Services", groupHelp: "Help" },
   home: {
     eyebrow: "Iran · Türkiye · Armenia · UK · Europe",
     title: "Every route out of Iran, arranged by people.",
@@ -39,6 +39,12 @@ export const en = {
     preferences: "Connection preferences", layoverWindow: "Preferred layover", selfTransfer: "Allow self-transfer (separate tickets)", airportChange: "Allow airport change",
     overnight: "Allow overnight layover", maxStops: "Maximum stops", gateways: "If there are no suitable flights from my city, show departures from nearby gateways",
     submit: "Search flights", placeholder: "City or airport", allAirports: "all airports", calendar: "Show dates in", gregorian: "Gregorian", jalali: "Jalali",
+    pickDepart: "Choose your departure date", pickReturn: "Choose your return date", destSearch: "Search cities or airports", destEmpty: "No city or airport matches. Ask our team — we search beyond this list.",
+    airportsCount: "{n} airports", allAirportsIn: "All {city} airports", travellersOne: "1 traveller", travellersMany: "{n} travellers",
+    adultsHint: "12 years and over", childrenHint: "2 to 11 years", infantsHint: "Under 2, on an adult's lap", infantsLimit: "One infant per adult", agesLabel: "Children's ages",
+    connections: "Connections", direct: "Direct", stopsUpTo: "Up to {n} stops", stopsUpToOne: "Up to 1 stop", hours: "{n} h", layoverHint: "Shortest and longest wait between flights",
+    selfTransferHint: "Separate tickets can be cheaper; you collect and re-check your bags.", airportChangeHint: "Land at one airport and leave from another in the same city.",
+    overnightHint: "A connection that runs through the night.", gatewaysShort: "Nearby gateway departures", flexHint: "Also search 3 days either side", done: "Done",
   },
   results: {
     progress: "Searching {total} sources · {done} of {total} done", complete: "Search complete · {count} options", tabs: { BEST: "Best", CHEAPEST: "Cheapest", FASTEST: "Fastest", SINGLE_TICKET: "Single ticket" },
@@ -80,6 +86,10 @@ export const en = {
     loadFailed: "We could not load this request.", noDocuments: "No documents yet.",
   },
   cargo: {
+    eyebrow: "Cargo and parcels", accent: "cargo", heroLead: "Choose a route, tell us what you are sending, and our team sends you a quote. Weights on this page are estimates, not a price.",
+    perkServices: "Documents, parcels and air freight", perkWeight: "Weight estimated as you type", perkTrack: "Follow it under Shipments", trackLink: "My shipments",
+    stepRoute: "Route and service", stepParties: "Sender and recipient", stepPieces: "Pieces", stepContents: "Contents", stepHandover: "Handover and declarations", stepConfirm: "Confirm and send",
+    summaryTitle: "Your shipment", summaryRoute: "Route", summaryService: "Service", summaryWeight: "Chargeable weight (estimate)", summaryValue: "Declared value", kg: "{n} kg", summaryNone: "Not chosen yet",
     signInNote: "You can prepare your shipment without an account. We ask you to sign in with a one-time code only when you send it.", signInToSend: "Sign in to send request",
     title: "Send cargo", service: "Service", DOCUMENTS: "Documents and small parcels", PARCEL: "Parcel", EXCESS_BAGGAGE: "Excess baggage / personal effects", AIR_FREIGHT: "Commercial air freight",
     lane: "Route", laneDisabled: "Not available", shipper: "Sender", consignee: "Recipient", name: "Full name (Latin letters)", company: "Company", address: "Address", city: "City", postcode: "Postcode", country: "Country", phone: "Phone", email: "Email",
@@ -93,6 +103,7 @@ export const en = {
     quoteLines: { freight: "Freight", fuel: "Fuel surcharge", security: "Security surcharge", handling: "Handling", customs: "Customs brokerage", duties: "Duties and taxes", insurance: "Insurance", pickup: "Pickup", delivery: "Delivery", payableByConsignee: "Payable by recipient" },
   },
   shipments: {
+    eyebrow: "Cargo tracking", accent: "Shipments", send: "Send cargo",
     title: "Shipments", lead: "Follow your cargo from collection to delivery.", empty: "No shipments yet. Once a quote is accepted, your shipment appears here.", open: "Open request",
     total: "Shipments", inTransit: "On the way", delivered: "Delivered", next: "Next to arrive", eta: "Estimated delivery", etaNote: "An estimate, not a promise. It can change.", noEta: "No estimate yet",
     lastUpdate: "Latest update", noEvents: "Nothing scanned yet. Updates appear here as our partner reports them.", updated: "Updated", awb: "AWB",
@@ -199,6 +210,11 @@ export const en = {
     notice: "Hotel rules, check-in times and what a rate includes are set by each hotel; your quote and voucher state them for your booking.",
   },
   services: {
+    visaEyebrow: "Visa help", visaAccent: "Visa", visaPerk1: "We check what your trip needs", visaPerk2: "A quote for our help", visaPerk3: "Not a visa application",
+    toursEyebrow: "Tours", toursAccent: "tours", toursPerk1: "A call from our team", toursPerk2: "Talk through tour options", toursPerk3: "Nothing is booked on the call",
+    cipEyebrow: "Airport services", cipAccent: "CIP", cipPerk1: "Lounge and fast-track", cipPerk2: "Arrivals and departures", cipPerk3: "Availability confirmed on your quote",
+    insuranceEyebrow: "Travel cover", insuranceAccent: "insurance", insurancePerk1: "Cover checked for your trip", insurancePerk2: "A quote before you decide", insurancePerk3: "Not a policy until issued",
+    startRequest: "Start your request", nextTitle: "What happens next", next1: "Send your request. We ask you to sign in only at this step.", next2: "A person on our team reviews it and gets back to you.", next3: "You decide. Sending a request does not book or buy anything.", nextHelp: "A question first?",
     signInNote: "You can fill this in without an account. We ask you to sign in with a one-time code only when you send it, and we keep what you typed.", signInToSend: "Sign in to send request",
     types: { VISA: "Visa", TOUR_CALLBACK: "Tour call-back", CIP: "Airport CIP", INSURANCE: "Travel insurance", HOTEL: "Hotel", STAY: "Villa or stay", TRAIN: "Train", BUS: "Bus" },
     status: { SUBMITTED: "Received", COMPLIANCE_HOLD: "Received", IN_PROGRESS: "Being handled", QUOTED: "Quote ready", CONFIRMED: "Confirmed", COMPLETED: "Completed", CANCELLED: "Cancelled", CLOSED_NO_RESPONSE: "Closed (no reply)", DECLINED: "Closed" },
@@ -280,15 +296,6 @@ export const en = {
     groundLead: "Routes and places our team handles. Details and prices are confirmed on your quote.", indicative: "Indicative: confirmed on quote", quotedPrice: "Quoted price",
     searchPlaceholder: "Filter by destination", empty: "Nothing listed right now.", requestThis: "Request this", requestForm: "Or tell us what you need", validUntil: "Valid until {date}",
   },
-  liveFlights: {
-    title: "In the air now", updated: "Updated {time}", all: "All", regionLabel: "Filter by region",
-    live: "Live", tracked: "flights tracked now", loading: "Loading flights", loadMore: "Load {n} more", seenNow: "Seen just now", seenMinutes: "Seen {n} min ago", refine: "Search a flight code or pick an area to narrow the list.",
-    lead: "Airline flights being tracked now over Europe, Turkey, the UAE and Iran, from public aircraft signals. This is a view of traffic, not a list of flights you can book.",
-    searchPlaceholder: "Search flight code", callsign: "Flight code", aircraft: "Aircraft", area: "Area", altitude: "Altitude", speed: "Speed",
-    region: { EUROPE: "Europe", TURKEY: "Turkey area", UAE: "UAE area", IRAN: "Iran area" },
-    noData: "No live aircraft data right now. Please check again shortly.", noMatch: "No flights match.", showing: "Showing {shown} of {total}",
-    note: "Positions can be a few minutes old and some flights are missing, because coverage depends on volunteer receivers. Coverage over Iran is limited. Source:",
-  },
   club: {
     signInPrompt: "Sign in to see your membership. Browsing this page needs no account.", signInCta: "Sign in",
     title: "Customer club", unavailable: "The customer club is not available yet.",
@@ -318,6 +325,15 @@ export const en = {
     b4: "Persian and English", b4Body: "Use it in either language, with dates in both Solar Hijri and Gregorian.",
     teaserTitle: "Watch the teaser", teaserNote: "The teaser is in Persian.", video: "Teaser for the Uni Travel app, coming soon", screenAlt: "Screen from the Uni Travel app: {feature}",
   },
-  card: { title: "Travel card", lead: "A Uni Travel travel card is not available yet.", soonTitle: "Coming soon", soonBody: "We have not launched a card, and nothing on this site can issue, load or charge one. When that changes, this page will say so.", offTitle: "Not available", offBody: "This service is not open.", help: "Questions? Our team can tell you what is planned." },
+  card: { title: "Travel card", accent: "card", lead: "A Uni Travel travel card is not available yet.", soonTitle: "Coming soon", soonBody: "We have not launched a card, and nothing on this site can issue, load or charge one. When that changes, this page will say so.", offTitle: "Not available", offBody: "This service is not open.", help: "Questions? Our team can tell you what is planned." },
   credits: { title: "Photo and video credits", lead: "The photographs and video on this site are decorative stock media. They show places only; they are not offers, prices or availability.", item: "Title", creator: "Creator", source: "Source", licence: "Licence", usedOn: "Used on", none: "No credits listed yet." },
+  // ADR-0032: popular routes on /flights (Apify Google Flights schedules, indicative only).
+  popularFlights: {
+    title: "Popular routes", lead: "Flights recently listed on routes our customers ask about. Choose one and our team checks it and sends you a quote.",
+    disclosure: "Schedules come from public listings. Availability and price are confirmed by our team.",
+    source: "Google Flights data, updated {ago}", iranNote: "Our team reviews trips to or from Iran before confirming anything.",
+    operatedBy: "Operated by {carrier}", aircraft: "Aircraft", cabin: "Cabin", departs: "Departs {date}", longLayover: "Long layover",
+    request: "Request this flight", loading: "Loading popular routes",
+    empty: "No flights listed right now — tell us your route and dates and our team will find options", emptyAction: "Tell us your route and dates",
+  },
 } as const

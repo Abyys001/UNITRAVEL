@@ -93,6 +93,15 @@ describe("permission matrix", () => {
     expect(DEFAULT_ROLE_PERMISSIONS.owner).toContain("payments.mode.approve")
   })
 
+  it("includes the Apify Developer Panel routes, so the role sweeps cover them (ADR-0032)", () => {
+    const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
+    // POST /v1/dev/providers/apify-google-flights/test is a parameter-less write, so it is not swept; routes.spec.ts pins its permission.
+    for (const [m, p] of [["GET", "/v1/dev/providers/:id"], ["GET", "/v1/dev/providers/:id/usage"], ["GET", "/v1/admin/providers/apify-google-flights/usage"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
+    for (const role of ["customer", "admin", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("provider.config.write")
+    // The admin dashboard card (ADR-0032 B7) is read-only: developer and owner only, never a customer.
+    for (const role of ["customer", "admin", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("provider.config.read")
+  })
+
   it("includes the Phase J routes, so the role sweeps cover them; only admin and owner hold the new permissions (ADR-0018 to 0021)", () => {
     const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
     for (const [m, p] of [["GET", "/v1/admin/customers"], ["GET", "/v1/admin/customers/:id/activity"], ["GET", "/v1/admin/support/tickets"], ["GET", "/v1/admin/support/tickets/:ref"], ["POST", "/v1/admin/support/tickets/:ref/replies"], ["POST", "/v1/admin/support/tickets/:ref/commands"], ["GET", "/v1/admin/calls"], ["POST", "/v1/admin/customers/:id/assignments"], ["GET", "/v1/admin/listings"], ["PATCH", "/v1/admin/listings/:id"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })

@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { CheckCircle2, Plus, Trash2, Upload } from "lucide-react"
+import { ArrowDown, Boxes, CheckCircle2, ClipboardCheck, FileText, Package, Plane, Plus, Route, Scale, Trash2, Truck, Upload, Users } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -12,6 +12,7 @@ import { Input } from "@unitravel/ui/components/input"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { CountrySelect } from "@unitravel/ui/product/country"
+import { HeroBand, ServiceHero, StepHeading } from "@/components/service-hero"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
 import { COUNTRIES, countryName } from "@/lib/countries"
@@ -104,13 +105,19 @@ export default function CargoPage() {
   // On a phone the form is long: bring the result into view.
   useEffect(() => { if (done) window.scrollTo({ top: 0, behavior: "smooth" }) }, [done])
   if (done) return (
-    <div className="mx-auto max-w-xl px-4 py-12"><div className="card-brand p-8 text-center"><IconBadge className="mx-auto border-success text-success"><CheckCircle2 /></IconBadge><h1 className="font-display mt-5 text-3xl md:text-4xl">{t("request.sentTitle")}</h1><p className="mt-4 inline-block rounded-xl bg-cloud px-4 py-2 font-mono text-2xl" dir="ltr">{done}</p><div><Link href={href(`/cargo/${done}`)} className="btn-orange mt-6">{t("cargo.tracking")}</Link></div></div></div>
+    <><HeroBand /><div className="mx-auto max-w-xl px-4 py-12"><div className="card-brand p-8 text-center"><IconBadge className="mx-auto border-success text-success"><CheckCircle2 /></IconBadge><h1 className="font-display mt-5 text-3xl md:text-4xl">{t("request.sentTitle")}</h1><p className="mt-4 inline-block rounded-xl bg-cloud px-4 py-2 font-mono text-2xl" dir="ltr">{done}</p><div><Link href={href(`/cargo/${done}`)} className="btn-orange mt-6">{t("cargo.tracking")}</Link></div></div></div></>
   )
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 md:py-10">
-      <h1 className="font-display text-3xl md:text-4xl">{t("cargo.title")}</h1>
-      <p className="card-brand mt-4 max-w-2xl !rounded-xl border-s-4 !border-s-danger px-4 py-3 text-sm">{t("cargo.prohibited")}</p>
-      <section className="mt-6 grid gap-4 sm:grid-cols-2">
+    <>
+    <ServiceHero testId="cargo-hero" photo="cargo" scene="cargo" eyebrow={t("cargo.eyebrow")} title={t("cargo.title")} accent={t("cargo.accent")} lead={t("cargo.heroLead")}
+      perks={[{ icon: Plane, label: t("cargo.perkServices") }, { icon: Scale, label: t("cargo.perkWeight") }, { icon: Truck, label: t("cargo.perkTrack") }]}
+      actions={<><a href="#cargo-form" className="btn-orange">{t("services.startRequest")}<ArrowDown className="size-4" aria-hidden /></a><Link href={href("/shipments")} className="btn-glass">{t("cargo.trackLink")}</Link></>} />
+    <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-16 pt-8 md:px-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div id="cargo-form" className="min-w-0 scroll-mt-24 space-y-6">
+      <p className="card-brand !rounded-xl border-s-4 !border-s-danger px-4 py-3 text-sm">{t("cargo.prohibited")}</p>
+      <section className="card-brand space-y-4 p-5">
+      <StepHeading n={1} icon={Route}>{t("cargo.stepRoute")}</StepHeading>
+      <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-medium">{t("cargo.lane")}
           <NativeSelect className="mt-1 h-11 w-full field" value={laneId} onChange={(e) => { setLaneId(e.target.value); const l = lanes.data?.find((x) => x.id === e.target.value); if (l) { setShipper((s) => ({ ...s, country: l.originCountry })); setConsignee((c) => ({ ...c, country: l.destinationCountry })) } }}>
             <option value="">—</option>
@@ -123,10 +130,14 @@ export default function CargoPage() {
           </NativeSelect>
         </label>
         {lane?.notice && <p className="text-sm text-steel sm:col-span-2">{lane.notice}</p>}
+      </div>
       </section>
-      <div className="mt-6 grid gap-4 md:grid-cols-2"><PartyFields title={t("cargo.shipper")} v={shipper} set={setShipper} freight={freight} /><PartyFields title={t("cargo.consignee")} v={consignee} set={setConsignee} freight={freight} /></div>
-      <section className="mt-6 card-brand p-4">
-        <h2 className="font-display text-lg">{t("cargo.pieces")}</h2>
+      <section className="space-y-4">
+        <StepHeading n={2} icon={Users}>{t("cargo.stepParties")}</StepHeading>
+        <div className="grid gap-4 xl:grid-cols-2"><PartyFields title={t("cargo.shipper")} v={shipper} set={setShipper} freight={freight} /><PartyFields title={t("cargo.consignee")} v={consignee} set={setConsignee} freight={freight} /></div>
+      </section>
+      <section className="card-brand p-5">
+        <StepHeading n={3} icon={Package}>{t("cargo.stepPieces")}</StepHeading>
         {pieces.map((p, i) => (
           <div key={i} className="mt-2 grid grid-cols-2 items-end gap-2 sm:grid-cols-5">
             {(["lengthCm", "widthCm", "heightCm", "weightKg"] as const).map((k) => <label key={k} className="text-xs text-steel">{t(`cargo.${k === "lengthCm" ? "length" : k === "widthCm" ? "width" : k === "heightCm" ? "height" : "weight"}`)}<Input type="number" inputMode="decimal" min={0.1} step="0.1" className="mt-1 h-10 text-base text-navy-950 sm:text-sm" value={p[k]} onChange={(e) => setPieces(pieces.map((x, j) => (j === i ? { ...x, [k]: Number(e.target.value) } : x)))} /></label>)}
@@ -136,8 +147,8 @@ export default function CargoPage() {
         <Button variant="outline" size="sm" className="rounded-xl border-navy-900 text-navy-900 mt-3" onClick={() => setPieces([...pieces, { lengthCm: 30, widthCm: 20, heightCm: 20, weightKg: 3 }])}><Plus className="size-4" />{t("cargo.addPiece")}</Button>
         <p className="mt-3 rounded-xl bg-cloud px-4 py-2.5 text-sm font-medium" aria-live="polite">{t("cargo.weights", { actual: w.actual, vol: w.vol, charge: w.charge })}</p>
       </section>
-      <section className="mt-6 card-brand p-4">
-        <h2 className="font-display text-lg">{t("cargo.items")}</h2>
+      <section className="card-brand p-5">
+        <StepHeading n={4} icon={Boxes}>{t("cargo.stepContents")}</StepHeading>
         {items.map((it, i) => (
           <div key={i} className="mt-3 grid gap-2 border-t border-line pt-3 first:border-0 sm:grid-cols-6">
             <label className="text-xs text-steel sm:col-span-2">{t("cargo.description")}<Input className="mt-1 h-10" value={it.description} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)))} required /></label>
@@ -152,7 +163,8 @@ export default function CargoPage() {
         <Button variant="outline" size="sm" className="rounded-xl border-navy-900 text-navy-900 mt-3" onClick={() => setItems([...items, { description: "", category: "OTHER", quantity: 1, value: 10, originCountry: "GB", hsCode: "", purpose: "GIFT" }])}><Plus className="size-4" />{t("cargo.addItem")}</Button>
         <p className="mt-3 text-sm text-steel">{money({ amountMinor: total, currency: "GBP" })}</p>
       </section>
-      <section className="mt-6 grid gap-4 card-brand p-4 sm:grid-cols-3">
+      <section className="grid gap-4 card-brand p-5 sm:grid-cols-3">
+        <div className="sm:col-span-3"><StepHeading n={5} icon={FileText}>{t("cargo.stepHandover")}</StepHeading></div>
         <label className="text-sm">{t("cargo.readyDate")}<Input type="date" className="mt-1 h-10" value={readyDate} onChange={(e) => setReadyDate(e.target.value)} /></label>
         <label className="text-sm">{t("cargo.handover")}<NativeSelect className="mt-1 h-10 w-full field" value={handover} onChange={(e) => setHandover(e.target.value)}><option value="PICKUP">{t("cargo.pickup")}</option><option value="DROP_OFF">{t("cargo.dropOff")}</option></NativeSelect></label>
         {freight && <label className="text-sm">{t("cargo.incoterm")}<NativeSelect className="mt-1 h-10 w-full field" value={incoterm} onChange={(e) => setIncoterm(e.target.value)}>{["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP"].map((x) => <option key={x}>{x}</option>)}</NativeSelect></label>}
@@ -166,12 +178,25 @@ export default function CargoPage() {
           <ul className="mt-2 text-sm text-steel">{docs.map((d) => <li key={d.documentId}>{d.filename}</li>)}</ul>
         </div>
       </section>
-      <section className="card-brand mt-6 space-y-2 p-5 text-sm">
+      <section className="card-brand space-y-2 p-5 text-sm">
+        <div className="mb-3"><StepHeading n={6} icon={ClipboardCheck}>{t("cargo.stepConfirm")}</StepHeading></div>
         {(["accuracy", "prohibitedItems", "privacy"] as const).map((k) => <label key={k} className="flex items-start gap-3 pointer-coarse:min-h-11"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={consent[k]} onChange={(e) => setConsent({ ...consent, [k]: e.target.checked })} />{t(`cargo.consent${k === "accuracy" ? "Accuracy" : k === "prohibitedItems" ? "Prohibited" : "Privacy"}`)}</label>)}
       </section>
-      {err && <p role="alert" className="mt-4 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err.problem.detail ?? err.problem.title}{err.problem.errors?.map((x) => <span key={x.path} className="block">{x.path}: {x.message}</span>)}</p>}
-      <button type="button" className="btn-orange mt-6 h-13 w-full text-base" disabled={busy || !laneId || (!!me && !phone) || !consent.accuracy || !consent.prohibitedItems || !consent.privacy} onClick={() => void submit()}>{me ? t("cargo.submit") : t("cargo.signInToSend")}</button>
-      {!me && <p className="mt-3 text-sm text-steel" data-testid="cargo-sign-in">{t("cargo.signInNote")}</p>}
+      {err && <p role="alert" className="rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err.problem.detail ?? err.problem.title}{err.problem.errors?.map((x) => <span key={x.path} className="block">{x.path}: {x.message}</span>)}</p>}
+      <button type="button" className="btn-orange h-13 w-full text-base" disabled={busy || !laneId || (!!me && !phone) || !consent.accuracy || !consent.prohibitedItems || !consent.privacy} onClick={() => void submit()}>{me ? t("cargo.submit") : t("cargo.signInToSend")}</button>
+      {!me && <p className="text-sm text-steel" data-testid="cargo-sign-in">{t("cargo.signInNote")}</p>}
     </div>
+    <aside className="card-brand self-start p-5 lg:sticky lg:top-24" aria-label={t("cargo.summaryTitle")} data-testid="cargo-summary">
+      <h2 className="font-display text-lg">{t("cargo.summaryTitle")}</h2>
+      <dl className="mt-4 space-y-3 text-sm">
+        {([["summaryRoute", lane?.label], ["summaryService", t(`cargo.${service}` as never)], ["summaryWeight", t("cargo.kg", { n: w.charge })], ["summaryValue", money({ amountMinor: total, currency: "GBP" })]] as const).map(([k, v]) => (
+          <div key={k} className="flex items-baseline justify-between gap-3 border-b border-dashed border-line pb-3 last:border-0 last:pb-0">
+            <dt className="text-steel">{t(`cargo.${k}`)}</dt><dd className="text-end font-semibold">{v ?? <span className="font-normal text-steel">{t("cargo.summaryNone")}</span>}</dd>
+          </div>
+        ))}
+      </dl>
+    </aside>
+    </div>
+    </>
   )
 }

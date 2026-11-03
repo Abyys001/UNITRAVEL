@@ -17,4 +17,11 @@ export class ReferenceController {
   locations(@Query(zbody(z.object({ q: z.string().max(60).default("") }))) q: { q: string }) {
     return this.ref.suggest(q.q)
   }
+
+  @Get("destinations")
+  @Public()
+  @RateLimit({ name: "destinations", limit: 120, windowSeconds: 600, key: "ip" })
+  destinations() {
+    return this.ref.destinations()
+  }
 }

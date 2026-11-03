@@ -57,7 +57,8 @@ test("menu: switched-off services are absent; turning visa on adds it to the Ser
   await expect(main.getByRole("link", { name: "Hotels" })).toHaveCount(0)
   await main.getByRole("button", { name: "Services" }).click()
   await expect(page.getByRole("link", { name: "Visa" })).toHaveCount(0)
-  await expect(page.locator("#services-menu").getByRole("link", { name: "Send cargo" })).toBeVisible()
+  await expect(main.getByRole("link", { name: "Cargo", exact: true })).toBeVisible()
+  await expect(page.locator("#services-menu").getByRole("link", { name: "Shipments" })).toBeVisible()
   await page.keyboard.press("Escape")
   await expect(page.locator("#services-menu")).toHaveCount(0)
 

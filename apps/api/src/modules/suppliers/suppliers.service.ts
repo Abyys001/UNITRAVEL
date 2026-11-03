@@ -120,6 +120,24 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     await this.redis.del(`supplier:${id}:${this.envName()}:token`)
   }
 
+  /** ADR-0032 B1: stores the values only when no credential exists for this environment. Returns whether it stored them. */
+  async importCredentials(id: string, values: Record<string, string>): Promise<boolean> {
+    const enc = encryptField(JSON.stringify(values))
+    const rows = await this.db.insert(providerCredentials).values({ providerId: id, environment: this.envName(), ciphertext: enc.ciphertext, keyId: enc.keyId, rotatedBy: null, rotatedAt: new Date(), invalidAt: null })
+      .onConflictDoNothing({ target: [providerCredentials.providerId, providerCredentials.environment] }).returning({ id: providerCredentials.providerId })
+    return rows.length > 0
+  }
+
+  /** Last 4 characters of a single-value credential, the only part ever shown again (ADR-0032 B2). */
+  async credentialLast4(id: string): Promise<string | null> {
+    const values = Object.values((await this.credentials(id)) ?? {})
+    return values.length === 1 && values[0]!.length >= 8 ? values[0]!.slice(-4) : null
+  }
+
+  async markTested(id: string, at = new Date()) {
+    await this.redis.set(`provider:${id}:testedAt`, at.toISOString(), "EX", 400 * 86400)
+  }
+
   async credentialMeta(id: string) {
     const [c] = await this.db.select({ rotatedAt: providerCredentials.rotatedAt, rotatedBy: providerCredentials.rotatedBy, invalidAt: providerCredentials.invalidAt }).from(providerCredentials).where(and(eq(providerCredentials.providerId, id), eq(providerCredentials.environment, this.envName())))
     return c ?? null
@@ -300,7 +318,10 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     return {
       id: row.id, name: row.name, environment: row.environment, enabled: row.enabled, priority: row.priority, capabilities: row.capabilities, limits: row.limits, markets: row.markets,
       shadowMode: row.shadowMode, version: row.version, metering: row.metering ?? null,
-      credentials: { set: !!cred, rotatedAt: cred?.rotatedAt.toISOString() ?? null, rotatedBy: cred?.rotatedBy ?? null, invalidAt: cred?.invalidAt?.toISOString() ?? null },
+      credentials: {
+        set: !!cred, last4: cred ? await this.credentialLast4(id) : null, rotatedAt: cred?.rotatedAt.toISOString() ?? null, rotatedBy: cred?.rotatedBy ?? null,
+        invalidAt: cred?.invalidAt?.toISOString() ?? null, testedAt: await this.redis.get(`provider:${id}:testedAt`),
+      },
       health: { circuit: cb.state, successRate: s.successRate, p50: s.p50, p95: s.p95, lastError: s.lastError, callsToday: s.callsToday },
       adapterCapabilities: this.adapters.get(row.id as ProviderId)?.capabilities(row.environment) ?? null,
     }

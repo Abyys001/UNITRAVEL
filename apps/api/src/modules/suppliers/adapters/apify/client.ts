@@ -29,13 +29,16 @@ export interface ApifyInput {
 
 export type ApifyRunStatus = "READY" | "RUNNING" | "SUCCEEDED" | "FAILED" | "TIMED-OUT" | "ABORTED"
 export interface ApifyRun { id: string; defaultDatasetId: string; status: ApifyRunStatus }
-export interface ApifyLimits { cycle: string | null; maxMonthlyUsageUsd: number | null; monthlyUsageUsd: number | null }
+export interface ApifyLimits { cycle: string | null; cycleEnd: string | null; maxMonthlyUsageUsd: number | null; monthlyUsageUsd: number | null }
 
 /** Thin client over the global `fetch`. The token goes only into the Authorization header and never into an error message. */
 export class ApifyClient {
   constructor(private readonly token: string, private readonly base = apifyBaseUrl()) {}
 
   startRun(input: ApifyInput, maxTotalChargeUsd: number): Promise<ApifyRun> {
+    // The actor defaults to 100 rows per route and has no charge cap, so an uncapped run is refused before any request is sent.
+    if (!Number.isInteger(input.maxResults) || input.maxResults < 1) return Promise.reject(new SupplierError("SUPPLIER_BAD_REQUEST", "Apify run refused: maxResults missing"))
+    if (!(maxTotalChargeUsd > 0)) return Promise.reject(new SupplierError("SUPPLIER_BAD_REQUEST", "Apify run refused: maxTotalChargeUsd missing"))
     return this.call<{ data: ApifyRun }>("POST", `/acts/${APIFY_ACTOR}/runs?maxTotalChargeUsd=${maxTotalChargeUsd.toFixed(4)}`, input).then((r) => r.data)
   }
 
@@ -51,7 +54,7 @@ export class ApifyClient {
   async limits(): Promise<ApifyLimits> {
     const r = await this.call<{ data: { monthlyUsageCycle?: { startAt?: string; endAt?: string }; limits?: { maxMonthlyUsageUsd?: number }; current?: { monthlyUsageUsd?: number } } }>("GET", "/users/me/limits")
     const d = r.data
-    return { cycle: d.monthlyUsageCycle?.startAt ?? null, maxMonthlyUsageUsd: d.limits?.maxMonthlyUsageUsd ?? null, monthlyUsageUsd: d.current?.monthlyUsageUsd ?? null }
+    return { cycle: d.monthlyUsageCycle?.startAt ?? null, cycleEnd: d.monthlyUsageCycle?.endAt ?? null, maxMonthlyUsageUsd: d.limits?.maxMonthlyUsageUsd ?? null, monthlyUsageUsd: d.current?.monthlyUsageUsd ?? null }
   }
 
   private async call<T>(method: "GET" | "POST", path: string, body?: unknown): Promise<T> {

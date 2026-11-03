@@ -1,0 +1,106 @@
+"use client"
+
+import type { DevApifyTestResult, ProviderView } from "@unitravel/contracts"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import Link from "next/link"
+import { useState } from "react"
+import { toast } from "sonner"
+
+import { Button } from "@unitravel/ui/components/button"
+
+import { EmptyState, TileError } from "@/components/bento"
+import { ApifyHelp } from "@/components/apify"
+import { useConfirm } from "@/components/confirm"
+import { DevPage, KV, KVRow, Section } from "@/components/dev-ui"
+import { APIFY } from "@/components/flight/apify-source"
+import { SecretDialog } from "@/components/secret-form"
+import { Arrow, ErrorLine, Loading, PageHead, Tag } from "@/components/ui"
+import { api, errText } from "@/lib/api"
+import { fmtDate, fmtDateTime } from "@/lib/format"
+import { useT } from "@/lib/i18n"
+import { useSession } from "@/lib/session"
+import type { Page } from "@/lib/types"
+
+const usd = (n: number | null) => (n == null ? "—" : `$${n.toFixed(2)}`)
+interface AuditRow { id: string; occurredAt: string; actor: string | null; actorKind: string; action: string }
+
+/** Developer Panel → Providers → Apify / Google Flights (ADR-0032 B2, ADR-0029 A8). */
+export default function ApifyProviderPage() {
+  const t = useT()
+  const qc = useQueryClient()
+  const { can } = useSession()
+  const write = can("provider.config.write")
+  const q = useQuery({ queryKey: ["provider", APIFY], queryFn: () => api<ProviderView>(`/v1/dev/providers/${APIFY}`) })
+  const audit = useQuery({ queryKey: ["provider-audit", APIFY], queryFn: () => api<Page<AuditRow>>(`/v1/dev/audit-log?entityType=provider&ref=${APIFY}&limit=20`), enabled: can("audit.read") })
+  const [secret, setSecret] = useState(false)
+  const [test, setTest] = useState<DevApifyTestResult | null>(null)
+  const [testErr, setTestErr] = useState<unknown>(null)
+  const [testing, setTesting] = useState(false)
+  const confirm = useConfirm()
+  const reload = async () => { await qc.invalidateQueries({ queryKey: ["provider", APIFY] }); await qc.invalidateQueries({ queryKey: ["providers"] }); void qc.invalidateQueries({ queryKey: ["provider-audit", APIFY] }) }
+  const runTest = async () => {
+    setTesting(true); setTestErr(null)
+    try { setTest(await api<DevApifyTestResult>(`/v1/dev/providers/${APIFY}/test`, { body: {} })); void qc.invalidateQueries({ queryKey: ["provider", APIFY] }) } catch (e) { setTest(null); setTestErr(e) } finally { setTesting(false) }
+  }
+  // PATCH answers STEP_UP_REQUIRED when the last second-factor check is stale; api() prompts and retries once.
+  const setEnabled = async (enabled: boolean) => { await api(`/v1/dev/providers/${APIFY}`, { method: "PATCH", body: { enabled } }); toast.success(t(enabled ? "apify.key.enabledNow" : "apify.key.disabledNow")); await reload() }
+  const p = q.data
+  const c = p?.credentials
+  return (
+    <div>
+      <PageHead kicker={<Link href="/providers" className="hover:underline"><Arrow back /> {t("dnav.providers")}</Link>} title={t("apify.page.title")}><span className="text-meta text-steel">{t("apify.page.desc")}</span></PageHead>
+      <DevPage data-testid="apify-page">
+        {q.error ? <TileError error={q.error} onRetry={() => void q.refetch()} /> : !p || !c ? <Loading /> : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Section title={t("apify.key")} aside={<><Tag value={p.enabled ? "ENABLED" : "DISABLED"} className={p.enabled ? "border-success text-success" : ""} /><Tag value={p.environment.toUpperCase()} /></>}>
+              <KV className="text-meta" data-testid="apify-key">
+                <KVRow k={t("apify.key.last4")}>{c.set ? <span className="num font-mono" dir="ltr">•••• {c.last4 ?? "—"}</span> : <span className="text-danger">{t("prov.notSet")}</span>}</KVRow>
+                <KVRow k={t("apify.key.rotatedAt")}><span className="num">{fmtDateTime(c.rotatedAt)}</span></KVRow>
+                <KVRow k={t("apify.key.rotatedBy")}>{c.rotatedBy ?? "—"}</KVRow>
+              </KV>
+              {c.invalidAt && <p role="alert" className="mt-3 rounded-md bg-danger-subtle px-2.5 py-1.5 text-meta text-danger">{t("apify.key.invalid", { t: fmtDateTime(c.invalidAt) })}</p>}
+              {write && (
+                <>
+                  <div className="mt-4 flex flex-wrap gap-2 border-t border-rule pt-4">
+                    <Button size="xs" variant="outline" onClick={() => setSecret(true)} data-testid="apify-replace">{c.set ? t("apify.key.replace") : t("apify.key.enter")}</Button>
+                    {p.enabled
+                      ? <Button size="xs" variant="ghost" className="text-danger" data-testid="apify-disable" onClick={() => confirm.ask({ title: t("apify.key.disable.title"), description: t("apify.key.disable.desc"), label: t("apify.key.disable"), destructive: true, run: () => setEnabled(false) })}>{t("apify.key.disable")}</Button>
+                      : <Button size="xs" variant="ghost" data-testid="apify-enable" onClick={() => void setEnabled(true).catch((e) => toast.error(errText(e)))}>{t("apify.key.enable")}</Button>}
+                  </div>
+                  <p className="mt-2 text-caption text-steel">{t("apify.key.stepUp")}</p>
+                </>
+              )}
+            </Section>
+
+            <Section title={t("apify.test")} aside={write && <Button size="xs" variant="outline" onClick={() => void runTest()} loading={testing} data-testid="apify-test">{t("prov.test")}</Button>}>
+              <KV className="text-meta" data-testid="apify-test-result">
+                <KVRow k={t("apify.test.plan")}>{test?.plan ?? "—"}</KVRow>
+                <KVRow k={t("apify.test.usage")}><span className="num">{usd(test?.monthlyUsageUsd ?? null)}</span></KVRow>
+                <KVRow k={t("apify.test.limit")}><span className="num">{usd(test?.monthlyLimitUsd ?? null)}</span></KVRow>
+                <KVRow k={t("apify.test.cycle")}><span className="num">{test?.cycleStart || test?.cycleEnd ? `${fmtDate(test.cycleStart)} – ${fmtDate(test.cycleEnd)}` : "—"}</span></KVRow>
+                <KVRow k={t("apify.test.at")}><span className="num">{fmtDateTime(test?.testedAt ?? c.testedAt)}</span></KVRow>
+              </KV>
+              {testErr != null && <div className="mt-3"><ErrorLine error={testErr} /></div>}
+              {!write && <p className="mt-2 text-caption text-steel">{t("apify.test.writeOnly")}</p>}
+            </Section>
+          </div>
+        )}
+
+        <ApifyHelp />
+
+        {can("audit.read") && (
+          <Section title={t("apify.audit")} flush={!!audit.data?.items.length}>
+            {audit.error ? <TileError error={audit.error} onRetry={() => void audit.refetch()} /> : !audit.data ? <Loading /> : !audit.data.items.length ? <EmptyState title={t("apify.audit.none")} className="py-4" /> : (
+              <ul className="divide-y divide-rule" data-testid="apify-audit">
+                {audit.data.items.map((a) => <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-2 text-meta md:px-5"><span className="font-mono" dir="ltr">{a.action}</span><span className="text-steel">{a.actor ?? a.actorKind.toLowerCase()} · <span className="num">{fmtDateTime(a.occurredAt)}</span></span></li>)}
+              </ul>
+            )}
+          </Section>
+        )}
+      </DevPage>
+      <SecretDialog open={secret} onOpenChange={setSecret} title={t("prov.credsTitle", { name: p?.name ?? "Apify" })} hintKeys={["token"]} fixedKeys requiredKeys={["token"]} hint={t("apify.key.hint")}
+        onSave={async (values) => { await api(`/v1/dev/providers/${APIFY}/credentials`, { method: "PUT", body: { values } }); toast.success(t("apify.key.saved")); await reload() }} />
+      {confirm.dialog}
+    </div>
+  )
+}

@@ -19,6 +19,7 @@ import { ItineraryView } from "@/components/flight/itinerary"
 import { RequestHero } from "@/components/flight/request-hero"
 import { InvoicesPanel } from "@/components/invoices-panel"
 import { AmendDialog } from "@/components/flight/amend-dialog"
+import { IndicativeSource } from "@/components/flight/apify-source"
 import { CustomerCard, TravellerCard, TripSummary } from "@/components/flight/request-panels"
 import { AfterSalesDialog, CreditOverrideDialog, PaymentDialog, ReservationDialog, TicketsDialog } from "@/components/flight/records"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
@@ -182,6 +183,7 @@ export default function FlightRequestPage() {
                 <ItineraryView it={d.snapshot.itinerary} />
                 <p className="mt-2 flex flex-wrap gap-x-4 text-meta text-steel">{d.snapshot.priceAtSubmit && <span>{t("rq.atSubmission")} <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>{t("rq.revalidated")} <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>{t("rq.rules", { v: d.snapshot.ruleVersion })} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
                 {recheck.error && <ErrorLine error={recheck.error} />}
+                <IndicativeSource d={d} />
               </div>
             </Panel>
           )}

@@ -46,7 +46,7 @@ export interface FlightDetail {
     history: { ref: string; status: string; submittedAt: string; productType: string }[]
   }
   travellers: StaffTraveller[]
-  snapshot: { id: string; itinerary: Itinerary; priceAtSubmit?: Money; priceRevalidated?: Money | null; revalidatedAt?: string | null; ruleVersion: number; engineVersion: string; contentHash: string; createdAt: string } | null
+  snapshot: { id: string; itinerary: Itinerary; priceAtSubmit?: Money; priceRevalidated?: Money | null; revalidatedAt?: string | null; sources?: SnapshotSource[]; ruleVersion: number; engineVersion: string; contentHash: string; createdAt: string } | null
   timeline: TimelineEntry[]
   messages: { id: string; direction: "TO_CUSTOMER" | "FROM_CUSTOMER"; body: string; authorName: string; createdAt: string; readAt: string | null; documentIds: string[] }[]
   notes: { id: string; body: string; author: string | null; createdAt: string }[]
@@ -64,6 +64,15 @@ export interface FlightDetail {
   /** Whether staff may amend the trip now, and whether a quote is out (ADR-0013). */
   amendment: { allowed: boolean; needsAcknowledge: boolean; reason?: string }
   atolMode: string
+}
+
+/**
+ * One line per itinerary component (ADR-0032 B7). `price`, `priceLevel` and `googleFlightsUrl` are present only for
+ * `pricing.read.internal` (ADR-0029 A5); the API leaves them out otherwise.
+ */
+export interface SnapshotSource {
+  provider: string; fetchedAt: string; confidence: "INDICATIVE" | null
+  price?: Money; priceLevel?: string | null; googleFlightsUrl?: string | null
 }
 
 /** Server-computed: whether an offline payment can be recorded now, why not, and the amount still outstanding (ADR-0008 W8). */

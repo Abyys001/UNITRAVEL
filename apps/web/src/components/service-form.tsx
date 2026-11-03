@@ -1,16 +1,18 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { LifeBuoy } from "lucide-react"
+import { ArrowDown, BadgeCheck, CalendarClock, ClipboardCheck, FileSearch, Headset, LifeBuoy, MessagesSquare, PhoneCall, PlaneLanding, ReceiptText, Send, ShieldCheck, Sofa, Stamp, Umbrella, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
 import type { MenuKey, ServiceRequestType, TravellerView } from "@unitravel/contracts"
+import type { MessageKey } from "@unitravel/i18n"
 import { ServiceScene, type SceneKind } from "@unitravel/ui/brand/scenes"
 import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Auto } from "@/components/badges"
+import { HeroBand, type HeroPhoto, ServiceHero } from "@/components/service-hero"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { restoreForm, saveDraft, snapshotForm, takeDraft } from "@/lib/form-draft"
 import { useI18n } from "@/lib/i18n"
@@ -36,15 +38,45 @@ export const inputCls = "field h-10 w-full"
 /** A page whose flag is off (or a vertical without a provider): an honest notice and the way to support, never fake listings. */
 const SCENE: Record<ServiceRequestType, SceneKind> = { VISA: "visa", TOUR_CALLBACK: "flight", CIP: "cip", INSURANCE: "stay", HOTEL: "stay", STAY: "stay", TRAIN: "train", BUS: "bus" }
 
-export function Unavailable({ title }: { title: string }) {
+type HeroCopy = { eyebrow: MessageKey; accent: MessageKey; photo: HeroPhoto; perks: [LucideIcon, MessageKey][] }
+/** Page header copy for the stand-alone request pages; perks only restate what the page lead already promises. */
+const HERO: Partial<Record<ServiceRequestType, HeroCopy>> = {
+  VISA: { eyebrow: "services.visaEyebrow", accent: "services.visaAccent", photo: "london", perks: [[FileSearch, "services.visaPerk1"], [ReceiptText, "services.visaPerk2"], [Stamp, "services.visaPerk3"]] },
+  TOUR_CALLBACK: { eyebrow: "services.toursEyebrow", accent: "services.toursAccent", photo: "istanbul", perks: [[PhoneCall, "services.toursPerk1"], [MessagesSquare, "services.toursPerk2"], [CalendarClock, "services.toursPerk3"]] },
+  CIP: { eyebrow: "services.cipEyebrow", accent: "services.cipAccent", photo: "tehran", perks: [[Sofa, "services.cipPerk1"], [PlaneLanding, "services.cipPerk2"], [BadgeCheck, "services.cipPerk3"]] },
+  INSURANCE: { eyebrow: "services.insuranceEyebrow", accent: "services.insuranceAccent", photo: "travel", perks: [[Umbrella, "services.insurancePerk1"], [ReceiptText, "services.insurancePerk2"], [ShieldCheck, "services.insurancePerk3"]] },
+}
+
+/** What happens after sending: the same three steps for every request type (ADR-0015), never a promise of a booking. */
+function NextSteps() {
+  const { t, href } = useI18n()
+  const steps: [LucideIcon, MessageKey][] = [[Send, "services.next1"], [Headset, "services.next2"], [ClipboardCheck, "services.next3"]]
+  return (
+    <aside className="card-brand self-start p-5 lg:sticky lg:top-24" data-testid="service-next">
+      <h2 className="font-display text-lg">{t("services.nextTitle")}</h2>
+      <ol className="mt-4 space-y-4">
+        {steps.map(([Icon, k], i) => (
+          <li key={k} className="relative flex gap-3 text-sm leading-6">
+            {i < steps.length - 1 && <span aria-hidden className="absolute start-[1.1rem] top-10 h-[calc(100%-1.5rem)] border-s-2 border-dashed border-orange/50" />}
+            <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-orange bg-white text-navy-900"><Icon className="size-4" /></span>
+            <span className="pt-1.5">{t(k)}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-5 border-t border-line pt-4 text-sm text-steel">{t("services.nextHelp")} <Link href={href("/support")} className="font-semibold text-royal underline">{t("nav.support")}</Link></p>
+    </aside>
+  )
+}
+
+export function Unavailable({ title, band }: { title: string; band?: boolean }) {
   const { t, href } = useI18n()
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
+    <>{band && <HeroBand />}<div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
       <h1 className="font-display text-3xl md:text-4xl">{title}</h1>
       <div className="mt-6" data-testid="service-unavailable">
         <EmptyState icon={<LifeBuoy />} title={t("services.unavailableTitle")} body={t("services.unavailableBody")} action={<Link href={href("/support")} className="btn-orange mt-2 inline-flex">{t("nav.support")}</Link>} />
       </div>
-    </div>
+    </div></>
   )
 }
 
@@ -88,9 +120,15 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
     setAck(d.ack)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formShown])
-  // A page with its own hero has no shell band, so these states must clear the fixed header themselves.
-  if (loaded && !enabled) return embedded ? null : <div className={hero ? "pt-20" : ""}><Unavailable title={title} /></div>
-  if (!loaded || loading) return <div className={`mx-auto max-w-3xl px-4 py-8 ${hero ? "pt-28" : ""}`}><LoadingState label={t("common.loading")} rows={3} /></div>
+  const copy = embedded ? undefined : HERO[type]
+  const header = hero ?? (copy && (
+    <ServiceHero testId="service-hero" eyebrow={t(copy.eyebrow)} title={title} accent={t(copy.accent)} lead={lead} scene={SCENE[type]} photo={copy.photo}
+      perks={copy.perks.map(([icon, k]) => ({ icon, label: t(k) }))}
+      actions={<a href="#request-details" className="btn-orange">{t("services.startRequest")}<ArrowDown className="size-4" aria-hidden /></a>} />
+  ))
+  // A page with its own hero has no shell band, so these states draw it themselves.
+  if (loaded && !enabled) return embedded ? null : <Unavailable title={title} band={!!header} />
+  if (!loaded || loading) return <>{header && <HeroBand />}<div className="mx-auto max-w-3xl px-4 py-8"><LoadingState label={t("common.loading")} rows={3} /></div></>
 
   const ready = valid && ack.notABooking && ack.privacy && (!me || (!!contact && (!withTravellers || chosen.length > 0)))
   const submit = async () => {
@@ -160,13 +198,16 @@ export function ServiceFormFrame({ type, menuKey, title, lead, withTravellers, d
     </>
   )
 
-  if (hero) {
+  if (header) {
     return (
       <form ref={formRef} onSubmit={onSubmit} noValidate>
-        {hero}
-        <div id="ground-details" className="mx-auto max-w-3xl scroll-mt-24 space-y-6 px-4 pb-14 pt-6 md:px-6">
-          <h2 className="font-display text-2xl md:text-3xl">{t("services.groundDetailsTitle")}</h2>
-          {fields}
+        {header}
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-16 pt-8 md:px-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div id="request-details" className="min-w-0 scroll-mt-24 space-y-6">
+            <h2 className="font-display text-2xl md:text-3xl">{t("services.groundDetailsTitle")}</h2>
+            {fields}
+          </div>
+          <NextSteps />
         </div>
       </form>
     )

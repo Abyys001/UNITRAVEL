@@ -30,6 +30,18 @@ describe("Apify client", () => {
     expect(JSON.parse(init!.body as string)).not.toHaveProperty("resolveBookingOptions")
   })
 
+  it("refuses a run without maxResults or a cost cap, before any request", async () => {
+    const spy = vi.spyOn(globalThis, "fetch")
+    const { ApifyClient } = await load()
+    const c = new ApifyClient("tok_secret")
+    const { maxResults: _omit, ...uncapped } = input
+    await expect(c.startRun(uncapped as ApifyInput, 0.016)).rejects.toMatchObject({ code: "SUPPLIER_BAD_REQUEST" })
+    await expect(c.startRun({ ...input, maxResults: 0 }, 0.016)).rejects.toMatchObject({ code: "SUPPLIER_BAD_REQUEST" })
+    await expect(c.startRun({ ...input }, 0)).rejects.toMatchObject({ code: "SUPPLIER_BAD_REQUEST" })
+    await expect(c.startRun({ ...input }, Number.NaN)).rejects.toMatchObject({ code: "SUPPLIER_BAD_REQUEST" })
+    expect(spy).not.toHaveBeenCalled()
+  })
+
   it("reads status, items (clean=1) and limits", async () => {
     const spy = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(json(SUCCEEDED_RESPONSE)).mockResolvedValueOnce(json([{ type: "notice" }])).mockResolvedValueOnce(json(LIMITS_RESPONSE))
@@ -38,7 +50,7 @@ describe("Apify client", () => {
     expect((await c.runStatus("runSYNTH0001")).status).toBe("SUCCEEDED")
     expect(await c.items("dsSYNTH0001")).toHaveLength(1)
     expect(String(spy.mock.calls[1]![0])).toBe("https://api.apify.com/v2/datasets/dsSYNTH0001/items?clean=1")
-    expect(await c.limits()).toEqual({ cycle: "2026-11-01T00:00:00.000Z", maxMonthlyUsageUsd: 5, monthlyUsageUsd: 0.42 })
+    expect(await c.limits()).toEqual({ cycle: "2026-11-01T00:00:00.000Z", cycleEnd: "2026-11-30T23:59:59.999Z", maxMonthlyUsageUsd: 5, monthlyUsageUsd: 0.42 })
   })
 
   it.each([

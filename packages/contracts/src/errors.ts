@@ -22,6 +22,8 @@ export const ERROR_STATUS = {
   IDENTITY_NOT_VERIFIED: 409,
   OFFER_EXPIRED: 409,
   SUPPLIER_UNAVAILABLE: 503,
+  /** The supplier rejected our stored credential (401/403 upstream); 502 so a client never reads it as its own session ending. */
+  SUPPLIER_AUTH: 502,
   LAST_OWNER: 409,
   SELF_TRAVELLER_EXISTS: 409,
   FEATURE_DISABLED: 403,

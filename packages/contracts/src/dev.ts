@@ -31,6 +31,8 @@ export const ProviderMetering = z.object({
   customerRunsPerHour: z.number().int().min(0).max(1000).default(6),
   maxResultsCustomer: z.number().int().min(1).max(100).default(15),
   maxResultsStaff: z.number().int().min(1).max(100).default(30),
+  /** ADR-0032 B3: rows per route in the batched popular-route warm. */
+  maxResultsPrewarm: z.number().int().min(1).max(100).default(10),
   cacheTtlSeconds: z.number().int().min(60).max(7 * 86400).default(3 * 3600),
   currency: z.string().length(3).default("GBP"),
   market: z.string().length(2).optional(),
@@ -51,7 +53,8 @@ export const ProviderView = z.object({
   limits: z.object({ timeoutMs: z.number().int(), maxConcurrent: z.number().int(), rps: z.number(), dailyBudget: z.number().int(), lookToBookAlert: z.number().int() }),
   markets: z.object({ pointOfSale: z.string(), currency: z.string(), originRegions: z.array(z.string()), destinationRegions: z.array(z.string()) }),
   shadowMode: z.boolean(),
-  credentials: z.object({ set: z.boolean(), rotatedAt: IsoDateTime.nullable(), rotatedBy: z.string().nullable(), invalidAt: IsoDateTime.nullable() }),
+  /** Write-only: `last4` is the only part of a stored value ever returned (ADR-0032 B2). `testedAt` is the last connection test. */
+  credentials: z.object({ set: z.boolean(), last4: z.string().max(4).nullable(), rotatedAt: IsoDateTime.nullable(), rotatedBy: z.string().nullable(), invalidAt: IsoDateTime.nullable(), testedAt: IsoDateTime.nullable() }),
   /** Null for providers that are not metered. */
   metering: ProviderMetering.nullable(),
   health: z.object({ circuit: z.enum(["CLOSED", "OPEN", "HALF_OPEN"]), successRate: z.number().nullable(), p50: z.number().nullable(), p95: z.number().nullable(), lastError: z.string().nullable(), callsToday: z.number().int() }),
@@ -73,6 +76,17 @@ export const ProviderUsageView = z.object({
   reconciledAt: IsoDateTime.nullable(),
 })
 export type ProviderUsageView = z.infer<typeof ProviderUsageView>
+
+/** `POST /v1/dev/providers/apify-google-flights/test` (ADR-0032 B2): Apify's free `/users/me/limits`, never the token. */
+export const DevApifyTestResult = z.object({
+  plan: z.string().nullable(),
+  monthlyUsageUsd: z.number().nullable(),
+  monthlyLimitUsd: z.number().nullable(),
+  cycleStart: IsoDateTime.nullable(),
+  cycleEnd: IsoDateTime.nullable(),
+  testedAt: IsoDateTime,
+})
+export type DevApifyTestResult = z.infer<typeof DevApifyTestResult>
 
 export const ProviderRunView = z.object({
   id: Uuid, provider: ProviderId, externalRunId: z.string().nullable(), pool: MeteringPool, purpose: z.enum(["SEARCH", "RECHECK", "PREWARM"]), searchId: Uuid.nullable(),

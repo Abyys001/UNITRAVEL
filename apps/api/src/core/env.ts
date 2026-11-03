@@ -1,7 +1,8 @@
 import { z } from "zod"
 
 // Chapter 36.3 — environment variables only for secrets and infrastructure endpoints; business configuration lives in
-// the database. Provider credentials are never environment variables (entered in the Developer Panel).
+// the database. Provider credentials are entered in the Developer Panel;
+// the one exception is APIFY_TOKEN, a first-boot import (ADR-0032 B1).
 const Env = z.object({
   APP_ENV: z.enum(["local", "staging", "production"]).default("local"),
   NODE_ENV: z.string().default("development"),
@@ -35,10 +36,10 @@ const Env = z.object({
   OUTBOX_POLL_MS: z.coerce.number().default(500),
   /** ADR-0012: email-only sign-in for the testing phase. Never allowed with APP_ENV=production. */
   TEST_SIGN_IN: z.enum(["off", "on"]).default("off"),
-  /** ADR-0027: where live aircraft positions come from. Off unless a host opts in. */
   /** ADR-0029 A9: a local mock of the Apify API. Honoured only when `sandboxAllowed()`; deployed hosts always use api.apify.com. */
   APIFY_BASE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
-  LIVE_FLIGHTS_SOURCE: z.enum(["off", "adsblol"]).default("off"),
+  /** ADR-0032 B1: imported once into the encrypted credential store when none is stored, then ignored. Never logged. */
+  APIFY_TOKEN: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(8).optional()),
 })
 
 export type Env = z.infer<typeof Env>

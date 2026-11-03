@@ -2,9 +2,9 @@ import type { ProviderMetering } from "@unitravel/contracts"
 
 import type * as s from "../schema"
 
-/** ADR-0029 A6 defaults ($5 free plan, 40/30/30 pools, $0.75 staff reserve). Staff change these in the Developer Panel. */
+/** ADR-0029 A6 defaults ($5 free plan, 40/30/30 pools, $0.75 staff reserve; ADR-0032 B3 prewarm at 10 rows per route). Staff change these in the Developer Panel. */
 export const APIFY_DEFAULT_METERING: ProviderMetering = {
-  monthlyBudgetUsd: 5, poolSplit: { customer: 0.4, prewarm: 0.3, staff: 0.3 }, staffReserveUsd: 0.75, customerRunsPerHour: 6, maxResultsCustomer: 15, maxResultsStaff: 30,
+  monthlyBudgetUsd: 5, poolSplit: { customer: 0.4, prewarm: 0.3, staff: 0.3 }, staffReserveUsd: 0.75, customerRunsPerHour: 6, maxResultsCustomer: 15, maxResultsStaff: 30, maxResultsPrewarm: 10,
   cacheTtlSeconds: 3 * 3600, currency: "GBP", excludeAirlines: [], maxLegsPerSearch: 3, watchlist: [],
 }
 

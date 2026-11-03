@@ -23,7 +23,7 @@ export function Logo({ className = "", tone = "onDark" }: { className?: string; 
 
 /** Same page in the other language: path and query (search, itinerary and request state live there) are kept. */
 function LanguageLink({ other, path, label, query = "" }: { other: "en" | "fa"; path: string; label: string; query?: string }) {
-  return <Link href={`/${other}${path.replace(/^\/(en|fa)/, "")}${query ? `?${query}` : ""}`} hrefLang={other} className="inline-flex items-center whitespace-nowrap rounded-full px-3 py-2 text-white/85 hover:bg-white/10 hover:text-white pointer-coarse:min-h-11" lang={other}>{label}</Link>
+  return <Link href={`/${other}${path.replace(/^\/(en|fa)/, "")}${query ? `?${query}` : ""}`} hrefLang={other} className="inline-flex h-9 items-center whitespace-nowrap rounded-full px-3 text-white/85 transition-colors hover:bg-white/10 hover:text-white pointer-coarse:min-h-11" lang={other}>{label}</Link>
 }
 
 function LanguageLinkWithQuery(props: { other: "en" | "fa"; path: string; label: string }) {
@@ -69,13 +69,14 @@ export function Header() {
     ...(on("hotels") ? [{ href: href("/hotels"), label: t("nav.hotels"), icon: BedDouble }] : []),
     ...(on("trains") ? [{ href: href("/trains"), label: t("nav.trains"), icon: TrainFront }] : []),
     ...(on("buses") ? [{ href: href("/buses"), label: t("nav.buses"), icon: Bus }] : []),
-    ...(on("stays") ? [{ href: href("/stays"), label: t("nav.stays"), icon: House }] : []),
+    ...(on("cargo") ? [{ href: href("/cargo"), label: t("nav.cargoShort"), icon: Package }] : []),
   ]
   const services: NavLink[] = [
+    ...(on("stays") ? [{ href: href("/stays"), label: t("nav.stays"), icon: House }] : []),
     ...(on("visa") ? [{ href: href("/visa"), label: t("nav.visa"), icon: Stamp }] : []),
     ...(on("tours") ? [{ href: href("/tours"), label: t("nav.tours"), icon: Globe }] : []),
     ...(on("cip") ? [{ href: href("/cip"), label: t("nav.cip"), icon: Armchair }] : []),
-    ...(on("cargo") ? [{ href: href("/cargo"), label: t("nav.cargo"), icon: Package }, { href: href("/shipments"), label: t("nav.shipments"), icon: Truck }] : []),
+    ...(on("cargo") ? [{ href: href("/shipments"), label: t("nav.shipments"), icon: Truck }] : []),
     ...(on("insurance") ? [{ href: href("/insurance"), label: t("nav.insurance"), icon: ShieldCheck }] : []),
     ...(on("card") ? [{ href: href("/card"), label: t("nav.card"), icon: CreditCard }] : []),
   ]
@@ -95,32 +96,32 @@ export function Header() {
     <>
       <header className={`${home ? "fixed inset-x-0" : "sticky"} top-0 z-40 text-white`}>
         <div aria-hidden className={`glass-layer pointer-events-none absolute inset-0 transition-opacity duration-300 ${solid ? "opacity-100 shadow-[0_10px_30px_-18px_rgb(0_0_0/0.6)]" : "opacity-0"}`} />
-        <div className="relative mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-2 px-4 min-[400px]:gap-4 md:px-6">
+        <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 md:px-6 lg:h-16 lg:gap-6">
           <Link href={href("/")} aria-label="Uni Travel home" className="shrink-0 rounded-lg">
-            <BrandLogo variant="mark" tone="onDark" size={38} className="min-[400px]:hidden" />
-            <Logo className="hidden min-[400px]:inline-flex" />
+            <BrandLogo variant="mark" tone="onDark" size={32} className="min-[400px]:hidden" />
+            <BrandLogo tone="onDark" size={32} className="hidden min-[400px]:inline-flex" />
           </Link>
-          <nav className="glass-flat hidden items-center gap-1 rounded-full p-1 text-sm font-semibold lg:flex" aria-label="Main">
+          <nav className="glass-flat hidden min-w-0 items-center gap-0.5 whitespace-nowrap rounded-full p-1 text-[13px] font-semibold lg:flex xl:text-sm" aria-label="Main">
             {book.map((l) => <NavPill key={l.href} l={l} active={path === l.href} />)}
             {services.length > 0 && <ServicesMenu label={t("nav.services")} items={services} path={path} />}
-            {links.slice(book.length).map((l) => <NavPill key={l.href} l={l} active={path === l.href} />)}
+            {links.slice(book.length).map((l) => <NavPill key={l.href} l={l} active={path === l.href} className="hidden xl:inline-flex" />)}
           </nav>
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Link href={href("/support")} aria-label={t("nav.support")} className="hidden items-center justify-center rounded-full p-2.5 hover:bg-white/10 lg:inline-flex"><LifeBuoy className="size-4" /></Link>
+          <div className="flex shrink-0 items-center gap-1 text-sm font-semibold">
+            <Link href={href("/support")} aria-label={t("nav.support")} className="hidden size-9 items-center justify-center rounded-full transition-colors hover:bg-white/10 xl:inline-flex"><LifeBuoy className="size-4" /></Link>
             <Suspense fallback={<LanguageLink other={other} path={path} label={t("nav.language")} />}><LanguageLinkWithQuery other={other} path={path} label={t("nav.language")} /></Suspense>
             {me ? (
               <>
-                <Link href={href("/inbox")} aria-label={t("nav.inbox")} className="inline-flex items-center justify-center rounded-full p-2.5 hover:bg-white/10 pointer-coarse:min-h-11 pointer-coarse:min-w-11"><Inbox className="size-4" /></Link>
-                <Link href={href("/account")} className="btn-glass hidden max-w-44 !py-2 sm:inline-flex"><span className="truncate">{me.displayName}</span></Link>
+                <Link href={href("/inbox")} aria-label={t("nav.inbox")} className="inline-flex size-9 items-center justify-center rounded-full transition-colors hover:bg-white/10 pointer-coarse:min-h-11 pointer-coarse:min-w-11"><Inbox className="size-4" /></Link>
+                <Link href={href("/account")} className="btn-glass ms-1 hidden h-9 max-w-36 items-center gap-2 !px-3 !py-0 sm:inline-flex"><UserRound aria-hidden className="size-4 shrink-0" /><span className="truncate">{me.displayName}</span></Link>
               </>
             ) : (
-              <Link href={href(`/sign-in?next=${encodeURIComponent(path)}`)} className="btn-orange whitespace-nowrap !rounded-full !px-5 !py-2 pointer-coarse:min-h-11">{t("nav.signIn")}</Link>
+              <Link href={href(`/sign-in?next=${encodeURIComponent(path)}`)} className="btn-orange ms-1 inline-flex h-9 items-center whitespace-nowrap !rounded-full !px-4 !py-0 pointer-coarse:min-h-11">{t("nav.signIn")}</Link>
             )}
-            <button ref={menuBtn} className="inline-flex items-center justify-center rounded-full p-2.5 hover:bg-white/10 pointer-coarse:min-h-11 pointer-coarse:min-w-11 lg:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? <X className="size-5" /> : <Menu className="size-5" />}</button>
+            <button ref={menuBtn} className="inline-flex size-9 items-center justify-center rounded-full transition-colors hover:bg-white/10 pointer-coarse:min-h-11 pointer-coarse:min-w-11 lg:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{open ? <X className="size-5" /> : <Menu className="size-5" />}</button>
           </div>
         </div>
         {open && (
-          <nav ref={menuRef} className="relative max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Mobile">
+          <nav ref={menuRef} className="relative max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Mobile">
             {([[t("nav.groupBook"), book], [t("nav.groupServices"), services], [t("nav.groupHelp"), [...help, ...(me ? [{ href: href("/inbox"), label: t("nav.inbox"), icon: Inbox }, { href: href("/account"), label: t("nav.account"), icon: UserRound }] : [])]]] as [string, NavLink[]][]).filter(([, items]) => items.length > 0).map(([title, items]) => (
               <div key={title} className="pt-2">
                 <p className="px-2 pb-1 pt-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-300">{title}</p>
@@ -132,8 +133,8 @@ export function Header() {
           </nav>
         )}
       </header>
-      {/* Trains, buses and stays carry their own hero with its ribbon. */}
-      {!home && !/^\/(en|fa)\/(trains|buses|stays)\/?$/.test(path) && (
+      {/* Service pages carry their own hero with its ribbon. */}
+      {!home && !/^\/(en|fa)\/(trains|buses|stays|visa|tours|cip|insurance|cargo|shipments|card)\/?$/.test(path) && (
         <div aria-hidden className="relative bg-brand">
           <div className="bg-dots h-6 md:h-8" />
           <Ribbon className="relative -mt-px" />
@@ -143,8 +144,8 @@ export function Header() {
   )
 }
 
-function NavPill({ l, active }: { l: NavLink; active: boolean }) {
-  return <Link href={l.href} aria-current={active ? "page" : undefined} className={`rounded-full px-4 py-2 transition-colors ${active ? "bg-white text-navy-950" : "text-white/85 hover:bg-white/10 hover:text-white"}`}>{l.label}</Link>
+function NavPill({ l, active, className = "inline-flex" }: { l: NavLink; active: boolean; className?: string }) {
+  return <Link href={l.href} aria-current={active ? "page" : undefined} className={`${className} h-8 items-center rounded-full px-3 transition-colors xl:px-3.5 ${active ? "bg-white text-navy-950" : "text-white/85 hover:bg-white/10 hover:text-white"}`}>{l.label}</Link>
 }
 
 /** Disclosure menu (button + list), not an ARIA menu: links stay links, Escape and an outside click close it. */
@@ -152,10 +153,6 @@ function ServicesMenu({ label, items, path }: { label: string; items: NavLink[];
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => setOpen(false), [path])
-  useEffect(() => {
-    const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number }
-    if (nav.connection?.saveData || (nav.deviceMemory !== undefined && nav.deviceMemory <= 4)) document.documentElement.dataset.lite = ""
-  }, [])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); ref.current?.querySelector("button")?.focus() } }
@@ -167,8 +164,8 @@ function ServicesMenu({ label, items, path }: { label: string; items: NavLink[];
   const active = items.some((i) => i.href === path)
   return (
     <div ref={ref} className="relative">
-      <button type="button" aria-expanded={open} aria-controls="services-menu" onClick={() => setOpen((o) => !o)} className={`inline-flex items-center gap-1 rounded-full px-4 py-2 transition-colors ${active ? "bg-white text-navy-950" : "text-white/85 hover:bg-white/10 hover:text-white"}`}>
-        {label}<ChevronDown aria-hidden className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      <button type="button" aria-expanded={open} aria-controls="services-menu" onClick={() => setOpen((o) => !o)} className={`inline-flex h-8 items-center gap-1 rounded-full px-3 transition-colors xl:px-3.5 ${active ? "bg-white text-navy-950" : "text-white/85 hover:bg-white/10 hover:text-white"}`}>
+        {label}<ChevronDown aria-hidden className={`size-3.5 opacity-70 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <ul id="services-menu" className="absolute start-0 top-full z-50 mt-2 min-w-60 overflow-hidden rounded-2xl border border-white/10 bg-navy-950 p-1.5 shadow-xl">

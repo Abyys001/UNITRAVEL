@@ -509,13 +509,22 @@ export class RequestsService {
     return out
   }
 
-  /** `includeInternal`: holds `pricing.read.internal`, so the stored itinerary keeps its amounts (ADR-0004). */
-  private async snapshotView(id: string | null, includeInternal: boolean) {
+  /**
+   * `includeInternal`: holds `pricing.read.internal`, so the stored itinerary keeps its amounts (ADR-0004). `staff` adds one
+   * source line per component for the console badge (ADR-0032 B7); price, price level and Google link only with `includeInternal`.
+   */
+  private async snapshotView(id: string | null, includeInternal: boolean, staff = false) {
     if (!id) return null
     const [s] = await this.db.select().from(offerSnapshots).where(eq(offerSnapshots.id, id))
     if (!s) return null
     const prices = includeInternal ? { priceAtSubmit: { amountMinor: s.priceAtSubmitMinor, currency: s.currency }, priceRevalidated: s.priceRevalidatedMinor ? { amountMinor: s.priceRevalidatedMinor, currency: s.currency } : null, revalidatedAt: s.revalidatedAt?.toISOString() ?? null } : {}
-    return { id: s.id, itinerary: includeInternal ? s.itinerary : customerItinerary(s.itinerary), ...prices, ruleVersion: s.ruleVersion, engineVersion: s.engineVersion, contentHash: s.contentHash, createdAt: s.createdAt.toISOString() }
+    const sources = staff ? {
+      sources: s.itinerary.components.map((c) => ({
+        provider: c.source.provider, fetchedAt: c.source.fetchedAt, confidence: c.source.confidence ?? null,
+        ...(includeInternal ? { price: c.price.total, priceLevel: c.providerData?.priceLevel ?? null, googleFlightsUrl: c.providerData?.googleFlightsUrl ?? null } : {}),
+      })),
+    } : {}
+    return { id: s.id, itinerary: includeInternal ? s.itinerary : customerItinerary(s.itinerary), ...prices, ...sources, ruleVersion: s.ruleVersion, engineVersion: s.engineVersion, contentHash: s.contentHash, createdAt: s.createdAt.toISOString() }
   }
 
   /** Customer-facing serialisation: never notes, internal costs, assignee details or screening results (ch. 25.6). */
@@ -592,7 +601,7 @@ export class RequestsService {
         history: [...history.map((h) => ({ ...h, productType: "FLIGHT" })), ...cargoHistory.map((h) => ({ ...h, productType: "CARGO" }))].sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()),
       },
       travellers: rt.map((t) => { const v = views.find((x) => x.id === t.travellerId); return { travellerId: t.travellerId, passengerType: t.passengerType, name: t.nameSnapshot, document: v?.document ?? null, documentComplete: !!v?.documentComplete, nationality: v?.nationality, verificationStatus: v?.verification.status ?? "UNVERIFIED" } }),
-      snapshot: await this.snapshotView(r.offerSnapshotId, actor.permissions.has("pricing.read.internal")),
+      snapshot: await this.snapshotView(r.offerSnapshotId, actor.permissions.has("pricing.read.internal"), true),
       timeline: await this.timeline(r, false, "en"),
       messages: msgs.map(({ m, author }) => ({ id: m.id, direction: m.direction, body: m.body, authorName: author ?? "Customer", createdAt: m.createdAt.toISOString(), readAt: m.readAt?.toISOString() ?? null, documentIds: m.documentIds })),
       notes: notes.map(({ n, author }) => ({ id: n.id, body: n.body, author, createdAt: n.createdAt.toISOString() })),

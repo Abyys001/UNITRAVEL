@@ -1,6 +1,6 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 
-import type { LocationSuggestion } from "@unitravel/contracts"
+import type { Destination, LocationSuggestion } from "@unitravel/contracts"
 import { airlines, airports, cities, countries, type Db } from "@unitravel/db"
 import type { AirportRef, ReferenceLookup } from "@unitravel/engine"
 
@@ -81,6 +81,30 @@ export class ReferenceService implements OnModuleInit {
       },
       cityAirports: (code) => [...this.airportsByIata.values()].filter((a) => a.cityCode === code || a.metroCode === code).map((a) => a.iata),
     }
+  }
+
+  /**
+   * Every city that has at least one listed airport, plus airports outside any city, for the destination picker.
+   * A city with one airport is offered as that airport so a search never expands to an unlisted code.
+   */
+  destinations(): Destination[] {
+    const byCity = new Map<string, Airport[]>()
+    const lone: Airport[] = []
+    for (const a of this.airportsByIata.values()) {
+      const city = a.cityCode ? this.cityByCode.get(a.cityCode) : undefined
+      if (city) byCity.set(city.code, [...(byCity.get(city.code) ?? []), a])
+      else lone.push(a)
+    }
+    const country = (code: string) => ({ country: code, countryNameEn: this.countryName(code, "en"), countryNameFa: this.countryName(code, "fa") })
+    const ap = (a: Airport) => ({ iata: a.iata, nameEn: a.nameEn, nameFa: a.nameFa })
+    const out: Destination[] = []
+    for (const [code, list] of byCity) {
+      const c = this.cityByCode.get(code)!
+      list.sort((x, y) => x.nameEn.localeCompare(y.nameEn))
+      out.push({ kind: list.length > 1 ? "CITY" : "AIRPORT", code: list.length > 1 ? c.code : list[0]!.iata, nameEn: c.nameEn, nameFa: c.nameFa, ...country(c.country), airports: list.map(ap) })
+    }
+    for (const a of lone) out.push({ kind: "AIRPORT", code: a.iata, nameEn: a.nameEn, nameFa: a.nameFa, ...country(a.country), airports: [ap(a)] })
+    return out.sort((x, y) => x.countryNameEn.localeCompare(y.countryNameEn) || x.nameEn.localeCompare(y.nameEn))
   }
 
   /** Autocomplete in English and Persian: "Tehran — all airports" first, then airports (ch. 11.3). */

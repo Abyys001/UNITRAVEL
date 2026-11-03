@@ -184,6 +184,19 @@ export const LocationSuggestion = z.object({
 })
 export type LocationSuggestion = z.infer<typeof LocationSuggestion>
 
+/** One place a traveller can fly to or from: a city with its airports, or a lone airport (ch. 11.3). Only active airports with an IANA zone are listed. */
+export const Destination = z.object({
+  kind: z.enum(["CITY", "AIRPORT"]),
+  code: Iata,
+  nameEn: z.string(),
+  nameFa: z.string(),
+  country: z.string(),
+  countryNameEn: z.string(),
+  countryNameFa: z.string(),
+  airports: z.array(z.object({ iata: Iata, nameEn: z.string(), nameFa: z.string() })).min(1),
+})
+export type Destination = z.infer<typeof Destination>
+
 /** ADR-0029 A7: staff recheck of an indicative itinerary. Asynchronous: the route returns a job id and the console polls. */
 export const RecheckStart = z.object({ jobId: Uuid, status: z.literal("PENDING") })
 export type RecheckStart = z.infer<typeof RecheckStart>

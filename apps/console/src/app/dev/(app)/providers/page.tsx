@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import Link from "next/link"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -52,6 +53,7 @@ function ProviderCard({ p }: { p: ProviderView }) {
             <h3 className="mb-1 text-meta font-semibold text-steel">{t("prov.credentials")}</h3>
             <p className="text-meta">{p.credentials.set ? <>{t("prov.set")} · {t("prov.rotated", { at: fmtDateTime(p.credentials.rotatedAt) })}{p.credentials.rotatedBy && ` · ${p.credentials.rotatedBy}`}</> : <span className="text-danger">{t("prov.notSet")}</span>}</p>
             {can("provider.config.write") && <Button size="xs" variant="outline" className="mt-2" onClick={() => setSecrets(true)}>{p.credentials.set ? t("prov.rotate") : t("prov.enter")}</Button>}
+            {p.id === "apify-google-flights" && <Link href="/providers/apify-google-flights" className="mt-2 block font-medium text-link hover:underline" data-testid="apify-page-link">{t("apify.page.open")}</Link>}
           </div>
           <div>
             <Button size="xs" variant="outline" onClick={() => void runTest()} loading={busy === "test"} data-testid={`test-${p.id}`}>{t("prov.test")}</Button>
@@ -61,7 +63,7 @@ function ProviderCard({ p }: { p: ProviderView }) {
           {dirty && draft.enabled === false && p.enabled && <p className="text-meta text-orange-700 dark:text-orange-300">{t("prov.disableStepUp")}</p>}
         </div>
       </div>
-      <SecretDialog open={secrets} onOpenChange={setSecrets} title={t("prov.credsTitle", { name: p.name })} hintKeys={p.id === "duffel" ? ["accessToken"] : p.id === "amadeus-enterprise" ? ["clientId", "clientSecret"] : ["apiKey"]} onSave={async (values) => { await api(`/v1/dev/providers/${p.id}/credentials`, { method: "PUT", body: { values } }); await qc.invalidateQueries({ queryKey: ["providers"] }) }} />
+      <SecretDialog open={secrets} onOpenChange={setSecrets} title={t("prov.credsTitle", { name: p.name })} hintKeys={p.id === "duffel" ? ["accessToken"] : p.id === "amadeus-enterprise" ? ["clientId", "clientSecret"] : p.id === "apify-google-flights" ? ["token"] : ["apiKey"]} onSave={async (values) => { await api(`/v1/dev/providers/${p.id}/credentials`, { method: "PUT", body: { values } }); await qc.invalidateQueries({ queryKey: ["providers"] }) }} />
     </Section>
   )
 }

@@ -550,4 +550,39 @@ describe("Curated and cached listings (ADR-0021)", () => {
       await redis.del("listings:flights:THR-MHD")
     }
   })
+
+  // ADR-0032 B4, ADR-0004, ADR-0029 A5: no fare field reaches a customer, whatever the source. The FAKE source carries prices, so it proves the projection.
+  it("no price, price level, booking token or Google link in the flight listing, its itinerary or a customer search", async () => {
+    const FARE = /priceLevel|bookingToken|googleFlightsUrl|google\.com\/travel|"price"|"amount"|"total"/
+    const settings = (await dev.get("/v1/dev/settings")).body
+    await redis.del("listings:flights:IST-LHR")
+    expect((await dev.put("/v1/dev/settings", { ...settings, listings: { flightRoutes: [{ from: "IST", to: "LHR" }] } })).status).toBe(200)
+    try {
+      // The worker picks the new route list up through the settings reload; warm again until it has.
+      const warmed = await until(async () => { await maintenance.add("listings.warm-flights", {}); await wait(3000); return redis.get("listings:flights:IST-LHR") }, Boolean, 60_000)
+      expect(warmed).toBeTruthy()
+      const listing = await anon.get("/v1/listings/flights")
+      expect(listing.body.items.length).toBeGreaterThan(0)
+      expect(JSON.stringify(listing.body)).not.toMatch(FARE)
+      const ref = (listing.body.items as { offerRef?: { itineraryId: string } | null }[]).find((i) => i.offerRef)?.offerRef
+      expect(ref).toBeTruthy()
+      // A SYSTEM listing search is readable by any caller (ADR-0032 B5), always through the customer projection.
+      const itin = await anon.get(`/v1/itineraries/${ref!.itineraryId}`)
+      expect(itin.status).toBe(200)
+      expect(JSON.stringify(itin.body)).not.toMatch(FARE)
+
+      const { c } = await customer("Leak")
+      const started = await c.post("/v1/flight-searches", { tripType: "ONE_WAY", slices: [{ from: { airport: "IST" }, to: { airport: "LHR" }, date: new Date(Date.now() + 21 * 86400_000).toISOString().slice(0, 10) }], passengers: [{ type: "ADT" }] })
+      expect(started.status).toBe(202)
+      const state = await until(() => c.get(`/v1/flight-searches/${started.body.id}?limit=60`), (r) => r.body.status !== "RUNNING", 30_000)
+      expect(state.body.results.length).toBeGreaterThan(0)
+      // `total` at the top of the page is the result count, not a fare; the results themselves carry none of these keys.
+      expect(JSON.stringify(state.body.results)).not.toMatch(FARE)
+      const { total: _count, results: _r, ...rest } = state.body
+      expect(JSON.stringify(rest)).not.toMatch(FARE)
+    } finally {
+      await dev.put("/v1/dev/settings", settings)
+      await redis.del("listings:flights:IST-LHR")
+    }
+  }, 120_000)
 })

@@ -1,6 +1,6 @@
 # ADR-0027: Live aircraft list on the flights page
 
-- Status: accepted (owner request, 1 Nov 2026: use a source that needs no account and show customers the flights in the air on `/flights`, covering Iran, Turkey, the UAE and Europe)
+- Status: superseded by ADR-0032 (3 Nov 2026: board, endpoint and poller removed). Originally accepted (owner request, 1 Nov 2026: use a source that needs no account and show customers the flights in the air on `/flights`, covering Iran, Turkey, the UAE and Europe)
 - Scope: `GET /v1/live-flights`, worker poller, customer web `/flights`. Mobile is out of scope (paused).
 
 ## Context

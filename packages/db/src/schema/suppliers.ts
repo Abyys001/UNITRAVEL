@@ -80,7 +80,8 @@ export const providerRuns = pgTable("provider_runs", {
 export const searches = pgTable("searches", {
   id: id(),
   userId: uuid().references(() => users.id),
-  actorKind: text({ enum: ["CUSTOMER", "STAFF", "ANONYMOUS"] }).notNull(),
+  /** SYSTEM: a popular-route listing search (ADR-0032 B5), readable by any caller like the public listing it backs. */
+  actorKind: text({ enum: ["CUSTOMER", "STAFF", "ANONYMOUS", "SYSTEM"] }).notNull(),
   anonKey: varchar({ length: 128 }),
   query: jsonb().$type<SearchQuery>().notNull(),
   status: text({ enum: ["RUNNING", "COMPLETE", "PARTIAL", "FAILED"] }).notNull().default("RUNNING"),

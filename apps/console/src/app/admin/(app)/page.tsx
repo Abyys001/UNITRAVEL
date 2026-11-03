@@ -9,9 +9,10 @@ import type { DashboardMetrics, VerificationQueueItem } from "@unitravel/contrac
 import { formatMoney } from "@unitravel/domain"
 import { cn } from "@unitravel/ui/lib/utils"
 
-import { EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
+import { BentoGrid, EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
 import { BarChart, Donut, Legend, SplitBar } from "@/components/charts"
 import { Segmented, Switch } from "@/components/controls"
+import { ADMIN_APIFY_USAGE, ApifyUsageTile } from "@/components/apify"
 import { AppHealth } from "@/components/app-health"
 import { Kpi } from "@/components/kpi"
 import { Arrow, RouteText, Tag, useAct } from "@/components/ui"
@@ -190,6 +191,8 @@ export default function Home() {
       )}
 
       {(flights || cargoRead) && <AppHealth metrics={m} loading={!m && metrics.isPending} error={metrics.isError ? metrics.error : undefined} onRetry={() => void metrics.refetch()} flights={flights} />}
+
+      {can("provider.config.read") && <BentoGrid><ApifyUsageTile endpoint={ADMIN_APIFY_USAGE} devDetails={false} /></BentoGrid>}
 
       <div className="grid items-start gap-4 xl:grid-cols-12">
         <div className="space-y-4 xl:col-span-8">

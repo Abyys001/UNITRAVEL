@@ -16,10 +16,10 @@ import { HealthController } from "./modules/platform/health.controller"
 import { HeartbeatService } from "./modules/platform/health.service"
 import { OutboxDispatcher } from "./modules/platform/outbox.dispatcher"
 import { ReferenceController } from "./modules/reference/reference.controller"
-import { DevProvidersController } from "./modules/suppliers/dev-providers.controller"
+import { AdminProvidersController, DevProvidersController } from "./modules/suppliers/dev-providers.controller"
 import { BUSINESS_CONTROLLERS, BusinessModules } from "./modules/business.module"
 
-export const API_CONTROLLERS = [HealthController, AuthController, MeController, ReferenceController, DevUsersController, DevSystemController, DevProvidersController]
+export const API_CONTROLLERS = [HealthController, AuthController, MeController, ReferenceController, DevUsersController, DevSystemController, DevProvidersController, AdminProvidersController]
 
 /** One codebase, two process roles (ADR-01): `api` serves HTTP, `worker` runs BullMQ consumers, timers and the outbox. */
 @Module({})

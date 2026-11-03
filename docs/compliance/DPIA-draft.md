@@ -143,7 +143,7 @@ Likelihood and severity are the author's initial assessment (Remote / Possible /
 | R17 | Activity telemetry builds a behavioural profile, is collected without a valid basis or notice, or is read by staff without need | Possible | Significant | Medium | M20, M11 | Low-Medium (lawful basis UNKNOWN) |
 | R18 | Support tickets or call notes hold unexpected sensitive data, or a ticket reply reaches the wrong person | Possible | Significant | Medium | M21, M11 | Low-Medium |
 | R19 | A remembered console device (ADR-0022) gives whoever uses an unlocked staff computer access to customer data without a sign-in | Possible | Significant | Medium | M22 | Low to medium: depends on staff locking their computers |
-| R20 | The live aircraft list (ADR-0027) could reveal the movements of a person through a private aircraft | Remote | Significant | Low | Only airline-format callsigns are shown; light aircraft, helicopters and military, PIA and LADD flags are dropped; no position history is stored | Low: airline flights only |
+| R20 | CLOSED 3 Nov 2026: the board was removed (ADR-0032). The live aircraft list (ADR-0027) could reveal the movements of a person through a private aircraft | Remote | Significant | Low | Only airline-format callsigns are shown; light aircraft, helicopters and military, PIA and LADD flags are dropped; no position history is stored | Low: airline flights only |
 
 ## 6. Measures to address risk
 

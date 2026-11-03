@@ -15,12 +15,13 @@ import { InfraModule } from "./infra.module"
 import { Queues } from "./queues"
 import { ObjectStorage } from "./storage"
 import { PROCESS_ROLE, type ProcessRole, WorkerRegistry } from "./workers"
+import { ApifyCredentialBootstrap } from "../modules/suppliers/apify/credential-bootstrap"
 import { FlightDataService } from "../modules/suppliers/apify/flight-data.service"
 import { SuppliersService } from "../modules/suppliers/suppliers.service"
 import { HealthService } from "../modules/platform/health.service"
 
 /** Foundation services every business module may depend on (Figure 20.1, bottom row). */
-const SERVICES = [AuditService, OutboxService, ConfigService, AccessService, TokensService, SessionsService, OtpService, PowService, MfaService, RateLimiter, Queues, WorkerRegistry, ReferenceService, ObjectStorage, SuppliersService, FlightDataService, HealthService]
+const SERVICES = [AuditService, OutboxService, ConfigService, AccessService, TokensService, SessionsService, OtpService, PowService, MfaService, RateLimiter, Queues, WorkerRegistry, ReferenceService, ObjectStorage, SuppliersService, FlightDataService, ApifyCredentialBootstrap, HealthService]
 
 @Global()
 @Module({})

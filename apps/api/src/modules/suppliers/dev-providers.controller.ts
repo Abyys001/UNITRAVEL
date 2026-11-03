@@ -4,18 +4,36 @@ import { eq, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 import { z } from "zod"
 
-import { CredentialsBody, ProviderId, ProviderPatchBody, ProviderRunsQuery } from "@unitravel/contracts"
+import { CredentialsBody, DevApifyTestResult, ProviderId, ProviderPatchBody, ProviderRunsQuery, ProviderUsageView, ProviderView } from "@unitravel/contracts"
 import { type Db, providers } from "@unitravel/db"
 
 import { sandboxAllowed } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { DB, REDIS, UnitOfWork } from "../../core/infra.module"
 import { type Actor, Ctx, CurrentActor, DevSurface, RequirePermission, type RequestContext, StaffOnly, StepUp } from "../../core/http/decorators"
-import { zbody } from "../../core/http/zod"
+import { ApiZodResponse, zbody } from "../../core/http/zod"
 import { AuditService } from "../audit/audit.service"
 import { OutboxService } from "../platform/outbox.service"
 import { APIFY_ID, FlightDataService } from "./apify/flight-data.service"
 import { SuppliersService } from "./suppliers.service"
+
+/**
+ * ADR-0032 B7: the Admin Panel dashboard's Apify usage card. Read-only and the same view as the Developer Panel
+ * usage route; `/v1/dev/*` does not exist on the admin host.
+ */
+@ApiTags("admin-providers")
+@Controller("v1/admin/providers")
+@StaffOnly()
+export class AdminProvidersController {
+  constructor(private readonly flightData: FlightDataService) {}
+
+  @Get(`${APIFY_ID}/usage`)
+  @RequirePermission("provider.config.read")
+  @ApiZodResponse(200, ProviderUsageView)
+  usage() {
+    return this.flightData.usage()
+  }
+}
 
 /** Developer Panel §2 — flight API configuration (ch. 16.2). */
 @ApiTags("dev")
@@ -32,8 +50,10 @@ export class DevProvidersController {
     return Promise.all(rows.map((r) => this.suppliers.view(r.id)))
   }
 
+  /** Credential metadata only (set, last4, rotatedAt, rotatedBy, invalidAt, testedAt); never a value. */
   @Get(":id")
   @RequirePermission("provider.config.read")
+  @ApiZodResponse(200, ProviderView)
   get(@Param("id", zbody(ProviderId)) id: string) {
     return this.suppliers.view(id)
   }
@@ -89,6 +109,18 @@ export class DevProvidersController {
     await this.suppliers.setCredentials(id, body.values, actor.userId)
     await this.uow.run((tx) => this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "provider.credentials_rotated", entityType: "provider", entityId: id, after: { keys: Object.keys(body.values) }, ip: actor.ip, requestId: ctx.id }))
     return this.suppliers.view(id)
+  }
+
+  /**
+   * ADR-0032 B2: Apify's free `/users/me/limits` with the stored token. Declared before `:id/test` so it wins the match.
+   * Write permission: a rejected token is marked invalid, which stops every Apify call.
+   */
+  @Post(`${APIFY_ID}/test`)
+  @RequirePermission("provider.config.write")
+  @HttpCode(200)
+  @ApiZodResponse(200, DevApifyTestResult)
+  testApify() {
+    return this.flightData.testConnection()
   }
 
   /** Runs a harmless call and shows the raw status, latency and any error code. */

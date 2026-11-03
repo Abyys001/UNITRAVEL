@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ProviderMetering } from "@unitravel/contracts"
 
-import { MIXED_DATASET, RUNNING_RESPONSE, START_RESPONSE, SUCCEEDED_RESPONSE } from "../../../../test/fixtures/apify/google-flights"
+import { LIMITS_RESPONSE, MIXED_DATASET, RUNNING_RESPONSE, START_RESPONSE, SUCCEEDED_RESPONSE, TOKEN_INVALID } from "../../../../test/fixtures/apify/google-flights"
 import { FakeRedis, reference } from "../../../../test/fixtures/apify/helpers"
 import type { CallContext, SliceQuery } from "../adapter"
 import { FlightDataService } from "./flight-data.service"
@@ -29,7 +29,7 @@ function harness(metering: Partial<ProviderMetering> = {}, opts: { invalid?: boo
   const row = { id: "apify-google-flights", metering: { ...ProviderMetering.parse({}), ...metering } }
   const suppliers = {
     registerAdapter: vi.fn(), row: async () => row, credentials: async () => (opts.token === null ? null : { token: "tok_secret" }),
-    credentialInvalid: async () => !!opts.invalid, markCredentialInvalid: vi.fn(), credentialMeta: async () => ({ rotatedAt: new Date(), rotatedBy: null, invalidAt: null }),
+    credentialInvalid: async () => !!opts.invalid, markCredentialInvalid: vi.fn(), markTested: vi.fn(), credentialMeta: async () => ({ rotatedAt: new Date(), rotatedBy: null, invalidAt: null }),
   }
   const svc = new FlightDataService(db as never, redis as never, queues as never, { registerJob: vi.fn() } as never, suppliers as never, { lookup: () => reference } as never, { putCallPayload: async () => undefined } as never)
   return { svc, redis, jobs, runs, suppliers }
@@ -103,6 +103,29 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     // After the collect, both searches read the cache and no further run is paid for.
     await expect(svc.lookup(q, ctxFor("A"))).resolves.toHaveLength(1)
     expect(posts(spy)).toHaveLength(1)
+  })
+
+  it("single-flight at scale: 200 concurrent identical searches pay for one run; a cache hit pays for none", async () => {
+    const spy = mockApify()
+    const { svc, jobs, runs } = harness()
+    const ids = Array.from({ length: 200 }, (_, i) => `S${i}`)
+    const misses = await Promise.allSettled(ids.map((id) => svc.lookup(q, ctxFor(id))))
+    expect(misses.every((r) => r.status === "rejected" && (r.reason as { code: string }).code === "SUPPLIER_PENDING")).toBe(true)
+    // One start job per search (job id = search id, no network); the run itself is single-flight per cache key.
+    expect(jobs.filter((j) => j.name === "flights.apify.start")).toHaveLength(200)
+    await Promise.all(ids.map((id) => svc.startSearchRuns(id)))
+    expect(posts(spy)).toHaveLength(1)
+    expect(runs).toHaveLength(1)
+    expect(JSON.parse(posts(spy)[0]![1]!.body as string)).toHaveProperty("maxResults", 15)
+
+    await svc.collect({ runId: runs[0]!.id as string, attempt: 1 })
+    expect(new Set(searchRuns(jobs).map((j) => j.data.searchId)).size).toBe(200)
+
+    const startsBefore = jobs.filter((j) => j.name === "flights.apify.start").length
+    const callsBefore = spy.mock.calls.length
+    await expect(svc.lookup(q, ctxFor("late"))).resolves.toHaveLength(1)
+    expect(spy.mock.calls.length).toBe(callsBefore)
+    expect(jobs.filter((j) => j.name === "flights.apify.start")).toHaveLength(startsBefore)
   })
 
   it("batches the legs of one search into one run", async () => {
@@ -305,5 +328,60 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     expect(await budget()).toBe(Math.floor(2 / 0.016))
     redis.kv.set(`apify:ledger:${new Date().toISOString().slice(0, 7)}:customer`, "2")
     expect(await budget()).toBe(0)
+  })
+})
+
+describe("popular-route warm and test connection (ADR-0032)", () => {
+  afterEach(() => vi.restoreAllMocks())
+  const routes = [{ origin: "IST", destination: "LHR", departureDate: "2026-12-10" }, { origin: "VAN", destination: "IST", departureDate: "2026-12-11" }]
+  const pq = { passengers: [{ type: "ADT" as const }], cabin: "ECONOMY" as const, maxConnections: 1 }
+
+  it("one batched prewarm-pool run for all routes with maxResultsPrewarm; collected legs announce listings.prewarmed", async () => {
+    const spy = mockApify()
+    const { svc, runs, jobs } = harness()
+    const r = await svc.prewarm(routes, pq)
+    expect(r.runId).toBeTruthy()
+    expect(posts(spy)).toHaveLength(1)
+    const body = JSON.parse(posts(spy)[0]![1]!.body as string) as { routes: unknown[]; maxResults: number }
+    expect(body.routes).toHaveLength(2)
+    expect(body.maxResults).toBe(10)
+    expect(String(posts(spy)[0]![0])).toContain("maxTotalChargeUsd=0.0210")
+    expect(runs[0]).toMatchObject({ pool: "prewarm", purpose: "PREWARM" })
+    await svc.collect({ runId: runs[0]!.id as string, attempt: 1 })
+    expect(jobs.filter((j) => j.name === "listings.prewarmed").map((j) => j.data)).toEqual([{ routes }])
+    // The legs are cached now: a second warm pays for nothing and lists them straight away.
+    const again = await svc.prewarm(routes, pq)
+    expect(again).toMatchObject({ runId: null })
+    expect(posts(spy)).toHaveLength(1)
+  })
+
+  it("a cache-only (listing) search never queues a paid run on a miss", async () => {
+    const { svc, redis, jobs } = harness()
+    await redis.set("search:L1:cache-only", "1")
+    await expect(svc.lookup(q, ctxFor("L1"))).rejects.toMatchObject({ code: "NO_AVAILABILITY" })
+    expect(jobs).toEqual([])
+  })
+
+  it("test connection reads /users/me/limits with the Bearer token", async () => {
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(json(LIMITS_RESPONSE))
+    const { svc, suppliers } = harness()
+    const r = await svc.testConnection()
+    expect(r).toMatchObject({ plan: null, monthlyUsageUsd: 0.42, monthlyLimitUsd: 5, cycleStart: "2026-11-01T00:00:00.000Z", cycleEnd: "2026-11-30T23:59:59.999Z" })
+    expect(String(spy.mock.calls[0]![0])).toBe("https://api.apify.com/v2/users/me/limits")
+    expect((spy.mock.calls[0]![1]!.headers as Record<string, string>).authorization).toBe("Bearer tok_secret")
+    expect(suppliers.markTested).toHaveBeenCalled()
+  })
+
+  it.each([401, 403])("test connection: %i answers SUPPLIER_AUTH and marks the credential invalid", async (status) => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(json(TOKEN_INVALID, status))
+    const { svc, suppliers } = harness()
+    await expect(svc.testConnection()).rejects.toMatchObject({ code: "SUPPLIER_AUTH" })
+    expect(suppliers.markCredentialInvalid).toHaveBeenCalledWith("apify-google-flights")
+  })
+
+  it("test connection without a stored token is NOT_CONFIGURED and calls nothing", async () => {
+    const spy = vi.spyOn(globalThis, "fetch")
+    await expect(harness({}, { token: null }).svc.testConnection()).rejects.toMatchObject({ code: "NOT_CONFIGURED" })
+    expect(spy).not.toHaveBeenCalled()
   })
 })

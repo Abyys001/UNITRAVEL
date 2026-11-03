@@ -38,6 +38,17 @@ describe("fail-closed route declarations", () => {
     expect(find("PATCH", "/v1/dev/providers/:id")).toMatchObject({ permissions: ["provider.config.write"] })
   })
 
+  it("the Apify Developer Panel routes (ADR-0032 B2): test connection writes, credential metadata reads", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("POST", "/v1/dev/providers/apify-google-flights/test")).toMatchObject({ permissions: ["provider.config.write"], staff: true, dev: true })
+    expect(find("GET", "/v1/dev/providers/:id")).toMatchObject({ permissions: ["provider.config.read"], staff: true, dev: true })
+    expect(find("PUT", "/v1/dev/providers/:id/credentials")).toMatchObject({ permissions: ["provider.config.write"], staff: true, dev: true })
+    // The Admin Panel dashboard's usage card reads the same view without the dev host (ADR-0032 B7).
+    expect(find("GET", "/v1/admin/providers/apify-google-flights/usage")).toMatchObject({ permissions: ["provider.config.read"], staff: true, dev: false })
+    // The live aircraft board is gone (ADR-0032 B6).
+    expect(routes.some((r) => r.path.startsWith("/v1/live-flights"))).toBe(false)
+  })
+
   it("identity verification and identity documents are gated (ADR-0005)", () => {
     const perms = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)?.permissions
     expect(perms("GET", "/v1/admin/verifications")).toEqual(["identity.verify"])
@@ -142,10 +153,6 @@ describe("fail-closed route declarations", () => {
     const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
     for (const [m, p] of [["POST", "/v1/admin/invoices"], ["PUT", "/v1/admin/invoices/:id"]] as const) expect(find(m, p)).toMatchObject({ permissions: ["invoice.direct"], staff: true })
     expect(find("POST", "/v1/admin/invoices/:id/payments")).toMatchObject({ permissions: ["payment.record"], staff: true })
-  })
-
-  it("live flights (ADR-0027): a public read with no staff surface", () => {
-    expect(routes.find((r) => r.method === "GET" && r.path === "/v1/live-flights")).toMatchObject({ isPublic: true, staff: false })
   })
 
   it("listings (ADR-0021): public reads are public, staff curation needs listings.write", () => {

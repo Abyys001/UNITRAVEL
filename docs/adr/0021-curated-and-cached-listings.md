@@ -18,7 +18,7 @@ Service pages for flights, buses, trains and stays should show something real, b
 - With no Duffel/Amadeus enabled (BLOCKED until the owner supplies credentials) the flights listing is empty with `NO_SOURCES`; that is the intended "empty, not fake" behaviour.
 
 ## Update, 1 Nov 2026 (owner request)
-The customer web `/flights` page no longer lists cached routes; see ADR-0027. The endpoint and the labelling rules above still apply to any client that shows them.
+Amended by ADR-0032 (3 Nov 2026): the customer web `/flights` page shows the search form plus cached popular routes from this endpoint (ADR-0027 superseded). The endpoint and the labelling rules above still apply to any client that shows them.
 
 ## Update, 1 Nov 2026 (owner request): trains and buses
 The customer web `/trains` and `/buses` pages no longer show curated rows or the destination filter. Each page is a hero with From and To dropdowns of Iranian cities (`docs/reference-data.md`, "Train and bus cities") over the same `TRAIN` / `BUS` service request, with an unchanged contract. `/stays` keeps the list. `/v1/listings/buses`, `/v1/listings/trains` and the staff listing tools remain, but rows for those two verticals no longer appear on the web pages.

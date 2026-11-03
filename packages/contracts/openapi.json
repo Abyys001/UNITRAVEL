@@ -1056,6 +1056,20 @@
         ]
       }
     },
+    "/v1/destinations": {
+      "get": {
+        "operationId": "ReferenceController_destinations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reference"
+        ]
+      }
+    },
     "/v1/dev/users": {
       "get": {
         "operationId": "DevUsersController_list",
@@ -1708,7 +1722,438 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "enum": [
+                        "fake",
+                        "duffel",
+                        "amadeus-enterprise",
+                        "manual",
+                        "apify-google-flights"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "environment": {
+                      "type": "string",
+                      "enum": [
+                        "test",
+                        "production"
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "priority": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "capabilities": {
+                      "type": "object",
+                      "properties": {
+                        "search": {
+                          "type": "boolean"
+                        },
+                        "price": {
+                          "type": "boolean"
+                        },
+                        "seatMap": {
+                          "type": "boolean"
+                        },
+                        "order": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "search",
+                        "price",
+                        "seatMap",
+                        "order"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "limits": {
+                      "type": "object",
+                      "properties": {
+                        "timeoutMs": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "maxConcurrent": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "rps": {
+                          "type": "number"
+                        },
+                        "dailyBudget": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "lookToBookAlert": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "timeoutMs",
+                        "maxConcurrent",
+                        "rps",
+                        "dailyBudget",
+                        "lookToBookAlert"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "markets": {
+                      "type": "object",
+                      "properties": {
+                        "pointOfSale": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        },
+                        "originRegions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "destinationRegions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "pointOfSale",
+                        "currency",
+                        "originRegions",
+                        "destinationRegions"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "shadowMode": {
+                      "type": "boolean"
+                    },
+                    "credentials": {
+                      "type": "object",
+                      "properties": {
+                        "set": {
+                          "type": "boolean"
+                        },
+                        "last4": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 4
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "rotatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "rotatedBy": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "invalidAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "testedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "set",
+                        "last4",
+                        "rotatedAt",
+                        "rotatedBy",
+                        "invalidAt",
+                        "testedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "metering": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "monthlyBudgetUsd": {
+                              "default": 5,
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 10000
+                            },
+                            "poolSplit": {
+                              "default": {
+                                "customer": 0.4,
+                                "prewarm": 0.3,
+                                "staff": 0.3
+                              },
+                              "type": "object",
+                              "properties": {
+                                "customer": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "prewarm": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "staff": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                }
+                              },
+                              "required": [
+                                "customer",
+                                "prewarm",
+                                "staff"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "staffReserveUsd": {
+                              "default": 0.75,
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "customerRunsPerHour": {
+                              "default": 6,
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000
+                            },
+                            "maxResultsCustomer": {
+                              "default": 15,
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100
+                            },
+                            "maxResultsStaff": {
+                              "default": 30,
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100
+                            },
+                            "maxResultsPrewarm": {
+                              "default": 10,
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100
+                            },
+                            "cacheTtlSeconds": {
+                              "default": 10800,
+                              "type": "integer",
+                              "minimum": 60,
+                              "maximum": 604800
+                            },
+                            "currency": {
+                              "default": "GBP",
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 3
+                            },
+                            "market": {
+                              "type": "string",
+                              "minLength": 2,
+                              "maxLength": 2
+                            },
+                            "excludeAirlines": {
+                              "default": [],
+                              "maxItems": 50,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 2,
+                                "maxLength": 3
+                              }
+                            },
+                            "maxLegsPerSearch": {
+                              "default": 3,
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 10
+                            },
+                            "watchlist": {
+                              "default": [],
+                              "maxItems": 100,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "origin": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "destination": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "dateOffsetsDays": {
+                                    "maxItems": 12,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 330
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "origin",
+                                  "destination",
+                                  "dateOffsetsDays"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "monthlyBudgetUsd",
+                            "poolSplit",
+                            "staffReserveUsd",
+                            "customerRunsPerHour",
+                            "maxResultsCustomer",
+                            "maxResultsStaff",
+                            "maxResultsPrewarm",
+                            "cacheTtlSeconds",
+                            "currency",
+                            "excludeAirlines",
+                            "maxLegsPerSearch",
+                            "watchlist"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "health": {
+                      "type": "object",
+                      "properties": {
+                        "circuit": {
+                          "type": "string",
+                          "enum": [
+                            "CLOSED",
+                            "OPEN",
+                            "HALF_OPEN"
+                          ]
+                        },
+                        "successRate": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "p50": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "p95": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "lastError": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "callsToday": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "circuit",
+                        "successRate",
+                        "p50",
+                        "p95",
+                        "lastError",
+                        "callsToday"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "environment",
+                    "enabled",
+                    "priority",
+                    "capabilities",
+                    "limits",
+                    "markets",
+                    "shadowMode",
+                    "credentials",
+                    "metering",
+                    "health",
+                    "version"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -1806,6 +2251,85 @@
         ]
       }
     },
+    "/v1/dev/providers/apify-google-flights/test": {
+      "post": {
+        "operationId": "DevProvidersController_testApify",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "monthlyUsageUsd": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "monthlyLimitUsd": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "cycleStart": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "cycleEnd": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "testedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    }
+                  },
+                  "required": [
+                    "plan",
+                    "monthlyUsageUsd",
+                    "monthlyLimitUsd",
+                    "cycleStart",
+                    "cycleEnd",
+                    "testedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "dev"
+        ]
+      }
+    },
     "/v1/dev/providers/{id}/test": {
       "post": {
         "operationId": "DevProvidersController_test",
@@ -1817,6 +2341,245 @@
         },
         "tags": [
           "dev"
+        ]
+      }
+    },
+    "/v1/admin/providers/apify-google-flights/usage": {
+      "get": {
+        "operationId": "AdminProvidersController_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "fake",
+                        "duffel",
+                        "amadeus-enterprise",
+                        "manual",
+                        "apify-google-flights"
+                      ]
+                    },
+                    "month": {
+                      "type": "string"
+                    },
+                    "credential": {
+                      "type": "object",
+                      "properties": {
+                        "set": {
+                          "type": "boolean"
+                        },
+                        "invalidAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "set",
+                        "invalidAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "apify": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "cycle": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "maxMonthlyUsageUsd": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "monthlyUsageUsd": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "cycle",
+                            "maxMonthlyUsageUsd",
+                            "monthlyUsageUsd"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "apifyError": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "ledger": {
+                      "type": "object",
+                      "properties": {
+                        "budgetUsd": {
+                          "type": "number"
+                        },
+                        "staffReserveUsd": {
+                          "type": "number"
+                        },
+                        "totalSpentUsd": {
+                          "type": "number"
+                        },
+                        "pools": {
+                          "type": "object",
+                          "properties": {
+                            "customer": {
+                              "type": "object",
+                              "properties": {
+                                "budgetUsd": {
+                                  "type": "number"
+                                },
+                                "spentUsd": {
+                                  "type": "number"
+                                },
+                                "remainingUsd": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "budgetUsd",
+                                "spentUsd",
+                                "remainingUsd"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "prewarm": {
+                              "type": "object",
+                              "properties": {
+                                "budgetUsd": {
+                                  "type": "number"
+                                },
+                                "spentUsd": {
+                                  "type": "number"
+                                },
+                                "remainingUsd": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "budgetUsd",
+                                "spentUsd",
+                                "remainingUsd"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "staff": {
+                              "type": "object",
+                              "properties": {
+                                "budgetUsd": {
+                                  "type": "number"
+                                },
+                                "spentUsd": {
+                                  "type": "number"
+                                },
+                                "remainingUsd": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "budgetUsd",
+                                "spentUsd",
+                                "remainingUsd"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "customer",
+                            "prewarm",
+                            "staff"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "customerRunsThisHour": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "customerRunsPerHour": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "budgetUsd",
+                        "staffReserveUsd",
+                        "totalSpentUsd",
+                        "pools",
+                        "customerRunsThisHour",
+                        "customerRunsPerHour"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "banner": {
+                      "type": "string",
+                      "enum": [
+                        "NONE",
+                        "CUSTOMER_POOL_EMPTY",
+                        "CREDENTIAL_INVALID",
+                        "CREDENTIAL_MISSING"
+                      ]
+                    },
+                    "reconciledAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "month",
+                    "credential",
+                    "apify",
+                    "apifyError",
+                    "ledger",
+                    "banner",
+                    "reconciledAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-providers"
         ]
       }
     },
@@ -16392,6 +17155,181 @@
                           },
                           "arrivalLocal": {
                             "type": "string"
+                          },
+                          "segments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "marketing": {
+                                  "type": "object",
+                                  "properties": {
+                                    "carrier": {
+                                      "type": "string",
+                                      "pattern": "^[A-Z0-9]{2,3}$"
+                                    },
+                                    "flightNumber": {
+                                      "type": "string",
+                                      "pattern": "^\\d{1,4}[A-Z]?$"
+                                    }
+                                  },
+                                  "required": [
+                                    "carrier",
+                                    "flightNumber"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "operating": {
+                                  "type": "object",
+                                  "properties": {
+                                    "carrier": {
+                                      "type": "string",
+                                      "pattern": "^[A-Z0-9]{2,3}$"
+                                    },
+                                    "flightNumber": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "carrier"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "origin": {
+                                  "type": "object",
+                                  "properties": {
+                                    "iata": {
+                                      "type": "string",
+                                      "pattern": "^[A-Z0-9]{3}$"
+                                    },
+                                    "terminal": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "iata"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "destination": {
+                                  "type": "object",
+                                  "properties": {
+                                    "iata": {
+                                      "type": "string",
+                                      "pattern": "^[A-Z0-9]{3}$"
+                                    },
+                                    "terminal": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "iata"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "departure": {
+                                  "type": "object",
+                                  "properties": {
+                                    "local": {
+                                      "type": "string",
+                                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$"
+                                    },
+                                    "utc": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                    },
+                                    "tz": {
+                                      "type": "string",
+                                      "minLength": 3
+                                    }
+                                  },
+                                  "required": [
+                                    "local",
+                                    "utc",
+                                    "tz"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "arrival": {
+                                  "type": "object",
+                                  "properties": {
+                                    "local": {
+                                      "type": "string",
+                                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$"
+                                    },
+                                    "utc": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                    },
+                                    "tz": {
+                                      "type": "string",
+                                      "minLength": 3
+                                    }
+                                  },
+                                  "required": [
+                                    "local",
+                                    "utc",
+                                    "tz"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "cabin": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ECONOMY",
+                                    "PREMIUM_ECONOMY",
+                                    "BUSINESS",
+                                    "FIRST"
+                                  ]
+                                },
+                                "aircraft": {
+                                  "type": "string"
+                                },
+                                "carrierName": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "marketing",
+                                "operating",
+                                "origin",
+                                "destination",
+                                "departure",
+                                "arrival",
+                                "cabin"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "offerRef": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "searchId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                  },
+                                  "itineraryId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "searchId",
+                                  "itineraryId"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "complianceReview": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -16603,173 +17541,6 @@
         },
         "tags": [
           "listings"
-        ]
-      }
-    },
-    "/v1/live-flights": {
-      "get": {
-        "operationId": "LiveFlightsController_list",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "label": {
-                            "type": "string",
-                            "const": "LIVE_POSITION"
-                          },
-                          "hex": {
-                            "type": "string",
-                            "pattern": "^[0-9a-f]{6}$"
-                          },
-                          "callsign": {
-                            "type": "string",
-                            "pattern": "^[A-Z]{3}[0-9][A-Z0-9]{0,3}$"
-                          },
-                          "aircraftType": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "maxLength": 8
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "region": {
-                            "type": "string",
-                            "enum": [
-                              "EUROPE",
-                              "TURKEY",
-                              "UAE",
-                              "IRAN"
-                            ]
-                          },
-                          "altitudeFt": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "groundSpeedKt": {
-                            "anyOf": [
-                              {
-                                "type": "integer",
-                                "minimum": 0,
-                                "maximum": 9007199254740991
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "seenAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                          }
-                        },
-                        "required": [
-                          "label",
-                          "hex",
-                          "callsign",
-                          "aircraftType",
-                          "region",
-                          "altitudeFt",
-                          "groundSpeedKt",
-                          "seenAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "total": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "regions": {
-                      "type": "object",
-                      "properties": {
-                        "EUROPE": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
-                        },
-                        "TURKEY": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
-                        },
-                        "UAE": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
-                        },
-                        "IRAN": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
-                        }
-                      },
-                      "required": [
-                        "EUROPE",
-                        "TURKEY",
-                        "UAE",
-                        "IRAN"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "updatedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "notice": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "OFF",
-                            "NO_DATA"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "total",
-                    "regions",
-                    "updatedAt",
-                    "notice"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "live-flights"
         ]
       }
     },

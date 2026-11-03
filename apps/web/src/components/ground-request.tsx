@@ -4,10 +4,9 @@ import { ArrowDown, ArrowLeftRight, Headset, MapPinned, ReceiptText } from "luci
 import { useMemo, useState } from "react"
 
 import type { MessageKey } from "@unitravel/i18n"
-import { Ribbon } from "@unitravel/ui/brand/art"
-import { ServiceScene } from "@unitravel/ui/brand/scenes"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { ServiceHero } from "@/components/service-hero"
 import { Field, inDays, inputCls, ServiceFormFrame, today } from "@/components/service-form"
 import { GROUND_CITIES, type GroundCity, type GroundMode } from "@/lib/ground-places"
 import { useI18n } from "@/lib/i18n"
@@ -58,27 +57,9 @@ export function GroundRequest({ mode }: { mode: GroundMode }) {
   const details = { from: name(g.from), to: name(g.to), date: g.date, passengers: g.passengers, ...(note ? { note } : {}) }
   const valid = !!g.from && !!g.to && !same && !!g.date && g.passengers >= 1
 
-  const title = t(copy.heroTitle)
-  const accent = t(copy.accent)
-  const at = title.indexOf(accent)
-
   const hero = (
-    <section className="relative isolate overflow-hidden bg-brand text-white" data-testid="ground-hero">
-      <div aria-hidden className="bg-dots absolute inset-0 -z-10 opacity-40" />
-      <div className="mx-auto max-w-7xl px-4 pb-8 pt-28 md:px-6 md:pb-12 md:pt-36">
-        <div className="grid items-center gap-8 lg:grid-cols-[1.25fr_1fr]">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold tracking-[0.12em] text-white/90">
-              <span className="size-1.5 rounded-full bg-orange" />{t(copy.eyebrow)}
-            </p>
-            <h1 className="font-display mt-6 text-[2.4rem] leading-[1.08] md:text-6xl">
-              {at < 0 ? title : <>{title.slice(0, at)}<span className="text-gradient-orange">{accent}</span>{title.slice(at + accent.length)}</>}
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85">{t(copy.lead)}</p>
-          </div>
-          <ServiceScene kind={copy.scene} className="hidden aspect-[5/3] overflow-hidden rounded-[28px] bg-white/90 shadow-[var(--shadow-lift)] lg:block" />
-        </div>
-
+    <ServiceHero testId="ground-hero" eyebrow={t(copy.eyebrow)} title={t(copy.heroTitle)} accent={t(copy.accent)} lead={t(copy.lead)} scene={copy.scene}
+      perks={PERKS.map(({ icon, label }) => ({ icon, label: t(label) }))}>
         <div className="mt-8 rounded-[24px] border border-white/60 bg-white p-4 text-navy-950 shadow-[var(--shadow-lift)] md:p-6" data-testid="ground-route">
           <h2 className="font-display text-xl md:text-2xl">{t("services.routeTitle")}</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_1fr]">
@@ -96,17 +77,11 @@ export function GroundRequest({ mode }: { mode: GroundMode }) {
               <label htmlFor="g-pax" className="text-sm font-semibold text-navy-950">{t("services.passengers")}</label>
               <input id="g-pax" type="number" inputMode="numeric" min={1} max={20} className={`mt-1 ${controlCls}`} value={g.passengers} onChange={(e) => setG((x) => ({ ...x, passengers: Number(e.target.value) }))} />
             </div>
-            <a href="#ground-details" className="btn-orange h-12 sm:col-span-2 md:col-span-1">{t("services.continueDetails")}<ArrowDown className="size-4" aria-hidden /></a>
+            <a href="#request-details" className="btn-orange h-12 sm:col-span-2 md:col-span-1">{t("services.continueDetails")}<ArrowDown className="size-4" aria-hidden /></a>
           </div>
           <p className="mt-4 text-sm leading-6 text-steel" data-testid="ground-note">{t("services.routeNote")}</p>
         </div>
-
-        <ul className="mt-5 grid gap-3 sm:grid-cols-3">
-          {PERKS.map(({ icon: Icon, label }) => <li key={label} className="glass flex items-center gap-3 rounded-2xl p-4 text-sm font-semibold"><Icon className="size-5 shrink-0 text-cyan" aria-hidden />{t(label)}</li>)}
-        </ul>
-      </div>
-      <Ribbon className="relative" />
-    </section>
+    </ServiceHero>
   )
 
   return (
