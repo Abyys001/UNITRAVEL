@@ -233,4 +233,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   support: { hours: null },
   payment: { offlineInstructions: null },
   listings: { flightRoutes: [] },
+  visa: { ruleTtlDays: 14, searchOfficialDomains: true },
 }

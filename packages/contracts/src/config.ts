@@ -225,5 +225,10 @@ export const AppSettings = z.object({
   payment: z.object({ offlineInstructions: LocalisedText.nullable() }).default({ offlineInstructions: null }),
   /** ADR-0021: routes the worker keeps warm in the flights listing when a live adapter is enabled. Empty by default. */
   listings: z.object({ flightRoutes: z.array(z.object({ from: z.string().regex(/^[A-Z]{3}$/), to: z.string().regex(/^[A-Z]{3}$/) })).max(30) }).default({ flightRoutes: [] }),
+  /** ADR-0029: how long a researched visa rule is served before it is refreshed, and whether domain-restricted search runs. */
+  visa: z.object({
+    ruleTtlDays: z.number().int().min(1).max(90).default(14),
+    searchOfficialDomains: z.boolean().default(true),
+  }).default({ ruleTtlDays: 14, searchOfficialDomains: true }),
 })
 export type AppSettings = z.infer<typeof AppSettings>

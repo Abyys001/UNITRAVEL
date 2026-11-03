@@ -136,8 +136,9 @@ test("visa request: form, detail page with the sent notice, listed in My request
   expect((await page.request.post("/api/v1/auth/otp/verify", { headers, data: { challengeId, code, deviceId, client: "WEB" } })).status()).toBe(200)
 
   await page.goto("/en/visa")
-  await expect(page.getByRole("heading", { name: "Visa services" })).toBeVisible()
-  await page.getByLabel("Destination country").selectOption("TR")
+  // ADR-0029: the checker sits above the request form, so the request's fields are addressed by id.
+  await expect(page.getByRole("heading", { name: "Want our team to help with your visa?" })).toBeVisible()
+  await page.locator("#v-dest").selectOption("TR")
   await page.getByRole("checkbox", { name: /visa applicant/i }).check()
   await page.getByRole("checkbox", { name: /does not book or buy anything/ }).check()
   await page.getByRole("checkbox", { name: /privacy notice/ }).check()

@@ -144,6 +144,7 @@ Likelihood and severity are the author's initial assessment (Remote / Possible /
 | R18 | Support tickets or call notes hold unexpected sensitive data, or a ticket reply reaches the wrong person | Possible | Significant | Medium | M21, M11 | Low-Medium |
 | R19 | A remembered console device (ADR-0022) gives whoever uses an unlocked staff computer access to customer data without a sign-in | Possible | Significant | Medium | M22 | Low to medium: depends on staff locking their computers |
 | R20 | The live aircraft list (ADR-0027) could reveal the movements of a person through a private aircraft | Remote | Significant | Low | Only airline-format callsigns are shown; light aircraft, helicopters and military, PIA and LADD flags are dropped; no position history is stored | Low: airline flights only |
+| R21 | The visa checker (ADR-0029) reveals a traveller's nationality, refugee or stateless status, or residence to a third party | Possible | Severe (special-category adjacent: refugee/stateless status) | Medium | Check inputs are held only in Valkey for one hour under a random id, never linked to the account or logged; research runs and rules store only destination, document type, issuing country and purpose (no person); page text sent to Anthropic contains only public official pages and a generic document description, never customer data | Low |
 
 ## 6. Measures to address risk
 

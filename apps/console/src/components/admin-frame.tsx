@@ -1,6 +1,6 @@
 "use client"
 
-import { ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Users } from "lucide-react"
+import { BookCheck, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Users } from "lucide-react"
 
 import { normaliseReference } from "@unitravel/domain"
 
@@ -45,6 +45,14 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       tabs: [{ href: "/club", label: t("nav.clubMembers") }, { href: "/club/benefits", label: t("nav.clubBenefits") }, { href: "/club/tiers", label: t("nav.clubTiers") }],
     }] : []),
     ...(can("listings.write") ? [{ href: "/listings", label: t("nav.listings"), group: "records", icon: <ListChecks className="size-[18px]" /> }] : []),
+    ...(can("visa.read") ? [{
+      href: "/visa", label: t("nav.visa"), group: "records", icon: <BookCheck className="size-[18px]" />,
+      tabs: [
+        { href: "/visa", label: t("nav.visaOverview") }, { href: "/visa/rules", label: t("nav.visaRules") }, { href: "/visa/conflicts", label: t("nav.visaConflicts") },
+        { href: "/visa/runs", label: t("nav.visaRuns") }, { href: "/visa/sources", label: t("nav.visaSources") }, { href: "/visa/documents", label: t("nav.visaDocuments") },
+        { href: "/visa/audit", label: t("nav.visaAudit") },
+      ],
+    }] : []),
     ...(can("cms.read") ? [{
       href: "/content", label: t("nav.content"), group: "records", icon: <FileText className="size-[18px]" />,
       tabs: [{ href: "/content", label: t("nav.contentEntries") }, { href: "/content/glossary", label: t("nav.contentGlossary") }],

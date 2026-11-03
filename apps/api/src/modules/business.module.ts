@@ -48,6 +48,10 @@ import { DashboardService } from "./requests/dashboard.service"
 import { RequestsService } from "./requests/requests.service"
 import { SearchController, StaffSearchController } from "./search/search.controller"
 import { SearchService } from "./search/search.service"
+import { PageFetcher } from "./visa/page-fetcher"
+import { AdminVisaController, DevVisaResearchController, PublicVisaController } from "./visa/visa.controller"
+import { VisaResearchService } from "./visa/visa-research.service"
+import { VisaService } from "./visa/visa.service"
 
 /** Business modules (Figure 20.1 middle row) and their HTTP controllers, registered as each stage is built. */
 export const BUSINESS_CONTROLLERS: Type[] = [
@@ -56,9 +60,10 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
   CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
   MeActivityController, AdminCustomerListController, SupportTicketsController, AdminSupportController, AdminCallsController, BonlineWebhookController, AdminAssignmentsController, PublicListingsController, LiveFlightsController, AdminListingsController,
+  PublicVisaController, AdminVisaController, DevVisaResearchController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, LiveFlightsService, SupportService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, LiveFlightsService, SupportService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaResearchService, VisaService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}
