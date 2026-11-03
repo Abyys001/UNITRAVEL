@@ -138,8 +138,10 @@ export class QuotesService {
     const total = s!.priceRevalidatedMinor ?? s!.priceAtSubmitMinor
     const first = it.components[0]!
     const allKnown = (k: "change" | "refund") => it.components.every((c) => c.conditions[k].status === "KNOWN")
+    // The label reaches the customer's quote and invoice line ("Airfare - …"), so it names the route, not internal provenance.
+    const route = `${first.slices[0]!.origin} → ${it.components.at(-1)!.slices.at(-1)!.destination}`
     return {
-      label: `${it.construction === "SELF_TRANSFER" ? "Self-transfer" : it.construction === "GATEWAY" ? "From gateway" : "Through"} · from snapshot`,
+      label: it.construction === "SELF_TRANSFER" ? `${route} · Self-transfer` : route,
       source: "SNAPSHOT",
       slices: it.components.length === 1 ? first.slices : [{ origin: it.components[0]!.slices[0]!.origin, destination: it.components.at(-1)!.slices.at(-1)!.destination, segments: it.components.flatMap((c) => c.slices.flatMap((x) => x.segments)), durationMin: it.durationMin }],
       components: it.components.map((c) => ({ provider: c.source.provider, offerId: c.source.providerOfferId, rung: c.source.rung, fetchedAt: c.source.fetchedAt })),

@@ -293,7 +293,7 @@ test.describe("offline flow", () => {
       for (const t of detailJson.travellers as { travellerId: string }[]) await markVerifiedForTest(t.travellerId)
 
       // 8. Ticketing with the payment recorded in the same step. Under PAY_ON_TICKETING the console now offers record_tickets
-      // before the request is PAID (the command records the payment and re-checks it). The step itself is posted by API.
+      // before the request is PAID (the command records the payment and re-checks it). The step is driven through the console dialog.
       await ap.reload()
       detailJson = (await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body
       const actions = detailJson.actions as { command: string; allowed: boolean; reason?: string }[]
@@ -308,12 +308,26 @@ test.describe("offline flow", () => {
       expect(validating, "an airline with an accounting code").toBeTruthy()
       const carrier = validating!.iata
       const accounting = validating!.accounting_code
-      const tk = await admin.api.post(`/v1/admin/flight-requests/${ref}/tickets`, {
-        reservationId: detailJson.reservations[0].id,
-        tickets: (detailJson.travellers as { travellerId: string }[]).map((t, i) => ({ travellerId: t.travellerId, ticketNumber: `${accounting}${String(Date.now() + i).slice(-10)}`, validatingCarrier: carrier, issueDate: new Date().toISOString().slice(0, 10), coupons: [{ sliceIndex: 0, segmentIndex: 0 }] })),
-        payment: { amount: total, method: "BANK_TRANSFER", receivedAt: new Date().toISOString(), externalReference: `S23-${Date.now()}`, payerName: "Daniel Hart" },
-      }, { "if-match": String(detailJson.version) })
-      expect(tk.status, JSON.stringify(tk.body).slice(0, 300)).toBe(201)
+      const travellers = detailJson.travellers as { travellerId: string }[]
+      await ap.locator('[data-command="record_tickets"]').first().click()
+      const tdlg = ap.getByRole("dialog").filter({ hasText: "Record tickets" })
+      await expect(tdlg).toBeVisible()
+      const ticketInputs = tdlg.getByLabel(/^Ticket number for/)
+      const carrierInputs = tdlg.getByLabel("Validating carrier")
+      expect(await ticketInputs.count()).toBe(travellers.length)
+      for (let i = 0; i < travellers.length; i++) {
+        await ticketInputs.nth(i).fill(`${accounting}${String(Date.now() + i).slice(-10)}`)
+        await carrierInputs.nth(i).fill(carrier)
+      }
+      // The payment checkbox is on by default under PAY_ON_TICKETING and the amount is pre-filled from the accepted option.
+      await expect(tdlg.getByLabel(/Record the customer.s payment/)).toBeChecked()
+      await expect(tdlg.getByLabel("Amount")).toHaveValue(String(total.amountMinor / 100))
+      await tdlg.getByLabel("Method").selectOption("BANK_TRANSFER")
+      await tdlg.getByLabel("External reference").fill(`S23-${Date.now()}`)
+      await tdlg.getByLabel("Payer name").fill("Daniel Hart")
+      await shots(ap, "28a-console-tickets-dialog", [WIDTHS[1]])
+      await tdlg.getByRole("button", { name: /Record tickets/ }).click()
+      await expect(tdlg).toBeHidden({ timeout: 20_000 })
       detailJson = (await admin.api.get(`/v1/admin/flight-requests/${ref}`)).body
       const observed: string[] = [`after ticketing: status=${detailJson.status} payment=${detailJson.paymentStatus}`]
       if (detailJson.status === "RESERVED") {

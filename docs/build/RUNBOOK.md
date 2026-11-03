@@ -67,4 +67,5 @@ Demo users (local only): owner +447700900001, admin +447700900002, compliance +4
 
 - Unit: `pnpm -r test` (no network).
 - API e2e: `cd apps/api && pnpm test:e2e`, per file if the whole run hits OTP cooldowns (`npx vitest run --project e2e test/<file>.e2e.ts`).
-- Browser: `cd apps/web && npx playwright test e2e/stage23-flow.spec.ts e2e/price-leak.spec.ts --project=desktop`. Point it elsewhere with `WEB_URL`, `API_URL`, `CONSOLE_ADMIN_URL`, `CONSOLE_DEV_URL`, `MAILPIT_URL`, `DATABASE_MIGRATE_URL`, `REDIS_URL`. The Stripe test runs only with `STRIPE_E2E=1`, test keys entered, and `stripe listen` running.
+- Browser: `cd apps/web && npx playwright test e2e/stage23-flow.spec.ts e2e/stage23-a11y.spec.ts e2e/price-leak.spec.ts --project=desktop`. Point it elsewhere with `WEB_URL`, `API_URL`, `CONSOLE_ADMIN_URL`, `CONSOLE_DEV_URL`, `MAILPIT_URL`, `DATABASE_MIGRATE_URL`, `REDIS_URL`. The Stripe test runs only with `STRIPE_E2E=1`, test keys entered, and `stripe listen` running.
+- Email outage drill (never against the shared stack; it restarts the worker it is given): `DRILL_ENV_FILE=<env file> DRILL_RUN_DIR=<dir with worker.pid> API_URL=… DATABASE_MIGRATE_URL=… REDIS_URL=… MAILPIT_URL=… pnpm --filter @unitravel/api drill:email`. It skips itself without those variables.
