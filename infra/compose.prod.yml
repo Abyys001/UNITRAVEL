@@ -24,6 +24,8 @@ x-app-env: &app-env
   TEST_SIGN_IN: ${TEST_SIGN_IN:-off}
   CLAMAV_HOST: clamav
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  # ADR-0032 B1: imported once into the encrypted provider store on API start when none is stored; remove from .env.prod after import.
+  APIFY_TOKEN: ${APIFY_TOKEN:-}
 
 services:
   caddy:
