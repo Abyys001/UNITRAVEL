@@ -43,6 +43,8 @@ export const PERMISSIONS = [
   "support.reply",
   "call.log",
   "listings.write",
+  "visa.read",
+  "visa.write",
   "identity.verify",
   "compliance.case.read",
   "compliance.case.decide",
@@ -111,6 +113,9 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "support.reply": { privileged: false },
   "call.log": { privileged: false },
   "listings.write": { privileged: false },
+  // ADR-0033: staff read and edit the visa requirements database; an override is audited and needs an official source.
+  "visa.read": { privileged: false },
+  "visa.write": { privileged: false },
   "identity.verify": { privileged: true },
   "compliance.case.read": { privileged: false },
   "compliance.case.decide": { privileged: true },
@@ -151,7 +156,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
     "flight_request.note.internal", "quote.create", "pricing.read.internal", "pricing.write", "commercial_document.issue", "reservation.record", "ticket.record",
     "payment.record", "payment.refund.request", "payment.refund.approve", "customer.read.pii", "customer.read.documents", "identity.verify", "engine.rules.read",
     "service_request.read.any", "service_request.write", "loyalty.read", "loyalty.manage", "loyalty.benefit.approve", "cms.read", "cms.write",
-    "customer.read", "service.assign", "invoice.direct", "support.read", "support.reply", "call.log", "listings.write",
+    "customer.read", "service.assign", "invoice.direct", "support.read", "support.reply", "call.log", "listings.write", "visa.read", "visa.write",
   ],
   cargo_admin: [
     "flight_search.run", "flight_request.note.internal", "payment.record", "cargo_request.read.any",
@@ -159,7 +164,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
   ],
   compliance_officer: [
     "flight_request.read.any", "flight_request.note.internal", "cargo_request.read.any", "customer.read.pii",
-    "customer.read.documents", "compliance.case.read", "compliance.case.decide", "audit.read", "service_request.read.any",
+    "customer.read.documents", "compliance.case.read", "compliance.case.decide", "audit.read", "service_request.read.any", "visa.read",
   ],
   developer: [
     "flight_search.run", "user.read", "user.role.assign", "provider.config.read", "provider.config.write",

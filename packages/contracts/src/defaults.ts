@@ -234,4 +234,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   payment: { offlineInstructions: null },
   /** ADR-0032 B3: popular routes warmed in one batched run. IKA-IST stays listed; the lane policy decides what customers see (ADR-0031). */
   listings: { flightRoutes: [{ from: "IST", to: "LHR" }, { from: "SAW", to: "LHR" }, { from: "IST", to: "FRA" }, { from: "IST", to: "AMS" }, { from: "IST", to: "CDG" }, { from: "DXB", to: "LHR" }, { from: "VAN", to: "IST" }, { from: "ERZ", to: "IST" }, { from: "EVN", to: "LHR" }, { from: "IKA", to: "IST" }] },
+  visa: { ruleTtlDays: 14, searchOfficialDomains: true },
 }

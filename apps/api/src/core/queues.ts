@@ -7,6 +7,8 @@ import { env } from "./env"
 export const QUEUES = [
   "search.execute", "supplier.call", "notify.route", "notify.sms", "notify.push", "notify.email", "notify.escalate",
   "timers.sla", "compliance.screen", "compliance.lists-sync", "reference.sync", "documents.scan", "maintenance", "events.misc",
+  // ADR-0033: one research run per visa rule key; its own queue so a slow run never holds up maintenance jobs.
+  "visa.research",
 ] as const
 export type QueueName = (typeof QUEUES)[number]
 
@@ -31,6 +33,8 @@ export const QUEUE_DEFAULTS: Record<QueueName, JobsOptions> = {
   "documents.scan": { attempts: 3, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: 1000, removeOnFail: false },
   maintenance: { attempts: 3, removeOnComplete: 100, removeOnFail: false },
   "events.misc": { attempts: 5, backoff: { type: "exponential", delay: 1000 }, removeOnComplete: 2000, removeOnFail: false },
+  // A failed run is recorded in visa_research_runs; one retry covers a transient network error, not a model that cannot answer.
+  "visa.research": { attempts: 2, backoff: { type: "exponential", delay: 30000 }, removeOnComplete: 500, removeOnFail: 500 },
 }
 
 @Injectable()

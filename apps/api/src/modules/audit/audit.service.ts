@@ -21,7 +21,7 @@ export interface AuditEntry {
   requestId?: string | null
 }
 
-const PERSONAL = /(phone|email|givenname|surname|name_?fa|namefa|passport|documentnumber|^number$|payername|address|idnumber|dateofbirth|value_?normalised|valuenormalised)/i
+const PERSONAL = /(phone|email|givenname|surname|name_?fa|namefa|passport(?!validity)|documentnumber|^number$|payername|address|idnumber|dateofbirth|value_?normalised|valuenormalised)/i
 
 /** Phone numbers keep the country code and the last two digits; other personal fields are masked (ch. 28.5). */
 export function maskValue(key: string, v: unknown): unknown {

@@ -1,17 +1,17 @@
-# Graph Report - UNITRAVEL  (2026-11-03)
+# Graph Report - UNITRAVEL  (2026-11-04)
 
 ## Corpus Check
-- 951 files · ~812,748 words
+- 978 files · ~851,824 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 79 file(s) not represented in the graph (top: .woff2 16, .ttf 14, (none) 11)
 
 ## Summary
-- 13998 nodes · 33950 edges · 373 communities (294 shown, 79 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 1348 edges (avg confidence: 0.85)
+- 14388 nodes · 35533 edges · 374 communities (293 shown, 81 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 1416 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f6d14b04`
+- Built from commit: `17ea4b0a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,13 +21,13 @@
 - Mobile L10n Strings (FA)
 - AppError
 - listings.dart
-- search.controller.ts
-- Authenticated
-- requests.service.ts
-- contracts/src/payments.ts
-- cargo_screens.dart
+- Ltr
+- Actor
+- invoices.service.ts
+- golden_test.dart
+- service_form_screen.dart
 - StatelessWidget
-- auth.controller.ts
+- .get
 - details_screen.dart
 - search_screen.dart
 - NormalisedOffer
@@ -37,70 +37,70 @@
 - CustomersService
 - router.dart
 - case_screen.dart
-- invoices.service.ts
+- useT
 - case.tsx
-- @nestjs/common
+- channels.ts
 - itinerary_screen.dart
-- DevSystemController
-- Authenticated
+- AppError
+- track_screen.dart
 - [locale]/page.tsx
 - home_screen.dart
 - api
 - SearchService
 - requests.service.ts
-- cms-article.tsx
+- translate
 - support.tsx
-- .lookup
+- service-request.spec.ts
 - i18n/src/index.ts
 - src/services.ts
-- SupportService
+- online-payment.ts
 - package:flutter_riverpod/flutter_riverpod.dart
-- otp_field.dart
-- ref_vitest
+- amount_field.dart
+- test/client.ts
 - package:flutter/material.dart
-- ApiZodResponse
-- src/cargo.ts
+- cms.controller.ts
+- adr0032-fullstack.spec.ts
 - seed/index.ts
 - schema/requests.ts
-- src/support.ts
+- SupportService
 - i18n/src/index.ts
 - seed/index.ts
 - engine.spec.ts
 - service-form.tsx
 - quotation-content.ts
 - stays.tsx
-- serialisers.spec.ts
+- SuppliersService
 - NativeSelect
 - FlightDataService
-- request_form_screen.dart
-- hotels/page.tsx
+- VisaService
+- service_explorer.dart
 - console/e2e/helpers.ts
 - repos.dart
+- bootstrap.ts
 - payments.controller.ts
-- evaluate
-- OutboxDispatcher
-- ComplianceController
+- _
+- compliance.controller.ts
 - itinerary_screen.dart
 - music.py
-- src/requests.ts
+- enums.ts
 - package:flutter_riverpod/flutter_riverpod.dart
 - .start
 - StatelessWidget
-- console/src/lib/api.ts
-- shipments.dart
+- ref_react
+- glass_nav_test.dart
 - sign_in_screen.dart
-- contracts/src/index.ts
+- problem.filter.ts
 - Booklet Supplier & Architecture
 - club.e2e.ts
 - identity-verification.spec.ts
-- i18n.tsx
+- contracts/src/visa.ts
 - content-editor.tsx
 - lib/types.ts
 - stage11.e2e.ts
-- engine.spec.ts
+- logic_test.dart
 - useI18n
-- money.dart
-- track_screen.dart
+- List
+- currency_pair_row.dart
 - kit_ui.dart
 - search.ts
 - web-content.spec.ts
@@ -111,15 +111,15 @@
 - web/src/components/shell.tsx
 - me.dart
 - Booklet Provider Options
-- xfam_presets.dart
-- ListingsService
+- adr0022.spec.ts
+- services_screens_test.dart
 - Customer Journeys
 - support.controller.ts
 - suppliers.ts
 - Db
 - i18n.tsx
-- enums.ts
-- stage10.e2e.ts
+- tracking_test.dart
+- SearchService
 - amendments.ts
 - adr0032-apify.spec.ts
 - quotation-content.ts
@@ -128,38 +128,38 @@
 - serialisers.spec.ts
 - Runbooks index
 - customers.dart
-- DevUsersController
+- machine.ts
 - identity-verification.spec.ts
 - devDependencies
 - lib/types.ts
-- ActivityService
-- compliance.service.ts
+- business.module.ts
+- list-parsers.ts
 - [locale]/page.tsx
-- normalise.ts
+- visa.spec.ts
 - Night flight design direction
-- translate
-- auth.ts
+- ClaudeVisaExtractor
+- support-ticket.spec.ts
 - mobile/analysis_options.yaml
 - search-form.tsx
 - image-sanitise.spec.ts
-- CargoService
-- entryMetadata
+- serialisers.spec.ts
+- invoice.spec.ts
 - gen-tokens.mjs
 - ADR-0017 Hotel page content and request preferences
 - Cargo Request
 - src/listings.ts
 - cargo-tracking.ts
-- Actor
-- adr0022.spec.ts
-- stays/adapter.ts
+- AdminCargoController
+- adr0022.e2e.ts
+- .registerJob
 - ADR-0015 service requests and verticals (deviates from D-04)
 - console/src/app/api/[...path]/route.ts
-- DocumentsService
+- name-matcher.ts
 - payments.service.ts
 - stage8.e2e.ts
 - Night flight design direction
-- calendar.tsx
-- ui/theme.dart
+- page-fetcher.ts
+- .list
 - list-parsers.ts
 - scripts
 - auth.ts
@@ -167,18 +167,18 @@
 - console/src/proxy.ts
 - shipments.dart
 - mobile/pubspec.yaml
-- name-matcher.ts
+- "users"
 - support.tsx
-- stage11.e2e.ts
+- stage13.e2e.ts
 - src/invoices.ts
 - decorators.ts
 - content_screens.dart
 - DevProvidersController
 - compilerOptions
-- stripe-js.ts
+- fake_api.dart
 - .download
-- support.dart
-- request_progress.dart
+- place_picker.dart
+- request_form_screen.dart
 - my_details.dart
 - support_tickets.dart
 - AppDelegate
@@ -186,52 +186,52 @@
 - api
 - infra.module.ts
 - dev.ts
-- config.ts
+- ObjectStorage
 - dev_dependencies
 - details/page.tsx
-- RequestContext
-- FakeRedis
+- loyalty.controller.ts
+- ReferenceController
 - search-rerun.spec.ts
-- notifications.ts
-- .constructor
-- content.ts
+- phase-j.e2e.ts
+- UniTravel request-based travel and cargo platform
+- token_store.dart
 - mobile/analysis_options.yaml
 - machine.ts
 - club.e2e.ts
 - compliance.service.ts
-- permissions.ts
+- reference.service.spec.ts
 - Graphify Operations
-- ADR-0020 Admin-assigned services and payment page
+- web-content.spec.ts
 - stays/adapter.ts
-- templates.ts
+- console/src/app/api/[...path]/route.ts
 - FakeAdapter refuses to construct outside local
 - TripTypeApi
 - my_details.dart
 - dev_dependencies
 - requests.service.ts
 - kit_ui README
-- Flight request state machine (flight-request.ts)
+- help_links_test.dart
 - club.e2e.ts
 - compilerOptions
 - graphify-gate.py
-- helmet
-- lib/markdown.tsx
+- claude-extractor.ts
+- VisaResearchService
 - manifest.webmanifest/route.ts
-- "public"."users"
+- "tickets"
 - dev_dependencies
-- providers.ts
-- [locale]/glossary/page.tsx
+- OutboxDispatcher
+- popular-flights.spec.ts
 - Deploy behind existing host nginx runbook
 - console/src/proxy.ts
 - manifest.json
 - e2e/live-data.spec.ts
-- apify/client.ts
+- Stage 23 record: visa and travel document checker (2 Nov 2026)
 - pdf.ts
 - services
 - kit_ui/pubspec.yaml
-- adr0032-fullstack.spec.ts
+- site-menu.spec.ts
 - "flight_requests"
-- manifest.webmanifest/route.ts
+- api_error.dart
 - Stage 18 record: customer activity, support and calls, assigned services, listings
 - robots.ts
 - Audited document downloads
@@ -239,7 +239,7 @@
 - service-policy.ts
 - edit.py
 - allowBuilds
-- Gap check: flights → request → invoice (owner prompts A–E)
+- DPIA draft for UniTravel platform
 - @simplewebauthn/server
 - console/src/app/api/[...path]/route.ts
 - api
@@ -247,11 +247,11 @@
 - web/src/app/api/[...path]/route.ts
 - "provider_runs"
 - zod@4.6.7
-- useT
+- useSession
 - 0019_direct_invoices.sql
 - steps
-- console/src/proxy.ts
-- passengers.ts
+- HealthController
+- domain.spec.ts
 - valkey
 - mailpit
 - postgres
@@ -270,16 +270,16 @@
 - domain/src/loyalty.ts
 - Control deck (console UI update)
 - ADR-0016 customer club
-- dev-system.controller.ts
+- commercial-pdf.ts
 - Hotel page copy (15 section contents, booking steps, price factors)
 - Control deck (console UI update)
 - ActivityService
 - postgres
 - i18n content model (Item, Block, visible
-- _
+- admin_test.dart
 - storage
-- console/src/app/api/[...path]/route.ts
-- list-parsers.ts
+- ADR-0002 Flutter for mobile
+- service-policy.ts
 - Deploy behind existing host nginx runbook
 - ADR-0015 service requests and verticals (deviates from D-04)
 - ADR-0016 customer club
@@ -287,7 +287,7 @@
 - storage
 - images
 - "service_requests"
-- web/src/proxy.ts
+- e2e/live-data.spec.ts
 - Stage 19 record: staff session limits, remembered devices, installable console (1 Nov 2026)
 - worker
 - mobile
@@ -296,10 +296,11 @@
 - Undeclared
 - console/public/flags/LICENSE.md
 - sw.js
-- reference-data.ts
+- ADR-0033 · Visa eligibility and travel document checker
+- 0011_customer_club.sql
 - Stage 12 record: Phase F design and UX
 - "service_requests"
-- dev-crypto.ts
+- ZodPipe
 - "service_requests"
 - MainActivity.kt
 - ADR-0011 Console UI typeface, type scale and theme
@@ -308,10 +309,12 @@
 - mobile
 - "screening_hits"
 - CargoService.ingest (dedupe, ON CONFLICT DO NOTHING)
+- notifications.service.ts
 - next@16.4.2
-- @simplewebauthn/server
-- zod@4.6.7
-- popular-flights.spec.ts
+- Visa checker (ADR-0029)
+- NotificationsService
+- ApiSession
+- IdempotencyInterceptor
 - clsx@2.1.1
 - lucide-react@1.48.0
 - Runner-Bridging-Header.h
@@ -320,6 +323,7 @@
 - lucide-react@1.48.0
 - @unitravel/ui@workspace:*
 - tailwind-merge@3.7.0
+- listings.spec.ts
 - Deterministic visual snapshots via recor
 - lucide-react@1.48.0
 - next@16.4.2
@@ -339,43 +343,39 @@
 - Ctx
 - Ctx
 - Ctx
-- SuppliersService
+- "request_amendments"
 - Stage 19 record: staff session limits, remembered devices, installable console
 - Shutdown
-- canonicalJson
-- e2e/live-data.spec.ts
 - ADR-0032 · Apify flights on `/flights`, token bootstrap from environment, live aircraft board removed
-- Undeclared
-- ApiSession
+- matrix.e2e.ts
 - ADR-0029 · Google Flights through Apify as an indicative flight source
-- helmet
-- dev-system.controller.ts
-- [locale]/layout.tsx
+- notification-router.ts
+- web/src/components/shell.tsx
 - Session
 
 ## God Nodes (most connected - your core abstractions)
-1. `Actor` - 365 edges
+1. `Actor` - 387 edges
 2. `cn()` - 300 edges
-3. `RequirePermission()` - 227 edges
-4. `AppError` - 221 edges
-5. `CurrentActor` - 214 edges
-6. `useT()` - 177 edges
-7. `api()` - 163 edges
-8. `Button()` - 159 edges
-9. `useI18n()` - 158 edges
-10. `RequestContext` - 121 edges
+3. `RequirePermission()` - 245 edges
+4. `AppError` - 232 edges
+5. `CurrentActor` - 224 edges
+6. `useT()` - 207 edges
+7. `api()` - 186 edges
+8. `Button()` - 173 edges
+9. `useI18n()` - 165 edges
+10. `RequestContext` - 131 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Decisions` --references--> `FlightSupplierAdapter`  [INFERRED]
   docs/adr/0032-apify-flights-page-and-env-bootstrap.md → apps/api/src/modules/suppliers/adapter.ts
 - `Consequences` --references--> `mobile()`  [INFERRED]
   docs/adr/0026-mobile-paused.md → apps/api/test/hardening.e2e.ts
-- `Status` --references--> `ProviderId`  [INFERRED]
-  docs/stages/GAP-flights-request-invoice.md → packages/contracts/src/enums.ts
 - `Decisions` --references--> `normaliseReference()`  [INFERRED]
   docs/adr/0028-direct-invoices.md → packages/domain/src/formats.ts
-- `Decisions` --references--> `FlightSupplierAdapter`  [INFERRED]
-  docs/adr/0029-apify-google-flights-indicative-source.md → apps/api/src/modules/suppliers/adapter.ts
+- `Status` --references--> `ProviderId`  [INFERRED]
+  docs/stages/GAP-flights-request-invoice.md → packages/contracts/src/enums.ts
+- `What changed (DOCUMENTED)` --references--> `FlightListingItem`  [INFERRED]
+  docs/stages/STAGE-22.md → packages/contracts/src/listings.ts
 
 ## Import Cycles
 - 3-file cycle: `packages/db/src/schema/customers.ts -> packages/db/src/schema/platform.ts -> packages/db/src/schema/requests.ts -> packages/db/src/schema/customers.ts`
@@ -414,7 +414,7 @@
 - **Stuck document scan recovery** — docs_plan_stuck_scans_fix, docs_runbooks_queue_backlog_scan_recovery, docs_runbooks_queue_backlog_queues [INFERRED 0.85]
 - **Truth model enforcement (no fabricated or inferred facts)** — docs_adr_0003_state_machine_interpretations_tri_state_truth_model, docs_adr_0003_state_machine_interpretations_f9_unknown_blocks_quote, docs_design_design_truth_badges, docs_adr_0003_state_machine_interpretations_f6_expire_reservation [INFERRED 0.85]
 
-## Communities (373 total, 79 thin omitted)
+## Communities (374 total, 81 thin omitted)
 
 ### Community 0 - "Mobile L10n Strings (All)"
 Cohesion: 0.00
@@ -429,64 +429,60 @@ Cohesion: 0.00
 Nodes (907): acceptConfirmBody, acceptConfirmTitle, acceptNewPrice, acceptOption, accountSection, accountTitle, ackNotBooking, ackPrivacy (+899 more)
 
 ### Community 3 - "AppError"
-Cohesion: 0.03
-Nodes (35): AppError, notFound(), BookingsService, flightTarget(), iso(), LoyaltyService, tierView(), toMoney() (+27 more)
+Cohesion: 0.02
+Nodes (71): notFound(), maskPersonal(), BookingsService, flightTarget(), CargoService, TERMINAL, neutralDeclineForUser(), asCustomer() (+63 more)
 
 ### Community 4 - "listings.dart"
-Cohesion: 0.04
-Nodes (50): _apply, _Body, _clear, createState, dispose, _filter, item, kind (+42 more)
+Cohesion: 0.07
+Nodes (29): arrivalLocal, carriers, curated, departureDate, departureLocal, destination, durationMin, fetchedAt (+21 more)
 
-### Community 5 - "search.controller.ts"
-Cohesion: 0.09
-Nodes (7): OptionalActor, owner(), SearchController, StaffSearchController, SearchService, RecheckStatus, SearchStateQuery
+### Community 5 - "Ltr"
+Cohesion: 0.11
+Nodes (29): conditionView(), customerSeatMaps(), ADR-0004, Page(), ItineraryPage(), Ltr(), RiskFlags(), Tag() (+21 more)
 
-### Community 6 - "Authenticated"
-Cohesion: 0.05
-Nodes (16): Authenticated(), serialise(), TravellersController, asCustomer(), CustomersService, today(), IdentityVerificationService, DocumentsController (+8 more)
+### Community 6 - "Actor"
+Cohesion: 0.02
+Nodes (112): testSignInEnabled(), Actor, Authenticated(), Ctx, CurrentActor, DevSurface(), Idempotent(), OptionalActor (+104 more)
 
-### Community 7 - "requests.service.ts"
-Cohesion: 0.03
-Nodes (144): forbidden(), invalidTransition(), DB, UnitOfWork, AccessService, ADR-0022, AUDIT_HASH_VERSION, AuditEntry (+136 more)
+### Community 7 - "invoices.service.ts"
+Cohesion: 0.01
+Nodes (295): ADR-0001, SERVICES, constantTimeEqual(), decryptField(), encryptField(), gcmDecrypt(), gcmEncrypt(), keyedHash() (+287 more)
 
-### Community 8 - "contracts/src/payments.ts"
+### Community 8 - "golden_test.dart"
+Cohesion: 0.07
+Nodes (21): invoice, invoiceJson, main, prefs, pump, pumpAndSettle, pumpWidget, main (+13 more)
+
+### Community 9 - "service_form_screen.dart"
 Cohesion: 0.06
-Nodes (34): Row, checkDirectLines(), CustomerInvoiceStatus, CustomerQuotation, directInvoiceFields, DirectInvoiceLine, directInvoiceTotal(), InvoiceCancelCode (+26 more)
-
-### Community 9 - "cargo_screens.dart"
-Cohesion: 0.03
-Nodes (61): CachedDoc, clear, data, JsonCache, _prefix, _prefs, put, savedAt (+53 more)
+Nodes (29): _ack, _busy, _c, createState, _date, _dateField, _details, dispose (+21 more)
 
 ### Community 10 - "StatelessWidget"
 Cohesion: 0.01
-Nodes (162): SummaryHistory, _Splash, BentoTile, build, chevronIcon, child, color, gradient (+154 more)
-
-### Community 11 - "auth.controller.ts"
-Cohesion: 0.05
-Nodes (20): testSignInEnabled(), Passive(), Public(), RateLimit(), AuthController, ADR-0012, ADR-0022, VerifyBodyClient (+12 more)
+Nodes (145): BentoTile, build, chevronIcon, child, color, gradient, Haptics, HealthBar (+137 more)
 
 ### Community 12 - "details_screen.dart"
 Cohesion: 0.02
-Nodes (146): apiClientProvider, deviceIdProvider, secureStorageProvider, myDetailsProvider, travellersProvider, _registerDevice, requestOtp, sessionProvider (+138 more)
+Nodes (154): apiClientProvider, deviceIdProvider, secureStorageProvider, myDetailsProvider, travellersProvider, _registerDevice, requestOtp, sessionProvider (+146 more)
 
 ### Community 13 - "search_screen.dart"
-Cohesion: 0.07
-Nodes (27): searchFormProvider, build, _busy, createState, _error, icon, index, label (+19 more)
+Cohesion: 0.05
+Nodes (39): addLeg, build, _fresh, n, removeLeg, reset, searchFormProvider, setLeg (+31 more)
 
 ### Community 14 - "NormalisedOffer"
-Cohesion: 0.06
-Nodes (42): ADAPTERS, CallContext, CallMeta, Capabilities, FlightSupplierAdapter, HealthResult, OfferRef, SliceQuery (+34 more)
+Cohesion: 0.04
+Nodes (64): GroundCapabilities, GroundSupplierAdapter, ADR-0015, AccommodationCapabilities, AccommodationSupplierAdapter, ADR-0004, ADR-0015, ADAPTERS (+56 more)
 
 ### Community 15 - "fake-payment.adapter.ts"
-Cohesion: 0.08
-Nodes (22): FakeEventKind, FakePaymentAdapter, FakeState, key(), ADR-0007, ADR-0014, CreateSessionInput, PaymentProvider (+14 more)
+Cohesion: 0.07
+Nodes (23): stripe@^23.0.1, FakeEventKind, FakePaymentAdapter, FakeState, key(), ADR-0007, ADR-0014, CreateSessionInput (+15 more)
 
 ### Community 16 - "session.dart"
 Cohesion: 0.02
-Nodes (107): ActivityEvent, activityFor, ActivityReporter, activityReporterProvider, activityScreens, _api, _cooling, dispose (+99 more)
+Nodes (99): build, UniTravelApp, accessToken, ApiClient, AuthDelegate, delegate, deviceId, _dio (+91 more)
 
 ### Community 17 - "contracts/src/index.ts"
-Cohesion: 0.07
-Nodes (68): InvoicePage(), FakeForm(), PayPage(), ADR-0007, PayReturnPage(), ADR-0007, BillingPage(), ADR-0006 (+60 more)
+Cohesion: 0.05
+Nodes (78): config, config, InvoicePage(), FakeForm(), PayPage(), ADR-0007, PayReturnPage(), ADR-0007 (+70 more)
 
 ### Community 18 - "CustomersService"
 Cohesion: 0.02
@@ -494,131 +490,131 @@ Nodes (127): accelerate, actor, base, bg, body, bodyLg, bold, border (+119 more)
 
 ### Community 19 - "router.dart"
 Cohesion: 0.04
-Nodes (17): admin, _badged, createState, dispose, full, homeFor, initState, loc (+9 more)
+Nodes (18): admin, _badged, createState, dispose, full, homeFor, initState, loc (+10 more)
 
 ### Community 20 - "case_screen.dart"
 Cohesion: 0.04
-Nodes (55): adminCaseProvider, _ActionBar, _Activity, _ActivityState, _askText, at, badge, _base (+47 more)
+Nodes (53): adminCaseProvider, _ActionBar, _Activity, _ActivityState, _askText, at, badge, _base (+45 more)
 
-### Community 21 - "invoices.service.ts"
-Cohesion: 0.07
-Nodes (16): AdminInvoicesController, CustomerBillingController, documentLine(), InvoicesService, iso(), NOT_A_SERVICE, timerKey(), productOf() (+8 more)
+### Community 21 - "useT"
+Cohesion: 0.06
+Nodes (139): Cases(), CasesPage(), STATUS_LABEL, STATUSES, PoliciesPage(), STATUS_ORDER, TYPES, EMPTY (+131 more)
 
 ### Community 22 - "case.tsx"
-Cohesion: 0.05
-Nodes (114): config, CargoPage(), Party(), CasePage(), Customer(), CustomerPage(), DESKTOP_ONLY, Dlg (+106 more)
+Cohesion: 0.04
+Nodes (173): CargoPage(), Party(), CasePage(), ListRow, ListsPage(), ScreenResult, Customer(), CustomerPage() (+165 more)
 
-### Community 23 - "@nestjs/common"
-Cohesion: 0.02
-Nodes (122): AppModule, ADR-0001, createApi(), openApiDocument(), ADR-0007, CoreModule, SERVICES, constantTimeEqual() (+114 more)
+### Community 23 - "channels.ts"
+Cohesion: 0.11
+Nodes (10): ChannelError, EmailSender, escapeHtml(), postJson(), PushMessage, PushProviders, SendResult, SmsMessage (+2 more)
 
 ### Community 24 - "itinerary_screen.dart"
-Cohesion: 0.03
-Nodes (71): SearchPoller, SearchSnapshot, _baggageText, build, component, _connectionAfter, _content, createState (+63 more)
+Cohesion: 0.04
+Nodes (44): SearchPoller, SearchSnapshot, trackingLabel, activityScreenLabel, _baggageText, build, component, _connectionAfter (+36 more)
 
-### Community 25 - "DevSystemController"
-Cohesion: 0.07
-Nodes (11): DevSystemController, templateVariables(), SiteController, placeholder(), SiteService, DEFAULT_SETTINGS, AuditQuery, ConfigDomain (+3 more)
+### Community 25 - "AppError"
+Cohesion: 0.02
+Nodes (41): AppError, forbidden(), invalidTransition(), StepUp(), canonicalJson(), chainHash(), base, IdentityVerificationService (+33 more)
 
-### Community 26 - "Authenticated"
-Cohesion: 0.03
-Nodes (109): Layout(), metadata, Page(), Layout(), metadata, Page(), inter, jetbrains (+101 more)
+### Community 26 - "track_screen.dart"
+Cohesion: 0.08
+Nodes (23): trackProvider, build, _busy, _code, createState, dispose, _error, _Intro (+15 more)
 
 ### Community 27 - "[locale]/page.tsx"
 Cohesion: 0.03
-Nodes (114): ActionMenu(), changedPaths(), friendlyIssue(), isObj(), Issue, Json, JsonField(), label() (+106 more)
+Nodes (94): Alert(), AlertDescription(), AlertTitle(), alertVariants, Badge(), badgeVariants, Card(), CardAction() (+86 more)
 
 ### Community 28 - "home_screen.dart"
 Cohesion: 0.02
-Nodes (104): cancelReasonText, invoiceStatusLabel, invoiceTone, quoteStatusLabel, adminCasesProvider, adminSearchProvider, at, customersFirstPageProvider (+96 more)
+Nodes (104): adminCasesProvider, adminSearchProvider, at, customersFirstPageProvider, _equal, fetchCustomers, fromJson, j (+96 more)
 
 ### Community 29 - "api"
 Cohesion: 0.02
 Nodes (92): adults, advisory, aircraft, allowAirportChange, allowOvernight, allowSelfTransfer, allPriced, anyCached (+84 more)
 
 ### Community 30 - "SearchService"
-Cohesion: 0.02
-Nodes (81): borderRadius, build, _controller, createState, dispose, height, rowCount, rowHeight (+73 more)
+Cohesion: 0.03
+Nodes (71): CollapsibleSection, _CollapsibleSectionState, borderRadius, build, _controller, createState, dispose, height (+63 more)
 
 ### Community 31 - "requests.service.ts"
 Cohesion: 0.06
-Nodes (72): ADR-0018, cargoItems, cargoLanes, cargoPieces, cargoService, cargoStatus, partnerBookings, partners (+64 more)
+Nodes (65): ADR-0018, cargoItems, cargoLanes, cargoPieces, cargoService, cargoStatus, partnerBookings, partners (+57 more)
 
-### Community 32 - "cms-article.tsx"
-Cohesion: 0.14
-Nodes (21): dynamic, LOCALES, SERVICES, sitemap(), STATIC, BASE, DESTINATION, LIST_LABEL (+13 more)
+### Community 32 - "translate"
+Cohesion: 0.05
+Nodes (75): Form, first(), generateMetadata(), Page(), Props, generateMetadata(), Page(), Props (+67 more)
 
 ### Community 33 - "support.tsx"
 Cohesion: 0.15
-Nodes (31): CallsPage(), ADR-0019, Message(), TicketPage(), ADR-0019, Segmented(), Side, BonlineNotice() (+23 more)
+Nodes (35): CallsPage(), ADR-0019, Inbox(), SupportPage(), ADR-0019, Message(), TicketPage(), ADR-0019 (+27 more)
 
-### Community 34 - ".lookup"
-Cohesion: 0.07
-Nodes (21): otpHash(), randomDigits(), ipPrefix(), RateLimiter, iso(), trackingDeclined(), maskPersonal(), maskValue() (+13 more)
+### Community 34 - "service-request.spec.ts"
+Cohesion: 0.11
+Nodes (16): SERVICE_TERMINAL, BEFORE_CONFIRMED, isServiceTerminal(), OPEN, SERVICE_TRANSITIONS, ServiceCommandName, arbActor, arbFacts (+8 more)
 
 ### Community 35 - "i18n/src/index.ts"
-Cohesion: 0.08
-Nodes (36): I18nProvider(), en, fa, faq, en, fa, flightGuide, en (+28 more)
+Cohesion: 0.05
+Nodes (63): generateMetadata(), Page(), Props, generateMetadata(), Page(), Props, FACTOR_ICONS, generateMetadata() (+55 more)
 
 ### Community 36 - "src/services.ts"
-Cohesion: 0.05
-Nodes (38): AssignmentResult, cip, quote, ADR-0020, Reference, QuoteStatus, MessageView, AccommodationDetails (+30 more)
+Cohesion: 0.02
+Nodes (99): Row, ACTIVITY_CLIENTS, ACTIVITY_KINDS, ACTIVITY_RETENTION_DAYS, ACTIVITY_SCREENS, ActivityBody, ActivityKind, ActivityRef (+91 more)
 
-### Community 37 - "SupportService"
-Cohesion: 0.07
-Nodes (25): toCallView(), iso(), staffSummary(), summary(), SupportService, CustomerTicketSummary, CustomerTicketView, SupportTicketStatus (+17 more)
+### Community 37 - "online-payment.ts"
+Cohesion: 0.11
+Nodes (22): OnlinePaymentReason, PAYMENT_PROVIDERS, PaymentSessionStatus, RefundStatus, CHECKOUT_MAX_MS, CHECKOUT_MIN_MS, EligibilityFacts, ONLINE_PAYMENT_LIVE_ENABLED (+14 more)
 
 ### Community 38 - "package:flutter_riverpod/flutter_riverpod.dart"
-Cohesion: 0.04
-Nodes (60): "aircraft_types", "airlines", "airports", audit_actor_idx, audit_entity_idx, "audit_log", audit_ref_idx, cargo_customer_idx (+52 more)
-
-### Community 39 - "otp_field.dart"
 Cohesion: 0.03
-Nodes (65): AmountField, _AmountFieldState, _AmountInputFormatter, _arabicIndicToAscii, autofocus, buffer, build, controller (+57 more)
+Nodes (79): "aircraft_types", "airlines", "airports", audit_actor_idx, audit_entity_idx, "audit_log", audit_ref_idx, cargo_customer_idx (+71 more)
 
-### Community 40 - "ref_vitest"
+### Community 39 - "amount_field.dart"
+Cohesion: 0.03
+Nodes (58): AmountField, _AmountFieldState, _AmountInputFormatter, _arabicIndicToAscii, autofocus, buffer, build, controller (+50 more)
+
+### Community 40 - "test/client.ts"
 Cohesion: 0.06
-Nodes (44): ADR-0012, GBP(), iso(), party(), receivedShipment(), ADMIN_HOST, base32Decode(), DEMO_TOTP (+36 more)
+Nodes (52): GBP(), iso(), party(), receivedShipment(), ADMIN_HOST, API, base32Decode(), DEMO_TOTP (+44 more)
 
 ### Community 41 - "package:flutter/material.dart"
 Cohesion: 0.01
-Nodes (193): BrandLogo, build, markSize, onDark, showPersian, actionLabel, build, description (+185 more)
+Nodes (172): BrandLogo, build, markSize, onDark, showPersian, actionLabel, build, description (+164 more)
 
-### Community 42 - "ApiZodResponse"
+### Community 42 - "cms.controller.ts"
 Cohesion: 0.07
 Nodes (41): LocaleQuery, Page, Redirect, Sitemap, Slug, TermPatch, TermStaffQuery, TermTransition (+33 more)
 
-### Community 43 - "src/cargo.ts"
-Cohesion: 0.06
-Nodes (32): AvailabilityView, CARGO_COMMANDS, CargoCommand, CargoCommandBodies, CargoItemInput, CargoItemView, CargoParty, CargoPieceInput (+24 more)
+### Community 43 - "adr0032-fullstack.spec.ts"
+Cohesion: 0.11
+Nodes (13): Logging, REDACT_PATHS, ApifyMock, Route, rowFor(), stackControl(), startApifyMock(), ADR-0029 (+5 more)
 
 ### Community 44 - "seed/index.ts"
 Cohesion: 0.06
-Nodes (75): ActivityRow(), Card(), CaseRows(), CountKey, Home(), More(), SkeletonRows(), SupportTile() (+67 more)
+Nodes (80): Layout(), ActivityRow(), Card(), CaseRows(), CountKey, Home(), More(), SkeletonRows() (+72 more)
 
 ### Community 45 - "schema/requests.ts"
 Cohesion: 0.03
 Nodes (66): acceptedOptionId, actions, at, author, body, can, CargoLane, carrier (+58 more)
 
-### Community 46 - "src/support.ts"
-Cohesion: 0.07
-Nodes (28): ACTIVITY_CLIENTS, ACTIVITY_KINDS, ACTIVITY_RETENTION_DAYS, ACTIVITY_SCREENS, ActivityBody, ActivityKind, ActivityRef, ActivityScreen (+20 more)
+### Community 46 - "SupportService"
+Cohesion: 0.12
+Nodes (14): iso(), staffSummary(), summary(), SupportService, CustomerTicketSummary, CustomerTicketView, StaffTicketCommandBody, StaffTicketListQuery (+6 more)
 
 ### Community 47 - "i18n/src/index.ts"
 Cohesion: 0.03
 Nodes (61): AdminCommand, allClear, allowed, assignee, awaiting, baggage, canDial, CaseTruth (+53 more)
 
 ### Community 48 - "seed/index.ts"
-Cohesion: 0.18
-Nodes (18): PRIVILEGED_ROLES, createDb(), DEMO_USERS, DemoUser, FLAG_META, main(), seedAccess(), seedAvailability() (+10 more)
+Cohesion: 0.04
+Nodes (75): DomainTypes, CmsSlug, CountryCode, AuthConfig, BusinessHours, DEFAULT_FLAGS, Gateway, HubTable (+67 more)
 
 ### Community 49 - "engine.spec.ts"
-Cohesion: 0.06
-Nodes (52): SearchPort, ConnectionRuleFields, RuleOverride, ScoringWeights, Construction, RiskFlag, Connection, Itinerary (+44 more)
+Cohesion: 0.04
+Nodes (82): SearchPort, c(), ConnectionRuleFields, EngineRules, HubsConfig, RuleOverride, ScoringWeights, Construction (+74 more)
 
 ### Community 50 - "service-form.tsx"
-Cohesion: 0.07
-Nodes (59): Page(), CardPage(), CipPage(), InsurancePage(), REGIONS, ADR-0015, ToursPage(), ADR-0015 (+51 more)
+Cohesion: 0.05
+Nodes (82): Page(), CardPage(), CipPage(), InsurancePage(), REGIONS, ADR-0015, ToursPage(), ADR-0015 (+74 more)
 
 ### Community 51 - "quotation-content.ts"
 Cohesion: 0.03
@@ -628,25 +624,25 @@ Nodes (59): amount, api, appliesTo, benefits, canAcceptQuote, canCancel, ClubBen
 Cohesion: 0.20
 Nodes (21): Page(), CityCard(), CityInput(), CityPhoto(), Hero(), ListingCard(), StayForm, StayListing() (+13 more)
 
-### Community 53 - "serialisers.spec.ts"
-Cohesion: 0.06
-Nodes (27): MOVING, customerSeatMaps(), aggregate, AMOUNT_FIELDS, amountPaths(), INTERNAL, iso, message (+19 more)
+### Community 53 - "SuppliersService"
+Cohesion: 0.08
+Nodes (8): SupplierResult, ApifyCredentialBootstrap, harness(), gateway(), seed(), READS, SuppliersService, today()
 
 ### Community 54 - "NativeSelect"
-Cohesion: 0.05
-Nodes (134): AddMemberDialog(), ClubMembers(), ADR-0016, TierDialog(), ADR-0016, ClubMember(), LedgerDialog(), MemberDialog() (+126 more)
+Cohesion: 0.06
+Nodes (97): ClubBenefits(), ADR-0016, AddMemberDialog(), ClubMembers(), ADR-0016, ClubTiers(), TierDialog(), ADR-0016 (+89 more)
 
 ### Community 55 - "FlightDataService"
-Cohesion: 0.12
-Nodes (10): ApifyClient, ApifyRoute, FlightDataService, hourSlot(), month(), sha(), harness(), usd() (+2 more)
+Cohesion: 0.08
+Nodes (25): APIFY_ACTOR, ApifyClient, ApifyInput, ApifyLimits, ApifyRoute, ApifyRun, ApifyRunStatus, ADR-0029 (+17 more)
 
-### Community 56 - "request_form_screen.dart"
+### Community 56 - "VisaService"
 Cohesion: 0.05
-Nodes (38): _budget, build, _busy, ConfirmationScreen, createState, dispose, _error, _flex (+30 more)
+Nodes (30): checkKey(), docView(), iso(), keyWhere(), LONG_STAY, offsetCursor(), ruleView(), runView() (+22 more)
 
-### Community 57 - "hotels/page.tsx"
-Cohesion: 0.09
-Nodes (35): DocZone, generateMetadata(), Page(), Props, generateMetadata(), Page(), Props, FACTOR_ICONS (+27 more)
+### Community 57 - "service_explorer.dart"
+Cohesion: 0.04
+Nodes (49): ActivityEvent, activityFor, ActivityReporter, activityReporterProvider, activityScreens, _api, _cooling, dispose (+41 more)
 
 ### Community 58 - "console/e2e/helpers.ts"
 Cohesion: 0.04
@@ -654,19 +650,23 @@ Nodes (56): ADR-0013, ADR-0012, ADR-0017, here, ADR-0028, ADMIN, API, apiSession
 
 ### Community 59 - "repos.dart"
 Cohesion: 0.02
-Nodes (147): api, _attempt, billingProvider, cache, Cached, clubProvider, data, dispose (+139 more)
+Nodes (132): api, _attempt, billingProvider, cache, Cached, cargoLanesProvider, clubProvider, data (+124 more)
 
-### Community 60 - "payments.controller.ts"
+### Community 60 - "bootstrap.ts"
+Cohesion: 0.15
+Nodes (12): nestjs-pino@5.3.1, reflect-metadata@0.2.2, AppModule, createApi(), openApiDocument(), ADR-0007, CoreModule, main() (+4 more)
+
+### Community 61 - "payments.controller.ts"
 Cohesion: 0.05
-Nodes (27): StepUp(), PaymentConfigService, AdminPaymentsController, CustomerPaymentsController, DevPaymentsController, DevPaymentSinkController, OWN, READ (+19 more)
+Nodes (35): sandboxAllowed(), fakeAllowed(), PaymentConfigService, CustomerPaymentsController, DevPaymentSinkController, OWN, READ, SimulateBody (+27 more)
 
-### Community 61 - "evaluate"
-Cohesion: 0.02
-Nodes (107): ADR-0003, AtolMode, PaymentSessionStatus, RefundStatus, PERMISSIONS, SERVICE_TERMINAL, AFTER_SALES_TRANSITIONS, AfterSalesCommandName (+99 more)
+### Community 62 - "_"
+Cohesion: 0.10
+Nodes (12): OnlineDot, _, app, build, dio, main, money, pageJson (+4 more)
 
-### Community 63 - "ComplianceController"
-Cohesion: 0.12
-Nodes (4): ComplianceController, DecideBody, PolicyBody, PolicyView
+### Community 63 - "compliance.controller.ts"
+Cohesion: 0.10
+Nodes (7): ComplianceController, ADR-0008, DecideBody, PolicyBody, PolicyRejectBody, PolicyView, ScreenAdHocBody
 
 ### Community 64 - "itinerary_screen.dart"
 Cohesion: 0.04
@@ -676,13 +676,13 @@ Nodes (50): action, address, amount, BillingDocs, cancelledAt, cancelReason, can
 Cohesion: 0.17
 Nodes (13): bass(), bell(), boom(), dum(), highpass(), hz(), lowpass(), pad() (+5 more)
 
-### Community 66 - "src/requests.ts"
-Cohesion: 0.06
-Nodes (35): AfterSalesStatus, AfterSalesType, ContactChannel, ContactOutcome, FlightRequestKind, PaymentMethod, PaymentRecordStatus, QuoteOptionSource (+27 more)
+### Community 66 - "enums.ts"
+Cohesion: 0.02
+Nodes (123): SessionValue, Identity, Me, MfaVerifyBody, OtpRequestResult, RefreshBody, SessionView, TestSignInStatus (+115 more)
 
 ### Community 67 - "package:flutter_riverpod/flutter_riverpod.dart"
-Cohesion: 0.02
-Nodes (124): build, UniTravelApp, errorMessage, needsSecondFactor, localeProvider, themeModeProvider, serviceRequestProvider, siteConfigProvider (+116 more)
+Cohesion: 0.01
+Nodes (164): cancelReasonText, invoiceStatusLabel, invoiceTone, quoteStatusLabel, serviceRequestProvider, _AdminModeCard, _busy, children (+156 more)
 
 ### Community 68 - ".start"
 Cohesion: 0.05
@@ -692,21 +692,21 @@ Nodes (49): dependencies, @base-ui/react@1.8.0, class-variance-authority@0.7.1, 
 Cohesion: 0.04
 Nodes (47): accentText, base, bg, blue, Brand, buildAppTheme, card, cardShadow (+39 more)
 
-### Community 70 - "console/src/lib/api.ts"
-Cohesion: 0.07
-Nodes (48): IndicativeSource(), recheckError(), RevalidateNow(), safeHttps(), Snapshot, snapshotUnknowns(), SourceBadge(), ADR-0029 (+40 more)
+### Community 70 - "ref_react"
+Cohesion: 0.04
+Nodes (92): metadata, Page(), Layout(), metadata, Page(), inter, jetbrains, montserrat (+84 more)
 
-### Community 71 - "shipments.dart"
-Cohesion: 0.08
-Nodes (23): awbNumber, code, corrected, delivered, description, estimatedDeliveryAt, fromJson, id (+15 more)
+### Community 71 - "glass_nav_test.dart"
+Cohesion: 0.11
+Nodes (13): dir, disableAnimations, highContrast, _host, _items, main, selected, accentTextFor (+5 more)
 
 ### Community 72 - "sign_in_screen.dart"
 Cohesion: 0.07
 Nodes (36): closeSheet(), HERE, named(), openSettings(), OUT, pass(), scroll(), settle() (+28 more)
 
-### Community 73 - "contracts/src/index.ts"
-Cohesion: 0.06
-Nodes (33): FA_TITLES, ProblemFilter, TITLES, toProblem(), conditionView(), customerItinerary(), ADR-0004, servicePolicyKeys() (+25 more)
+### Community 73 - "problem.filter.ts"
+Cohesion: 0.15
+Nodes (12): FA_TITLES, ProblemFilter, TITLES, toProblem(), RFC-9457, ERROR_STATUS, ErrorCode, Problem (+4 more)
 
 ### Community 74 - "Booklet Supplier & Architecture"
 Cohesion: 0.06
@@ -717,40 +717,40 @@ Cohesion: 0.20
 Nodes (8): anon, Cust, FLAGS, initial, setFlag(), ADR-0016, until(), wait()
 
 ### Community 76 - "identity-verification.spec.ts"
-Cohesion: 0.09
-Nodes (33): DocRow, NO_VERIFICATION, Review, Traveller, TravellerDoc, ADR-0005, COMMAND, ADR-0005 (+25 more)
-
-### Community 77 - "i18n.tsx"
 Cohesion: 0.14
-Nodes (25): Credit, CREDITS, CreditsPage(), ItineraryPage(), ADULT_LIKE, Mix, mixOf(), NewRequestPage() (+17 more)
+Nodes (22): VerificationStatus, canonicalMaterial(), decidable(), MATERIAL_FIELDS, materialChanges(), MaterialField, norm(), normaliseMaterial() (+14 more)
+
+### Community 77 - "contracts/src/visa.ts"
+Cohesion: 0.07
+Nodes (37): FactsDraft, Conflict, DocumentCategory, DocumentTypeCode, EvidenceView, LEG_STATES, OFFICIAL_TIER_MAX, ResearchRunPage (+29 more)
 
 ### Community 78 - "content-editor.tsx"
-Cohesion: 0.12
-Nodes (33): EMPTY, Glossary(), TermDialog(), ADR-0017, ContentEntry(), NewContent(), asPaged(), contentError() (+25 more)
+Cohesion: 0.19
+Nodes (17): ContentEntry(), NewContent(), contentError(), ContentEditor(), Counter(), EMPTY, fromEntry(), toBody() (+9 more)
 
 ### Community 79 - "lib/types.ts"
-Cohesion: 0.08
-Nodes (58): Builder(), QuotePage(), storeKey(), toLocal(), Working, ItineraryView(), SliceView(), TruthBadge() (+50 more)
+Cohesion: 0.07
+Nodes (64): Builder(), QuotePage(), storeKey(), toLocal(), Working, code(), place(), SearchPage() (+56 more)
 
 ### Community 80 - "stage11.e2e.ts"
 Cohesion: 0.05
 Nodes (41): a, arabic, b, d, dayOffset, difference, digits, durationM (+33 more)
 
-### Community 81 - "engine.spec.ts"
-Cohesion: 0.10
-Nodes (29): EngineRules, HubsConfig, Place, SearchQuery, AmendmentSide, AIRPORTS, fmtLocal(), hubTimes (+21 more)
+### Community 81 - "logic_test.dart"
+Cohesion: 0.12
+Nodes (7): max, null, salt, solvePow, solvePowChallenge, target, main
 
 ### Community 82 - "useI18n"
 Cohesion: 0.06
 Nodes (33): Account Linking and Recovery, API Error Codes, Architecture Decision Record (ADR), Authentication and Authorisation, Circuit Breakers and Supplier Budgets, Delivery Roadmap, Environment Variables, Environments (Local, Staging, Production) (+25 more)
 
-### Community 83 - "money.dart"
-Cohesion: 0.08
-Nodes (20): amount, _arabicIndicDigitLocales, _arabicIndicDigits, buffer, currency, defaultMinorUnits, _digitGlyphsToAscii, digits (+12 more)
+### Community 83 - "List"
+Cohesion: 0.03
+Nodes (58): SummaryHistory, awbNumber, code, corrected, delivered, description, estimatedDeliveryAt, fromJson (+50 more)
 
-### Community 84 - "track_screen.dart"
-Cohesion: 0.08
-Nodes (23): trackProvider, build, _busy, _code, createState, dispose, _error, _Intro (+15 more)
+### Community 84 - "currency_pair_row.dart"
+Cohesion: 0.05
+Nodes (41): assetsBasePath, build, currencies, CurrencyEntry, CurrencyFlagCatalog, fallbackFlag, flag, flagFor (+33 more)
 
 ### Community 85 - "kit_ui.dart"
 Cohesion: 0.05
@@ -758,7 +758,7 @@ Nodes (40): image, ports, profiles, POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USE
 
 ### Community 86 - "search.ts"
 Cohesion: 0.06
-Nodes (38): CarrierCode, CursorQuery, Iata, InboxQuery, IsoDate, IsoDateTime, tri(), ProviderPatchBody (+30 more)
+Nodes (40): Conflicts with accepted ADRs, Gap check: flights → request → invoice (owner prompts A–E), Gaps in dependency order, Owner decisions, Status, Tri, Cabin, ProviderId (+32 more)
 
 ### Community 88 - "web-content.spec.ts"
 Cohesion: 0.07
@@ -773,12 +773,12 @@ Cohesion: 0.05
 Nodes (36): blue, BrandTokens, cloud, cyan, danger, glassBlur, glassEdge, glassFillDark (+28 more)
 
 ### Community 91 - "approval_action_bar.dart"
-Cohesion: 0.05
-Nodes (54): UniTravel project rules for AI sessions, ADR-0001 Stack, monorepo and approved additions, Decision D-06 (stack), Docker Compose + Caddy topology, pnpm workspaces + Turborepo, RustFS local S3, Valkey (Redis-protocol) + BullMQ, Zod contracts + OpenAPI from schemas (+46 more)
+Cohesion: 0.06
+Nodes (38): ADR-0001 Stack, monorepo and approved additions, Decision D-06 (stack), Docker Compose + Caddy topology, pnpm workspaces + Turborepo, RustFS local S3, Valkey (Redis-protocol) + BullMQ, Zod contracts + OpenAPI from schemas, ADR-0003 State machine interpretations (+30 more)
 
 ### Community 92 - "api/package.json"
 Cohesion: 0.05
-Nodes (38): dependencies, @aws-sdk/client-s3@3.1150.0, bullmq@6.3.14, cookie-parser@1.4.7, drizzle-orm@0.45.4, express@5.3.0, ioredis@6.0.0, jose@6.2.13 (+30 more)
+Nodes (58): dependencies, @aws-sdk/client-s3@3.1150.0, @aws-sdk/s3-request-presigner@3.1150.0, bullmq@6.3.14, cookie-parser@1.4.7, drizzle-orm@0.45.4, express@5.3.0, helmet@8.3.0 (+50 more)
 
 ### Community 93 - "web/src/components/shell.tsx"
 Cohesion: 0.09
@@ -792,21 +792,21 @@ Nodes (32): Admin Panel, API Process Role, Config Module, Console, Console (Admi
 Cohesion: 0.07
 Nodes (34): dependencies, drizzle-orm@0.45.4, pg@8.23.1, @unitravel/contracts@workspace:*, uuid@14.0.3, devDependencies, dotenv@18.0.7, drizzle-kit@0.31.11 (+26 more)
 
-### Community 96 - "xfam_presets.dart"
+### Community 96 - "adr0022.spec.ts"
 Cohesion: 0.08
-Nodes (24): SessionState, adminConsole, all, colorsFor, customerPortal, dark, defaultMode, fontDisplay (+16 more)
+Nodes (16): apiRequire, { Client }, { Redis }, ADR-0012, ADR-0022, { chromium }, HERE, MEDIA (+8 more)
 
-### Community 97 - "ListingsService"
-Cohesion: 0.09
-Nodes (14): AdminListingsController, PublicListingsController, escapeLike(), flightCacheKey(), iso(), listingQuery(), ListingsService, FlightListingsView (+6 more)
+### Community 97 - "services_screens_test.dart"
+Cohesion: 0.11
+Nodes (9): app, build, details, dio, main, prefs, scope, site (+1 more)
 
 ### Community 98 - "Customer Journeys"
 Cohesion: 0.07
 Nodes (31): airQuest FareWizard, Amadeus, Amadeus Enterprise, Amadeus Flight Builder Discovery, Amadeus Master Pricer, Duffel, Flight Aggregators, Flight Search and Itinerary Engine (+23 more)
 
 ### Community 99 - "support.controller.ts"
-Cohesion: 0.05
-Nodes (44): Phase A price confidentiality (ADR-0004), ADR-0018 Customer activity telemetry, activity.prune worker job (90 days), customer_activity table (allow-listed screens, /24 prefix), customer.read permission and audited timeline, ADR-0028 · Direct invoices, invoice emails and the Stripe setup form, Consequences, Context (+36 more)
+Cohesion: 0.07
+Nodes (31): Phase A price confidentiality (ADR-0004), ADR-0028 · Direct invoices, invoice emails and the Stripe setup form, Consequences, Context, Decisions, invoice.direct permission, Invoice email with services, total and PDF, Compliance screening and SERVICE policies at issue (+23 more)
 
 ### Community 100 - "suppliers.ts"
 Cohesion: 0.05
@@ -820,13 +820,9 @@ Nodes (27): Access Notes, Ancillaries, Assumptions Register, Booking Class and F
 Cohesion: 0.06
 Nodes (29): ALTCHA Proof-of-Work Captcha, Alternative Contact, Brevo, Customer Conversation Thread, Customer Journeys, Customers Module, E.164 Normalisation, Expo Push (+21 more)
 
-### Community 103 - "enums.ts"
-Cohesion: 0.07
-Nodes (35): PolicyRejectBody, ScreenAdHocBody, ScreeningHitView, ScreeningView, ActorKind, CaseDecision, CaseStatus, CaseTrigger (+27 more)
-
-### Community 104 - "stage10.e2e.ts"
-Cohesion: 0.13
-Nodes (12): addVerifiedEmail(), connection, Mail, mailTo(), maintenance, timers, u, until() (+4 more)
+### Community 103 - "tracking_test.dart"
+Cohesion: 0.12
+Nodes (4): main, _traveller, codes, main
 
 ### Community 105 - "amendments.ts"
 Cohesion: 0.32
@@ -837,20 +833,20 @@ Cohesion: 0.17
 Nodes (13): BASIC, detail(), FULL, GBP(), itinerary, json(), me(), missing() (+5 more)
 
 ### Community 107 - "quotation-content.ts"
-Cohesion: 0.12
-Nodes (21): atolFooter(), baggageText(), CargoPiece, cargoSections(), Cond, conditionText(), DEFAULT_ZONE, flightOptionSections() (+13 more)
+Cohesion: 0.11
+Nodes (22): atolFooter(), baggageText(), CargoPiece, cargoSections(), Cond, conditionText(), DEFAULT_ZONE, DocZone (+14 more)
 
 ### Community 108 - "domain/src/loyalty.ts"
 Cohesion: 0.06
 Nodes (30): city, code, confirmedAt, ContactMethod, country, DocumentSummary, expiryDate, fromJson (+22 more)
 
 ### Community 109 - "ServicesService"
-Cohesion: 0.09
-Nodes (30): devDependencies, fast-check@4.10.2, @nestjs/testing@12.2.0, supertest@7.3.1, @swc/core@1.16.18, @types/cookie-parser@1.4.10, @types/express@5.0.6, @types/node@24.19.2 (+22 more)
+Cohesion: 0.07
+Nodes (27): devDependencies, fast-check@4.10.2, @nestjs/testing@12.2.0, supertest@7.3.1, @swc/core@1.16.18, @types/cookie-parser@1.4.10, @types/express@5.0.6, @types/node@24.19.2 (+19 more)
 
 ### Community 110 - "serialisers.spec.ts"
 Cohesion: 0.07
-Nodes (38): UniTravel mobile (Flutter) README, kit_ui shared UI package, Playwright smoke test (e2e/smoke.mjs), Customer mode and admin mode chosen from /v1/me surfaces.admin, Brand assets README, Night flight design direction (navy, royal, orange, cyan), Phase F design and UX, ADR-0026 Mobile app paused (+30 more)
+Nodes (36): UniTravel mobile (Flutter) README, kit_ui shared UI package, Playwright smoke test (e2e/smoke.mjs), Customer mode and admin mode chosen from /v1/me surfaces.admin, Night flight design direction (navy, royal, orange, cyan), Phase F design and UX, ADR-0026 Mobile app paused, ADR-0026: Mobile app paused; public site shows Coming Soon only (+28 more)
 
 ### Community 111 - "Runbooks index"
 Cohesion: 0.07
@@ -860,9 +856,13 @@ Nodes (46): pnpm db:seed reference seed (idempotent), Runbook: backup and restor
 Cohesion: 0.07
 Nodes (29): activeSessions, ActivityEntry, client, contact, CustomerActivity, CustomerItem, CustomerPage, displayName (+21 more)
 
+### Community 113 - "machine.ts"
+Cohesion: 0.15
+Nodes (13): AfterSalesStatus, AFTER_SALES_TRANSITIONS, AfterSalesCommandName, AfterSalesFacts, ActorKind, Evaluation, TransitionDef, TransitionTable (+5 more)
+
 ### Community 114 - "identity-verification.spec.ts"
-Cohesion: 0.07
-Nodes (40): Logo mark and app icon assets, Additional requirements gap plan (23 Oct 2026), Invoice state machine DRAFT-ISSUED-PAID/CANCELLED-REFUNDED, Encrypted passport scans with audited downloads, Phase B identity, passport, verification (ADR-0005), Phase C quotations and invoices (ADR-0006), Phase D Stripe Embedded Checkout, test mode (ADR-0007), Phase E cargo tracking improvements (+32 more)
+Cohesion: 0.09
+Nodes (28): Additional requirements gap plan (23 Oct 2026), Invoice state machine DRAFT-ISSUED-PAID/CANCELLED-REFUNDED, Encrypted passport scans with audited downloads, Phase B identity, passport, verification (ADR-0005), Phase C quotations and invoices (ADR-0006), Phase D Stripe Embedded Checkout, test mode (ADR-0007), Phase E cargo tracking improvements, Stripe webhook with signature check and stripe_events dedupe (+20 more)
 
 ### Community 115 - "devDependencies"
 Cohesion: 0.09
@@ -872,53 +872,53 @@ Nodes (24): Accessibility (WCAG 2.2 AA), API Audiences (/v1, /v1/admin, /v1/dev)
 Cohesion: 0.10
 Nodes (30): build, API_URL, WEB_URL, args, context, dockerfile, target, build (+22 more)
 
-### Community 117 - "ActivityService"
-Cohesion: 0.12
-Nodes (4): AdminCustomerListController, MeActivityController, ActivityService, CustomerListQuery
+### Community 117 - "business.module.ts"
+Cohesion: 0.03
+Nodes (42): AdminCustomerListController, MeActivityController, ActivityService, iso(), trackingDeclined(), BUSINESS_CONTROLLERS, BUSINESS_PROVIDERS, BusinessModules (+34 more)
 
-### Community 118 - "compliance.service.ts"
-Cohesion: 0.05
-Nodes (44): CaseOutcome, ComplianceService, ComplianceSettings, DEFAULT_COMPLIANCE, ListId, OutcomeHandler, ScreenHandler, Subject (+36 more)
+### Community 118 - "list-parsers.ts"
+Cohesion: 0.20
+Nodes (12): COUNTRY_CODES, MONTHS, OFAC_NULL(), parseCsv(), ParsedEntry, parseEu(), parseOfac(), parseUkList() (+4 more)
 
 ### Community 119 - "[locale]/page.tsx"
 Cohesion: 0.09
-Nodes (42): AppPage(), CITY, Home(), ROUTES, searchQuery(), SupportPage(), AppDownload(), BENEFITS (+34 more)
+Nodes (41): AppPage(), Credit, CREDITS, CreditsPage(), CITY, Home(), ROUTES, searchQuery() (+33 more)
 
-### Community 120 - "normalise.ts"
-Cohesion: 0.14
-Nodes (20): CABIN, identityKey(), iso(), minor(), NormalisedRows, normaliseRows(), num(), numberPart() (+12 more)
+### Community 120 - "visa.spec.ts"
+Cohesion: 0.18
+Nodes (11): Evidence, COLOUR, decideVisa(), decidingEvidence(), newestFirst(), normaliseText(), quoteFound(), same() (+3 more)
 
 ### Community 121 - "Night flight design direction"
 Cohesion: 0.06
-Nodes (39): ADR-0023: Customer typefaces, ADR-0011 console typefaces, Alexandria 700 (Persian display), Figtree (Latin text and UI), Montserrat 800 (Latin display, brand), Vazirmatn (Persian text and UI), Web visual cassette re-recorded and snapshots regenerated, ADR-0025: Purchase tracking requires sign-in (+31 more)
+Nodes (39): UniTravel project rules for AI sessions, ADR-0023: Customer typefaces, ADR-0011 console typefaces, Alexandria 700 (Persian display), Figtree (Latin text and UI), Montserrat 800 (Latin display, brand), Vazirmatn (Persian text and UI), Web visual cassette re-recorded and snapshots regenerated (+31 more)
 
-### Community 122 - "translate"
-Cohesion: 0.23
-Nodes (20): first(), generateMetadata(), Page(), Props, generateMetadata(), Page(), Props, ALWAYS (+12 more)
+### Community 122 - "ClaudeVisaExtractor"
+Cohesion: 0.22
+Nodes (3): ClaudeVisaExtractor, SandboxVisaExtractor, VisaExtractor
 
-### Community 123 - "auth.ts"
-Cohesion: 0.09
-Nodes (21): AddIdentityBody, DeviceBody, Identity, MfaVerifyBody, OtpRequestResult, RefreshBody, SessionView, TestSignInStatus (+13 more)
+### Community 123 - "support-ticket.spec.ts"
+Cohesion: 0.14
+Nodes (12): LIVE, facts(), now, owner, readOnlyStaff, run(), staff, stranger (+4 more)
 
 ### Community 124 - "mobile/analysis_options.yaml"
 Cohesion: 0.18
 Nodes (10): analyzer, exclude, flutter_lints Ruleset, include, linter, rules, prefer_single_quotes, Mobile l10n.yaml (+2 more)
 
 ### Community 125 - "search-form.tsx"
-Cohesion: 0.08
-Nodes (49): Page(), EN, FA, Page(), decode(), Results(), SearchPage(), TABS (+41 more)
+Cohesion: 0.09
+Nodes (49): decode(), Results(), SearchPage(), TABS, Calendar(), CalendarProps, isWeekend(), Month() (+41 more)
 
 ### Community 126 - "image-sanitise.spec.ts"
 Cohesion: 0.10
 Nodes (26): Supplier adapter configuration and safe testing, amadeus-enterprise adapter (placeholder), Provider credentials model (Developer Panel, encrypted, write-only), duffel adapter, Supplier gateway protections (deadline, rate limits, circuit breaker, budget), manual adapter (staff-entered options), Related adapters (SMS, push, email, Stripe key names), Provider options by vertical (+18 more)
 
-### Community 127 - "CargoService"
-Cohesion: 0.08
-Nodes (8): CargoService, TERMINAL, timerJobId(), FlightLifecycle, CargoStatus, trackingEvents, CargoFacts, cargoWeights()
+### Community 127 - "serialisers.spec.ts"
+Cohesion: 0.06
+Nodes (25): MOVING, aggregate, AMOUNT_FIELDS, amountPaths(), INTERNAL, iso, message, money (+17 more)
 
-### Community 128 - "entryMetadata"
+### Community 128 - "invoice.spec.ts"
 Cohesion: 0.11
-Nodes (17): generateMetadata(), Page(), Props, generateMetadata(), Page(), Props, generateMetadata(), Page() (+9 more)
+Nodes (24): AtolMode, endOfLondonDay(), fmt, INVOICE_TRANSITIONS, invoiceAmountsEditable(), InvoiceCommand, invoiceExpiry(), issueGuard() (+16 more)
 
 ### Community 129 - "gen-tokens.mjs"
 Cohesion: 0.15
@@ -926,31 +926,27 @@ Nodes (15): camel(), css(), dart(), dartColor(), decl(), FILES, here, isHex() (+
 
 ### Community 130 - "ADR-0017 Hotel page content and request preferences"
 Cohesion: 0.11
-Nodes (22): ADR-0021 Curated and cached listings, Cached flight results (CACHED_OFFER), curated_listings (buses, trains, stays; INDICATIVE), GET /v1/listings/flights cached results (CACHED_OFFER), listings.warm-flights worker job, ADR-0027 Live aircraft list, ADR-0027: Live aircraft list on the flights page, adsb.lol live aircraft source (+14 more)
+Nodes (23): ADR-0021 Curated and cached listings, Cached flight results (CACHED_OFFER), curated_listings (buses, trains, stays; INDICATIVE), GET /v1/listings/flights cached results (CACHED_OFFER), listings.warm-flights worker job, ADR-0027 Live aircraft list, ADR-0027: Live aircraft list on the flights page, adsb.lol live aircraft source (+15 more)
 
 ### Community 131 - "Cargo Request"
 Cohesion: 0.10
 Nodes (24): Audit Log, Audit Module, Background Jobs, Events and Caching, BullMQ Queues, Compliance Evidence Retention, Database Roles, Dead Letters and Replay, Developer Panel Endpoint Catalogue (+16 more)
 
 ### Community 132 - "src/listings.ts"
-Cohesion: 0.10
-Nodes (17): CachedFlights, Draft, CuratedListingView, FlightListingItem, LISTING_LABELS, ListingFields, ListingLabel, ListingShape (+9 more)
+Cohesion: 0.06
+Nodes (32): CachedFlights, escapeLike(), iso(), listingQuery(), ListingsService, rotatedDate(), offer(), tp() (+24 more)
 
 ### Community 133 - "cargo-tracking.ts"
-Cohesion: 0.13
-Nodes (19): CargoTrackingPort, dedupeIncoming(), EARLIEST, effectiveRecordIds(), effectiveTimeline(), IncomingTrackingEvent, lastEvent(), ManualTrackingAdapter (+11 more)
+Cohesion: 0.11
+Nodes (21): TrackingEventCode, CargoTrackingPort, dedupeIncoming(), EARLIEST, effectiveRecordIds(), effectiveTimeline(), EffectiveTrackingEvent, IncomingTrackingEvent (+13 more)
 
-### Community 134 - "Actor"
-Cohesion: 0.05
-Nodes (28): Actor, CurrentActor, DevSurface(), Idempotent(), RequirePermission(), AdminCargoController, CustomerCargoController, DevCargoController (+20 more)
+### Community 134 - "AdminCargoController"
+Cohesion: 0.11
+Nodes (10): AdminCargoController, DevCargoController, ifMatch(), touchesIran(), AvailabilityBody, CargoQuoteBody, EstimatedDeliveryBody, PartnerBody (+2 more)
 
-### Community 135 - "adr0022.spec.ts"
-Cohesion: 0.06
-Nodes (19): db, device, dropCaches(), resume(), apiRequire, { Client }, { Redis }, ADR-0012 (+11 more)
-
-### Community 136 - "stays/adapter.ts"
-Cohesion: 0.13
-Nodes (12): GroundCapabilities, GroundSupplierAdapter, ADR-0015, AccommodationCapabilities, AccommodationSupplierAdapter, ADR-0004, ADR-0015, ProviderEnv (+4 more)
+### Community 135 - "adr0022.e2e.ts"
+Cohesion: 0.15
+Nodes (7): db, device, dropCaches(), resume(), IMMUTABLE_TABLES, main(), SENSITIVE_TABLES
 
 ### Community 137 - "ADR-0015 service requests and verticals (deviates from D-04)"
 Cohesion: 0.10
@@ -960,9 +956,9 @@ Nodes (23): dependencies, crypto, dio, flutter, flutter_localizations, flutter_r
 Cohesion: 0.12
 Nodes (21): glide(), latestOtp(), mouse, offsetsFile, only, OUT, point(), ROOT (+13 more)
 
-### Community 139 - "DocumentsService"
-Cohesion: 0.07
-Nodes (9): ObjectStorage, Handler, clamScan(), DocumentsService, isIdentityType(), STUCK_SCAN_AFTER_MS, ReferenceService, Destination (+1 more)
+### Community 139 - "name-matcher.ts"
+Cohesion: 0.16
+Nodes (19): canonToken(), decide(), EQUIVALENTS, jaroWinkler(), MatchCandidate, MatchSubject, nameScore(), normaliseLatin() (+11 more)
 
 ### Community 140 - "payments.service.ts"
 Cohesion: 0.15
@@ -976,13 +972,13 @@ Nodes (19): "compliance_decisions", "config_versions", config_versions_uq, "offe
 Cohesion: 0.12
 Nodes (18): JPEG_KEEP_APP, PNG_KEEP, PNG_SIGNATURE, COM, DATA, DHT, DQT, EXIF (+10 more)
 
-### Community 143 - "calendar.tsx"
-Cohesion: 0.28
-Nodes (18): CalendarProps, isWeekend(), Month(), noon(), Panel, addDays(), CalendarKind, calendarLocale() (+10 more)
+### Community 143 - "page-fetcher.ts"
+Cohesion: 0.17
+Nodes (13): ENTITIES, FetchedPage, FetchLog, GovukContent, htmlLinks(), htmlTitle(), htmlToText(), isGovernmentHost() (+5 more)
 
-### Community 144 - "ui/theme.dart"
-Cohesion: 0.14
-Nodes (18): build, createState, glossaryProvider, GlossaryScreen, _GlossaryScreenState, guideProvider, GuideScreen, guidesProvider (+10 more)
+### Community 144 - ".list"
+Cohesion: 0.18
+Nodes (5): PublicListingsController, flightCacheKey(), FlightListingsView, ListingPath, PublicListingQuery
 
 ### Community 145 - "list-parsers.ts"
 Cohesion: 0.10
@@ -1012,17 +1008,17 @@ Nodes (20): ATOL, atol.mode, Cargo Request State Machine, Carrier Policy, Compli
 Cohesion: 0.10
 Nodes (21): Stage 10 record: Phase C quotations and invoices, ADR-0006 commercial documents (C1-C12), documentDelivery forces inbox and email (SMS fallback), DocumentNumbersService (gap-free numbering), Invoice expiry (delayed job and invoices.expire-due maintenance), Invoice state machine (INVOICE_TRANSITIONS), Console InvoicesPanel and web /billing pages, InvoicesService (draft, issue, cancel, expire, markPaid, settleFromPayments) (+13 more)
 
-### Community 152 - "name-matcher.ts"
-Cohesion: 0.13
-Nodes (21): "users", "request_amendments", request_amendments_append_only, request_amendments_request_idx, "loyalty_benefits", loyalty_benefits_tier_idx, loyalty_benefits_user_idx, "loyalty_ledger" (+13 more)
+### Community 152 - ""users""
+Cohesion: 0.14
+Nodes (20): "users", "customer_activity", customer_activity_at_idx, customer_activity_user_idx, users_last_active_idx, "curated_listings", curated_listings_public_idx, "trusted_devices" (+12 more)
 
 ### Community 153 - "support.tsx"
 Cohesion: 0.11
 Nodes (21): dependencies, @unitravel/contracts@workspace:*, devDependencies, fast-check@4.10.2, @types/node@24.19.2, typescript@6.0.3, vitest@5.0.4, fast-check (+13 more)
 
-### Community 154 - "stage11.e2e.ts"
-Cohesion: 0.05
-Nodes (43): API, dbQuery(), stackControl(), anon, Cust, maintenance, redis, ADR-0004 (+35 more)
+### Community 154 - "stage13.e2e.ts"
+Cohesion: 0.12
+Nodes (21): dbQuery(), auditCount(), addVerifiedEmail(), GBP(), inReview(), Mail, mailsTo(), notes() (+13 more)
 
 ### Community 155 - "src/invoices.ts"
 Cohesion: 0.11
@@ -1030,31 +1026,35 @@ Nodes (21): dependencies, @unitravel/contracts@workspace:*, devDependencies, fas
 
 ### Community 156 - "decorators.ts"
 Cohesion: 0.04
-Nodes (51): API_CONTROLLERS, randomToken(), sha256(), AuthGuard, COOKIE_ACCESS, COOKIE_ANON, COOKIE_CSRF, COOKIE_DEVICE (+43 more)
+Nodes (41): hmacSign(), randomDigits(), randomToken(), sha256(), AuthGuard, COOKIE_ACCESS, COOKIE_CSRF, COOKIE_DEVICE (+33 more)
 
 ### Community 157 - "content_screens.dart"
 Cohesion: 0.10
 Nodes (18): buildXfamTheme, colorScheme, fontFallback, fontFamily, isRtl, lineHeight, radiusLg, radiusMd (+10 more)
 
+### Community 158 - "DevProvidersController"
+Cohesion: 0.16
+Nodes (3): AdminProvidersController, DevProvidersController, ProviderRunsQuery
+
 ### Community 159 - "compilerOptions"
 Cohesion: 0.11
 Nodes (6): AppDelegate, SceneDelegate, RunnerTests, Flutter, UIKit, XCTest
 
-### Community 160 - "stripe-js.ts"
-Cohesion: 0.29
-Nodes (5): EmbeddedCheckout, loadStripeJs(), mountEmbeddedCheckout(), StripeJs, Window
+### Community 160 - "fake_api.dart"
+Cohesion: 0.13
+Nodes (10): calls, close, count, FakeAdapter, fetch, Handler, json, meJson (+2 more)
 
 ### Community 161 - ".download"
 Cohesion: 0.12
 Nodes (13): ack, anon, Cust, FLAGS, GBP(), initial, MENU, quoteInput() (+5 more)
 
-### Community 162 - "support.dart"
-Cohesion: 0.11
-Nodes (18): authorName, body, canReply, createdAt, fromCustomer, fromJson, id, lastMessageAt (+10 more)
+### Community 162 - "place_picker.dart"
+Cohesion: 0.04
+Nodes (38): CachedDoc, clear, data, JsonCache, _prefix, _prefs, put, savedAt (+30 more)
 
-### Community 163 - "request_progress.dart"
-Cohesion: 0.12
-Nodes (15): amountMinor, currency, flag, from, integer, intOrNull, Json, Money (+7 more)
+### Community 163 - "request_form_screen.dart"
+Cohesion: 0.03
+Nodes (51): _budget, _busy, ConfirmationScreen, createState, dispose, _error, _flex, _idempotencyKey (+43 more)
 
 ### Community 164 - "my_details.dart"
 Cohesion: 0.10
@@ -1073,52 +1073,48 @@ Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
 ### Community 168 - "api"
-Cohesion: 0.07
-Nodes (63): Context, EMPTY, MyDetailsPage(), ADR-0005, AccountPage(), CargoPage(), CATS, countryOptions() (+55 more)
+Cohesion: 0.06
+Nodes (78): Context, EMPTY, MyDetailsPage(), ADR-0005, AccountPage(), CargoPage(), CATS, countryOptions() (+70 more)
 
 ### Community 169 - "infra.module.ts"
 Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
 ### Community 170 - "dev.ts"
-Cohesion: 0.09
-Nodes (21): AuditEntryView, ConfigDraftBody, ConfigVersionView, CredentialsBody, DeadLetterView, DevUserListItem, DevUsersQuery, HealthView (+13 more)
-
-### Community 171 - "config.ts"
-Cohesion: 0.14
-Nodes (13): CountryCode, LocalisedText, BusinessHours, CONFIG_SCHEMAS, DEFAULT_FLAGS, Gateway, HubTable, NotificationRule (+5 more)
+Cohesion: 0.06
+Nodes (31): Not verified / open, Stage 22 record: Apify Google Flights on `/flights` (2–3 Nov 2026), Verified (OBSERVED, local stack, `APIFY_TOKEN` empty, no real Apify call), What changed (DOCUMENTED), AuditEntryView, ConfigDraftBody, ConfigVersionView, CredentialsBody (+23 more)
 
 ### Community 172 - "dev_dependencies"
 Cohesion: 0.33
 Nodes (6): dev_dependencies, flutter_lints, flutter_localizations, flutter_test, sdk, sdk
 
 ### Community 173 - "details/page.tsx"
-Cohesion: 0.19
-Nodes (19): ADR-0017 Hotel page content and request preferences, AccommodationDetails preferences (stars, room, meal plan), dl content block kind (Terms), hotel-guide.ts content (15 items, en/fa), hotels.enabled flag, ServiceFormFrame embedded mode, Claims to verify before publishing (C1-C26), C21-C25 hotel supply and instant voucher claims (+11 more)
+Cohesion: 0.11
+Nodes (29): ADR-0017 Hotel page content and request preferences, AccommodationDetails preferences (stars, room, meal plan), dl content block kind (Terms), hotel-guide.ts content (15 items, en/fa), hotels.enabled flag, ServiceFormFrame embedded mode, ADR-0019 Bonline telephony integration, Manual call log (POST /v1/admin/calls) (+21 more)
 
-### Community 174 - "RequestContext"
-Cohesion: 0.03
-Nodes (83): Ctx, RequestContext, StaffOnly(), ApiZodBody(), ApiZodQuery(), ApiZodResponse(), openApiSchema(), zbody() (+75 more)
+### Community 174 - "loyalty.controller.ts"
+Cohesion: 0.09
+Nodes (20): iso(), LoyaltyService, tierView(), toMoney(), ClubCandidate, CustomerClubView, LoyaltyAppliesTo, LoyaltyBenefitBody (+12 more)
 
-### Community 175 - "FakeRedis"
-Cohesion: 0.08
-Nodes (5): gateway(), ID, seed(), FakeRedis, providerCredentials
+### Community 175 - "ReferenceController"
+Cohesion: 0.15
+Nodes (4): ReferenceController, fold(), Destination, LocationSuggestion
 
 ### Community 176 - "search-rerun.spec.ts"
-Cohesion: 0.06
-Nodes (36): build(), offers, pending(), query, input, ctx, json(), mockApify() (+28 more)
+Cohesion: 0.04
+Nodes (43): build(), offers, pending(), query, input, CABIN, identityKey(), iso() (+35 more)
 
-### Community 177 - "notifications.ts"
-Cohesion: 0.15
-Nodes (12): Channel, DeliveryStatus, Locale, DeliveryView, InboxItem, MarkReadBody, prefixCoversIran(), SMS_PROVIDERS (+4 more)
+### Community 177 - "phase-j.e2e.ts"
+Cohesion: 0.17
+Nodes (10): anon, Cust, maintenance, redis, ADR-0004, ADR-0018, ADR-0029, ADR-0032 (+2 more)
 
-### Community 178 - ".constructor"
+### Community 178 - "UniTravel request-based travel and cargo platform"
 Cohesion: 0.18
-Nodes (3): StaffEvents, CLOSED_CARGO, DashboardService
+Nodes (13): Brand assets README, Logo mark and app icon assets, apps/api (NestJS API and worker), apps/console (Admin and Developer Panels), apps/mobile (Flutter app), apps/web (Next.js customer website), packages/contracts (Zod schemas, permissions), packages/db (Drizzle schema, migrations, seed) (+5 more)
 
-### Community 179 - "content.ts"
-Cohesion: 0.27
-Nodes (9): CmsSlug, dir, load(), readSeedContent(), seedContent(), SeedEntry, SeedGlossaryTerm, SeedStatus (+1 more)
+### Community 179 - "token_store.dart"
+Cohesion: 0.20
+Nodes (9): clear, _key, MemoryTokenStore, readRefreshToken, SecureTokenStore, _storage, _token, TokenStore (+1 more)
 
 ### Community 180 - "mobile/analysis_options.yaml"
 Cohesion: 0.17
@@ -1136,25 +1132,25 @@ Nodes (15): dependencies, @base-ui/react@1.8.0, class-variance-authority@0.7.1, 
 Cohesion: 0.13
 Nodes (14): with, cache, cache-from, cache-to, channel, context, fetch-depth, file (+6 more)
 
-### Community 184 - "permissions.ts"
-Cohesion: 0.25
-Nodes (8): BUILT_IN_ROLES, BuiltInRole, DEFAULT_ROLE_PERMISSIONS, hasPrivilegedPermission(), PERMISSION_CATALOGUE, PRIVILEGED_PERMISSIONS, ADR-0020, ADR-0028
+### Community 184 - "reference.service.spec.ts"
+Cohesion: 0.27
+Nodes (7): db, rows, aircraftTypes, airlines, airports, cities, countries
 
 ### Community 185 - "Graphify Operations"
 Cohesion: 0.13
 Nodes (15): dependencies, @base-ui/react@1.8.0, class-variance-authority@0.7.1, react@19.3.0, react-dom@19.3.0, @tanstack/react-query@5.104.2, @unitravel/contracts@workspace:*, zod@4.6.7 (+7 more)
 
-### Community 186 - "ADR-0020 Admin-assigned services and payment page"
-Cohesion: 0.25
-Nodes (11): ADR-0019 Bonline telephony integration, Manual call log (POST /v1/admin/calls), TelephonyPort and BonlineAdapter, telephony:bonline vendor credential (write-only), POST /v1/webhooks/bonline signed webhook, ADR-0020 Admin-assigned services and payment page, POST /v1/admin/customers/:id/assignments (service.assign), GET /v1/billing/purchasable (+3 more)
+### Community 186 - "web-content.spec.ts"
+Cohesion: 0.20
+Nodes (6): anon, ids, setCard(), slugs, tag, ADR-0017
 
 ### Community 187 - "stays/adapter.ts"
 Cohesion: 0.21
 Nodes (14): "payment_records", payment_records_request_idx, "payment_config", payment_records_provider_ref_uq, "payment_sessions", payment_sessions_invoice_idx, payment_sessions_one_open_per_invoice_uq, payment_sessions_status_idx (+6 more)
 
-### Community 188 - "templates.ts"
+### Community 188 - "console/src/app/api/[...path]/route.ts"
 Cohesion: 0.22
-Nodes (8): EventTemplates, T, TEMPLATES, ADR-0004, ADR-0006, ADR-0013, ADR-0015, ADR-0016
+Nodes (7): DELETE, dynamic, GET, HOP, PATCH, POST, PUT
 
 ### Community 189 - "FakeAdapter refuses to construct outside local"
 Cohesion: 0.14
@@ -1180,13 +1176,13 @@ Nodes (13): concurrency, cancel-in-progress, group, env, NODE_VERSION, PNPM_VERS
 Cohesion: 0.14
 Nodes (14): depends_on, environment, image, ports, restart, volumes, ACME_EMAIL, ADMIN_HOST (+6 more)
 
-### Community 195 - "Flight request state machine (flight-request.ts)"
-Cohesion: 0.21
-Nodes (4): ADR-0003 State machine interpretations, Cargo request state machine (cargo-request.ts), Flight request state machine (flight-request.ts), Property tests (engine invariants, state machine, payments, serialisers)
+### Community 195 - "help_links_test.dart"
+Cohesion: 0.22
+Nodes (4): _captureLaunches, main, _pump, urls
 
 ### Community 196 - "club.e2e.ts"
-Cohesion: 0.21
-Nodes (16): "quotes", quotes_request_idx, quotes_request_version_uq, "document_sequences", invoice_history_invoice_idx, "invoice_lines", invoice_lines_invoice_idx, invoice_lines_only_in_draft() (+8 more)
+Cohesion: 0.27
+Nodes (13): "document_sequences", invoice_history_invoice_idx, "invoice_lines", invoice_lines_invoice_idx, invoice_lines_only_in_draft(), "invoice_status_history", invoice_status_history_append_only, "invoices" (+5 more)
 
 ### Community 197 - "compilerOptions"
 Cohesion: 0.18
@@ -1196,33 +1192,29 @@ Nodes (13): ADR-0018 activity telemetry, ADR-0019 Bonline telephony, ADR-0021 cu
 Cohesion: 0.18
 Nodes (5): agent_marker(), main(), runs_search(), should_gate(), targets_code()
 
-### Community 199 - "helmet"
-Cohesion: 0.11
-Nodes (10): @aws-sdk/s3-request-presigner@3.1150.0, libphonenumber-js@1.13.15, @unitravel/contracts@workspace:*, @unitravel/db@workspace:*, @unitravel/engine@workspace:*, @unitravel/contracts, @aws-sdk/s3-request-presigner, libphonenumber-js (+2 more)
+### Community 199 - "claude-extractor.ts"
+Cohesion: 0.14
+Nodes (15): @anthropic-ai/sdk@1.3.0, Claims, ExtractionInput, ExtractionPage, ExtractionResult, Output, ADR-0014, ADR-0033 (+7 more)
 
-### Community 200 - "lib/markdown.tsx"
-Cohesion: 0.33
-Nodes (9): cells(), Heading, href(), inline(), isSeparator(), plainText(), renderMarkdown(), slugify() (+1 more)
+### Community 200 - "VisaResearchService"
+Cohesion: 0.12
+Nodes (16): countryName(), documentDescription(), GOVUK_ALIASES, MAX_PAGES, purposeDescription(), regionNames, RunTrigger, slugify() (+8 more)
 
 ### Community 201 - "manifest.webmanifest/route.ts"
 Cohesion: 0.15
 Nodes (12): Compliance Screening Queue (compliance.screen), J3 Manual Request, Manual Request Service, Manual Staff Options, Partner Screening, Party Screening, SI 2026/983, Special Service Requests (+4 more)
 
-### Community 202 - ""public"."users""
-Cohesion: 0.07
-Nodes (25): "after_sales_cases", "contact_attempts", contact_attempts_idx, "credit_overrides", "customer_profiles", "devices", devices_token_uq, "mfa_factors" (+17 more)
+### Community 202 - ""tickets""
+Cohesion: 0.17
+Nodes (9): "after_sales_cases", "credit_overrides", "request_travellers", request_travellers_req_idx, "reservation_segments", "reservations", reservations_request_idx, "tickets" (+1 more)
 
 ### Community 203 - "dev_dependencies"
 Cohesion: 0.50
 Nodes (4): dev_dependencies, flutter_lints, flutter_test, sdk
 
-### Community 204 - "providers.ts"
-Cohesion: 0.24
-Nodes (8): APIFY_DEFAULT_METERING, providerSeedRows(), shouldSeedDemo(), ADR-0014, ADR-0014, ADR-0015, ADR-0029, ADR-0032
-
-### Community 205 - "[locale]/glossary/page.tsx"
-Cohesion: 0.33
-Nodes (7): generateMetadata(), Page(), Props, CATS, GlossaryList(), norm(), listGlossary()
+### Community 205 - "popular-flights.spec.ts"
+Cohesion: 0.25
+Nodes (4): day, ITEMS, ADR-0031, ADR-0032
 
 ### Community 206 - "Deploy behind existing host nginx runbook"
 Cohesion: 0.20
@@ -1240,13 +1232,13 @@ Nodes (11): "call_logs", call_logs_provider_uq, call_logs_started_idx, call_logs
 Cohesion: 0.20
 Nodes (9): compilerOptions, declaration, emitDecoratorMetadata, experimentalDecorators, outDir, types, extends, include (+1 more)
 
-### Community 210 - "apify/client.ts"
+### Community 210 - "Stage 23 record: visa and travel document checker (2 Nov 2026)"
 Cohesion: 0.25
-Nodes (7): APIFY_ACTOR, ApifyInput, ApifyLimits, ApifyRun, ApifyRunStatus, ADR-0029, LegSpec
+Nodes (7): Audit of what existed (OBSERVED), Deployed to staging (OBSERVED, 2 Nov 2026 16:54-17:05), Not verified, Owner actions, Stage 23 record: visa and travel document checker (2 Nov 2026), Verified (OBSERVED, local stack), What changed (DOCUMENTED)
 
 ### Community 211 - "pdf.ts"
-Cohesion: 0.13
-Nodes (20): pdf-lib@1.17.1, @pdf-lib/fontkit@1.1.1, ascii(), bidiRuns(), COPPER, fontBytes, GREY, latin() (+12 more)
+Cohesion: 0.17
+Nodes (16): ascii(), bidiRuns(), COPPER, fontBytes, GREY, latin(), LINE, MIRROR (+8 more)
 
 ### Community 212 - "services"
 Cohesion: 0.18
@@ -1256,17 +1248,17 @@ Nodes (10): days, hours, left, mins, parts, SlaLevel, slaRiskWindow, slaStatuses
 Cohesion: 0.12
 Nodes (15): dependencies, flutter, flutter_svg, intl, lucide_icons_flutter, description, environment, flutter (+7 more)
 
-### Community 214 - "adr0032-fullstack.spec.ts"
+### Community 214 - "site-menu.spec.ts"
 Cohesion: 0.12
-Nodes (15): solvePow(), ADR-0004, API, latestOtp(), signIn(), ADR-0012, ADR-0005, ADR-0012 (+7 more)
+Nodes (15): ADR-0004, API, latestOtp(), signIn(), ADR-0012, ADR-0005, ADR-0012, anon (+7 more)
 
 ### Community 215 - ""flight_requests""
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, prefer_related_applications, short_name (+2 more)
 
-### Community 216 - "manifest.webmanifest/route.ts"
-Cohesion: 0.29
-Nodes (4): dynamic, ICONS, SURFACE, ADR-0022
+### Community 216 - "api_error.dart"
+Cohesion: 0.14
+Nodes (12): body, code, detail, fieldErrors, fromDio, isNetwork, network, networkCode (+4 more)
 
 ### Community 217 - "Stage 18 record: customer activity, support and calls, assigned services, listings"
 Cohesion: 0.18
@@ -1296,9 +1288,9 @@ Nodes (8): audio_for(), clip_segment(), esc(), label_filter(), main(), probe(), 
 Cohesion: 0.20
 Nodes (10): scripts, build, dev, dev:worker, openapi, start, start:worker, test (+2 more)
 
-### Community 224 - "Gap check: flights → request → invoice (owner prompts A–E)"
-Cohesion: 0.33
-Nodes (5): Conflicts with accepted ADRs, Gap check: flights → request → invoice (owner prompts A–E), Gaps in dependency order, Owner decisions, Status
+### Community 224 - "DPIA draft for UniTravel platform"
+Cohesion: 0.17
+Nodes (13): ADR-0018 Customer activity telemetry, activity.prune worker job (90 days), customer_activity table (allow-listed screens, /24 prefix), customer.read permission and audited timeline, DPIA draft for UniTravel platform, Activity telemetry (ADR-0018), DPIA data categories and subjects, Invoice emails data row (ADR-0028) (+5 more)
 
 ### Community 225 - "@simplewebauthn/server"
 Cohesion: 0.20
@@ -1317,8 +1309,8 @@ Cohesion: 0.20
 Nodes (9): allowBuilds, esbuild, msgpackr-extract, @parcel/watcher, @scarf/scarf, sharp, @swc/core, unrs-resolver (+1 more)
 
 ### Community 229 - "web/src/app/api/[...path]/route.ts"
-Cohesion: 0.22
-Nodes (7): DELETE, dynamic, GET, HOP, PATCH, POST, PUT
+Cohesion: 0.09
+Nodes (16): dynamic, ICONS, SURFACE, ADR-0022, config, notFound(), proxy(), surfaceOf() (+8 more)
 
 ### Community 230 - ""provider_runs""
 Cohesion: 0.67
@@ -1328,9 +1320,9 @@ Nodes (3): "providers", "provider_runs", provider_runs_provider_idx
 Cohesion: 0.22
 Nodes (9): flutter, assets, fonts, generate, uses-material-design, asset, family, fonts (+1 more)
 
-### Community 232 - "useT"
-Cohesion: 0.07
-Nodes (156): ClubBenefits(), ADR-0016, ClubTiers(), ListRow, ListsPage(), ScreenResult, Cases(), CasesPage() (+148 more)
+### Community 232 - "useSession"
+Cohesion: 0.05
+Nodes (138): ConfigPage(), SimResult, SimSide, Version, Health, HealthPage(), Lane, LanesPage() (+130 more)
 
 ### Community 233 - "0019_direct_invoices.sql"
 Cohesion: 0.22
@@ -1340,13 +1332,9 @@ Nodes (9): RUSTFS_ACCESS_KEY, RUSTFS_SECRET_KEY, RUSTFS_SSE_S3_MASTER_KEY, stora
 Cohesion: 0.25
 Nodes (10): "documents", documents_request_idx, "traveller_documents", traveller_documents_traveller_idx, "travellers", travellers_owner_idx, traveller_documents_verification_idx, "verification_reviews" (+2 more)
 
-### Community 235 - "console/src/proxy.ts"
-Cohesion: 0.47
-Nodes (5): config, notFound(), proxy(), surfaceOf(), ADR-0022
-
-### Community 236 - "passengers.ts"
-Cohesion: 0.40
-Nodes (5): PassengerType, ageOn(), passengerTypeOn(), ADR-0008, validatePassengerMix()
+### Community 236 - "domain.spec.ts"
+Cohesion: 0.06
+Nodes (34): ADR-0003, CargoStatus, PassengerType, BEFORE_RECEIVED, CARGO_TRANSITIONS, CargoCommandName, CargoFacts, IN_FULFILMENT (+26 more)
 
 ### Community 237 - "valkey"
 Cohesion: 0.25
@@ -1410,7 +1398,7 @@ Nodes (7): compilerOptions, outDir, rootDir, exclude, extends, include, ../../ts
 
 ### Community 252 - "domain/src/loyalty.ts"
 Cohesion: 0.13
-Nodes (19): AppliesTo, BenefitFacts, BenefitKind, BenefitStatus, canDebit(), checkClubDiscountLine(), ClubLineCheck, effectiveBenefitStatus() (+11 more)
+Nodes (18): AppliesTo, BenefitFacts, BenefitKind, BenefitStatus, checkClubDiscountLine(), ClubLineCheck, effectiveBenefitStatus(), fail() (+10 more)
 
 ### Community 253 - "Control deck (console UI update)"
 Cohesion: 0.29
@@ -1420,9 +1408,9 @@ Nodes (6): ADR-0015 service requests and verticals (deviates from D-04), ADR-002
 Cohesion: 0.29
 Nodes (7): ADR-0016 customer club, Stage 16 record: menu, service requests, tracking, support, customer club, club-discount.hook validates CLUB_DISCOUNT quote lines, Migration 0011 customer club tables (tiers, members, benefits, append-only ledger), Admin Panel /services and /club screens, Loyalty domain rules (four-eyes, checkClubDiscountLine, ledger no-overdraft), Open: publish new NOTIFICATION_MATRIX version on existing databases
 
-### Community 255 - "dev-system.controller.ts"
-Cohesion: 0.05
-Nodes (39): DomainTypes, DOMAIN_PERMISSION, redact(), ADR-0007, PdfSection, CompanyInfo, DocMoney, InvoicePdfInput (+31 more)
+### Community 255 - "commercial-pdf.ts"
+Cohesion: 0.19
+Nodes (8): PdfSection, CompanyInfo, DocMoney, InvoicePdfInput, QuotationPdfInput, UNKNOWN_PARTICULAR, CommercialDocumentSettings, DEFAULT_COMMERCIAL_DOCUMENTS
 
 ### Community 256 - "Hotel page copy (15 section contents, booking steps, price factors)"
 Cohesion: 0.33
@@ -1444,21 +1432,21 @@ Nodes (5): ADR-0017 content system, Stage 17 record: hotel page, liquid glass, c
 Cohesion: 0.33
 Nodes (6): scripts, build, dev, e2e, start, typecheck
 
-### Community 261 - "_"
-Cohesion: 0.02
-Nodes (102): AuthDelegate, max, null, salt, solvePow, solvePowChallenge, target, SessionNotifier (+94 more)
+### Community 261 - "admin_test.dart"
+Cohesion: 0.06
+Nodes (19): ApiException, brightness, build, _item, locale, main, _now, prefs (+11 more)
 
 ### Community 262 - "storage"
 Cohesion: 0.33
 Nodes (5): AppL10n, _AppL10nDelegate, AppL10nEn, AppL10nFa, of
 
-### Community 263 - "console/src/app/api/[...path]/route.ts"
-Cohesion: 0.22
-Nodes (7): DELETE, dynamic, GET, HOP, PATCH, POST, PUT
+### Community 263 - "ADR-0002 Flutter for mobile"
+Cohesion: 0.13
+Nodes (19): ADR-0002 Flutter for mobile, Dart models mirror packages/contracts, checked by contract test, Push via EXPO / PUSHY providers behind feature flag, flutter_secure_storage refresh token, go_router with two StatefulShellRoutes chosen by permissions, Jalali dates via shamsi_date, Mobile app brief, Admin mode (triage only) (+11 more)
 
-### Community 264 - "list-parsers.ts"
-Cohesion: 0.24
-Nodes (12): COUNTRY_CODES, MONTHS, OFAC_NULL(), parseCsv(), ParsedEntry, parseEu(), parseOfac(), parseUkList() (+4 more)
+### Community 264 - "service-policy.ts"
+Cohesion: 0.50
+Nodes (3): servicePolicyKeys(), uk, ADR-0015
 
 ### Community 265 - "Deploy behind existing host nginx runbook"
 Cohesion: 0.33
@@ -1488,9 +1476,9 @@ Nodes (6): needs, runs-on, strategy, images, target, matrix
 Cohesion: 0.33
 Nodes (8): "user_identities", user_identities_user_idx, user_identities_value_uq, "service_requests", sr_assignee_idx, sr_customer_idx, sr_queue_idx, sr_type_idx
 
-### Community 272 - "web/src/proxy.ts"
+### Community 272 - "e2e/live-data.spec.ts"
 Cohesion: 0.40
-Nodes (3): config, LOCALES, ADR-0007
+Nodes (4): params, q, state, ADR-0014
 
 ### Community 273 - "Stage 19 record: staff session limits, remembered devices, installable console (1 Nov 2026)"
 Cohesion: 0.40
@@ -1508,13 +1496,21 @@ Nodes (5): run, mobile, defaults, runs-on, working-directory
 Cohesion: 0.70
 Nodes (3): svc.sh script, start(), stop()
 
+### Community 277 - "robots.ts"
+Cohesion: 0.50
+Nodes (3): dynamic, PRIVATE, robots()
+
 ### Community 278 - "Undeclared"
 Cohesion: 0.33
 Nodes (5): compilerOptions, rootDir, exclude, extends, ./tsconfig.json
 
-### Community 282 - "reference-data.ts"
-Cohesion: 0.33
-Nodes (5): AIRLINES, AIRPORTS, CITIES, COUNTRIES, EU
+### Community 282 - "ADR-0033 · Visa eligibility and travel document checker"
+Cohesion: 0.40
+Nodes (4): ADR-0033 · Visa eligibility and travel document checker, Consequences, Context, Decision
+
+### Community 284 - "0011_customer_club.sql"
+Cohesion: 0.38
+Nodes (9): "loyalty_benefits", loyalty_benefits_tier_idx, loyalty_benefits_user_idx, "loyalty_ledger", loyalty_ledger_append_only, loyalty_ledger_user_idx, "loyalty_members", loyalty_members_tier_idx (+1 more)
 
 ### Community 285 - "Stage 12 record: Phase F design and UX"
 Cohesion: 0.50
@@ -1523,10 +1519,6 @@ Nodes (4): Stage 12 record: Phase F design and UX, Design audit AUDIT-2026-10, R
 ### Community 286 - ""service_requests""
 Cohesion: 0.50
 Nodes (4): Stage 8 record: Phase B identity, profile, passport, verification, ADR-0005 identity verification, record_tickets guard allTravellersVerified (IDENTITY_NOT_VERIFIED), Identity verification state machine (UNVERIFIED, SUBMITTED, VERIFIED, REJECTED, CORRECTION_REQUIRED)
-
-### Community 287 - "dev-crypto.ts"
-Cohesion: 0.67
-Nodes (3): DEMO_TOTP_SECRET_HEX, devEncrypt(), gcm()
 
 ### Community 290 - "ADR-0011 Console UI typeface, type scale and theme"
 Cohesion: 0.67
@@ -1552,45 +1544,49 @@ Nodes (3): amendState and request amendment endpoint (POST /v1/admin/flight-requ
 Cohesion: 0.67
 Nodes (3): CargoService.ingest (dedupe, ON CONFLICT DO NOTHING), CargoTrackingPort and ManualTrackingAdapter, Migration 0005_cargo_tracking (insert-only tracking_events)
 
-### Community 300 - "popular-flights.spec.ts"
-Cohesion: 0.25
-Nodes (4): day, ITEMS, ADR-0031, ADR-0032
+### Community 296 - "notifications.service.ts"
+Cohesion: 0.08
+Nodes (32): eventUuid(), formatLocal(), localDateVars(), localTime(), quietHoursDelay(), renderTemplate(), Audience, NotifyInput (+24 more)
 
-### Community 364 - "SuppliersService"
-Cohesion: 0.12
-Nodes (5): SupplierResult, READS, SuppliersService, today(), ProviderId
+### Community 298 - "Visa checker (ADR-0029)"
+Cohesion: 0.29
+Nodes (6): After deploying migration 0020, Cost and limits, Daily review, Overrides, Turn on research, Visa checker (ADR-0033)
+
+### Community 299 - "NotificationsService"
+Cohesion: 0.13
+Nodes (6): LABELS, localisedVars(), localiseRoute(), NamePair, names, NotificationsService
+
+### Community 365 - ""request_amendments""
+Cohesion: 0.83
+Nodes (3): "request_amendments", request_amendments_append_only, request_amendments_request_idx
 
 ### Community 367 - "Stage 19 record: staff session limits, remembered devices, installable console"
 Cohesion: 0.19
 Nodes (9): flutter_secure_storage, Mobile /track behind sign-in, ADR-0022 staff sessions and install, Finding: ComplianceService.screen() returns CLEAR with no active list, Console idle veil and silent resume, Idle timeout enforcement on refresh, Installable console (manifest, service worker, offline page), Stage 19 record: staff session limits, remembered devices, installable console (+1 more)
 
-### Community 369 - "canonicalJson"
-Cohesion: 0.50
-Nodes (3): canonicalJson(), chainHash(), base
-
-### Community 371 - "e2e/live-data.spec.ts"
-Cohesion: 0.40
-Nodes (4): params, q, state, ADR-0014
-
 ### Community 372 - "ADR-0032 · Apify flights on `/flights`, token bootstrap from environment, live aircraft board removed"
 Cohesion: 0.40
 Nodes (4): ADR-0032 · Apify flights on `/flights`, token bootstrap from environment, live aircraft board removed, Consequences, Context, Decisions
 
+### Community 373 - "matrix.e2e.ts"
+Cohesion: 0.16
+Nodes (9): API_CONTROLLERS, enumerateRoutes(), ADR-0032, Undeclared, call(), ROLE_RULES, routes, STREAMS (+1 more)
+
 ### Community 375 - "ADR-0029 · Google Flights through Apify as an indicative flight source"
-Cohesion: 0.40
-Nodes (4): ADR-0029 · Google Flights through Apify as an indicative flight source, Consequences, Context, Decisions
+Cohesion: 0.50
+Nodes (3): ADR-0029 · Google Flights through Apify as an indicative flight source, Consequences, Context
 
-### Community 383 - "dev-system.controller.ts"
-Cohesion: 0.03
-Nodes (59): ChannelError, EmailSender, escapeHtml(), postJson(), PushProviders, SmsProviders, eventUuid(), formatLocal() (+51 more)
+### Community 383 - "notification-router.ts"
+Cohesion: 0.15
+Nodes (14): NotificationRouter, preview(), RequestPayload, ADR-0006, ADR-0013, ADR-0015, ADR-0016, ADR-0028 (+6 more)
 
-### Community 384 - "[locale]/layout.tsx"
-Cohesion: 0.24
-Nodes (12): alexandria, figtree, jetbrains, montserrat, vazirmatn, GlobalNotFound(), LocaleLayout(), metadata (+4 more)
+### Community 384 - "web/src/components/shell.tsx"
+Cohesion: 0.12
+Nodes (26): alexandria, figtree, jetbrains, montserrat, vazirmatn, GlobalNotFound(), LocaleLayout(), metadata (+18 more)
 
 ### Community 388 - "Session"
 Cohesion: 0.07
-Nodes (44): signedIn(), customer(), freshStaffSession(), latestCode(), randomPhone(), refreshPermCache(), requestOtp(), Session (+36 more)
+Nodes (47): ADR-0012, signedIn(), customer(), freshStaffSession(), latestCode(), randomPhone(), refreshPermCache(), requestOtp() (+39 more)
 
 ## Ambiguous Edges - Review These
 - `Mobile App (Expo / React Native)` → `Stage 4 Mobile App`  [AMBIGUOUS]
@@ -1599,21 +1595,21 @@ Nodes (44): signedIn(), customer(), freshStaffSession(), latestCode(), randomPho
   docs/stages/STAGE-13.md · relation: conceptually_related_to
 
 ## Knowledge Gaps
-- **5383 isolated node(s):** `ADR-0001`, `ADR-0007`, `ADR-0012`, `ADR-0032`, `ADR-0012` (+5378 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 7404 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **79 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **5408 isolated node(s):** `ADR-0001`, `ADR-0007`, `ADR-0012`, `ADR-0032`, `ADR-0012` (+5403 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 7511 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **81 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `401 refresh contract (single-flight refresh, retry once)` connect `Stage 19 record: staff session limits, remembered devices, installable console` to `serialisers.spec.ts`?**
-  _High betweenness centrality (0.376) - this node is a cross-community bridge._
+  _High betweenness centrality (0.392) - this node is a cross-community bridge._
 - **What connects `ADR-0001`, `ADR-0007`, `ADR-0012` to the rest of the system?**
-  _5383 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _5408 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Mobile L10n Strings (All)` be split into smaller, more focused modules?**
   _Cohesion score 0.002173913043478261 - nodes in this community are weakly interconnected._
 - **Why does `flutter_secure_storage` connect `Stage 19 record: staff session limits, remembered devices, installable console` to `ADR-0015 service requests and verticals (deviates from D-04)`?**
-  _High betweenness centrality (0.376) - this node is a cross-community bridge._
+  _High betweenness centrality (0.392) - this node is a cross-community bridge._
 - **Should `Mobile L10n Strings (EN)` be split into smaller, more focused modules?**
   _Cohesion score 0.0022002200220022 - nodes in this community are weakly interconnected._
 

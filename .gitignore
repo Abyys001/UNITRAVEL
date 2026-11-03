@@ -23,3 +23,4 @@ graphify-out/needs_update
 graphify-out/20[0-9][0-9]-*/
 apps/mobile/test/golden/failures/
 .playwright-mcp/
+.pnpm-store/

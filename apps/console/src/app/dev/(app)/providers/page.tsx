@@ -12,6 +12,7 @@ import { cn } from "@unitravel/ui/lib/utils"
 import { SchemaForm } from "@/components/schema-form"
 import { SecretDialog } from "@/components/secret-form"
 import { DevPage, KV, KVRow, Section } from "@/components/dev-ui"
+import { VisaResearchCard } from "@/components/visa-research-card"
 import { ErrorLine, Loading, PageHead, Tag } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDateTime } from "@/lib/format"
@@ -77,7 +78,7 @@ export default function ProvidersPage() {
   return (
     <div>
       <PageHead kicker={t("dnav.integrations")} title={t("dnav.providers")}><span className="text-meta text-steel">{t("prov.desc")}</span></PageHead>
-      <DevPage data-testid="providers">{q.data.map((p) => <ProviderCard key={`${p.id}-${p.version}`} p={p} />)}</DevPage>
+      <DevPage data-testid="providers">{q.data.map((p) => <ProviderCard key={`${p.id}-${p.version}`} p={p} />)}<VisaResearchCard /></DevPage>
     </div>
   )
 }
