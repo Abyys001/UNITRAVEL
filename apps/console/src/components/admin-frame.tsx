@@ -1,6 +1,6 @@
 "use client"
 
-import { BookCheck, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Users } from "lucide-react"
+import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Users } from "lucide-react"
 
 import { normaliseReference } from "@unitravel/domain"
 
@@ -58,6 +58,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       tabs: [{ href: "/content", label: t("nav.contentEntries") }, { href: "/content/glossary", label: t("nav.contentGlossary") }],
     }] : []),
     ...(can("flight_search.run") ? [{ href: "/search", label: t("nav.flightSearch"), group: "tools", icon: <Search className="size-[18px]" /> }] : []),
+    ...(can("catalog.read") ? [{ href: "/catalog", label: t("nav.catalog"), group: "tools", icon: <CalendarRange className="size-[18px]" /> }] : []),
   ]
   const alerts: ShellAlert[] = s ? [
     ...(flights ? [{ id: "sla", label: t("bell.sla", { n: s.slaBreaches }), count: s.slaBreaches, href: "/queues?tab=new", tone: "danger" as const }] : []),

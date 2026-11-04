@@ -156,7 +156,7 @@ export class SearchService implements OnModuleInit, SearchPort {
         const offers = (JSON.parse(cached) as NormalisedOffer[]).map((o) => ({ ...o, source: { ...o.source, rung: "CACHED_OFFER" as const } }))
         collected.push({ call: c, offers })
       } else {
-        const res = await this.suppliers.search(c.provider, { slices: c.slices, passengers: row.query.passengers, cabin: row.query.cabin, maxConnections: Math.min(row.query.preferences.maxStops, rules.global.maxStops) }, { deadline: c.wave === 1 ? firstWave : deadline, searchId, requestId: `search-${searchId}` })
+        const res = await this.suppliers.search(c.provider, { slices: c.slices, passengers: row.query.passengers, cabin: row.query.cabin, maxConnections: Math.min(row.query.preferences.maxStops, rules.global.maxStops) }, { deadline: c.wave === 1 ? firstWave : deadline, searchId, requestId: `search-${searchId}`, staff: row.actorKind === "STAFF" })
         if (res.ok) {
           collected.push({ call: c, offers: res.value })
           await this.redis.set(key, JSON.stringify(res.value), "EX", rules.cache.legTtlSeconds)

@@ -26,6 +26,9 @@ x-app-env: &app-env
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
   # ADR-0032 B1: imported once into the encrypted provider store on API start when none is stored; remove from .env.prod after import.
   APIFY_TOKEN: ${APIFY_TOKEN:-}
+  # ADR-0034: the API (worker) asks the website to purge cached catalog pages after a refresh; both optional.
+  WEB_REVALIDATE_URL: ${WEB_REVALIDATE_URL:-}
+  WEB_REVALIDATE_SECRET: ${WEB_REVALIDATE_SECRET:-}
 
 services:
   caddy:

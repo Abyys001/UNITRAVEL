@@ -9,6 +9,8 @@ export const QUEUES = [
   "timers.sla", "compliance.screen", "compliance.lists-sync", "reference.sync", "documents.scan", "maintenance", "events.misc",
   // ADR-0033: one research run per visa rule key; its own queue so a slow run never holds up maintenance jobs.
   "visa.research",
+  // ADR-0034: the flight catalog pacer. Its own queue because a refresh run is polled for up to 10 minutes and must not hold up maintenance jobs.
+  "catalog",
 ] as const
 export type QueueName = (typeof QUEUES)[number]
 
@@ -34,6 +36,8 @@ export const QUEUE_DEFAULTS: Record<QueueName, JobsOptions> = {
   maintenance: { attempts: 3, removeOnComplete: 100, removeOnFail: false },
   "events.misc": { attempts: 5, backoff: { type: "exponential", delay: 1000 }, removeOnComplete: 2000, removeOnFail: false },
   // A failed run is recorded in visa_research_runs; one retry covers a transient network error, not a model that cannot answer.
+  // One attempt: a retry of a job that already started a paid run would pay twice. The pacer retries by its own rules (spec §9).
+  catalog: { attempts: 1, removeOnComplete: 200, removeOnFail: 500 },
   "visa.research": { attempts: 2, backoff: { type: "exponential", delay: 30000 }, removeOnComplete: 500, removeOnFail: 500 },
 }
 

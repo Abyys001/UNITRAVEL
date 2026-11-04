@@ -12,6 +12,7 @@ import { DB, REDIS } from "../../../core/infra.module"
 import { Queues } from "../../../core/queues"
 import { ObjectStorage } from "../../../core/storage"
 import { WorkerRegistry } from "../../../core/workers"
+import { CatalogBudgetService } from "../../catalog/catalog-budget.service"
 import { ReferenceService } from "../../reference/reference.service"
 import { type CallContext, type SliceQuery, SupplierError } from "../adapter"
 import { ApifyGoogleFlightsAdapter } from "../adapters/apify/apify.adapter"
@@ -20,7 +21,6 @@ import { normaliseRows } from "../adapters/apify/normalise"
 import { SuppliersService } from "../suppliers.service"
 
 export const APIFY_ID = "apify-google-flights" as const
-type Pool = "customer" | "prewarm" | "staff"
 type RunRow = typeof providerRuns.$inferSelect
 
 /** $0.001 per row and, from 4 Nov 2026, $0.001 per run start (DOCUMENTED, actor README). */
@@ -29,24 +29,6 @@ const RUN_START_USD = 0.001
 const RUN_DEADLINE_MS = 300_000
 const NEGATIVE_TTL_S = 300
 const MAX_RERUNS = 3
-
-const HOUR_MS = 3600_000
-/** ADR-0032 B3: never warm more often than this, whatever the pool allows. */
-export const MIN_WARM_INTERVAL_MS = 6 * HOUR_MS
-
-/** Worst-case cost of one batched popular-route warm: every route at `maxResultsPrewarm` rows plus one run start. */
-export const prewarmCostUsd = (routes: number, m: Pick<ProviderMetering, "maxResultsPrewarm">) => usd(routes * m.maxResultsPrewarm * ROW_USD + RUN_START_USD)
-
-/**
- * ADR-0032 B3: interval = 30 days / ⌊prewarm pool / cost per warm⌋, rounded up to the hour, at least 6 h. A pool that cannot
- * pay for one warm a month gives null (do not schedule).
- */
-export function prewarmIntervalMs(routes: number, m: Pick<ProviderMetering, "maxResultsPrewarm" | "monthlyBudgetUsd" | "poolSplit">): number | null {
-  if (routes < 1) return null
-  const warms = Math.floor(usd(m.monthlyBudgetUsd * m.poolSplit.prewarm) / prewarmCostUsd(routes, m) + 1e-9)
-  if (warms < 1) return null
-  return Math.max(MIN_WARM_INTERVAL_MS, Math.ceil((30 * 24 * HOUR_MS) / warms / HOUR_MS) * HOUR_MS)
-}
 
 /** One leg the actor is asked for; everything except the route is shared by the legs of one run. */
 export interface LegSpec {
@@ -58,12 +40,12 @@ const CABIN_OUT: Record<string, ApifyInput["cabinClass"]> = { ECONOMY: "economy"
 const sha = (v: unknown) => createHash("sha1").update(JSON.stringify(v)).digest("hex").slice(0, 24)
 const usd = (n: number) => Math.round(n * 1e6) / 1e6
 const month = () => new Date().toISOString().slice(0, 7)
-const hourSlot = () => new Date().toISOString().slice(0, 13).replace(/\D/g, "")
 
 /**
- * ADR-0029 A6: cache → single-flight lock → budget guard → run, all for a slow, pay-per-row source. A search never waits
- * for Apify: a cache miss queues a run and answers SUPPLIER_PENDING; when the run is collected the waiting searches are
- * run again and find the data in the cache (including an empty result, so "no flights" is not paid for twice).
+ * ADR-0029 A6 as amended by ADR-0034: staff searches and rechecks only. cache → single-flight lock → dollar reserve check → run, all for a
+ * slow, pay-per-row source. A search never waits for Apify: a cache miss queues a run and answers SUPPLIER_PENDING; when the run is
+ * collected the waiting searches are run again and find the data in the cache (including an empty result, so "no flights" is not
+ * paid for twice). Customers never reach this class: the catalog serves them from stored snapshots (`modules/catalog`).
  */
 @Injectable()
 export class FlightDataService implements OnModuleInit {
@@ -77,14 +59,15 @@ export class FlightDataService implements OnModuleInit {
     private readonly suppliers: SuppliersService,
     private readonly reference: ReferenceService,
     private readonly storage: ObjectStorage,
+    private readonly budget: CatalogBudgetService,
   ) {}
 
   async onModuleInit() {
-    this.suppliers.registerAdapter(new ApifyGoogleFlightsAdapter(this), () => this.customerRunsAffordable())
+    this.suppliers.registerAdapter(new ApifyGoogleFlightsAdapter(this), () => this.staffRunsAffordable())
     this.workers.registerJob("maintenance", "flights.apify.start", (job) => this.startSearchRuns((job.data as { searchId: string }).searchId))
     this.workers.registerJob("maintenance", "flights.apify.collect", (job) => this.collect(job.data as { runId: string; attempt: number }))
-    this.workers.registerJob("maintenance", "flights.apify.reconcile", () => this.reconcile())
-    await this.queues.get("maintenance").upsertJobScheduler("flights-apify-reconcile-daily", { every: 24 * 3600_000 }, { name: "flights.apify.reconcile" }).catch(() => undefined)
+    // The daily reconcile moved to the catalog queue (ADR-0034); the Redis ledger and the prewarm scheduler it served are gone.
+    await this.queues.get("maintenance").removeJobScheduler("flights-apify-reconcile-daily").catch(() => undefined)
   }
 
   // ---------------- configuration ----------------
@@ -113,6 +96,8 @@ export class FlightDataService implements OnModuleInit {
   // ---------------- the adapter side: read the cache or queue a run ----------------
 
   async lookup(q: SliceQuery, ctx: CallContext): Promise<NormalisedOffer[]> {
+    // ADR-0034 C1: no customer or anonymous search can reach a paid run, whatever route led here.
+    if (!ctx.staff) throw new SupplierError("NO_AVAILABILITY", "The indicative source is searched by staff only")
     // Return flights are fetched as separate one-way legs by the engine's own planning; a multi-slice call is not served.
     if (q.slices.length !== 1) throw new SupplierError("NO_AVAILABILITY", "The indicative source serves one-way legs only")
     const m = await this.metering()
@@ -125,8 +110,6 @@ export class FlightDataService implements OnModuleInit {
     if (neg) throw new SupplierError((JSON.parse(neg) as { code: SupplierError["code"] }).code, "The indicative source has no data for this leg right now")
     const searchId = ctx.searchId
     if (!searchId) throw new SupplierError("SUPPLIER_UNAVAILABLE", "The indicative source is only searched on behalf of a search")
-    // Popular-route listing searches read what the batched warm fetched and never start a paid customer run (ADR-0032 B3).
-    if (await this.redis.exists(`search:${searchId}:cache-only`)) throw new SupplierError("NO_AVAILABILITY", "Cache-only search: no indicative data for this leg")
     const pending = `apify:pending:${searchId}`
     const member = JSON.stringify(spec)
     if ((await this.redis.scard(pending)) >= m.maxLegsPerSearch && !(await this.redis.sismember(pending, member))) throw new SupplierError("NO_AVAILABILITY", "Per-search cap on indicative legs reached")
@@ -142,53 +125,14 @@ export class FlightDataService implements OnModuleInit {
 
   // ---------------- budget ----------------
 
-  private ledgerKey(pool: Pool | "total") {
-    return `apify:ledger:${month()}:${pool}`
-  }
-
-  private async spent(pool: Pool | "total") {
-    return Number((await this.redis.get(this.ledgerKey(pool))) ?? 0)
-  }
-
-  private caps(m: ProviderMetering, pool: Pool) {
-    // Customers and prewarm never spend into the staff reserve; staff may use the whole month.
-    return { pool: usd(m.monthlyBudgetUsd * m.poolSplit[pool]), total: usd(pool === "staff" ? m.monthlyBudgetUsd : m.monthlyBudgetUsd - m.staffReserveUsd) }
-  }
-
-  /** Reserves the worst-case cost of a run. Increments first and rolls back on overrun, so concurrent callers cannot overspend. */
-  async reserve(pool: Pool, cost: number, m: ProviderMetering): Promise<boolean> {
-    const c = this.caps(m, pool)
-    const inPool = Number(await this.redis.incrbyfloat(this.ledgerKey(pool), cost))
-    const inTotal = Number(await this.redis.incrbyfloat(this.ledgerKey("total"), cost))
-    if (inPool > c.pool + 1e-9 || inTotal > c.total + 1e-9) {
-      await this.redis.incrbyfloat(this.ledgerKey(pool), -cost)
-      await this.redis.incrbyfloat(this.ledgerKey("total"), -cost)
-      return false
-    }
-    for (const k of [this.ledgerKey(pool), this.ledgerKey("total")]) await this.redis.expire(k, 40 * 86400)
-    return true
-  }
-
-  private async adjust(pool: Pool, delta: number) {
-    if (Math.abs(delta) < 1e-9) return
-    await this.redis.incrbyfloat(this.ledgerKey(pool), delta)
-    await this.redis.incrbyfloat(this.ledgerKey("total"), delta)
-  }
-
   private runCost(routes: number, maxResults: number) {
     return usd(routes * maxResults * ROW_USD + RUN_START_USD)
   }
 
-  /** How many typical customer runs the customer pool can still pay for; the engine planner drops calls beyond this. */
-  private async customerRunsAffordable(): Promise<number> {
+  /** How many typical staff runs the reserve can still pay for; the engine planner drops calls beyond this (replaces the call-count budget). */
+  private async staffRunsAffordable(): Promise<number> {
     const m = await this.metering()
-    const c = this.caps(m, "customer")
-    const room = Math.min(c.pool - (await this.spent("customer")), c.total - (await this.spent("total")))
-    return Math.max(0, Math.floor(room / this.runCost(1, m.maxResultsCustomer)))
-  }
-
-  private async hourlyRuns() {
-    return Number((await this.redis.get(`apify:runs:${hourSlot()}`)) ?? 0)
+    return this.budget.adminRunsAffordable(this.runCost(1, m.maxResultsStaff))
   }
 
   // ---------------- start job ----------------
@@ -216,41 +160,38 @@ export class FlightDataService implements OnModuleInit {
     const groups = new Map<string, LegSpec[]>()
     for (const s of todo) groups.set(sha(s.shared), [...(groups.get(sha(s.shared)) ?? []), s])
     let runs = 0
-    for (const group of groups.values()) if (await this.launch(group, "customer", "SEARCH", m, token!, searchId)) runs++
+    for (const group of groups.values()) if (await this.launch(group, "SEARCH", m, token!, searchId)) runs++
     if (wakeNow.length) await this.wake(wakeNow, `s${Date.now()}`)
     return { runs, skipped: specs.length - todo.length }
   }
 
-  /** Creates the run row, enforces the guards and starts the actor. Returns false when the run was declined or failed to start. */
-  private async launch(legs: LegSpec[], pool: Pool, purpose: "SEARCH" | "RECHECK" | "PREWARM", m: ProviderMetering, token: string, searchId: string | null, result?: Record<string, unknown>): Promise<{ id: string } | null> {
-    const maxResults = pool === "staff" ? m.maxResultsStaff : pool === "prewarm" ? m.maxResultsPrewarm : m.maxResultsCustomer
-    const input: ApifyInput = { routes: legs.map((l) => l.route), maxResults, ...legs[0]!.shared }
-    const cost = this.runCost(legs.length, maxResults)
+  /**
+   * Creates the run row, checks the dollar reserve and starts the actor (staff pool only). Writes a ledger row (`admin_search`,
+   * or `admin_revalidate` for a recheck). Returns null when the run was declined or failed to start.
+   */
+  private async launch(legs: LegSpec[], purpose: "SEARCH" | "RECHECK", m: ProviderMetering, token: string, searchId: string | null, result?: Record<string, unknown>): Promise<{ id: string } | null> {
+    const input: ApifyInput = { routes: legs.map((l) => l.route), maxResults: m.maxResultsStaff, ...legs[0]!.shared }
+    const cost = this.runCost(legs.length, m.maxResultsStaff)
     const legKeys = legs.map((l) => this.legKey(l))
-    const base = { providerId: APIFY_ID, pool, purpose, searchId, routes: input.routes, input: input as unknown as Record<string, unknown>, legKeys, result: result ?? null }
-    let decline: string | null = null
-    if (pool === "customer") {
-      const used = Number(await this.redis.incr(`apify:runs:${hourSlot()}`))
-      await this.redis.expire(`apify:runs:${hourSlot()}`, 2 * 3600)
-      if (used > m.customerRunsPerHour) { await this.redis.decr(`apify:runs:${hourSlot()}`); decline = "HOURLY_CAP" }
-    }
-    if (!decline && !(await this.reserve(pool, cost, m))) decline = "POOL_EMPTY"
-    if (decline) {
-      await this.db.insert(providerRuns).values({ ...base, status: "DECLINED", errors: [decline], finishedAt: new Date() })
+    const base = { providerId: APIFY_ID, pool: "staff" as const, purpose, searchId, routes: input.routes, input: input as unknown as Record<string, unknown>, legKeys, result: result ?? null }
+    if (!(await this.budget.canSpendAdmin(cost))) {
+      await this.db.insert(providerRuns).values({ ...base, status: "DECLINED", errors: ["RESERVE_EMPTY"], finishedAt: new Date() })
       await this.release(legKeys, purpose === "SEARCH" ? "SUPPLIER_RATE_LIMITED" : null)
       return null
     }
     const [run] = await this.db.insert(providerRuns).values({ ...base, status: "QUEUED", reservedUsd: String(cost) }).returning()
+    const ledgerId = await this.budget.openLedger({ purpose: purpose === "SEARCH" ? "admin_search" : "admin_revalidate", providerRunId: run!.id, slotIds: [], maxResults: m.maxResultsStaff, estCostUsd: cost, maxChargeUsd: cost })
     try {
       const started = await new ApifyClient(token).startRun(input, cost)
       await this.db.update(providerRuns).set({ externalRunId: started.id, status: "RUNNING", startedAt: new Date() }).where(eq(providerRuns.id, run!.id))
+      await this.budget.closeLedger({ id: ledgerId }, { apifyRunId: started.id })
       await this.queues.get("maintenance").add("flights.apify.collect", { runId: run!.id, attempt: 1 }, { delay: 4000, jobId: `apify-collect-${run!.id}-1` })
       return { id: run!.id }
     } catch (err) {
       const e = err instanceof SupplierError ? err : new SupplierError("SUPPLIER_UNKNOWN", String(err))
       if (e.code === "SUPPLIER_AUTH") await this.suppliers.markCredentialInvalid(APIFY_ID)
-      await this.adjust(pool, -cost)
       await this.db.update(providerRuns).set({ status: "FAILED", errors: [`${e.code}: ${e.message}`], finishedAt: new Date(), reservedUsd: "0" }).where(eq(providerRuns.id, run!.id))
+      await this.budget.closeLedger({ id: ledgerId }, { status: "FAILED", estCostUsd: 0, error: `${e.code}: ${e.message}` })
       await this.release(legKeys, purpose === "SEARCH" ? e.code : null)
       return null
     }
@@ -321,8 +262,8 @@ export class FlightDataService implements OnModuleInit {
 
   private async fail(run: RunRow, status: "FAILED" | "TIMED-OUT" | "ABORTED", code: SupplierError["code"], message: string) {
     // The run start fee is charged even when the run fails; rows already produced are billed too but unknown, so only the fee is assumed.
-    await this.adjust(run.pool, RUN_START_USD - Number(run.reservedUsd))
     await this.db.update(providerRuns).set({ status, errors: [...run.errors, `${code}: ${message}`], estimatedUsd: String(RUN_START_USD), finishedAt: new Date() }).where(eq(providerRuns.id, run.id))
+    await this.budget.closeLedger({ providerRunId: run.id }, { status, estCostUsd: RUN_START_USD, error: `${code}: ${message}` })
     if (run.purpose === "RECHECK") await this.db.update(providerRuns).set({ result: { ...(run.result ?? {}), error: message } }).where(eq(providerRuns.id, run.id))
     // A failed staff recheck must not hide the route from customers.
     await this.release(run.legKeys, run.purpose === "SEARCH" ? code : null)
@@ -347,38 +288,12 @@ export class FlightDataService implements OnModuleInit {
     for (const [i, key] of run.legKeys.entries()) await this.redis.set(`${key}:data`, JSON.stringify({ fetchedAt: fetchedAt.toISOString(), offers: perLeg[i] }), "EX", m.cacheTtlSeconds)
     const billable = items.filter((r) => r.type !== "notice" && r.type !== "error").length
     const cost = usd(billable * ROW_USD + RUN_START_USD)
-    await this.adjust(run.pool, cost - Number(run.reservedUsd))
     // The itinerary id stays on the row so the status poll can check that the job belongs to the itinerary asked about.
     const result = run.purpose === "RECHECK" ? { ...this.recheckResult(run, perLeg.flat(), fetchedAt), itineraryId: (run.result as { itineraryId: string }).itineraryId } : run.result
     await this.db.update(providerRuns).set({ status: "SUCCEEDED", rows: billable, estimatedUsd: String(cost), notices: normalised.notices, errors: normalised.errors, payloadKey, result, finishedAt: fetchedAt }).where(eq(providerRuns.id, run.id))
+    await this.budget.closeLedger({ providerRunId: run.id }, { status: "SUCCEEDED", rowsBilled: billable, estCostUsd: cost })
     await this.release(run.legKeys, null)
-    // The listings worker turns the warmed legs into stored, requestable search results (ADR-0032 B3, B5).
-    if (run.purpose === "PREWARM") await this.queues.get("maintenance").add("listings.prewarmed", { routes }, { jobId: `listings-prewarmed-${run.id}` })
     return { rows: billable, offers: normalised.offers.length }
-  }
-
-  // ---------------- popular-route warm (ADR-0032 B3) ----------------
-
-  /**
-   * One prewarm-pool run for every leg that is neither cached nor in flight. Legs already cached are returned so the caller
-   * can list them straight away; the rest are announced by `listings.prewarmed` when the run is collected.
-   */
-  async prewarm(routes: ApifyRoute[], q: Pick<SliceQuery, "passengers" | "cabin" | "maxConnections">): Promise<{ runId: string | null; cached: ApifyRoute[]; reason?: "CREDENTIAL" | "IN_FLIGHT" | "DECLINED" }> {
-    const m = await this.metering()
-    const token = (await this.suppliers.credentials(APIFY_ID))?.token
-    if (!token || (await this.suppliers.credentialInvalid(APIFY_ID))) return { runId: null, cached: [], reason: "CREDENTIAL" }
-    const cached: ApifyRoute[] = []
-    const todo: LegSpec[] = []
-    for (const route of routes) {
-      const spec = this.specFor(route, q.passengers, q.cabin, q.maxConnections, m)
-      const key = this.legKey(spec)
-      if (await this.redis.exists(`${key}:data`)) { cached.push(route); continue }
-      if ((await this.redis.set(`${key}:lock`, "prewarm", "PX", RUN_DEADLINE_MS + 60_000, "NX")) !== "OK") continue
-      todo.push(spec)
-    }
-    if (!todo.length) return { runId: null, cached, reason: cached.length ? undefined : "IN_FLIGHT" }
-    const started = await this.launch(todo, "prewarm", "PREWARM", m, token, null)
-    return started ? { runId: started.id, cached } : { runId: null, cached, reason: "DECLINED" }
   }
 
   // ---------------- staff recheck (ADR-0029 A7) ----------------
@@ -398,8 +313,8 @@ export class FlightDataService implements OnModuleInit {
     const keys = legs.map((l) => this.legKey(l))
     for (const k of keys) if ((await this.redis.set(`${k}:lock`, "recheck", "PX", RUN_DEADLINE_MS + 60_000, "NX")) !== "OK") throw new AppError("VERSION_CONFLICT", "A run for this route is already in progress; try again in a minute")
     const result = { itineraryId: itinerary.id, components: comps.map((c) => ({ providerOfferId: c.source.providerOfferId, old: c.price.total })) }
-    const started = await this.launch(legs, "staff", "RECHECK", m, token, null, result)
-    if (!started) throw new AppError("RATE_LIMITED", "The staff budget for this month is used up")
+    const started = await this.launch(legs, "RECHECK", m, token, null, result)
+    if (!started) throw new AppError("RATE_LIMITED", "The admin reserve for this billing cycle is used up")
     return { jobId: started.id, status: "PENDING" }
   }
 
@@ -440,7 +355,6 @@ export class FlightDataService implements OnModuleInit {
   }
 
   async usage(): Promise<ProviderUsageView> {
-    const m = await this.metering()
     const meta = await this.suppliers.credentialMeta(APIFY_ID)
     const token = (await this.suppliers.credentials(APIFY_ID))?.token
     let apify: ProviderUsageView["apify"] = null
@@ -454,18 +368,20 @@ export class FlightDataService implements OnModuleInit {
         if (e instanceof SupplierError && e.code === "SUPPLIER_AUTH") await this.suppliers.markCredentialInvalid(APIFY_ID)
       }
     }
-    const pool = async (p: Pool) => {
-      const budgetUsd = this.caps(m, p).pool
-      const spentUsd = usd(await this.spent(p))
-      return { budgetUsd, spentUsd, remainingUsd: usd(Math.max(0, budgetUsd - spentUsd)) }
-    }
-    const customer = await pool("customer")
+    const { spend, settings } = await this.budget.budget()
+    // The customer and prewarm pools are gone (ADR-0034): the shape stays for the existing console, with the admin reserve as the staff pool.
+    const none = { budgetUsd: 0, spentUsd: 0, remainingUsd: 0 }
+    const reserveSpent = usd(Math.min(spend.adminSpentUsd, settings.adminReserveUsd))
     const reconciled = await this.redis.get("apify:reconciled")
-    const invalidAt = (await this.suppliers.credentialMeta(APIFY_ID))?.invalidAt ?? null
+    const invalidAt = meta?.invalidAt ?? null
     return {
       provider: APIFY_ID, month: month(), credential: { set: !!meta, invalidAt: invalidAt?.toISOString() ?? null }, apify, apifyError,
-      ledger: { budgetUsd: m.monthlyBudgetUsd, staffReserveUsd: m.staffReserveUsd, totalSpentUsd: usd(await this.spent("total")), pools: { customer, prewarm: await pool("prewarm"), staff: await pool("staff") }, customerRunsThisHour: await this.hourlyRuns(), customerRunsPerHour: m.customerRunsPerHour },
-      banner: !meta ? "CREDENTIAL_MISSING" : invalidAt ? "CREDENTIAL_INVALID" : customer.remainingUsd < this.runCost(1, m.maxResultsCustomer) ? "CUSTOMER_POOL_EMPTY" : "NONE",
+      ledger: {
+        budgetUsd: settings.monthlyBudgetUsd, staffReserveUsd: settings.adminReserveUsd, totalSpentUsd: spend.spentUsd,
+        pools: { customer: none, prewarm: none, staff: { budgetUsd: settings.adminReserveUsd, spentUsd: reserveSpent, remainingUsd: usd(Math.max(0, settings.adminReserveUsd - reserveSpent)) } },
+        customerRunsThisHour: 0, customerRunsPerHour: 0,
+      },
+      banner: !meta ? "CREDENTIAL_MISSING" : invalidAt ? "CREDENTIAL_INVALID" : "NONE",
       reconciledAt: reconciled ? (JSON.parse(reconciled) as { at: string }).at : null,
     }
   }
@@ -491,16 +407,5 @@ export class FlightDataService implements OnModuleInit {
       }
       throw new AppError("SUPPLIER_UNAVAILABLE", `Apify test failed: ${err.code}`)
     }
-  }
-
-  /** Daily: Apify's own usage is the floor of our ledger, so an estimate that drifted low cannot hide real spend. */
-  async reconcile() {
-    const token = (await this.suppliers.credentials(APIFY_ID))?.token
-    if (!token || (await this.suppliers.credentialInvalid(APIFY_ID))) return { skipped: true }
-    const l = await new ApifyClient(token).limits()
-    const ours = await this.spent("total")
-    if (l.monthlyUsageUsd !== null && l.monthlyUsageUsd > ours) await this.redis.incrbyfloat(this.ledgerKey("total"), l.monthlyUsageUsd - ours)
-    await this.redis.set("apify:reconciled", JSON.stringify({ at: new Date().toISOString(), apifyUsd: l.monthlyUsageUsd, ledgerUsd: ours }), "EX", 40 * 86400)
-    return { apifyUsd: l.monthlyUsageUsd, ledgerUsd: ours }
   }
 }

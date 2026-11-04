@@ -410,6 +410,17 @@ export const fa: DeepString<typeof en> = {
     helpLead: "سفر و همراهانتان را برای ما بفرستید. تیم ما مدارک لازم را بررسی می‌کند و برای کمک ما پیش‌فاکتور می‌فرستد. ارسال این فرم درخواست ویزا نیست.",
     newCheck: "شروع بررسی تازه",
   },
+  // ADR-0034: stored flight catalog on /search and /flights/results/{id}. No prices; cached data is never a guarantee.
+  catalog: {
+    updated: "به‌روزرسانی: {ago}", confirmed: "موجودی را همکاران ما تأیید می‌کنند.", stale: "این فهرست قدیمی‌تر از حد معمول است و ممکن است تغییر کرده باشد. همکاران ما آن را برایتان بررسی می‌کنند.",
+    partyNote: "موجودی و قیمت نهایی را همکاران ما برای گروه سفر شما تأیید می‌کنند.", selfTransferNote: "بلیت‌های جداگانه: اگر پرواز اول تأخیر کند، ایرلاین دوم موظف به منتظر ماندن نیست.",
+    emptyTitle: "برای این تاریخ پروازی فهرست نشده است", emptyBody: "همکاران ما همچنان می‌توانند برای این تاریخ گزینه پیدا کنند.", nearby: "تاریخ‌هایی که پرواز فهرست‌شده دارند",
+    notTrackedTitle: "این مسیر را هنوز خودکار دنبال نمی‌کنیم", notTrackedBody: "همکاران ما می‌توانند برایتان گزینه پیدا کنند.",
+    unavailableTitle: "فهرست پروازها اکنون در دسترس نیست", noFlights: "پروازی فهرست نشده", datesAround: "پروازهای اطراف تاریخ شما",
+    askTeam: "از تیم ما بپرسید", requestFlight: "درخواست این پرواز", viewDetails: "جزئیات پرواز",
+    detailTitle: "جزئیات پرواز", leg: "پرواز {n}", terminal: "ترمینال {terminal}", aircraft: "هواپیما", operatedBy: "اجراکننده: {carrier}", total: "کل سفر",
+    noLongerListed: "این پرواز دیگر فهرست نشده است. از تیم ما گزینه‌های فعلی را بخواهید.", lastSeen: "آخرین مشاهده: {ago}", backToSearch: "بازگشت به جست‌وجو", layoverAt: "توقف در {at}: {time}",
+  },
   credits: { title: "اعتبار عکس‌ها و ویدیو", lead: "عکس‌ها و ویدیوهای این سایت رسانهٔ تزئینی از بانک‌های تصویر هستند. فقط مکان‌ها را نشان می‌دهند و پیشنهاد، قیمت یا موجودی نیستند.", item: "عنوان", creator: "پدیدآور", source: "منبع", licence: "مجوز", usedOn: "محل استفاده", none: "هنوز اعتباری ثبت نشده است." },
   // ADR-0032: popular routes on /flights (Apify Google Flights schedules, indicative only).
   popularFlights: {

@@ -65,7 +65,7 @@ export default function HealthPage() {
           </BentoTile>
           <BentoTile size="s" title={t("hl.circuits")}><Stat label={t("hl.circuitsOpen")} value={<>{open.length}<span className="text-base font-normal text-steel"> / {h.dependencies.length}</span></>} tone={open.length ? "danger" : "default"} hint={open.length ? open.map((d) => d.name).join(", ") : t("hl.circuitsOk")} /></BentoTile>
           <BentoTile size="s" title={t("hl.backlog")} aside={<Link href="/jobs" className="inline-flex min-h-6 items-center font-medium text-link hover:underline pointer-coarse:min-h-11">{t("hl.deadLetters")}</Link>}><Stat label={t("hl.queued")} value={backlog} tone={failed ? "danger" : "default"} hint={t("hl.backlogHint", { failed, oldest })} /></BentoTile>
-          {can("provider.config.read") && <ApifyUsageTile />}
+          {can("catalog.read") && <ApifyUsageTile />}
         </BentoGrid>
 
         <div className="grid gap-4 lg:grid-cols-3">

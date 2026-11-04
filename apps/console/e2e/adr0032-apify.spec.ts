@@ -9,7 +9,7 @@ const JOB = "6f1d8c2e-5b0a-4c7e-9a51-3f2b6d4e8a10"
 const FETCHED = "2026-11-03T09:15:00Z"
 const GBP = (amountMinor: number) => ({ amountMinor, currency: "GBP" })
 
-const FULL = ["flight_request.read.any", "flight_request.transition", "pricing.read.internal", "quote.create", "provider.config.read", "provider.config.write", "audit.read"]
+const FULL = ["flight_request.read.any", "flight_request.transition", "pricing.read.internal", "quote.create", "catalog.read", "provider.config.read", "provider.config.write", "audit.read"]
 const BASIC = ["flight_request.read.any", "flight_request.transition"]
 
 const me = (permissions: string[]) => ({
@@ -116,7 +116,7 @@ test.describe("ADR-0032 console (mocked API)", () => {
   test("dev dashboard shows the Apify usage card", async ({ page }) => {
     await mockApi(page, DEV, FULL)
     await page.route("**/api/v1/dev/health", (r) => json(r, { version: "1.0.0", commit: "local", env: "local", uptimeSeconds: 3600, database: { ok: true, latencyMs: 1, migrations: { applied: 1, latest: "0001" } }, redis: { ok: true, latencyMs: 1 }, queues: [], workers: [], configVersions: {}, flags: {}, dependencies: [], outbox: { pending: 0, oldestSeconds: null } }))
-    await page.route("**/api/v1/dev/providers/apify-google-flights/usage", (r) => json(r, usage()))
+    await page.route("**/api/v1/admin/catalog/usage", (r) => json(r, usage()))
     const run = (createdAt: string) => ({ id: crypto.randomUUID(), provider: "apify-google-flights", externalRunId: null, pool: "CUSTOMER", purpose: "SEARCH", searchId: null, routes: [], status: "SUCCEEDED", rows: 10, estimatedUsd: 0.01, notices: [], errors: [], startedAt: null, finishedAt: null, createdAt })
     const now = new Date().toISOString()
     await page.route("**/api/v1/dev/providers/apify-google-flights/runs**", (r) => json(r, [run(now), run(now), run(now), run("2020-01-15T00:00:00Z")]))
@@ -124,10 +124,11 @@ test.describe("ADR-0032 console (mocked API)", () => {
     await page.goto(`${DEV}/`)
     const card = page.getByTestId("apify-usage")
     await expect(card).toContainText("Apify usage")
-    await expect(card).toContainText("Customer budget used up")
-    await expect(card).toContainText("Customer pool")
-    await expect(card).toContainText("$2.00")
-    await expect(card).toContainText("Staff revalidation pool")
+    await expect(card.getByTestId("catalog-over")).toContainText("Projected spend is over the budget")
+    await expect(card).toContainText("Spent this cycle")
+    await expect(card).toContainText("$4.80")
+    await expect(card).toContainText("Projected at cycle end")
+    await expect(card).toContainText("Refreshing on schedule")
     await expect(card).toContainText("Runs this month")
     await expect(card).toContainText("3")
     await expect(card).toContainText("Last connection test")
@@ -137,14 +138,15 @@ test.describe("ADR-0032 console (mocked API)", () => {
     await mockApi(page, ADMIN, FULL)
     const devCalls: string[] = []
     page.on("request", (req) => { if (req.url().includes("/api/v1/dev/")) devCalls.push(req.url()) })
-    await page.route("**/api/v1/admin/providers/apify-google-flights/usage", (r) => json(r, usage()))
+    await page.route("**/api/v1/admin/catalog/usage", (r) => json(r, usage()))
     await page.goto(`${ADMIN}/`)
     const card = page.getByTestId("apify-usage")
     await expect(card).toContainText("Apify usage")
-    await expect(card).toContainText("Customer budget used up")
-    await expect(card).toContainText("Customer pool")
-    await expect(card).toContainText("$2.00")
-    await expect(card).toContainText("Staff revalidation pool")
+    await expect(card.getByTestId("catalog-over")).toContainText("Projected spend is over the budget")
+    await expect(card).toContainText("Spent this cycle")
+    await expect(card).toContainText("$4.80")
+    await expect(card).toContainText("Projected at cycle end")
+    await expect(card).toContainText("Refreshing on schedule")
     // Run count, connection test and the provider link need the Developer Panel routes, which the admin host refuses.
     await expect(card).not.toContainText("Runs this month")
     await expect(card).not.toContainText("Last connection test")
@@ -152,10 +154,10 @@ test.describe("ADR-0032 console (mocked API)", () => {
     expect(devCalls).toEqual([])
   })
 
-  test("admin dashboard has no Apify usage card without provider.config.read", async ({ page }) => {
+  test("admin dashboard has no Apify usage card without catalog.read", async ({ page }) => {
     await mockApi(page, ADMIN, BASIC)
     let asked = false
-    await page.route("**/api/v1/admin/providers/apify-google-flights/usage", (r) => { asked = true; return json(r, usage()) })
+    await page.route("**/api/v1/admin/catalog/usage", (r) => { asked = true; return json(r, usage()) })
     await page.goto(`${ADMIN}/`)
     await expect(page.getByTestId("tile-now")).toBeVisible()
     await expect(page.getByTestId("apify-usage")).toHaveCount(0)
@@ -198,12 +200,12 @@ test.describe("ADR-0032 console (mocked API)", () => {
   }
 })
 
+/** `GET /v1/admin/catalog/usage` (CatalogUsage, ADR-0034): the pacer's spend, projection and pause state. */
 function usage() {
-  const pool = (budgetUsd: number, spentUsd: number) => ({ budgetUsd, spentUsd, remainingUsd: budgetUsd - spentUsd })
   return {
-    provider: "apify-google-flights", month: "2026-11", credential: { set: true, invalidAt: null }, apify: { cycle: "2026-11", maxMonthlyUsageUsd: 5, monthlyUsageUsd: 1.2 }, apifyError: null,
-    ledger: { budgetUsd: 5, staffReserveUsd: 0.75, totalSpentUsd: 1.2, pools: { customer: pool(2, 2), prewarm: pool(1.5, 0.1), staff: pool(1.5, 0.3) }, customerRunsThisHour: 4, customerRunsPerHour: 10 },
-    banner: "CUSTOMER_POOL_EMPTY", reconciledAt: null,
+    cycleStart: "2026-11-01T00:00:00Z", cycleEnd: "2026-11-30T23:59:59Z", spentUsd: 4.8, spentSource: "apify", ledgerUsd: 4.6, projectedUsd: 5.6, budgetUsd: 5,
+    availableUsd: 0.2, reserveLeftUsd: 0.5, reserveReleased: false, rowsPerDay: 120, runsPerDay: 3.5, costCorrection: 1.04, paused: false, pauseReason: null,
+    accountCapUsd: null, lastTick: { at: "2026-11-04T08:00:00Z", outcome: "STARTED", tickBudgetUsd: 0.05, slots: 4 }, nextTickAt: "2026-11-04T12:00:00Z", schemaAlert: null, overBudget: true,
   }
 }
 

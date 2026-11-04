@@ -40,6 +40,9 @@ const Env = z.object({
   APIFY_BASE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   /** ADR-0032 B1: imported once into the encrypted credential store when none is stored, then ignored. Never logged. */
   APIFY_TOKEN: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(8).optional()),
+  /** ADR-0034: the website's revalidation route. Both optional; when unset the catalog refresh just skips the purge (pages expire by their own `revalidate`). */
+  WEB_REVALIDATE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
+  WEB_REVALIDATE_SECRET: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(16).optional()),
 })
 
 export type Env = z.infer<typeof Env>
@@ -56,6 +59,11 @@ export function env(): Env {
     }
   }
   return cached
+}
+
+/** For in-process tests that change the environment before booting an app (test/catalog.e2e.ts); the parsed environment is otherwise cached for the life of the process. */
+export function resetEnvForTests() {
+  cached = undefined
 }
 
 export const isLocal = () => env().APP_ENV === "local"

@@ -21,7 +21,7 @@ export async function createApi() {
   // Webhook signatures are computed over the exact bytes Stripe sent, so keep them for that path only (ADR-0007 P6).
   app.useBodyParser("json", { limit: "1mb", verify: (req: { url?: string; rawBody?: Buffer }, _res: unknown, buf: Buffer) => { if (req.url?.startsWith("/v1/webhooks/")) req.rawBody = buf } } as { limit: string })
   // The website and console call same-origin through their /api proxy; only the Flutter web build (bearer tokens) is cross-origin.
-  app.enableCors({ origin: [env().PUBLIC_MOBILE_WEB_URL], credentials: false, allowedHeaders: ["authorization", "content-type", "idempotency-key", "if-match", "accept-language", "x-device-id", "x-client-platform", "x-app-version", "last-event-id"], exposedHeaders: ["etag", "x-request-id", "retry-after", "location"] })
+  app.enableCors({ origin: [env().PUBLIC_MOBILE_WEB_URL], credentials: false, allowedHeaders: ["authorization", "content-type", "idempotency-key", "if-match", "accept-language", "x-device-id", "x-client-platform", "x-app-version", "last-event-id", "if-none-match"], exposedHeaders: ["etag", "x-request-id", "retry-after", "location"] })
   app.enableShutdownHooks()
   return app
 }

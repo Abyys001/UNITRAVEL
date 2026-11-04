@@ -208,7 +208,7 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async call<T>(id: ProviderId, op: Operation, fn: (a: FlightSupplierAdapter, ctx: CallContext) => Promise<T>, opts: { deadline: Date; searchId?: string; requestId: string }): Promise<SupplierResult<T>> {
+  async call<T>(id: ProviderId, op: Operation, fn: (a: FlightSupplierAdapter, ctx: CallContext) => Promise<T>, opts: { deadline: Date; searchId?: string; requestId: string; staff?: boolean }): Promise<SupplierResult<T>> {
     const row = await this.row(id)
     const adapter = this.adapters.get(id)
     const started = Date.now()
@@ -218,7 +218,8 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     if (row.metering && op !== "health" && (await this.credentialInvalid(id))) {
       return { ok: false, error: new SupplierError("SUPPLIER_AUTH", "The credential was rejected; replace it in the Developer Panel"), meta: { durationMs: 0 } }
     }
-    if (op === "search") {
+    // A source with a dollar budget (Apify, ADR-0034) is limited by money in its own launch step, not by a call count.
+    if (op === "search" && !this.budgets.has(id)) {
       const used = await this.redis.incr(`budget:${id}:${today()}`)
       await this.redis.expire(`budget:${id}:${today()}`, 36 * 3600)
       if (used > row.limits.dailyBudget) return { ok: false, error: new SupplierError("SUPPLIER_RATE_LIMITED", "Daily call budget exhausted"), meta: { durationMs: 0 } }
@@ -234,7 +235,7 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
         release = await this.acquire(row, opts.deadline)
         const timeout = Math.min(remaining, row.limits.timeoutMs || remaining)
         const signal = AbortSignal.timeout(timeout)
-        const ctx: CallContext = { requestId: opts.requestId, deadline: opts.deadline, pointOfSale: { country: row.markets.pointOfSale, currency: row.markets.currency }, reference: this.reference.lookup(), credentials, environment: row.environment, signal, searchId: opts.searchId }
+        const ctx: CallContext = { requestId: opts.requestId, deadline: opts.deadline, pointOfSale: { country: row.markets.pointOfSale, currency: row.markets.currency }, reference: this.reference.lookup(), credentials, environment: row.environment, signal, searchId: opts.searchId, staff: opts.staff }
         const value = await Promise.race([fn(adapter, ctx), new Promise<never>((_, rej) => signal.addEventListener("abort", () => rej(new SupplierError("SUPPLIER_TIMEOUT", "Provider timeout"))))])
         return this.finish(row, op, opts, started, { ok: true, value, meta: { durationMs: Date.now() - started } })
       } catch (err) {
@@ -271,7 +272,7 @@ export class SuppliersService implements OnModuleInit, OnModuleDestroy {
     return r
   }
 
-  search(id: ProviderId, q: SliceQuery, opts: { deadline: Date; searchId?: string; requestId: string }) {
+  search(id: ProviderId, q: SliceQuery, opts: { deadline: Date; searchId?: string; requestId: string; staff?: boolean }) {
     return this.call<NormalisedOffer[]>(id, "search", (a, ctx) => a.search(q, ctx), opts)
   }
 

@@ -13,6 +13,7 @@ import { type Actor, Authenticated, Ctx, CurrentActor, DevSurface, OptionalActor
 import { RateLimiter } from "../../core/http/rate-limit"
 import { zbody } from "../../core/http/zod"
 import { newRedis, REDIS } from "../../core/infra.module"
+import { CatalogRefreshService } from "../catalog/catalog-refresh.service"
 import { ConfigService } from "../config/config.service"
 import { customerItinerary } from "./customer-projection"
 import { type SearchOwner, SearchService } from "./search.service"
@@ -27,37 +28,39 @@ function owner(actor: Actor | undefined, ctx: RequestContext): SearchOwner {
 export class SearchController {
   constructor(private readonly search: SearchService, private readonly limiter: RateLimiter, @Inject(REDIS) private readonly redis: Redis) {}
 
-  /** 202 with the search id (< 300 ms); anonymous searches are rate-limited harder (ch. 25.7). */
+  /**
+   * ADR-0034 C1: staff only. Customers read the flight catalog (`GET /v1/flights/search`); a search here can reach metered providers, so
+   * it needs `flight_search.run` and a second factor like the admin search routes.
+   */
   @Post("flight-searches")
-  @Public()
+  @StaffOnly()
+  @RequirePermission("flight_search.run")
   @HttpCode(202)
-  async start(@Body(zbody(SearchQuery)) q: z.infer<typeof SearchQuery>, @OptionalActor() actor: Actor | undefined, @Ctx() ctx: RequestContext, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    if (actor) await this.limiter.enforce("search-user", actor.userId, 60, 3600)
-    else await this.limiter.enforce("search-anon", req.ip ?? "?", 10, 3600)
-    if (!actor && !ctx.anonKey) {
-      ctx.anonKey = randomToken(18)
-      res.cookie(COOKIE_ANON, ctx.anonKey, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 30 * 86400_000 })
-    }
-    const r = await this.search.start(q, owner(actor, ctx), ctx.locale)
+  async start(@Body(zbody(SearchQuery)) q: z.infer<typeof SearchQuery>, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext, @Res({ passthrough: true }) res: Response) {
+    await this.limiter.enforce("search-user", actor.userId, 60, 3600)
+    const r = await this.search.start(q, staffOwner(actor), ctx.locale)
     res.setHeader("Location", `/v1/flight-searches/${r.id}`)
     return r
   }
 
   @Get("flight-searches/:id")
-  @Public()
-  get(@Param("id", zbody(z.uuid())) id: string, @Query(zbody(SearchStateQuery)) q: z.infer<typeof SearchStateQuery>, @OptionalActor() actor: Actor | undefined, @Ctx() ctx: RequestContext) {
-    return this.search.get(id, owner(actor, ctx), q)
+  @StaffOnly()
+  @RequirePermission("flight_search.run")
+  get(@Param("id", zbody(z.uuid())) id: string, @Query(zbody(SearchStateQuery)) q: z.infer<typeof SearchStateQuery>, @CurrentActor() actor: Actor) {
+    return this.search.get(id, staffOwner(actor), q)
   }
 
   /** Server-sent events: progress, results, done. Small and resumable; clients re-fetch on results (ch. 24.9). */
   @Get("flight-searches/:id/events")
-  @Public()
-  async events(@Param("id", zbody(z.uuid())) id: string, @OptionalActor() actor: Actor | undefined, @Ctx() ctx: RequestContext, @Req() req: Request, @Res() res: Response) {
-    const channel = await this.search.subscribe(id, owner(actor, ctx))
+  @StaffOnly()
+  @RequirePermission("flight_search.run")
+  async events(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor, @Req() req: Request, @Res() res: Response) {
+    const owner = staffOwner(actor)
+    const channel = await this.search.subscribe(id, owner)
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache, no-transform", connection: "keep-alive", "x-accel-buffering": "no" })
     let seq = Number(req.header("last-event-id") ?? 0)
     const send = (event: string, data: unknown) => res.write(`id: ${++seq}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-    const state = await this.search.get(id, owner(actor, ctx), { limit: 1 })
+    const state = await this.search.get(id, owner, { limit: 1 })
     send("progress", { ...state.progress })
     if (state.version > 0) send("results", { version: state.version, count: state.total })
     if (state.status !== "RUNNING") { send("done", { status: state.status, count: state.total }); res.end(); return }
@@ -98,7 +101,7 @@ const staffOwner = (actor: Actor): SearchOwner => ({ userId: actor.userId, staff
 @Controller("v1")
 @StaffOnly()
 export class StaffSearchController {
-  constructor(private readonly search: SearchService, private readonly config: ConfigService) {}
+  constructor(private readonly search: SearchService, private readonly config: ConfigService, private readonly catalog: CatalogRefreshService) {}
 
   @Post("admin/flight-searches")
   @RequirePermission("flight_search.run")
@@ -126,12 +129,19 @@ export class StaffSearchController {
   @RequirePermission("pricing.read.internal")
   @HttpCode(202)
   recheck(@Param("id") id: string, @CurrentActor() actor: Actor) {
+    // ADR-0034: a catalog result id (uuid) is revalidated against the admin reserve; it spends money, so it needs catalog.manage and a fresh second factor.
+    if (z.uuid().safeParse(id).success) {
+      if (!actor.permissions.has("catalog.manage")) throw new AppError("FORBIDDEN", "Requires catalog.manage")
+      if (!actor.mfaVerifiedAt || Date.now() - actor.mfaVerifiedAt.getTime() > 10 * 60_000) throw new AppError("STEP_UP_REQUIRED", "Revalidating a catalog result needs a fresh second-factor check")
+      return this.catalog.revalidateResult(id)
+    }
     return this.search.recheck(id, staffOwner(actor))
   }
 
   @Get("admin/itineraries/:id/recheck/:jobId")
   @RequirePermission("pricing.read.internal")
-  recheckStatus(@Param("id") id: string, @Param("jobId", zbody(z.uuid())) jobId: string) {
+  async recheckStatus(@Param("id") id: string, @Param("jobId", zbody(z.uuid())) jobId: string) {
+    if (z.uuid().safeParse(id).success) return this.catalog.revalidateStatus(jobId)
     return this.search.recheckStatus(id, jobId)
   }
 

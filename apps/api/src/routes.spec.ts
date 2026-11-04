@@ -1,9 +1,12 @@
 import { Controller, Get } from "@nestjs/common"
+import { type BuiltInRole, DEFAULT_ROLE_PERMISSIONS, PERMISSION_CATALOGUE } from "@unitravel/contracts"
 import { describe, expect, it } from "vitest"
 
 import { API_CONTROLLERS } from "./app.module"
 import { enumerateRoutes } from "./core/http/route-table"
 import { BUSINESS_CONTROLLERS } from "./modules/business.module"
+
+const pick = (r?: { permissions: string[]; staff: boolean; stepUp: boolean }) => ({ permissions: r?.permissions, staff: r?.staff, stepUp: r?.stepUp })
 
 describe("fail-closed route declarations", () => {
   const routes = enumerateRoutes([...API_CONTROLLERS, ...BUSINESS_CONTROLLERS])
@@ -171,5 +174,31 @@ describe("fail-closed route declarations", () => {
     const bad = enumerateRoutes([Undeclared]).filter((r) => !r.declared)
     expect(bad).toHaveLength(1)
     expect(bad[0]!.path).toBe("/v1/oops")
+  })
+  it("flight catalog (ADR-0034): the customer endpoints are public reads, the old fan-out is staff-only, every spend is gated", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    for (const p of ["/v1/flights/search", "/v1/flights/results/:id", "/v1/flights/routes"]) expect({ p, pub: find("GET", p)?.isPublic, staff: find("GET", p)?.staff }).toEqual({ p, pub: true, staff: false })
+    // Nothing public may write: the flights prefix holds GET handlers only.
+    expect(routes.filter((r) => r.path.startsWith("/v1/flights") && r.method !== "GET")).toEqual([])
+    // Customers and anonymous callers can no longer start or read a provider-backed search.
+    for (const [m, p] of [["POST", "/v1/flight-searches"], ["GET", "/v1/flight-searches/:id"], ["GET", "/v1/flight-searches/:id/events"]] as const) {
+      expect({ p, pub: find(m, p)?.isPublic, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, pub: false, perms: ["flight_search.run"], staff: true })
+    }
+    const admin: [string, string, string, boolean][] = [
+      ["GET", "/v1/admin/catalog/usage", "catalog.read", false], ["GET", "/v1/admin/catalog/coverage", "catalog.read", false], ["GET", "/v1/admin/catalog/settings", "catalog.read", false],
+      ["PATCH", "/v1/admin/catalog/settings", "catalog.manage", false], ["POST", "/v1/admin/catalog/estimate", "catalog.read", false], ["GET", "/v1/admin/catalog/routes", "catalog.read", false],
+      ["POST", "/v1/admin/catalog/routes", "catalog.manage", false], ["PATCH", "/v1/admin/catalog/routes/:id", "catalog.manage", false], ["POST", "/v1/admin/catalog/pause", "catalog.manage", false],
+      ["POST", "/v1/admin/catalog/resume", "catalog.manage", false], ["POST", "/v1/admin/catalog/slots/:id/refresh/quote", "catalog.manage", false], ["POST", "/v1/admin/catalog/slots/:id/refresh", "catalog.manage", true],
+      ["GET", "/v1/admin/catalog/slots/:id/results", "catalog.read", false], ["GET", "/v1/admin/catalog/jobs/:jobId", "catalog.read", false], ["POST", "/v1/admin/catalog/results/:id/revalidate", "catalog.manage", true],
+      ["POST", "/v1/admin/integrations/apify/test", "provider.config.read", false], ["POST", "/v1/admin/integrations/apify/apply-cap", "provider.config.write", true],
+    ]
+    for (const [m, p, perm, stepUp] of admin) expect({ m, p, ...pick(find(m, p)) }).toEqual({ m, p, permissions: [perm], staff: true, stepUp })
+    expect(routes.filter((r) => r.path.startsWith("/v1/admin/catalog")).map((r) => `${r.method} ${r.path}`).sort()).toEqual(admin.filter(([, p]) => p.startsWith("/v1/admin/catalog")).map(([m, p]) => `${m} ${p}`).sort())
+  })
+  it("catalog permissions: admin, developer and owner hold them; nobody else; managing the budget is privileged (ADR-0034)", () => {
+    for (const role of ["admin", "developer", "owner"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).toEqual(expect.arrayContaining(["catalog.read", "catalog.manage"]))
+    for (const role of ["customer", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => p.startsWith("catalog."))).toEqual([])
+    expect(PERMISSION_CATALOGUE["catalog.manage"].privileged).toBe(true)
+    expect(PERMISSION_CATALOGUE["catalog.read"].privileged).toBe(false)
   })
 })

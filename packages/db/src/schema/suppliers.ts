@@ -57,8 +57,8 @@ export const providerRuns = pgTable("provider_runs", {
   id: id(),
   providerId: varchar({ length: 40 }).notNull().references(() => providers.id),
   externalRunId: varchar({ length: 64 }),
-  pool: text({ enum: ["customer", "prewarm", "staff"] }).notNull(),
-  purpose: text({ enum: ["SEARCH", "RECHECK", "PREWARM"] }).notNull(),
+  pool: text({ enum: ["customer", "prewarm", "staff", "catalog"] }).notNull(),
+  purpose: text({ enum: ["SEARCH", "RECHECK", "PREWARM", "CATALOG"] }).notNull(),
   searchId: uuid(),
   routes: jsonb().$type<{ origin: string; destination: string; departureDate: string; returnDate?: string }[]>().notNull(),
   /** The actor input without credentials, and the cache key per route, so the collect job can file the rows. */

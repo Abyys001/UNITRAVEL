@@ -16,6 +16,7 @@ export class FakeRedis {
   async expire() { return 1 }
   async incr(k: string) { const n = Number(this.kv.get(k) ?? 0) + 1; this.kv.set(k, String(n)); return n }
   async decr(k: string) { const n = Number(this.kv.get(k) ?? 0) - 1; this.kv.set(k, String(n)); return n }
+  async incrby(k: string, by: number) { const n = Number(this.kv.get(k) ?? 0) + by; this.kv.set(k, String(n)); return n }
   async incrbyfloat(k: string, by: number) { const n = Number(this.kv.get(k) ?? 0) + by; this.kv.set(k, String(n)); return String(n) }
   async sadd(k: string, ...m: string[]) { const s = this.sets.get(k) ?? new Set(); let n = 0; for (const x of m) if (!s.has(x)) { s.add(x); n++ } this.sets.set(k, s); return n }
   async smembers(k: string) { return [...(this.sets.get(k) ?? [])] }

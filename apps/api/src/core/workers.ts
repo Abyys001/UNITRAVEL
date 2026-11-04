@@ -11,6 +11,8 @@ export type ProcessRole = "api" | "worker"
 
 type Handler = (job: Job) => Promise<unknown>
 
+const JOB_LOG_QUEUES = new Set<QueueName>(["maintenance", "compliance.lists-sync", "reference.sync", "catalog"])
+
 /**
  * BullMQ consumers live only in the worker process role (ADR-01). Modules register their handlers; the registry
  * starts one Worker per queue with the concurrency from Table 26.2.
@@ -49,10 +51,10 @@ export class WorkerRegistry implements OnApplicationBootstrap, OnApplicationShut
         const started = Date.now()
         try {
           const r = await handler(job)
-          if (queue === "maintenance" || queue === "compliance.lists-sync" || queue === "reference.sync") await this.db.insert(jobRuns).values({ queue, name: job.name, status: "OK", durationMs: Date.now() - started, detail: (r ?? null) as never })
+          if (JOB_LOG_QUEUES.has(queue)) await this.db.insert(jobRuns).values({ queue, name: job.name, status: "OK", durationMs: Date.now() - started, detail: (r ?? null) as never })
           return r
         } catch (err) {
-          if (queue === "maintenance" || queue === "compliance.lists-sync" || queue === "reference.sync") await this.db.insert(jobRuns).values({ queue, name: job.name, status: "FAILED", durationMs: Date.now() - started, detail: { error: String(err) } })
+          if (JOB_LOG_QUEUES.has(queue)) await this.db.insert(jobRuns).values({ queue, name: job.name, status: "FAILED", durationMs: Date.now() - started, detail: { error: String(err) } })
           throw err
         }
       }, { connection: redisConnection(), concurrency })

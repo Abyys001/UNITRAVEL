@@ -18,6 +18,7 @@ Source: booklet ch. 30.7 (trigger table) and ch. 30.6 (backup). Targets: ch. 30.
 | [deploy-vps](deploy-vps.md) | Standing up or updating a staging/production stack on one VPS; not an incident trigger |
 | [deploy-vps-nginx](deploy-vps-nginx.md) | Same, on a shared VPS whose host nginx owns 80/443 (`scripts/vps-deploy.sh`); the live unitravels.co.uk setup |
 | [refunds](refunds.md) | Staff procedure for refunding an online card payment (ADR-0007); not an incident trigger |
+| [flight-catalog](flight-catalog.md) | Catalog paused, usage widget red, schema-check alert, or Apify 401/403 (ADR-0034) |
 
 ## Conventions
 

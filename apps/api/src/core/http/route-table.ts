@@ -5,11 +5,11 @@ import { METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants"
 
 import type { Permission } from "@unitravel/contracts"
 
-import { AUTHENTICATED_KEY, DEV_SURFACE_KEY, PERMISSIONS_KEY, PUBLIC_KEY, STAFF_KEY } from "./decorators"
+import { AUTHENTICATED_KEY, DEV_SURFACE_KEY, PERMISSIONS_KEY, PUBLIC_KEY, STAFF_KEY, STEP_UP_KEY } from "./decorators"
 
 export interface Route {
   controller: string; handler: string; method: string; path: string
-  declared: boolean; isPublic: boolean; authenticated: boolean; permissions: Permission[]; staff: boolean; dev: boolean
+  declared: boolean; isPublic: boolean; authenticated: boolean; permissions: Permission[]; staff: boolean; dev: boolean; stepUp: boolean
 }
 
 /** Every route with its access declaration, read from controller metadata (ch. 25.6, 32.3). */
@@ -28,7 +28,7 @@ export function enumerateRoutes(controllers: Type[]): Route[] {
         controller: c.name, handler: name, method: RequestMethod[method]!,
         path: `/${base}/${String(Reflect.getMetadata(PATH_METADATA, fn) ?? "")}`.replace(/\/+/g, "/").replace(/\/$/, ""),
         isPublic: !!meta(PUBLIC_KEY), authenticated: !!meta(AUTHENTICATED_KEY), permissions,
-        declared: !!(meta(PUBLIC_KEY) || meta(AUTHENTICATED_KEY) || permissions.length), staff: !!meta(STAFF_KEY), dev: !!meta(DEV_SURFACE_KEY),
+        declared: !!(meta(PUBLIC_KEY) || meta(AUTHENTICATED_KEY) || permissions.length), staff: !!meta(STAFF_KEY), dev: !!meta(DEV_SURFACE_KEY), stepUp: !!meta(STEP_UP_KEY),
       })
     }
   }

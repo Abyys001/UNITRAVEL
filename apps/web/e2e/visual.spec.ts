@@ -20,7 +20,8 @@ interface Screen { name: string; path: string; signedIn?: boolean; override?: Ov
 const SCREENS: Screen[] = [
   { name: "home", path: "", signedIn: false },
   { name: "sign-in", path: "/sign-in", signedIn: false },
-  { name: "search-results", path: `/search?q=${m.searchQ}`, settle: "main ul li a" },
+  // ADR-0034: /search is server-rendered from the catalog, which the browser cassette cannot replay; KUL-OSL is untracked, so the page is always the NOT_TRACKED state.
+  { name: "search-results", path: "/search?from=KUL&to=OSL&date=2026-12-01", settle: "[data-testid=catalog-not_tracked]" },
   { name: "itinerary", path: m.itineraryPath! },
   { name: "request-new", path: m.requestNewPath! },
   { name: "requests", path: "/requests" },

@@ -8,7 +8,7 @@ import { CustomersService } from "./modules/customers/customers.service"
 import { InvoicesService } from "./modules/invoices/invoices.service"
 import { ServicesService } from "./modules/services/services.service"
 
-import { toFlightItems } from "./modules/listings/listings.service"
+import { toListingItem } from "./modules/listings/listings.service"
 import { customerItinerary, customerSeatMaps } from "./modules/search/customer-projection"
 
 /** Field names that exist on staff/internal records and must never reach a customer (ch. 25.6, 32.2). */
@@ -153,14 +153,10 @@ describe("customer serialisers never emit internal fields (property)", () => {
     }), { numRuns: 100 })
   })
 
-  it("popular-route listings carry no amount, price level, booking token, Google link or provider data, whatever the record carries (ADR-0032 B4)", () => {
-    const indicative = Itinerary.parse({
-      ...structuredClone(staffItinerary),
-      components: [{ ...structuredClone(staffOffer), source: { ...staffOffer.source, provider: "apify-google-flights", confidence: "INDICATIVE" },
-        providerData: { bookingToken: "SECRET-token", googleFlightsUrl: "https://www.google.com/travel/flights?SECRET", priceLevel: "SECRET-low", typicalPriceLow: 111222, typicalPriceHigh: 333444 } }],
-    })
-    const items = toFlightItems([indicative], "3e9d4c0b-6f40-4c0d-8e5b-8a7f6e5d4c30", "2026-11-20")
-    expect(items[0]).toMatchObject({ fetchedAt: staffOffer.source.fetchedAt, offerRef: { itineraryId: "itn_1" }, segments: [{ marketing: { carrier: "TK", flightNumber: "879" } }] })
+  it("popular-route listings carry no amount, price level, booking token, Google link or provider data, whatever the record carries (ADR-0032 B4, ADR-0034 C8)", () => {
+    const snapshot = { id: "3e9d4c0b-6f40-4c0d-8e5b-8a7f6e5d4c30", origin: "IST", destination: "LHR", departureDate: "2026-11-20", departLocal: "2026-11-20T08:40", arriveLocal: "2026-11-20T10:55", durationMin: 255, stops: 0, carriers: ["TK"], flightNumbers: ["TK879"], selfTransfer: false, layovers: [], riskFlags: [], complianceReview: false, fetchedAt: "2026-11-19T10:00:00.000Z" }
+    const items = [toListingItem(snapshot)]
+    expect(items[0]).toMatchObject({ fetchedAt: snapshot.fetchedAt, offerRef: null, carriers: ["TK"] })
     const check = (v: unknown) => {
       const out = JSON.stringify(v)
       expect(amountPaths(v)).toEqual([])

@@ -9,6 +9,7 @@ import { LoadingState } from "@unitravel/ui/product/states"
 
 import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
+import { ago } from "@/lib/relative-time"
 import { useSession } from "@/lib/session"
 
 import { Ltr } from "./badges"
@@ -24,14 +25,6 @@ type PopularFlight = FlightListingItem
 /** A wait this long usually means leaving the airside or a night at the airport, so customers should notice it. */
 const LONG_LAYOVER_MIN = 240
 const CABIN_KEY = { ECONOMY: "search.economy", PREMIUM_ECONOMY: "search.premium", BUSINESS: "search.business", FIRST: "search.first" } as const
-const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [["day", 86_400], ["hour", 3_600], ["minute", 60]]
-
-function ago(iso: string, locale: string) {
-  const seconds = Math.max(0, (Date.now() - Date.parse(iso)) / 1000)
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" })
-  for (const [unit, size] of RELATIVE_STEPS) if (seconds >= size) return rtf.format(-Math.floor(seconds / size), unit)
-  return rtf.format(0, "minute")
-}
 
 /** Popular routes under the search form (ADR-0032 B4). Indicative schedules only: every card says where it came from and when. */
 export function PopularFlights() {

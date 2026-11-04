@@ -509,80 +509,13 @@ describe("Curated and cached listings (ADR-0021)", () => {
     expect((await admin.get("/v1/admin/listings/00000000-0000-4000-8000-000000000000")).status).toBe(404)
   })
 
-  it("flights: empty with NO_SOURCES when nothing is cached; a cached live result carries its label and fetch time and no amount; stale or foreign data is not served", async () => {
-    const empty = await anon.get("/v1/listings/flights?from=LHR&to=IKA")
-    expect(empty.status).toBe(200)
-    expect(empty.body).toEqual({ items: [], notice: "NO_SOURCES" })
-    const fetchedAt = new Date().toISOString()
-    const item = { label: "CACHED_OFFER", fetchedAt, origin: "LHR", destination: "IKA", departureDate: "2027-01-10", carriers: ["TK"], stops: 1, durationMin: 640, departureLocal: "2027-01-10T09:00", arrivalLocal: "2027-01-10T20:40" }
-    await redis.set("listings:flights:LHR-IKA", JSON.stringify({ fetchedAt, items: [item] }), "EX", 120)
-    try {
-      const hit = await anon.get("/v1/listings/flights?from=lhr&to=ika")
-      expect(hit.body.notice).toBeNull()
-      expect(hit.body.items).toEqual([item])
-      expect(JSON.stringify(hit.body)).not.toMatch(/amount|price|GBP/i)
-      expect((await anon.get("/v1/listings/flights?from=LHR&to=THR")).body).toEqual({ items: [], notice: "NO_SOURCES" })
-      expect((await anon.get("/v1/listings/flights?from=LH&to=IKA")).body.notice).toBe("NO_SOURCES")
-    } finally {
-      await redis.del("listings:flights:LHR-IKA")
+  // ADR-0034: the popular-route cards read the flight catalog's snapshots. The positive path (cards from stored results, no price)
+  // is covered in test/catalog.e2e.ts, which can write snapshots; the prewarm worker it replaced is gone.
+  it("flights: empty with NO_SOURCES when the catalog holds nothing for the pair; malformed codes are skipped, never an error", async () => {
+    for (const q of ["from=LHR&to=IKA", "from=LHR&to=THR", "from=LH&to=IKA"]) {
+      const empty = await anon.get(`/v1/listings/flights?${q}`)
+      expect(empty.status, q).toBe(200)
+      expect(empty.body, q).toEqual({ items: [], notice: "NO_SOURCES" })
     }
   })
-
-  it("the worker warms configured routes through the supplier gateway and the result is served labelled; with no source it caches nothing", async () => {
-    const settings = (await dev.get("/v1/dev/settings")).body
-    await redis.del("listings:flights:THR-MHD")
-    expect((await dev.put("/v1/dev/settings", { ...settings, listings: { flightRoutes: [{ from: "THR", to: "MHD" }] } })).status).toBe(200)
-    try {
-      await maintenance.add("listings.warm-flights", {})
-      const cached = await until(() => redis.get("listings:flights:THR-MHD"), Boolean, 25_000)
-      if (cached) {
-        const view = (await anon.get("/v1/listings/flights")).body
-        expect(view.notice).toBeNull()
-        expect(view.items.length).toBeGreaterThan(0)
-        for (const i of view.items) expect(i).toMatchObject({ origin: "THR", destination: "MHD", label: expect.stringMatching(/^(SANDBOX|CACHED_OFFER)$/), fetchedAt: expect.any(String) })
-        // A FAKE result is labelled SANDBOX and only exists where sandboxAllowed() (this developer machine).
-        expect(view.items.every((i: { label: string }) => i.label === "SANDBOX")).toBe(true)
-      } else {
-        expect((await anon.get("/v1/listings/flights")).body).toEqual({ items: [], notice: "NO_SOURCES" })
-      }
-    } finally {
-      await dev.put("/v1/dev/settings", settings)
-      await redis.del("listings:flights:THR-MHD")
-    }
-  })
-
-  // ADR-0032 B4, ADR-0004, ADR-0029 A5: no fare field reaches a customer, whatever the source. The FAKE source carries prices, so it proves the projection.
-  it("no price, price level, booking token or Google link in the flight listing, its itinerary or a customer search", async () => {
-    const FARE = /priceLevel|bookingToken|googleFlightsUrl|google\.com\/travel|"price"|"amount"|"total"/
-    const settings = (await dev.get("/v1/dev/settings")).body
-    await redis.del("listings:flights:IST-LHR")
-    expect((await dev.put("/v1/dev/settings", { ...settings, listings: { flightRoutes: [{ from: "IST", to: "LHR" }] } })).status).toBe(200)
-    try {
-      // The worker picks the new route list up through the settings reload; warm again until it has.
-      const warmed = await until(async () => { await maintenance.add("listings.warm-flights", {}); await wait(3000); return redis.get("listings:flights:IST-LHR") }, Boolean, 60_000)
-      expect(warmed).toBeTruthy()
-      const listing = await anon.get("/v1/listings/flights")
-      expect(listing.body.items.length).toBeGreaterThan(0)
-      expect(JSON.stringify(listing.body)).not.toMatch(FARE)
-      const ref = (listing.body.items as { offerRef?: { itineraryId: string } | null }[]).find((i) => i.offerRef)?.offerRef
-      expect(ref).toBeTruthy()
-      // A SYSTEM listing search is readable by any caller (ADR-0032 B5), always through the customer projection.
-      const itin = await anon.get(`/v1/itineraries/${ref!.itineraryId}`)
-      expect(itin.status).toBe(200)
-      expect(JSON.stringify(itin.body)).not.toMatch(FARE)
-
-      const { c } = await customer("Leak")
-      const started = await c.post("/v1/flight-searches", { tripType: "ONE_WAY", slices: [{ from: { airport: "IST" }, to: { airport: "LHR" }, date: new Date(Date.now() + 21 * 86400_000).toISOString().slice(0, 10) }], passengers: [{ type: "ADT" }] })
-      expect(started.status).toBe(202)
-      const state = await until(() => c.get(`/v1/flight-searches/${started.body.id}?limit=60`), (r) => r.body.status !== "RUNNING", 30_000)
-      expect(state.body.results.length).toBeGreaterThan(0)
-      // `total` at the top of the page is the result count, not a fare; the results themselves carry none of these keys.
-      expect(JSON.stringify(state.body.results)).not.toMatch(FARE)
-      const { total: _count, results: _r, ...rest } = state.body
-      expect(JSON.stringify(rest)).not.toMatch(FARE)
-    } finally {
-      await dev.put("/v1/dev/settings", settings)
-      await redis.del("listings:flights:IST-LHR")
-    }
-  }, 120_000)
 })

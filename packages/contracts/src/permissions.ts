@@ -43,6 +43,8 @@ export const PERMISSIONS = [
   "support.reply",
   "call.log",
   "listings.write",
+  "catalog.read",
+  "catalog.manage",
   "visa.read",
   "visa.write",
   "identity.verify",
@@ -113,6 +115,9 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "support.reply": { privileged: false },
   "call.log": { privileged: false },
   "listings.write": { privileged: false },
+  // ADR-0034: the flight catalog. Reading shows indicative prices (staff only); managing spends the Apify budget, so it is privileged.
+  "catalog.read": { privileged: false },
+  "catalog.manage": { privileged: true },
   // ADR-0033: staff read and edit the visa requirements database; an override is audited and needs an official source.
   "visa.read": { privileged: false },
   "visa.write": { privileged: false },
@@ -157,6 +162,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
     "payment.record", "payment.refund.request", "payment.refund.approve", "customer.read.pii", "customer.read.documents", "identity.verify", "engine.rules.read",
     "service_request.read.any", "service_request.write", "loyalty.read", "loyalty.manage", "loyalty.benefit.approve", "cms.read", "cms.write",
     "customer.read", "service.assign", "invoice.direct", "support.read", "support.reply", "call.log", "listings.write", "visa.read", "visa.write",
+    "catalog.read", "catalog.manage",
   ],
   cargo_admin: [
     "flight_search.run", "flight_request.note.internal", "payment.record", "cargo_request.read.any",
@@ -169,7 +175,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
   developer: [
     "flight_search.run", "user.read", "user.role.assign", "provider.config.read", "provider.config.write",
     "engine.rules.read", "engine.rules.publish", "settings.write", "flags.write", "notification.template.write",
-    "audit.read", "diagnostics.read", "payments.configure",
+    "audit.read", "diagnostics.read", "payments.configure", "catalog.read", "catalog.manage",
   ],
   owner: [...PERMISSIONS],
 }

@@ -1,26 +1,33 @@
 import { expect, test } from "@playwright/test"
 
-// ADR-0014: a deployed host with no live source enabled shows the honest "no sources" notice and "Ask our team",
-// never FAKE or sandbox results. The API side (no searchable providers -> NO_SOURCES) is covered by the API unit test.
-const params = { trip: "ONE_WAY", from: { kind: "CITY", code: "THR", label: "Tehran" }, to: { kind: "CITY", code: "LON", label: "London" }, date: "2026-12-10", adt: 1, chd: [], inf: 0, cabin: "ECONOMY", flex: false, st: true, ac: true, on: true, gw: true, stops: 2, lay: [120, 360] }
-const q = Buffer.from(JSON.stringify(params)).toString("base64")
-const searchId = "0190f2a0-0000-7000-8000-000000000013"
-const state = {
-  id: searchId, status: "COMPLETE", version: 1,
-  query: { tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date: "2026-12-10", flexDays: 0 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY", preferences: {} },
-  progress: { sourcesTotal: 0, sourcesDone: 0, removedByPolicy: 0, slowSources: [], wave: 1 },
-  expiresAt: "2026-12-01T00:00:00Z", historical: false, ruleVersion: 1, engineVersion: "test", notices: ["NO_SOURCES"], results: [], nextCursor: null, total: 0,
-}
+// ADR-0034: /search is a server component reading the stored catalog (GET /v1/flights/search); nothing in the browser can start a provider call.
+// These run against the real API and read only. KUL-OSL is not on the watchlist, so its state does not depend on what the pacer has stored.
+const day = new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10)
+const FORBIDDEN = /priceLevel|bookingToken|googleFlightsUrl|google\.com\/travel|"price"|"amount"/
 
 for (const locale of ["en", "fa"] as const) {
-  test(`no live sources: notice and ask-our-team, no test data (${locale})`, async ({ page }) => {
-    await page.route("**/api/v1/flight-searches", (r) => r.fulfill({ status: 201, json: { id: searchId } }))
-    await page.route(`**/api/v1/flight-searches/${searchId}/events`, (r) => r.fulfill({ status: 200, headers: { "content-type": "text/event-stream" }, body: "" }))
-    await page.route(`**/api/v1/flight-searches/${searchId}?*`, (r) => r.fulfill({ json: state }))
-    await page.goto(`/${locale}/search?q=${encodeURIComponent(q)}`)
-    const noSources = locale === "en" ? "Our flight sources are unavailable right now." : "منابع پرواز ما اکنون در دسترس نیستند."
-    await expect(page.getByText(noSources).first()).toBeVisible()
-    await expect(page.getByRole("link", { name: locale === "en" ? "Ask our team to find options" : "از تیم ما بخواهید گزینه پیدا کند" }).first()).toBeVisible()
+  test(`untracked route: not-tracked state and ask-our-team, no test data, no browser flight-search call (${locale})`, async ({ page }) => {
+    const calls: string[] = []
+    page.on("request", (r) => { if (r.url().includes("/flight-searches")) calls.push(r.url()) })
+    await page.goto(`/${locale}/search?from=KUL&to=OSL&date=${day}`)
+    const state = page.getByTestId("catalog-not_tracked")
+    await expect(state).toBeVisible()
+    await expect(state).toContainText(locale === "en" ? "We don't track this route automatically yet" : "این مسیر را هنوز خودکار دنبال نمی‌کنیم")
+    const ask = state.getByRole("link", { name: locale === "en" ? "Ask our team to find options" : "از تیم ما بخواهید گزینه پیدا کند" })
+    await expect(ask).toBeVisible()
+    await expect(ask).toHaveAttribute("href", new RegExp(`/${locale}/(request/new\\?manual=|sign-in\\?next=)`))
     await expect(page.getByText(locale === "en" ? "TEST DATA" : "دادهٔ آزمایشی")).toHaveCount(0)
+    expect(calls).toEqual([])
+    expect(await page.content()).not.toMatch(FORBIDDEN)
   })
 }
+
+test("watchlist route: renders one catalog state (results, stale or empty) without any amount", async ({ page }) => {
+  await page.goto(`/en/search?from=IKA&to=IST&date=${day}`)
+  const states = ["catalog-result", "catalog-date-group", "catalog-empty", "catalog-unavailable"].map((id) => page.getByTestId(id).first())
+  await expect.poll(async () => (await Promise.all(states.map((s) => s.isVisible()))).some(Boolean)).toBe(true)
+  await expect(page.getByTestId("catalog-not_tracked")).toHaveCount(0)
+  const body = await page.locator("main").innerText()
+  expect(body).not.toMatch(/[£$€]\s?\d|\d\s?(GBP|USD|EUR)/)
+  expect(await page.content()).not.toMatch(FORBIDDEN)
+})

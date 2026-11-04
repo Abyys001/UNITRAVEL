@@ -706,6 +706,8 @@
                           "support.reply",
                           "call.log",
                           "listings.write",
+                          "catalog.read",
+                          "catalog.manage",
                           "visa.read",
                           "visa.write",
                           "identity.verify",
@@ -24090,6 +24092,3816 @@
         },
         "tags": [
           "dev"
+        ]
+      }
+    },
+    "/v1/flights/search": {
+      "get": {
+        "operationId": "CatalogReadController_search",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{3}$"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9]{3}$"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            }
+          },
+          {
+            "name": "flex",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            }
+          },
+          {
+            "name": "cabin",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "economy",
+              "type": "string",
+              "enum": [
+                "economy",
+                "premium_economy",
+                "business",
+                "first"
+              ]
+            }
+          },
+          {
+            "name": "adults",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tracked": {
+                      "type": "boolean"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "RESULTS",
+                        "STALE",
+                        "EMPTY",
+                        "NOT_TRACKED",
+                        "UNAVAILABLE"
+                      ]
+                    },
+                    "origin": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "destination": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "fetchedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "origin": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "destination": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "departureDate": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          },
+                          "departLocal": {
+                            "type": "string"
+                          },
+                          "arriveLocal": {
+                            "type": "string"
+                          },
+                          "durationMin": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "stops": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "carriers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "flightNumbers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "selfTransfer": {
+                            "type": "boolean"
+                          },
+                          "layovers": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "at": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z0-9]{3}$"
+                                },
+                                "minutes": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "flags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEPARATE_TICKETS",
+                                      "AIRPORT_CHANGE",
+                                      "OVERNIGHT",
+                                      "TIGHT",
+                                      "TERMINAL_CHANGE",
+                                      "TERMINAL_UNKNOWN",
+                                      "ENTRY_REQUIRED"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "at",
+                                "minutes",
+                                "flags"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "riskFlags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "SEPARATE_TICKETS",
+                                "AIRPORT_CHANGE",
+                                "OVERNIGHT",
+                                "TIGHT",
+                                "TERMINAL_CHANGE",
+                                "TERMINAL_UNKNOWN",
+                                "ENTRY_REQUIRED"
+                              ]
+                            }
+                          },
+                          "complianceReview": {
+                            "type": "boolean"
+                          },
+                          "fetchedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "origin",
+                          "destination",
+                          "departureDate",
+                          "departLocal",
+                          "arriveLocal",
+                          "durationMin",
+                          "stops",
+                          "carriers",
+                          "flightNumbers",
+                          "selfTransfer",
+                          "layovers",
+                          "riskFlags",
+                          "complianceReview",
+                          "fetchedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "dates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "RESULTS",
+                              "STALE",
+                              "EMPTY",
+                              "NOT_TRACKED",
+                              "UNAVAILABLE"
+                            ]
+                          },
+                          "fetchedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "results": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "origin": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z0-9]{3}$"
+                                },
+                                "destination": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z0-9]{3}$"
+                                },
+                                "departureDate": {
+                                  "type": "string",
+                                  "format": "date",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                },
+                                "departLocal": {
+                                  "type": "string"
+                                },
+                                "arriveLocal": {
+                                  "type": "string"
+                                },
+                                "durationMin": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "stops": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "carriers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "flightNumbers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "selfTransfer": {
+                                  "type": "boolean"
+                                },
+                                "layovers": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "at": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z0-9]{3}$"
+                                      },
+                                      "minutes": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "flags": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "enum": [
+                                            "SEPARATE_TICKETS",
+                                            "AIRPORT_CHANGE",
+                                            "OVERNIGHT",
+                                            "TIGHT",
+                                            "TERMINAL_CHANGE",
+                                            "TERMINAL_UNKNOWN",
+                                            "ENTRY_REQUIRED"
+                                          ]
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "at",
+                                      "minutes",
+                                      "flags"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "riskFlags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEPARATE_TICKETS",
+                                      "AIRPORT_CHANGE",
+                                      "OVERNIGHT",
+                                      "TIGHT",
+                                      "TERMINAL_CHANGE",
+                                      "TERMINAL_UNKNOWN",
+                                      "ENTRY_REQUIRED"
+                                    ]
+                                  }
+                                },
+                                "complianceReview": {
+                                  "type": "boolean"
+                                },
+                                "fetchedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "origin",
+                                "destination",
+                                "departureDate",
+                                "departLocal",
+                                "arriveLocal",
+                                "durationMin",
+                                "stops",
+                                "carriers",
+                                "flightNumbers",
+                                "selfTransfer",
+                                "layovers",
+                                "riskFlags",
+                                "complianceReview",
+                                "fetchedAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "date",
+                          "state",
+                          "fetchedAt",
+                          "results"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "nearbyDates": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                      }
+                    },
+                    "partyNote": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "tracked",
+                    "state",
+                    "origin",
+                    "destination",
+                    "date",
+                    "fetchedAt",
+                    "results",
+                    "dates",
+                    "nearbyDates",
+                    "partyNote"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flights"
+        ]
+      }
+    },
+    "/v1/flights/routes": {
+      "get": {
+        "operationId": "CatalogReadController_routes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "routes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "origin": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "destination": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "selfTransfer": {
+                            "type": "boolean"
+                          },
+                          "firstDate": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          },
+                          "lastDate": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          }
+                        },
+                        "required": [
+                          "origin",
+                          "destination",
+                          "selfTransfer",
+                          "firstDate",
+                          "lastDate"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "routes"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flights"
+        ]
+      }
+    },
+    "/v1/flights/results/{id}": {
+      "get": {
+        "operationId": "CatalogReadController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "origin": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "destination": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "departureDate": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "departLocal": {
+                      "type": "string"
+                    },
+                    "arriveLocal": {
+                      "type": "string"
+                    },
+                    "durationMin": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "stops": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "carriers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "flightNumbers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "selfTransfer": {
+                      "type": "boolean"
+                    },
+                    "layovers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "at": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "minutes": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "flags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "SEPARATE_TICKETS",
+                                "AIRPORT_CHANGE",
+                                "OVERNIGHT",
+                                "TIGHT",
+                                "TERMINAL_CHANGE",
+                                "TERMINAL_UNKNOWN",
+                                "ENTRY_REQUIRED"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "at",
+                          "minutes",
+                          "flags"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "riskFlags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "SEPARATE_TICKETS",
+                          "AIRPORT_CHANGE",
+                          "OVERNIGHT",
+                          "TIGHT",
+                          "TERMINAL_CHANGE",
+                          "TERMINAL_UNKNOWN",
+                          "ENTRY_REQUIRED"
+                        ]
+                      }
+                    },
+                    "complianceReview": {
+                      "type": "boolean"
+                    },
+                    "fetchedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "legs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "carrier": {
+                            "type": "string"
+                          },
+                          "flightNumber": {
+                            "type": "string"
+                          },
+                          "operatingCarrier": {
+                            "type": "string"
+                          },
+                          "from": {
+                            "type": "object",
+                            "properties": {
+                              "iata": {
+                                "type": "string",
+                                "pattern": "^[A-Z0-9]{3}$"
+                              },
+                              "local": {
+                                "type": "string"
+                              },
+                              "terminal": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "iata",
+                              "local"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "to": {
+                            "type": "object",
+                            "properties": {
+                              "iata": {
+                                "type": "string",
+                                "pattern": "^[A-Z0-9]{3}$"
+                              },
+                              "local": {
+                                "type": "string"
+                              },
+                              "terminal": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "iata",
+                              "local"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "durationMin": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "aircraft": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "carrier",
+                          "flightNumber",
+                          "from",
+                          "to",
+                          "durationMin"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "isCurrent": {
+                      "type": "boolean"
+                    },
+                    "lastSeenAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "origin",
+                    "destination",
+                    "departureDate",
+                    "departLocal",
+                    "arriveLocal",
+                    "durationMin",
+                    "stops",
+                    "carriers",
+                    "flightNumbers",
+                    "selfTransfer",
+                    "layovers",
+                    "riskFlags",
+                    "complianceReview",
+                    "fetchedAt",
+                    "legs",
+                    "isCurrent",
+                    "lastSeenAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "flights"
+        ]
+      }
+    },
+    "/v1/admin/catalog/usage": {
+      "get": {
+        "operationId": "CatalogAdminController_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cycleStart": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "cycleEnd": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "spentUsd": {
+                      "type": "number"
+                    },
+                    "spentSource": {
+                      "type": "string",
+                      "enum": [
+                        "apify",
+                        "ledger"
+                      ]
+                    },
+                    "ledgerUsd": {
+                      "type": "number"
+                    },
+                    "projectedUsd": {
+                      "type": "number"
+                    },
+                    "budgetUsd": {
+                      "type": "number"
+                    },
+                    "availableUsd": {
+                      "type": "number"
+                    },
+                    "reserveLeftUsd": {
+                      "type": "number"
+                    },
+                    "reserveReleased": {
+                      "type": "boolean"
+                    },
+                    "rowsPerDay": {
+                      "type": "number"
+                    },
+                    "runsPerDay": {
+                      "type": "number"
+                    },
+                    "costCorrection": {
+                      "type": "number"
+                    },
+                    "paused": {
+                      "type": "boolean"
+                    },
+                    "pauseReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "accountCapUsd": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "lastTick": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "outcome": {
+                              "type": "string"
+                            },
+                            "tickBudgetUsd": {
+                              "type": "number"
+                            },
+                            "slots": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "at",
+                            "outcome",
+                            "tickBudgetUsd",
+                            "slots"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "nextTickAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "schemaAlert": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "overBudget": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "cycleStart",
+                    "cycleEnd",
+                    "spentUsd",
+                    "spentSource",
+                    "ledgerUsd",
+                    "projectedUsd",
+                    "budgetUsd",
+                    "availableUsd",
+                    "reserveLeftUsd",
+                    "reserveReleased",
+                    "rowsPerDay",
+                    "runsPerDay",
+                    "costCorrection",
+                    "paused",
+                    "pauseReason",
+                    "accountCapUsd",
+                    "lastTick",
+                    "nextTickAt",
+                    "schemaAlert",
+                    "overBudget"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/coverage": {
+      "get": {
+        "operationId": "CatalogAdminController_coverage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "routes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "route": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "origin": {
+                                "type": "string",
+                                "pattern": "^[A-Z0-9]{3}$"
+                              },
+                              "destination": {
+                                "type": "string",
+                                "pattern": "^[A-Z0-9]{3}$"
+                              },
+                              "enabled": {
+                                "type": "boolean"
+                              },
+                              "horizonDays": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "maxResults": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "priorityWeight": {
+                                "type": "number"
+                              },
+                              "note": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "DIRECT",
+                                  "COMBINED"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "origin",
+                              "destination",
+                              "enabled",
+                              "horizonDays",
+                              "maxResults",
+                              "priorityWeight",
+                              "note",
+                              "kind"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "slots": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "date": {
+                                  "type": "string",
+                                  "format": "date",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "NEVER",
+                                    "FRESH",
+                                    "AGING",
+                                    "STALE",
+                                    "EMPTY",
+                                    "ERROR"
+                                  ]
+                                },
+                                "tier": {
+                                  "type": "string"
+                                },
+                                "lastFetchedAt": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "nextDueAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                "resultCount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "demand": {
+                                  "type": "number"
+                                },
+                                "consecutiveEmpty": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "consecutiveErrors": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "lastError": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "date",
+                                "status",
+                                "tier",
+                                "lastFetchedAt",
+                                "nextDueAt",
+                                "resultCount",
+                                "demand",
+                                "consecutiveEmpty",
+                                "consecutiveErrors",
+                                "lastError"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "route",
+                          "slots"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "untracked": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "origin": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "destination": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "demand": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "origin",
+                          "destination",
+                          "demand"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "routes",
+                    "untracked"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/settings": {
+      "get": {
+        "operationId": "CatalogAdminController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "type": "object",
+                      "properties": {
+                        "paused": {
+                          "type": "boolean"
+                        },
+                        "monthlyBudgetUsd": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10000
+                        },
+                        "safetyMarginUsd": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1000
+                        },
+                        "adminReserveUsd": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1000
+                        },
+                        "releaseReserveHours": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 240
+                        },
+                        "refreshTicksPerDay": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 48
+                        },
+                        "maxSlotsPerRun": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 200
+                        },
+                        "defaultMaxResults": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "defaultHorizonDays": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 330
+                        },
+                        "tiers": {
+                          "minItems": 1,
+                          "maxItems": 6,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 8
+                              },
+                              "maxDaysOut": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 365
+                              },
+                              "intervalHours": {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 1440
+                              },
+                              "weight": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "maxDaysOut",
+                              "intervalHours",
+                              "weight"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "minRefreshIntervalHours": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 720
+                        },
+                        "hideAfterDays": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 60
+                        },
+                        "emptyBackoffAfter": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10
+                        },
+                        "emptyBackoffMax": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 64
+                        },
+                        "errorSkipAfter": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10
+                        },
+                        "errorSkipHours": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 168
+                        },
+                        "demandHalfLifeDays": {
+                          "type": "number",
+                          "minimum": 0.5,
+                          "maximum": 90
+                        },
+                        "market": {
+                          "type": "string",
+                          "pattern": "^[A-Z]{2}$"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "pattern": "^[A-Z]{3}$"
+                        },
+                        "costCorrection": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 5
+                        },
+                        "revalidateMaxResults": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "connections": {
+                          "type": "object",
+                          "properties": {
+                            "hubs": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "iata": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "enabled": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "iata",
+                                  "enabled"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "minLayoverMin": {
+                              "type": "integer",
+                              "minimum": 30,
+                              "maximum": 1440
+                            },
+                            "maxLayoverMin": {
+                              "type": "integer",
+                              "minimum": 30,
+                              "maximum": 2880
+                            },
+                            "sameAirport": {
+                              "type": "boolean"
+                            },
+                            "allowOvernight": {
+                              "type": "boolean"
+                            },
+                            "dayOffsets": {
+                              "minItems": 1,
+                              "maxItems": 3,
+                              "type": "array",
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 2
+                              }
+                            },
+                            "pairs": {
+                              "maxItems": 20,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "via": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "to": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "enabled": {
+                                    "default": true,
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "from",
+                                  "via",
+                                  "to",
+                                  "enabled"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "hubs",
+                            "minLayoverMin",
+                            "maxLayoverMin",
+                            "sameAirport",
+                            "allowOvernight",
+                            "dayOffsets",
+                            "pairs"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "paused",
+                        "monthlyBudgetUsd",
+                        "safetyMarginUsd",
+                        "adminReserveUsd",
+                        "releaseReserveHours",
+                        "refreshTicksPerDay",
+                        "maxSlotsPerRun",
+                        "defaultMaxResults",
+                        "defaultHorizonDays",
+                        "tiers",
+                        "minRefreshIntervalHours",
+                        "hideAfterDays",
+                        "emptyBackoffAfter",
+                        "emptyBackoffMax",
+                        "errorSkipAfter",
+                        "errorSkipHours",
+                        "demandHalfLifeDays",
+                        "market",
+                        "currency",
+                        "costCorrection",
+                        "revalidateMaxResults",
+                        "connections"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "estimate": {
+                      "type": "object",
+                      "properties": {
+                        "rowsPerDay": {
+                          "type": "number"
+                        },
+                        "runsPerDay": {
+                          "type": "number"
+                        },
+                        "monthlyUsd": {
+                          "type": "number"
+                        },
+                        "spendableUsd": {
+                          "type": "number"
+                        },
+                        "overBudget": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "rowsPerDay",
+                        "runsPerDay",
+                        "monthlyUsd",
+                        "spendableUsd",
+                        "overBudget"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "settings",
+                    "estimate"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      },
+      "patch": {
+        "operationId": "CatalogAdminController_patchSettings",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "paused": {
+                    "type": "boolean"
+                  },
+                  "monthlyBudgetUsd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "safetyMarginUsd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "adminReserveUsd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "releaseReserveHours": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 240
+                  },
+                  "refreshTicksPerDay": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 48
+                  },
+                  "maxSlotsPerRun": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200
+                  },
+                  "defaultMaxResults": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "defaultHorizonDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 330
+                  },
+                  "tiers": {
+                    "minItems": 1,
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8
+                        },
+                        "maxDaysOut": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 365
+                        },
+                        "intervalHours": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 1440
+                        },
+                        "weight": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "maxDaysOut",
+                        "intervalHours",
+                        "weight"
+                      ]
+                    }
+                  },
+                  "minRefreshIntervalHours": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 720
+                  },
+                  "hideAfterDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60
+                  },
+                  "emptyBackoffAfter": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "emptyBackoffMax": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 64
+                  },
+                  "errorSkipAfter": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "errorSkipHours": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 168
+                  },
+                  "demandHalfLifeDays": {
+                    "type": "number",
+                    "minimum": 0.5,
+                    "maximum": 90
+                  },
+                  "market": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  },
+                  "costCorrection": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "revalidateMaxResults": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "connections": {
+                    "type": "object",
+                    "properties": {
+                      "hubs": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "iata": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "iata",
+                            "enabled"
+                          ]
+                        }
+                      },
+                      "minLayoverMin": {
+                        "type": "integer",
+                        "minimum": 30,
+                        "maximum": 1440
+                      },
+                      "maxLayoverMin": {
+                        "type": "integer",
+                        "minimum": 30,
+                        "maximum": 2880
+                      },
+                      "sameAirport": {
+                        "type": "boolean"
+                      },
+                      "allowOvernight": {
+                        "type": "boolean"
+                      },
+                      "dayOffsets": {
+                        "minItems": 1,
+                        "maxItems": 3,
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2
+                        }
+                      },
+                      "pairs": {
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "via": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "to": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "enabled": {
+                              "default": true,
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "via",
+                            "to"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "hubs",
+                      "minLayoverMin",
+                      "maxLayoverMin",
+                      "sameAirport",
+                      "allowOvernight",
+                      "dayOffsets",
+                      "pairs"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "type": "object",
+                      "properties": {
+                        "paused": {
+                          "type": "boolean"
+                        },
+                        "monthlyBudgetUsd": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10000
+                        },
+                        "safetyMarginUsd": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1000
+                        },
+                        "adminReserveUsd": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1000
+                        },
+                        "releaseReserveHours": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 240
+                        },
+                        "refreshTicksPerDay": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 48
+                        },
+                        "maxSlotsPerRun": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 200
+                        },
+                        "defaultMaxResults": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "defaultHorizonDays": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 330
+                        },
+                        "tiers": {
+                          "minItems": 1,
+                          "maxItems": 6,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 8
+                              },
+                              "maxDaysOut": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 365
+                              },
+                              "intervalHours": {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 1440
+                              },
+                              "weight": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "maxDaysOut",
+                              "intervalHours",
+                              "weight"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "minRefreshIntervalHours": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 720
+                        },
+                        "hideAfterDays": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 60
+                        },
+                        "emptyBackoffAfter": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10
+                        },
+                        "emptyBackoffMax": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 64
+                        },
+                        "errorSkipAfter": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10
+                        },
+                        "errorSkipHours": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 168
+                        },
+                        "demandHalfLifeDays": {
+                          "type": "number",
+                          "minimum": 0.5,
+                          "maximum": 90
+                        },
+                        "market": {
+                          "type": "string",
+                          "pattern": "^[A-Z]{2}$"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "pattern": "^[A-Z]{3}$"
+                        },
+                        "costCorrection": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 5
+                        },
+                        "revalidateMaxResults": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "connections": {
+                          "type": "object",
+                          "properties": {
+                            "hubs": {
+                              "maxItems": 10,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "iata": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "enabled": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "iata",
+                                  "enabled"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "minLayoverMin": {
+                              "type": "integer",
+                              "minimum": 30,
+                              "maximum": 1440
+                            },
+                            "maxLayoverMin": {
+                              "type": "integer",
+                              "minimum": 30,
+                              "maximum": 2880
+                            },
+                            "sameAirport": {
+                              "type": "boolean"
+                            },
+                            "allowOvernight": {
+                              "type": "boolean"
+                            },
+                            "dayOffsets": {
+                              "minItems": 1,
+                              "maxItems": 3,
+                              "type": "array",
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 2
+                              }
+                            },
+                            "pairs": {
+                              "maxItems": 20,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "from": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "via": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "to": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z0-9]{3}$"
+                                  },
+                                  "enabled": {
+                                    "default": true,
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "from",
+                                  "via",
+                                  "to",
+                                  "enabled"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "hubs",
+                            "minLayoverMin",
+                            "maxLayoverMin",
+                            "sameAirport",
+                            "allowOvernight",
+                            "dayOffsets",
+                            "pairs"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "paused",
+                        "monthlyBudgetUsd",
+                        "safetyMarginUsd",
+                        "adminReserveUsd",
+                        "releaseReserveHours",
+                        "refreshTicksPerDay",
+                        "maxSlotsPerRun",
+                        "defaultMaxResults",
+                        "defaultHorizonDays",
+                        "tiers",
+                        "minRefreshIntervalHours",
+                        "hideAfterDays",
+                        "emptyBackoffAfter",
+                        "emptyBackoffMax",
+                        "errorSkipAfter",
+                        "errorSkipHours",
+                        "demandHalfLifeDays",
+                        "market",
+                        "currency",
+                        "costCorrection",
+                        "revalidateMaxResults",
+                        "connections"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "estimate": {
+                      "type": "object",
+                      "properties": {
+                        "rowsPerDay": {
+                          "type": "number"
+                        },
+                        "runsPerDay": {
+                          "type": "number"
+                        },
+                        "monthlyUsd": {
+                          "type": "number"
+                        },
+                        "spendableUsd": {
+                          "type": "number"
+                        },
+                        "overBudget": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "rowsPerDay",
+                        "runsPerDay",
+                        "monthlyUsd",
+                        "spendableUsd",
+                        "overBudget"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "settings",
+                    "estimate"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/estimate": {
+      "post": {
+        "operationId": "CatalogAdminController_estimate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "paused": {
+                    "type": "boolean"
+                  },
+                  "monthlyBudgetUsd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "safetyMarginUsd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "adminReserveUsd": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "releaseReserveHours": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 240
+                  },
+                  "refreshTicksPerDay": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 48
+                  },
+                  "maxSlotsPerRun": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200
+                  },
+                  "defaultMaxResults": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "defaultHorizonDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 330
+                  },
+                  "tiers": {
+                    "minItems": 1,
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 8
+                        },
+                        "maxDaysOut": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 365
+                        },
+                        "intervalHours": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 1440
+                        },
+                        "weight": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 10
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "maxDaysOut",
+                        "intervalHours",
+                        "weight"
+                      ]
+                    }
+                  },
+                  "minRefreshIntervalHours": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 720
+                  },
+                  "hideAfterDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60
+                  },
+                  "emptyBackoffAfter": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "emptyBackoffMax": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 64
+                  },
+                  "errorSkipAfter": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "errorSkipHours": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 168
+                  },
+                  "demandHalfLifeDays": {
+                    "type": "number",
+                    "minimum": 0.5,
+                    "maximum": 90
+                  },
+                  "market": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  },
+                  "costCorrection": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "revalidateMaxResults": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "connections": {
+                    "type": "object",
+                    "properties": {
+                      "hubs": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "iata": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "enabled": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "iata",
+                            "enabled"
+                          ]
+                        }
+                      },
+                      "minLayoverMin": {
+                        "type": "integer",
+                        "minimum": 30,
+                        "maximum": 1440
+                      },
+                      "maxLayoverMin": {
+                        "type": "integer",
+                        "minimum": 30,
+                        "maximum": 2880
+                      },
+                      "sameAirport": {
+                        "type": "boolean"
+                      },
+                      "allowOvernight": {
+                        "type": "boolean"
+                      },
+                      "dayOffsets": {
+                        "minItems": 1,
+                        "maxItems": 3,
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 2
+                        }
+                      },
+                      "pairs": {
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "via": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "to": {
+                              "type": "string",
+                              "pattern": "^[A-Z0-9]{3}$"
+                            },
+                            "enabled": {
+                              "default": true,
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "via",
+                            "to"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "hubs",
+                      "minLayoverMin",
+                      "maxLayoverMin",
+                      "sameAirport",
+                      "allowOvernight",
+                      "dayOffsets",
+                      "pairs"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rowsPerDay": {
+                      "type": "number"
+                    },
+                    "runsPerDay": {
+                      "type": "number"
+                    },
+                    "monthlyUsd": {
+                      "type": "number"
+                    },
+                    "spendableUsd": {
+                      "type": "number"
+                    },
+                    "overBudget": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "rowsPerDay",
+                    "runsPerDay",
+                    "monthlyUsd",
+                    "spendableUsd",
+                    "overBudget"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/routes": {
+      "get": {
+        "operationId": "CatalogAdminController_routes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "routes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "origin": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "destination": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "horizonDays": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "maxResults": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "priorityWeight": {
+                            "type": "number"
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "DIRECT",
+                              "COMBINED"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "origin",
+                          "destination",
+                          "enabled",
+                          "horizonDays",
+                          "maxResults",
+                          "priorityWeight",
+                          "note",
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "routes"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      },
+      "post": {
+        "operationId": "CatalogAdminController_createRoute",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{3}$"
+                  },
+                  "destination": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{3}$"
+                  },
+                  "enabled": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "horizonDays": {
+                    "default": 14,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 330
+                  },
+                  "maxResults": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "priorityWeight": {
+                    "default": 1,
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "note": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "origin",
+                  "destination"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "origin": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "destination": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "horizonDays": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "maxResults": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "priorityWeight": {
+                      "type": "number"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "DIRECT",
+                        "COMBINED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "origin",
+                    "destination",
+                    "enabled",
+                    "horizonDays",
+                    "maxResults",
+                    "priorityWeight",
+                    "note",
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/routes/{id}": {
+      "patch": {
+        "operationId": "CatalogAdminController_patchRoute",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "horizonDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 330
+                  },
+                  "maxResults": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "priorityWeight": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10
+                  },
+                  "note": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "origin": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "destination": {
+                      "type": "string",
+                      "pattern": "^[A-Z0-9]{3}$"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "horizonDays": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "maxResults": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "priorityWeight": {
+                      "type": "number"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "DIRECT",
+                        "COMBINED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "origin",
+                    "destination",
+                    "enabled",
+                    "horizonDays",
+                    "maxResults",
+                    "priorityWeight",
+                    "note",
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/pause": {
+      "post": {
+        "operationId": "CatalogAdminController_pause",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cycleStart": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "cycleEnd": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "spentUsd": {
+                      "type": "number"
+                    },
+                    "spentSource": {
+                      "type": "string",
+                      "enum": [
+                        "apify",
+                        "ledger"
+                      ]
+                    },
+                    "ledgerUsd": {
+                      "type": "number"
+                    },
+                    "projectedUsd": {
+                      "type": "number"
+                    },
+                    "budgetUsd": {
+                      "type": "number"
+                    },
+                    "availableUsd": {
+                      "type": "number"
+                    },
+                    "reserveLeftUsd": {
+                      "type": "number"
+                    },
+                    "reserveReleased": {
+                      "type": "boolean"
+                    },
+                    "rowsPerDay": {
+                      "type": "number"
+                    },
+                    "runsPerDay": {
+                      "type": "number"
+                    },
+                    "costCorrection": {
+                      "type": "number"
+                    },
+                    "paused": {
+                      "type": "boolean"
+                    },
+                    "pauseReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "accountCapUsd": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "lastTick": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "outcome": {
+                              "type": "string"
+                            },
+                            "tickBudgetUsd": {
+                              "type": "number"
+                            },
+                            "slots": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "at",
+                            "outcome",
+                            "tickBudgetUsd",
+                            "slots"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "nextTickAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "schemaAlert": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "overBudget": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "cycleStart",
+                    "cycleEnd",
+                    "spentUsd",
+                    "spentSource",
+                    "ledgerUsd",
+                    "projectedUsd",
+                    "budgetUsd",
+                    "availableUsd",
+                    "reserveLeftUsd",
+                    "reserveReleased",
+                    "rowsPerDay",
+                    "runsPerDay",
+                    "costCorrection",
+                    "paused",
+                    "pauseReason",
+                    "accountCapUsd",
+                    "lastTick",
+                    "nextTickAt",
+                    "schemaAlert",
+                    "overBudget"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/resume": {
+      "post": {
+        "operationId": "CatalogAdminController_resume",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cycleStart": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "cycleEnd": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "spentUsd": {
+                      "type": "number"
+                    },
+                    "spentSource": {
+                      "type": "string",
+                      "enum": [
+                        "apify",
+                        "ledger"
+                      ]
+                    },
+                    "ledgerUsd": {
+                      "type": "number"
+                    },
+                    "projectedUsd": {
+                      "type": "number"
+                    },
+                    "budgetUsd": {
+                      "type": "number"
+                    },
+                    "availableUsd": {
+                      "type": "number"
+                    },
+                    "reserveLeftUsd": {
+                      "type": "number"
+                    },
+                    "reserveReleased": {
+                      "type": "boolean"
+                    },
+                    "rowsPerDay": {
+                      "type": "number"
+                    },
+                    "runsPerDay": {
+                      "type": "number"
+                    },
+                    "costCorrection": {
+                      "type": "number"
+                    },
+                    "paused": {
+                      "type": "boolean"
+                    },
+                    "pauseReason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "accountCapUsd": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "lastTick": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "outcome": {
+                              "type": "string"
+                            },
+                            "tickBudgetUsd": {
+                              "type": "number"
+                            },
+                            "slots": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "at",
+                            "outcome",
+                            "tickBudgetUsd",
+                            "slots"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "nextTickAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "schemaAlert": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "overBudget": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "cycleStart",
+                    "cycleEnd",
+                    "spentUsd",
+                    "spentSource",
+                    "ledgerUsd",
+                    "projectedUsd",
+                    "budgetUsd",
+                    "availableUsd",
+                    "reserveLeftUsd",
+                    "reserveReleased",
+                    "rowsPerDay",
+                    "runsPerDay",
+                    "costCorrection",
+                    "paused",
+                    "pauseReason",
+                    "accountCapUsd",
+                    "lastTick",
+                    "nextTickAt",
+                    "schemaAlert",
+                    "overBudget"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/slots/{id}/refresh/quote": {
+      "post": {
+        "operationId": "CatalogAdminController_quote",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slotId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "estimatedUsd": {
+                      "type": "number"
+                    },
+                    "reserveLeftUsd": {
+                      "type": "number"
+                    },
+                    "confirmToken": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "slotId",
+                    "estimatedUsd",
+                    "reserveLeftUsd",
+                    "confirmToken"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/slots/{id}/refresh": {
+      "post": {
+        "operationId": "CatalogAdminController_refreshNow",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirmToken": {
+                    "type": "string",
+                    "minLength": 10
+                  }
+                },
+                "required": [
+                  "confirmToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "const": "PENDING"
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/slots/{id}/results": {
+      "get": {
+        "operationId": "CatalogAdminController_results",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "origin": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "destination": {
+                            "type": "string",
+                            "pattern": "^[A-Z0-9]{3}$"
+                          },
+                          "departureDate": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          },
+                          "departLocal": {
+                            "type": "string"
+                          },
+                          "arriveLocal": {
+                            "type": "string"
+                          },
+                          "durationMin": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "stops": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "carriers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "flightNumbers": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "selfTransfer": {
+                            "type": "boolean"
+                          },
+                          "layovers": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "at": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z0-9]{3}$"
+                                },
+                                "minutes": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "flags": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "SEPARATE_TICKETS",
+                                      "AIRPORT_CHANGE",
+                                      "OVERNIGHT",
+                                      "TIGHT",
+                                      "TERMINAL_CHANGE",
+                                      "TERMINAL_UNKNOWN",
+                                      "ENTRY_REQUIRED"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "at",
+                                "minutes",
+                                "flags"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "riskFlags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "SEPARATE_TICKETS",
+                                "AIRPORT_CHANGE",
+                                "OVERNIGHT",
+                                "TIGHT",
+                                "TERMINAL_CHANGE",
+                                "TERMINAL_UNKNOWN",
+                                "ENTRY_REQUIRED"
+                              ]
+                            }
+                          },
+                          "complianceReview": {
+                            "type": "boolean"
+                          },
+                          "fetchedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "legs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "carrier": {
+                                  "type": "string"
+                                },
+                                "flightNumber": {
+                                  "type": "string"
+                                },
+                                "operatingCarrier": {
+                                  "type": "string"
+                                },
+                                "from": {
+                                  "type": "object",
+                                  "properties": {
+                                    "iata": {
+                                      "type": "string",
+                                      "pattern": "^[A-Z0-9]{3}$"
+                                    },
+                                    "local": {
+                                      "type": "string"
+                                    },
+                                    "terminal": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "iata",
+                                    "local"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "to": {
+                                  "type": "object",
+                                  "properties": {
+                                    "iata": {
+                                      "type": "string",
+                                      "pattern": "^[A-Z0-9]{3}$"
+                                    },
+                                    "local": {
+                                      "type": "string"
+                                    },
+                                    "terminal": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "iata",
+                                    "local"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "durationMin": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "aircraft": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "carrier",
+                                "flightNumber",
+                                "from",
+                                "to",
+                                "durationMin"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "isCurrent": {
+                            "type": "boolean"
+                          },
+                          "lastSeenAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "price": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "amountMinor": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "currency": {
+                                    "type": "string"
+                                  },
+                                  "previousAmountMinor": {
+                                    "anyOf": [
+                                      {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "changedAt": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "amountMinor",
+                                  "currency",
+                                  "previousAmountMinor",
+                                  "changedAt"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "origin",
+                          "destination",
+                          "departureDate",
+                          "departLocal",
+                          "arriveLocal",
+                          "durationMin",
+                          "stops",
+                          "carriers",
+                          "flightNumbers",
+                          "selfTransfer",
+                          "layovers",
+                          "riskFlags",
+                          "complianceReview",
+                          "fetchedAt",
+                          "legs",
+                          "isCurrent",
+                          "lastSeenAt",
+                          "price"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/jobs/{jobId}": {
+      "get": {
+        "operationId": "CatalogAdminController_job",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "DONE",
+                        "FAILED"
+                      ]
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "stillListed": {
+                          "type": "boolean"
+                        },
+                        "priceChanged": {
+                          "type": "boolean"
+                        },
+                        "old": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amountMinor": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amountMinor",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "new": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amountMinor": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amountMinor",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "fetchedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "components": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "providerOfferId": {
+                                "type": "string"
+                              },
+                              "stillListed": {
+                                "type": "boolean"
+                              },
+                              "old": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "amountMinor": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "currency": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z]{3}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "amountMinor",
+                                      "currency"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "new": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "amountMinor": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "currency": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z]{3}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "amountMinor",
+                                      "currency"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "providerOfferId",
+                              "stillListed",
+                              "old",
+                              "new"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "stillListed",
+                        "priceChanged",
+                        "old",
+                        "new",
+                        "fetchedAt",
+                        "components"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/catalog/results/{id}/revalidate": {
+      "post": {
+        "operationId": "CatalogAdminController_revalidate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "const": "PENDING"
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-catalog"
+        ]
+      }
+    },
+    "/v1/admin/integrations/apify/test": {
+      "post": {
+        "operationId": "ApifyIntegrationController_test",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "cycleEnd": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "monthlyUsageUsd": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "maxMonthlyUsageUsd": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "cycleEnd",
+                    "monthlyUsageUsd",
+                    "maxMonthlyUsageUsd"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-integrations"
+        ]
+      }
+    },
+    "/v1/admin/integrations/apify/apply-cap": {
+      "post": {
+        "operationId": "ApifyIntegrationController_applyCap",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "maxMonthlyUsageUsd": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "maxMonthlyUsageUsd"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-integrations"
         ]
       }
     },

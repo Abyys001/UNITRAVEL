@@ -247,6 +247,11 @@ export class ComplianceService implements OnModuleInit {
     return rows
   }
 
+  /** Workers hold their own copy; the catalog rebuild calls this so it never reads a policy cached before the change. */
+  invalidatePolicyCache() {
+    this.policyCache = undefined
+  }
+
   /** The carrier and airport policy the engine applies to supplier output (ch. 21.1, 27.4). "country:XX" expands to every carrier registered there. */
   async carrierPolicy(): Promise<CarrierPolicy> {
     const rows = await this.activePolicies()
@@ -340,6 +345,8 @@ export class ComplianceService implements OnModuleInit {
       await tx.update(compliancePolicies).set({ status: "ACTIVE", approvedBy: actorId, approvedAt: new Date(), effectiveFrom: new Date() }).where(eq(compliancePolicies.id, id))
       await this.audit.record(tx, { actorUserId: actorId, actorKind: "STAFF", action: "compliance.policy_approved", entityType: "compliance_policy", entityId: id, after: { type: p.type, key: p.key, action: p.action } })
       this.policyCache = undefined
+      // ADR-0034: catalog snapshots embed the carrier, airport and lane policy at write time, so an activated policy rebuilds them (no Apify cost).
+      if (p.type === "CARRIER" || p.type === "AIRPORT" || p.type === "LANE") await this.outbox.add(tx, { aggregateType: "compliance_policy", aggregateId: id, eventType: "compliance.policy_activated", payload: { type: p.type, key: p.key, action: p.action } })
       return { ok: true }
     })
   }

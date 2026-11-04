@@ -79,6 +79,8 @@ International transfers: phone numbers and message content sent to an Iranian pr
 |---|---|
 | Search queries and results | 30 days (aggregates anonymised) |
 | Supplier call payloads | 14 days |
+| Flight catalog demand counters (ADR-0034) | **1 hour** for the per-visitor dedupe key, which holds only `sha256(ip + user agent + daily salt)` in Valkey; the salt rotates daily, so a hash cannot be linked across days. Aggregated counts per route and date (no identifier) live in `catalog_slots.demand_score` and decay with a 7-day half-life. No IP, user agent or account id is stored |
+| Provider cost ledger (ADR-0034) | No personal data. Kept for at least a full Apify billing cycle (no automatic purge) |
 | OTP challenges | 90 days |
 | Requests, quotes, reservations, tickets, payments | 6 years after travel or closure, then deleted or anonymised |
 | Passport numbers | Until 12 months after last travel date unless the customer keeps the profile |

@@ -89,7 +89,7 @@ export const DevApifyTestResult = z.object({
 export type DevApifyTestResult = z.infer<typeof DevApifyTestResult>
 
 export const ProviderRunView = z.object({
-  id: Uuid, provider: ProviderId, externalRunId: z.string().nullable(), pool: MeteringPool, purpose: z.enum(["SEARCH", "RECHECK", "PREWARM"]), searchId: Uuid.nullable(),
+  id: Uuid, provider: ProviderId, externalRunId: z.string().nullable(), pool: z.enum([...MeteringPool.options, "catalog"]), purpose: z.enum(["SEARCH", "RECHECK", "PREWARM", "CATALOG"]), searchId: Uuid.nullable(),
   routes: z.array(z.object({ origin: Iata, destination: Iata, departureDate: z.string(), returnDate: z.string().optional() })),
   status: z.enum(["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "TIMED-OUT", "ABORTED", "DECLINED"]),
   rows: z.number().int(), estimatedUsd: z.number(),

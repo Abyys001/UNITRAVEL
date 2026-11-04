@@ -25,6 +25,8 @@ export interface CallContext {
   signal: AbortSignal
   /** The search this call belongs to; asynchronous sources use it to wake the search when their data arrives. */
   searchId?: string
+  /** The search was started by staff. Metered sources (Apify) refuse every other caller (ADR-0034 C1). */
+  staff?: boolean
 }
 
 // Chapter 21.6 — error taxonomy.

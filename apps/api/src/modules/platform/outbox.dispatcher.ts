@@ -17,7 +17,7 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "security.new_sign_in": ["notify.route"],
   "user.permissions_changed": ["notify.route"],
   "traveller.updated": ["compliance.screen"],
-  "flight_request.submitted": ["compliance.screen", "notify.route", "timers.sla"],
+  "flight_request.submitted": ["compliance.screen", "notify.route", "timers.sla", "catalog"],
   "flight_request.transitioned": ["notify.route", "timers.sla"],
   "flight_request.message": ["notify.route"],
   "quote.sent": ["notify.route", "timers.sla"],
@@ -54,6 +54,9 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "identity.verification_decided": ["notify.route"],
   "document.uploaded": ["documents.scan"],
   "document.published": ["notify.route"],
+  // ADR-0034: the flight catalog. A written slot purges the website's cached pages; an activated carrier/airport/lane policy rebuilds the snapshots.
+  "catalog.slot_updated": ["catalog"],
+  "compliance.policy_activated": ["catalog"],
 }
 
 /** Events every process must react to immediately (config reload, provider switch-off) go out on pub/sub too. */

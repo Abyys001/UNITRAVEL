@@ -55,6 +55,16 @@ describe("metered provider in the gateway (ADR-0029)", () => {
     expect((await svc.searchable()).find((s) => s.row.id === ID)?.budgetRemaining).toBe(7)
   })
 
+  it("the call-count daily budget does not apply to a source with a dollar budget; other providers keep it (ADR-0034)", async () => {
+    const { svc, search } = gateway()
+    const redis = (svc as unknown as { redis: FakeRedis }).redis
+    const q = { slices: [{ origin: "IST", destination: "LHR", date: "2026-12-10" }], passengers: [{ type: "ADT" }], cabin: "ECONOMY", maxConnections: 1 }
+    redis.kv.set(`budget:${ID}:${new Date().toISOString().slice(0, 10)}`, "1000000")
+    expect(await svc.search(ID, q, opts())).toMatchObject({ ok: true })
+    expect(search).toHaveBeenCalledTimes(1)
+    expect(Number(redis.kv.get(`budget:${ID}:${new Date().toISOString().slice(0, 10)}`))).toBe(1000000)
+  })
+
   it("is never called in shadow mode", async () => {
     expect((await gateway({ shadow: true }).svc.shadowProviders()).map((r) => r.id)).not.toContain(ID)
   })

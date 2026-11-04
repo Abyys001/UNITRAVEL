@@ -9,9 +9,9 @@ import { FlightDataService } from "./flight-data.service"
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } })
 const q: SliceQuery = { slices: [{ origin: "IST", destination: "LHR", date: "2026-12-10" }], passengers: [{ type: "ADT" }], cabin: "ECONOMY", maxConnections: 1 }
-const ctxFor = (searchId?: string) => ({ searchId } as CallContext)
+const ctxFor = (searchId?: string, staff = true) => ({ searchId, staff } as CallContext)
 
-function harness(metering: Partial<ProviderMetering> = {}, opts: { invalid?: boolean; token?: string | null } = {}) {
+function harness(metering: Partial<ProviderMetering> = {}, opts: { invalid?: boolean; token?: string | null; reserveEmpty?: boolean } = {}) {
   const redis = new FakeRedis()
   const jobs: { queue: string; name: string; data: Record<string, unknown>; opts: Record<string, unknown> }[] = []
   const queues = { get: (queue: string) => ({ add: async (name: string, data: Record<string, unknown>, o: Record<string, unknown>) => void jobs.push({ queue, name, data, opts: o }), upsertJobScheduler: async () => undefined }) }
@@ -31,8 +31,10 @@ function harness(metering: Partial<ProviderMetering> = {}, opts: { invalid?: boo
     registerAdapter: vi.fn(), row: async () => row, credentials: async () => (opts.token === null ? null : { token: "tok_secret" }),
     credentialInvalid: async () => !!opts.invalid, markCredentialInvalid: vi.fn(), markTested: vi.fn(), credentialMeta: async () => ({ rotatedAt: new Date(), rotatedBy: null, invalidAt: null }),
   }
-  const svc = new FlightDataService(db as never, redis as never, queues as never, { registerJob: vi.fn() } as never, suppliers as never, { lookup: () => reference } as never, { putCallPayload: async () => undefined } as never)
-  return { svc, redis, jobs, runs, suppliers }
+  // ADR-0034: staff runs draw on the dollar reserve and write a ledger row; the real arithmetic is covered in catalog-budget and the engine's pacer tests.
+  const budget = { canSpendAdmin: vi.fn(async () => !opts.reserveEmpty), openLedger: vi.fn(async () => "ledger-1"), closeLedger: vi.fn(async () => undefined), adminRunsAffordable: vi.fn(async () => 7) }
+  const svc = new FlightDataService(db as never, redis as never, queues as never, { registerJob: vi.fn() } as never, suppliers as never, { lookup: () => reference } as never, { putCallPayload: async () => undefined } as never, budget as never)
+  return { svc, redis, jobs, runs, suppliers, budget }
 }
 
 /** Routes the three Apify endpoints the service uses. */
@@ -67,6 +69,19 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     expect(spy).not.toHaveBeenCalled()
   })
 
+  it("a customer or anonymous search can never reach a paid run: no queue, no cache entry, no Apify (ADR-0034 C1)", async () => {
+    const spy = mockApify()
+    const { svc, jobs, redis, runs } = harness()
+    for (const staff of [false, undefined]) {
+      await expect(svc.lookup(q, { searchId: "cust", staff } as CallContext)).rejects.toMatchObject({ code: "NO_AVAILABILITY" })
+    }
+    await svc.startSearchRuns("cust")
+    expect(spy).not.toHaveBeenCalled()
+    expect(jobs).toEqual([])
+    expect(runs).toEqual([])
+    expect(redis.keys("apify:")).toEqual([])
+  })
+
   it("caps the legs one search can bill (maxLegsPerSearch)", async () => {
     const { svc } = harness({ maxLegsPerSearch: 1 })
     await expect(svc.lookup(q, ctxFor("s1"))).rejects.toMatchObject({ code: "SUPPLIER_PENDING" })
@@ -87,12 +102,12 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     await Promise.all([svc.startSearchRuns("A"), svc.startSearchRuns("B")])
     expect(posts(spy)).toHaveLength(1)
     expect(runs).toHaveLength(1)
-    expect(runs[0]).toMatchObject({ pool: "customer", purpose: "SEARCH", status: "RUNNING", externalRunId: "runSYNTH0001" })
+    expect(runs[0]).toMatchObject({ pool: "staff", purpose: "SEARCH", status: "RUNNING", externalRunId: "runSYNTH0001" })
     // The run input: one route, always capped, KAYAK and booking options off.
     const [url, init] = posts(spy)[0]!
-    expect(String(url)).toContain("maxTotalChargeUsd=0.0160")
-    expect(JSON.parse(init!.body as string)).toMatchObject({ maxResults: 15, currency: "GBP", adults: 1, cabinClass: "economy", maxStops: 1, routes: [{ origin: "IST", destination: "LHR", departureDate: "2026-12-10" }] })
-    expect(JSON.parse(init!.body as string)).not.toHaveProperty("resolveBookingOptions")
+    expect(String(url)).toContain("maxTotalChargeUsd=0.0310")
+    expect(JSON.parse(init!.body as string)).toMatchObject({ maxResults: 30, currency: "GBP", adults: 1, cabinClass: "economy", maxStops: 1, routes: [{ origin: "IST", destination: "LHR", departureDate: "2026-12-10" }] })
+    expect(JSON.parse(init!.body as string)).toMatchObject({ kayakWhenGoogleEmpty: false, fillMissingPricesFromKayak: false, resolveBookingOptions: false, resolveReturnFlights: false })
     expect(searchRuns(jobs)).toHaveLength(0)
 
     await svc.collect({ runId: runs[0]!.id as string, attempt: 1 })
@@ -116,7 +131,7 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     await Promise.all(ids.map((id) => svc.startSearchRuns(id)))
     expect(posts(spy)).toHaveLength(1)
     expect(runs).toHaveLength(1)
-    expect(JSON.parse(posts(spy)[0]![1]!.body as string)).toHaveProperty("maxResults", 15)
+    expect(JSON.parse(posts(spy)[0]![1]!.body as string)).toHaveProperty("maxResults", 30)
 
     await svc.collect({ runId: runs[0]!.id as string, attempt: 1 })
     expect(new Set(searchRuns(jobs).map((j) => j.data.searchId)).size).toBe(200)
@@ -136,12 +151,12 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     await svc.startSearchRuns("A")
     expect(posts(spy)).toHaveLength(1)
     expect(JSON.parse(posts(spy)[0]![1]!.body as string).routes).toHaveLength(2)
-    expect(String(posts(spy)[0]![0])).toContain("maxTotalChargeUsd=0.0310")
+    expect(String(posts(spy)[0]![0])).toContain("maxTotalChargeUsd=0.0610")
   })
 
   it("caches the normalised rows and records the run: rows, estimated cost, notices, errors and the ledger", async () => {
     mockApify()
-    const { svc, runs, redis } = harness()
+    const { svc, runs, budget } = harness()
     await expect(svc.lookup(q, ctxFor("A"))).rejects.toMatchObject({ code: "SUPPLIER_PENDING" })
     await svc.startSearchRuns("A")
     await svc.collect({ runId: runs[0]!.id as string, attempt: 1 })
@@ -150,7 +165,9 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     // 6 billable rows (4 flights, calendar_day, search) + the run fee; notice and error rows are free.
     expect(runs[0]).toMatchObject({ rows: 6, estimatedUsd: "0.007", errors: ["Route VAN-XXX: no results"] })
     expect((runs[0]!.notices as string[]).some((n) => n.startsWith("PRICE_UNAVAILABLE"))).toBe(true)
-    expect(Number(redis.kv.get(`apify:ledger:${new Date().toISOString().slice(0, 7)}:customer`))).toBeCloseTo(0.007, 6)
+    // The ledger row (purpose admin_search) was opened at the charge cap and closed at the real cost.
+    expect(budget.openLedger).toHaveBeenCalledWith(expect.objectContaining({ purpose: "admin_search", maxChargeUsd: 0.031 }))
+    expect(budget.closeLedger).toHaveBeenLastCalledWith({ providerRunId: runs[0]!.id }, expect.objectContaining({ status: "SUCCEEDED", rowsBilled: 6, estCostUsd: 0.007 }))
   })
 
   it("negative cache: an empty result is cached, so a route with no flights is not paid for twice", async () => {
@@ -174,50 +191,29 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     expect(runs[0]!.status).toBe("RUNNING")
   })
 
-  it("budget guard: the customer pool is a share of the month and is never overspent", async () => {
-    mockApify()
-    // $0.05 a month: customer pool 40% = $0.02, so one $0.016 run fits and the second is declined.
-    const { svc, runs, jobs } = harness({ monthlyBudgetUsd: 0.05, staffReserveUsd: 0 })
-    for (const id of ["A", "B"]) {
-      await expect(svc.lookup({ ...q, slices: [{ origin: "IST", destination: "LHR", date: id === "A" ? "2026-12-10" : "2026-12-11" }] }, ctxFor(id))).rejects.toMatchObject({ code: "SUPPLIER_PENDING" })
-      await svc.startSearchRuns(id)
-    }
-    expect(runs.map((r) => r.status)).toEqual(["RUNNING", "DECLINED"])
-    expect(runs[1]!.errors).toEqual(["POOL_EMPTY"])
-    // The declined search is re-run and finds a negative marker, never a silent hang.
-    expect(searchRuns(jobs).map((j) => j.data.searchId)).toEqual(["B"])
-    await expect(svc.lookup({ ...q, slices: [{ origin: "IST", destination: "LHR", date: "2026-12-11" }] }, ctxFor("B"))).rejects.toMatchObject({ code: "SUPPLIER_RATE_LIMITED" })
-  })
-
-  it("staff reserve: customers cannot spend into it, staff can", async () => {
-    const { svc } = harness({ monthlyBudgetUsd: 1, staffReserveUsd: 0.99 })
-    const m = ProviderMetering.parse({ monthlyBudgetUsd: 1, staffReserveUsd: 0.99 })
-    expect(await svc.reserve("customer", 0.016, m)).toBe(false)
-    expect(await svc.reserve("staff", 0.016, m)).toBe(true)
-    expect(await svc.reserve("prewarm", 0.016, m)).toBe(false)
-  })
-
-  it("hourly cap on customer runs", async () => {
-    mockApify()
-    const { svc, runs } = harness({ customerRunsPerHour: 1 })
-    for (const [i, id] of ["A", "B"].entries()) {
-      await expect(svc.lookup({ ...q, slices: [{ origin: "IST", destination: "LHR", date: `2026-12-1${i}` }] }, ctxFor(id))).rejects.toMatchObject({ code: "SUPPLIER_PENDING" })
-      await svc.startSearchRuns(id)
-    }
-    expect(runs.map((r) => r.status)).toEqual(["RUNNING", "DECLINED"])
-    expect(runs[1]!.errors).toEqual(["HOURLY_CAP"])
+  it("reserve guard: with the admin reserve spent the run is declined, nothing is billed, and the waiting search is woken with a rate-limit answer", async () => {
+    const spy = mockApify()
+    const { svc, runs, jobs, budget } = harness({}, { reserveEmpty: true })
+    await expect(svc.lookup(q, ctxFor("A"))).rejects.toMatchObject({ code: "SUPPLIER_PENDING" })
+    await svc.startSearchRuns("A")
+    expect(spy).not.toHaveBeenCalled()
+    expect(runs.map((r) => r.status)).toEqual(["DECLINED"])
+    expect(runs[0]!.errors).toEqual(["RESERVE_EMPTY"])
+    expect(budget.openLedger).not.toHaveBeenCalled()
+    expect(searchRuns(jobs).map((j) => j.data.searchId)).toEqual(["A"])
+    await expect(svc.lookup(q, ctxFor("A"))).rejects.toMatchObject({ code: "SUPPLIER_RATE_LIMITED" })
   })
 
   it("a failed run leaves a short negative marker, wakes the waiters and charges only the start fee", async () => {
     mockApify(MIXED_DATASET, { data: { ...SUCCEEDED_RESPONSE.data, status: "FAILED" } })
-    const { svc, runs, jobs, redis } = harness()
+    const { svc, runs, jobs, budget } = harness()
     await expect(svc.lookup(q, ctxFor("A"))).rejects.toMatchObject({ code: "SUPPLIER_PENDING" })
     await svc.startSearchRuns("A")
     await svc.collect({ runId: runs[0]!.id as string, attempt: 1 })
     expect(runs[0]).toMatchObject({ status: "FAILED", estimatedUsd: "0.001" })
     expect(searchRuns(jobs).map((j) => j.data.searchId)).toEqual(["A"])
     await expect(svc.lookup(q, ctxFor("A"))).rejects.toMatchObject({ code: "SUPPLIER_UNAVAILABLE" })
-    expect(Number(redis.kv.get(`apify:ledger:${new Date().toISOString().slice(0, 7)}:customer`))).toBeCloseTo(0.001, 6)
+    expect(budget.closeLedger).toHaveBeenLastCalledWith({ providerRunId: runs[0]!.id }, expect.objectContaining({ status: "FAILED", estCostUsd: 0.001 }))
   })
 
   it("a search is re-run at most three times", async () => {
@@ -269,10 +265,11 @@ describe("FlightDataService (ADR-0029 A6)", () => {
 
     it("uses the staff pool with the staff maxResults and reports still listed, old and new price", async () => {
       const spy = mockApify()
-      const { svc, runs } = harness()
+      const { svc, runs, budget } = harness()
       const start = await svc.startRecheck(itinerary(20000), query)
       expect(start.status).toBe("PENDING")
       expect(runs[0]).toMatchObject({ pool: "staff", purpose: "RECHECK" })
+      expect(budget.openLedger).toHaveBeenCalledWith(expect.objectContaining({ purpose: "admin_revalidate" }))
       expect(JSON.parse(posts(spy)[0]![1]!.body as string).maxResults).toBe(30)
       expect(await svc.recheckStatus("itn_1", start.jobId)).toEqual({ jobId: start.jobId, status: "PENDING" })
       await svc.collect({ runId: start.jobId, attempt: 1 })
@@ -319,49 +316,20 @@ describe("FlightDataService (ADR-0029 A6)", () => {
     })
   })
 
-  it("the planner budget is the number of customer runs the pool can still pay for", async () => {
-    const { svc, redis } = harness()
+  it("the planner budget is the number of staff runs the admin reserve can still pay for (replaces the call-count budget)", async () => {
+    const { svc, budget } = harness()
     const reg = vi.fn()
     ;(svc as unknown as { suppliers: { registerAdapter: typeof reg } }).suppliers.registerAdapter = reg
+    ;(svc as unknown as { queues: { get: () => { removeJobScheduler: () => Promise<void> } } }).queues = { get: () => ({ removeJobScheduler: async () => undefined }) } as never
     await svc.onModuleInit()
-    const budget = reg.mock.calls[0]![1] as () => Promise<number>
-    expect(await budget()).toBe(Math.floor(2 / 0.016))
-    redis.kv.set(`apify:ledger:${new Date().toISOString().slice(0, 7)}:customer`, "2")
-    expect(await budget()).toBe(0)
+    const affordable = reg.mock.calls[0]![1] as () => Promise<number>
+    expect(await affordable()).toBe(7)
+    expect(budget.adminRunsAffordable).toHaveBeenCalledWith(0.031)
   })
 })
 
-describe("popular-route warm and test connection (ADR-0032)", () => {
+describe("test connection (ADR-0032 B2)", () => {
   afterEach(() => vi.restoreAllMocks())
-  const routes = [{ origin: "IST", destination: "LHR", departureDate: "2026-12-10" }, { origin: "VAN", destination: "IST", departureDate: "2026-12-11" }]
-  const pq = { passengers: [{ type: "ADT" as const }], cabin: "ECONOMY" as const, maxConnections: 1 }
-
-  it("one batched prewarm-pool run for all routes with maxResultsPrewarm; collected legs announce listings.prewarmed", async () => {
-    const spy = mockApify()
-    const { svc, runs, jobs } = harness()
-    const r = await svc.prewarm(routes, pq)
-    expect(r.runId).toBeTruthy()
-    expect(posts(spy)).toHaveLength(1)
-    const body = JSON.parse(posts(spy)[0]![1]!.body as string) as { routes: unknown[]; maxResults: number }
-    expect(body.routes).toHaveLength(2)
-    expect(body.maxResults).toBe(10)
-    expect(String(posts(spy)[0]![0])).toContain("maxTotalChargeUsd=0.0210")
-    expect(runs[0]).toMatchObject({ pool: "prewarm", purpose: "PREWARM" })
-    await svc.collect({ runId: runs[0]!.id as string, attempt: 1 })
-    expect(jobs.filter((j) => j.name === "listings.prewarmed").map((j) => j.data)).toEqual([{ routes }])
-    // The legs are cached now: a second warm pays for nothing and lists them straight away.
-    const again = await svc.prewarm(routes, pq)
-    expect(again).toMatchObject({ runId: null })
-    expect(posts(spy)).toHaveLength(1)
-  })
-
-  it("a cache-only (listing) search never queues a paid run on a miss", async () => {
-    const { svc, redis, jobs } = harness()
-    await redis.set("search:L1:cache-only", "1")
-    await expect(svc.lookup(q, ctxFor("L1"))).rejects.toMatchObject({ code: "NO_AVAILABILITY" })
-    expect(jobs).toEqual([])
-  })
-
   it("test connection reads /users/me/limits with the Bearer token", async () => {
     const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(json(LIMITS_RESPONSE))
     const { svc, suppliers } = harness()

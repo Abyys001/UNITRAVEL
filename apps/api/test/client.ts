@@ -1,6 +1,10 @@
 import { createHmac } from "node:crypto"
 
-export const API = process.env.API_URL ?? "http://localhost:4100"
+export let API = process.env.API_URL ?? "http://localhost:4100"
+/** Points every client in this file at another API (an in-process app); call with no argument to restore the default. */
+export function useApi(url?: string) {
+  API = url ?? process.env.API_URL ?? "http://localhost:4100"
+}
 export const DEV_HOST = "dev.localhost:4200"
 export const ADMIN_HOST = "admin.localhost:4200"
 

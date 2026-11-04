@@ -10,6 +10,9 @@ import { Button } from "@unitravel/ui/components/button"
 
 import { EmptyState, TileError } from "@/components/bento"
 import { ApifyHelp } from "@/components/apify"
+import { KEYS, usd as usdBudget } from "@/components/catalog/shared"
+import { useCatalogUsage } from "@/components/catalog/usage"
+import { FormDialog } from "@/components/form-dialog"
 import { useConfirm } from "@/components/confirm"
 import { DevPage, KV, KVRow, Section } from "@/components/dev-ui"
 import { APIFY } from "@/components/flight/apify-source"
@@ -21,6 +24,8 @@ import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 import type { Page } from "@/lib/types"
 
+const APPLY_WORD = "APPLY"
+interface CatalogTest { ok: boolean; cycleEnd: string | null; monthlyUsageUsd: number | null; maxMonthlyUsageUsd: number | null }
 const usd = (n: number | null) => (n == null ? "—" : `$${n.toFixed(2)}`)
 interface AuditRow { id: string; occurredAt: string; actor: string | null; actorKind: string; action: string }
 
@@ -37,6 +42,16 @@ export default function ApifyProviderPage() {
   const [testErr, setTestErr] = useState<unknown>(null)
   const [testing, setTesting] = useState(false)
   const confirm = useConfirm()
+  const usage = useCatalogUsage(can("catalog.read"))
+  const [capOpen, setCapOpen] = useState(false)
+  const [capWord, setCapWord] = useState("")
+  const [cap, setCap] = useState<CatalogTest | null>(null)
+  const [capErr, setCapErr] = useState<unknown>(null)
+  const [capTesting, setCapTesting] = useState(false)
+  const runCapTest = async () => {
+    setCapTesting(true); setCapErr(null)
+    try { setCap(await api<CatalogTest>("/v1/admin/integrations/apify/test", { body: {} })) } catch (e) { setCap(null); setCapErr(e) } finally { setCapTesting(false) }
+  }
   const reload = async () => { await qc.invalidateQueries({ queryKey: ["provider", APIFY] }); await qc.invalidateQueries({ queryKey: ["providers"] }); void qc.invalidateQueries({ queryKey: ["provider-audit", APIFY] }) }
   const runTest = async () => {
     setTesting(true); setTestErr(null)
@@ -86,6 +101,27 @@ export default function ApifyProviderPage() {
           </div>
         )}
 
+        {usage.data?.schemaAlert && <p role="alert" className="rounded-md bg-danger-subtle px-3 py-2 text-meta text-danger" data-testid="apify-schema-alert">{t("cat.schemaAlert", { why: usage.data.schemaAlert })}</p>}
+
+        {can("catalog.read") && (
+          <Section title={t("cat.cap.title")} hint={t("cat.cap.hint")} aside={write && <Button size="xs" variant="outline" onClick={() => void runCapTest()} loading={capTesting} data-testid="apify-cap-test">{t("cat.cap.test")}</Button>}>
+            <KV className="text-meta" data-testid="apify-cap">
+              <KVRow k={t("cat.cap.status")}>{cap ? (cap.ok ? t("cat.cap.ok") : t("cat.cap.fail")) : "—"}</KVRow>
+              <KVRow k={t("apify.test.usage")}><span className="num">{usd(cap?.monthlyUsageUsd ?? null)}</span></KVRow>
+              <KVRow k={t("cat.cap.current")}><span className="num">{usd(cap?.maxMonthlyUsageUsd ?? usage.data?.accountCapUsd ?? null)}</span></KVRow>
+              <KVRow k={t("cat.cap.budget")}><span className="num">{usdBudget(usage.data?.budgetUsd)}</span></KVRow>
+              <KVRow k={t("cat.cap.cycleEnd")}><span className="num">{fmtDate(cap?.cycleEnd ?? usage.data?.cycleEnd)}</span></KVRow>
+            </KV>
+            {capErr != null && <div className="mt-3"><ErrorLine error={capErr} /></div>}
+            {write && (
+              <div className="mt-4 border-t border-rule pt-4">
+                <p className="mb-2 text-meta text-steel">{t("cat.cap.explain")}</p>
+                <Button size="xs" variant="outline" onClick={() => { setCapWord(""); setCapOpen(true) }} data-testid="apify-apply-cap">{t("cat.cap.apply")}</Button>
+              </div>
+            )}
+          </Section>
+        )}
+
         <ApifyHelp />
 
         {can("audit.read") && (
@@ -100,6 +136,17 @@ export default function ApifyProviderPage() {
       </DevPage>
       <SecretDialog open={secret} onOpenChange={setSecret} title={t("prov.credsTitle", { name: p?.name ?? "Apify" })} hintKeys={["token"]} fixedKeys requiredKeys={["token"]} hint={t("apify.key.hint")}
         onSave={async (values) => { await api(`/v1/dev/providers/${APIFY}/credentials`, { method: "PUT", body: { values } }); toast.success(t("apify.key.saved")); await reload() }} />
+      <FormDialog open={capOpen} onOpenChange={setCapOpen} title={t("cat.cap.confirm.title")} submitLabel={t("cat.cap.apply")} destructive testId="dlg-apply-cap"
+        description={t("cat.cap.confirm.desc", { budget: usdBudget(usage.data?.budgetUsd) })}
+        onSubmit={async () => {
+          if (capWord.trim() !== APPLY_WORD) throw new Error(t("cat.cap.confirm.word", { word: APPLY_WORD }))
+          const r = await api<{ maxMonthlyUsageUsd: number }>("/v1/admin/integrations/apify/apply-cap", { body: {} })
+          setCap((c) => ({ ok: true, cycleEnd: c?.cycleEnd ?? null, monthlyUsageUsd: c?.monthlyUsageUsd ?? null, maxMonthlyUsageUsd: r.maxMonthlyUsageUsd }))
+          void qc.invalidateQueries({ queryKey: KEYS.all })
+        }}>
+        <label className="block text-meta"><span className="font-medium">{t("cat.cap.confirm.label", { word: APPLY_WORD })}</span>
+          <input className="field-input mt-1.5 font-mono" dir="ltr" autoComplete="off" value={capWord} onChange={(e) => setCapWord(e.target.value)} data-testid="apply-cap-word" /></label>
+      </FormDialog>
       {confirm.dialog}
     </div>
   )

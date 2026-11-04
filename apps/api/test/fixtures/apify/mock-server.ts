@@ -56,37 +56,26 @@ export async function startApifyMock(port: number, token: string): Promise<Apify
 }
 
 /**
- * Stack-side helpers for the cross-app spec, kept here so `bullmq` and `ioredis` resolve from the API package.
- * `snapshot()` records the Apify ledger and run counters; `restore()` puts them back and drops every synthetic cache entry,
- * so no SYNTHETIC listing is left on the shared local stack (rule 2) and the month's budget ledger is unchanged.
+ * Stack-side helpers for the cross-app spec, kept here so `ioredis` resolves from the API package.
+ * `snapshot()` records the Apify ledger and run counters; `restore()` puts them back and drops the legacy per-leg cache keys,
+ * so the month's budget ledger is unchanged. The catalog (ADR-0034) lives in Postgres and is driven in-process by test/catalog.e2e.ts, not here.
  */
-export async function stackControl(routeKey: string) {
+export async function stackControl() {
   const { Redis } = await import("ioredis")
-  const { Queue } = await import("bullmq")
   const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6390")
-  const maintenance = new Queue("maintenance", { connection: { host: "localhost", port: 6390 } })
   const kept = new Map<string, string | null>()
-  const counters = async () => [...(await redis.keys("apify:ledger:*")), ...(await redis.keys("apify:runs:*")), "listings:warm:rotation"]
+  const counters = async () => [...(await redis.keys("apify:ledger:*")), ...(await redis.keys("apify:runs:*"))]
   const clearSynthetic = async () => {
-    const keys = [...(await redis.keys("apify:leg:*")), ...(await redis.keys("apify:pending:*")), ...(await redis.keys("apify:start:*")), ...(await redis.keys("apify:recheck:*")), `listings:flights:${routeKey}`]
+    const keys = [...(await redis.keys("apify:leg:*")), ...(await redis.keys("apify:pending:*")), ...(await redis.keys("apify:start:*")), ...(await redis.keys("apify:recheck:*"))]
     if (keys.length) await redis.del(...keys)
   }
   return {
     redis,
     async snapshot() { for (const k of await counters()) kept.set(k, await redis.get(k)); await clearSynthetic() },
-    warm: () => maintenance.add("listings.warm-flights", {}),
     async restore() {
-      // A warm queued earlier can still collect after the spec: drop pending listing jobs and wait out active ones before clearing.
-      for (let i = 0; i < 60; i++) {
-        const jobs = (await maintenance.getJobs(["delayed", "waiting", "active"])).filter((j) => j.name.startsWith("listings.") && j.name !== "listings.warm-flights")
-        for (const j of jobs) if (!(await j.isActive())) await j.remove().catch(() => undefined)
-        if (!jobs.length) break
-        await new Promise((r) => setTimeout(r, 1000))
-      }
       await clearSynthetic()
       for (const k of await counters()) if (!kept.has(k)) await redis.del(k)
       for (const [k, v] of kept) { if (v == null) await redis.del(k); else await redis.set(k, v) }
-      await maintenance.close()
       redis.disconnect()
     },
   }

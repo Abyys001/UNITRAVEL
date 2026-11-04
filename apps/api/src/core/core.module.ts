@@ -19,9 +19,11 @@ import { ApifyCredentialBootstrap } from "../modules/suppliers/apify/credential-
 import { FlightDataService } from "../modules/suppliers/apify/flight-data.service"
 import { SuppliersService } from "../modules/suppliers/suppliers.service"
 import { HealthService } from "../modules/platform/health.service"
+import { CatalogBudgetService } from "../modules/catalog/catalog-budget.service"
+import { CatalogSettingsService } from "../modules/catalog/catalog-settings.service"
 
 /** Foundation services every business module may depend on (Figure 20.1, bottom row). */
-const SERVICES = [AuditService, OutboxService, ConfigService, AccessService, TokensService, SessionsService, OtpService, PowService, MfaService, RateLimiter, Queues, WorkerRegistry, ReferenceService, ObjectStorage, SuppliersService, FlightDataService, ApifyCredentialBootstrap, HealthService]
+const SERVICES = [AuditService, OutboxService, ConfigService, AccessService, TokensService, SessionsService, OtpService, PowService, MfaService, RateLimiter, Queues, WorkerRegistry, ReferenceService, ObjectStorage, SuppliersService, CatalogSettingsService, CatalogBudgetService, FlightDataService, ApifyCredentialBootstrap, HealthService]
 
 @Global()
 @Module({})

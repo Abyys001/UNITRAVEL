@@ -113,3 +113,22 @@ test("fields the API must never send are not rendered even if present", async ({
   const html = await page.content()
   expect(html).not.toMatch(/LEAK|1,?234\.56|123456|google\.com\/travel/)
 })
+
+// ADR-0034: catalog-sourced rows carry no segments and `offerRef: null`; the card shows what it has and requests via the manual flow.
+test("catalog-style card (no segments, no offerRef) shows carriers and times, no detail rows, and requests the manual flow", async ({ page }) => {
+  const item = { label: "CACHED_OFFER", fetchedAt: hoursAgo(3), origin: "IKA", destination: "IST", departureDate: day, carriers: ["TK"], stops: 0, durationMin: 210, departureLocal: `${day}T07:30`, arrivalLocal: `${day}T11:00`, offerRef: null, complianceReview: false }
+  await mockListings(page, { items: [item], notice: null })
+  await page.goto("/en/flights")
+  const card = page.getByTestId("popular-flight")
+  await expect(card).toHaveCount(1)
+  await expect(card).toContainText("TK")
+  await expect(card.getByTestId("long-layover")).toHaveCount(0)
+  await expect(card.locator("dl")).toHaveCount(0)
+  await expect(card.getByRole("link")).toHaveCount(0)
+  expect(await card.innerText()).not.toMatch(/[£$€]\s?\d/)
+  await card.getByRole("button", { name: "Request this flight" }).click()
+  await expect(page).toHaveURL(/\/en\/sign-in\?next=/)
+  const manual = new URL(`http://x${new URL(page.url()).searchParams.get("next")}`).searchParams.get("manual")!
+  const shape = JSON.parse(decodeURIComponent(escape(atob(manual)))) as { from: { code: string }; to: { code: string }; date: string }
+  expect([shape.from.code, shape.to.code, shape.date]).toEqual(["IKA", "IST", day])
+})

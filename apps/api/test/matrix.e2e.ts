@@ -102,6 +102,13 @@ describe("permission matrix", () => {
     for (const role of ["customer", "admin", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("provider.config.read")
   })
 
+  it("includes the flight catalog routes, so the role sweeps cover them; only admin, developer and owner hold catalog permissions (ADR-0034)", () => {
+    const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
+    for (const [m, p] of [["GET", "/v1/admin/catalog/usage"], ["GET", "/v1/admin/catalog/coverage"], ["GET", "/v1/admin/catalog/settings"], ["PATCH", "/v1/admin/catalog/routes/:id"], ["POST", "/v1/admin/catalog/slots/:id/refresh/quote"], ["POST", "/v1/admin/catalog/slots/:id/refresh"], ["GET", "/v1/admin/catalog/slots/:id/results"], ["POST", "/v1/admin/catalog/results/:id/revalidate"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
+    for (const role of ["customer", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => p.startsWith("catalog."))).toEqual([])
+    for (const role of ["admin", "developer", "owner"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).toEqual(expect.arrayContaining(["catalog.read", "catalog.manage"]))
+  })
+
   it("includes the Phase J routes, so the role sweeps cover them; only admin and owner hold the new permissions (ADR-0018 to 0021)", () => {
     const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
     for (const [m, p] of [["GET", "/v1/admin/customers"], ["GET", "/v1/admin/customers/:id/activity"], ["GET", "/v1/admin/support/tickets"], ["GET", "/v1/admin/support/tickets/:ref"], ["POST", "/v1/admin/support/tickets/:ref/replies"], ["POST", "/v1/admin/support/tickets/:ref/commands"], ["GET", "/v1/admin/calls"], ["POST", "/v1/admin/customers/:id/assignments"], ["GET", "/v1/admin/listings"], ["PATCH", "/v1/admin/listings/:id"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })

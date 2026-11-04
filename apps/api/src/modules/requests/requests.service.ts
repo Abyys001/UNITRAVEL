@@ -46,6 +46,13 @@ export function staffActor(a: Actor): MachineActor {
 }
 export const SYSTEM: MachineActor = { kind: "SYSTEM", permissions: new Set() }
 
+/** Origin, destination and first date of a request, for the catalog demand counter (ADR-0034: a submitted request counts +5). */
+export function demandRoute(q: SearchQuery) {
+  const s = q.slices[0]!
+  const code = (p: (typeof s)["from"]) => ("airport" in p ? p.airport : p.city)
+  return { from: code(s.from), to: code(s.to), date: s.date }
+}
+
 /**
  * The flight request lifecycle (ch. 13): a request is a case, not a booking. Every transition is a named command that
  * runs the state machine inside one transaction and writes the history row, the audit entry and the outbox event.
@@ -176,7 +183,7 @@ export class RequestsService {
       await tx.insert(requestTravellers).values(trav.map((t, i) => ({ requestId: req!.id, travellerId: t.id, passengerType: body.travellers[i]!.passengerType, nameSnapshot: { title: t.title, givenNames: t.givenNames, surname: t.surname, nameFa: t.nameFa, dateOfBirth: t.dateOfBirth } })))
       await tx.insert(requestStatusHistory).values({ requestType: "FLIGHT", requestId: req!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: "CUSTOMER" })
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "flight_request.submitted", entityType: "flight_request", entityId: req!.id, contextRef: ref, after: { kind, tripType: query.tripType, travellers: trav.length, snapshot: !!snapshotId }, ip: actor.ip, requestId: ctx.requestId })
-      await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: req!.id, eventType: "flight_request.submitted", payload: { requestId: req!.id, ref, customerUserId: actor.userId, routeLabel: this.routeLabel(query, ctx.locale), urgent }, dedupeKey: `fr-submitted:${req!.id}` })
+      await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: req!.id, eventType: "flight_request.submitted", payload: { requestId: req!.id, ref, customerUserId: actor.userId, routeLabel: this.routeLabel(query, ctx.locale), urgent, route: demandRoute(query) }, dedupeKey: `fr-submitted:${req!.id}` })
       return { ref, status: "SUBMITTED" as const, kind }
     })
   }

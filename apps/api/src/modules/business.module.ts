@@ -5,6 +5,12 @@ import { AdminCustomerListController, MeActivityController } from "./activity/ac
 import { BookingsService } from "./bookings/bookings.service"
 import { AdminCargoController, CustomerCargoController, DevCargoController } from "./cargo/cargo.controller"
 import { CargoService } from "./cargo/cargo.service"
+import { ApifyIntegrationController, CatalogAdminController } from "./catalog/catalog-admin.controller"
+import { CatalogAdminService } from "./catalog/catalog-admin.service"
+import { CatalogReadController } from "./catalog/catalog-read.controller"
+import { CatalogReadService } from "./catalog/catalog-read.service"
+import { CatalogRefreshService } from "./catalog/catalog-refresh.service"
+import { CatalogWriteService } from "./catalog/catalog-write.service"
 import { ComplianceController } from "./compliance/compliance.controller"
 import { ComplianceService } from "./compliance/compliance.service"
 import { AdminCustomersController, AdminVerificationsController, MyDetailsController, TravellersController } from "./customers/customers.controller"
@@ -59,9 +65,10 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
   MeActivityController, AdminCustomerListController, SupportTicketsController, AdminSupportController, AdminCallsController, BonlineWebhookController, AdminAssignmentsController, PublicListingsController, AdminListingsController,
   PublicVisaController, AdminVisaController, DevVisaResearchController,
+  CatalogReadController, CatalogAdminController, ApifyIntegrationController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, CatalogRefreshService, CatalogReadService, CatalogAdminService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

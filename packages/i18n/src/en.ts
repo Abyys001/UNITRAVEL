@@ -406,6 +406,17 @@ export const en = {
     helpLead: "Send us your trip and travellers. Our team checks what is needed and sends you a quote for our help. Sending this form is not a visa application.",
     newCheck: "Start a new check",
   },
+  // ADR-0034: stored flight catalog on /search and /flights/results/{id}. No prices; cached data is never a guarantee.
+  catalog: {
+    updated: "Updated {ago}", confirmed: "Availability is confirmed by our team.", stale: "This listing is older than usual and may have changed. Our team will check it for you.",
+    partyNote: "Our team confirms availability and the final price for your party.", selfTransferNote: "Separate tickets: if the first flight is late, the second airline is not obliged to wait.",
+    emptyTitle: "No flights listed for this date", emptyBody: "Our team can still look for options on this date.", nearby: "Dates with listed flights",
+    notTrackedTitle: "We don't track this route automatically yet", notTrackedBody: "Our team can find options for you.",
+    unavailableTitle: "Flight listings are unavailable right now", noFlights: "No flights listed", datesAround: "Flights around your date",
+    askTeam: "Ask our team", requestFlight: "Request this flight", viewDetails: "Flight details",
+    detailTitle: "Flight details", leg: "Flight {n}", terminal: "Terminal {terminal}", aircraft: "Aircraft", operatedBy: "Operated by {carrier}", total: "Total journey",
+    noLongerListed: "This flight is no longer listed. Ask our team for current options.", lastSeen: "Last seen {ago}", backToSearch: "Back to search", layoverAt: "Layover at {at}: {time}",
+  },
   credits: { title: "Photo and video credits", lead: "The photographs and video on this site are decorative stock media. They show places only; they are not offers, prices or availability.", item: "Title", creator: "Creator", source: "Source", licence: "Licence", usedOn: "Used on", none: "No credits listed yet." },
   // ADR-0032: popular routes on /flights (Apify Google Flights schedules, indicative only).
   popularFlights: {

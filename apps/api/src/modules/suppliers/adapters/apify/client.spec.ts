@@ -23,11 +23,20 @@ describe("Apify client", () => {
     const run = await new ApifyClient("tok_secret").startRun({ ...input }, 0.016)
     expect(run).toEqual(START_RESPONSE.data)
     const [url, init] = spy.mock.calls[0]!
-    expect(String(url)).toBe("https://api.apify.com/v2/acts/lergassy~google-flights-scraper/runs?maxTotalChargeUsd=0.0160")
+    expect(String(url)).toBe("https://api.apify.com/v2/acts/lergassy~google-flights-scraper/runs?build=0.1.167&maxTotalChargeUsd=0.0160")
     expect(String(url)).not.toContain("tok_secret")
     expect((init!.headers as Record<string, string>).authorization).toBe("Bearer tok_secret")
     expect(JSON.parse(init!.body as string)).toMatchObject({ maxResults: 15, routes: [{ origin: "IST" }] })
-    expect(JSON.parse(init!.body as string)).not.toHaveProperty("resolveBookingOptions")
+  })
+
+  it("always sends the KAYAK and resolution fields as false, even if a caller tries to turn them on (ADR-0034 F2)", async () => {
+    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValue(json(START_RESPONSE, 201))
+    const { ApifyClient } = await load()
+    const sneaky = { ...input, kayakWhenGoogleEmpty: true, fillMissingPricesFromKayak: true, resolveBookingOptions: true, resolveReturnFlights: true } as unknown as ApifyInput
+    await new ApifyClient("tok_secret").startRun(sneaky, 0.016)
+    expect(JSON.parse(spy.mock.calls[0]![1]!.body as string)).toMatchObject({
+      kayakWhenGoogleEmpty: false, fillMissingPricesFromKayak: false, resolveBookingOptions: false, resolveReturnFlights: false, exploreAnywhere: false, calendarDays: 0,
+    })
   })
 
   it("refuses a run without maxResults or a cost cap, before any request", async () => {
