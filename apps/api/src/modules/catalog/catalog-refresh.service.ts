@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto"
+
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 import type { Job } from "bullmq"
 import { and, asc, eq, gte, inArray, lt, sql } from "drizzle-orm"
@@ -5,7 +7,7 @@ import type { Redis } from "ioredis"
 
 import type { CatalogSettings, RecheckStart, RecheckStatus, UsagePurpose } from "@unitravel/contracts"
 import { catalogSlots, type Db, flightResultLegs, flightResultPricing, flightResults, flightWatchlistRoutes, providerRuns, providerUsageLedger } from "@unitravel/db"
-import { adminRunCap, APIFY_ROW_USD, APIFY_START_USD, type PacerRoute, type PacerSlot, selectRun } from "@unitravel/engine"
+import { adminRunCap, APIFY_ROW_USD, APIFY_START_USD, FLIGHTAPI_CREDITS_PER_CALL, type PacerRoute, type PacerSlot, selectFlightapiSlots, selectRun } from "@unitravel/engine"
 
 import { env } from "../../core/env"
 import { AppError } from "../../core/errors"
@@ -20,6 +22,8 @@ import { ReferenceService } from "../reference/reference.service"
 import { SupplierError } from "../suppliers/adapter"
 import { APIFY_ACTOR_BUILD, APIFY_COST_OFF_FIELDS, APIFY_PROVIDER_ID, ApifyClient, type ApifyInput, type ApifyRun } from "../suppliers/adapters/apify/client"
 import { normaliseRows } from "../suppliers/adapters/apify/normalise"
+import { FLIGHTAPI_PROVIDER_ID, FlightapiClient } from "../suppliers/adapters/flightapi/client"
+import { normaliseResponse } from "../suppliers/adapters/flightapi/normalise"
 import { SuppliersService } from "../suppliers/suppliers.service"
 import { CatalogBudgetService } from "./catalog-budget.service"
 import { bumpDemand, DEMAND_REQUEST } from "./catalog-read.service"
@@ -48,6 +52,7 @@ export const JOBS = {
 const isoDate = (d: Date) => d.toISOString().slice(0, 10)
 const addDays = (d: Date, n: number) => new Date(d.getTime() + n * DAY)
 const usd = (n: number) => Math.round(n * 1e6) / 1e6
+const fingerprint = (secret: string) => createHash("sha256").update(secret).digest("hex").slice(0, 16)
 
 const toPacerSlot = (s: SlotRow): PacerSlot => ({
   id: s.id, routeId: s.routeId, departureDate: s.departureDate, lastFetchedAt: s.lastFetchedAt, recentCounts: s.recentCounts,
@@ -64,6 +69,10 @@ const classify = (err: unknown): Failure => {
   if (e && (e.code === "SUPPLIER_TIMEOUT" || e.code === "SUPPLIER_UNAVAILABLE")) return "TRANSIENT"
   return "OTHER"
 }
+
+/** One FlightAPI call: a slot's route and date. */
+interface FlightapiJob { slotId: string; departureDate: string; origin: string; destination: string; maxResults: number }
+type Meta = { resultId?: string; old?: { amountMinor: number; currency: string } | null }
 
 interface RunSpec {
   purpose: UsagePurpose
@@ -153,6 +162,18 @@ export class CatalogRefreshService implements OnModuleInit {
     return (await this.suppliers.credentials(APIFY_PROVIDER_ID))?.token ?? null
   }
 
+  /** ADR-0035: the FlightAPI key is an environment secret; it is never stored, logged or echoed. */
+  protected flightapiKey(): string | null {
+    return env().FLIGHTAPI_KEY ?? null
+  }
+
+  /** A pause for a rejected credential ends when the credential changes: Apify through the store, FlightAPI by the key's fingerprint. */
+  private async authRecovered(s: CatalogSettings, pause: NonNullable<Awaited<ReturnType<CatalogSettingsService["state"]>>["pause"]>): Promise<boolean> {
+    if (s.source !== "flightapi") return !!(await this.token())
+    const key = this.flightapiKey()
+    return !!key && fingerprint(key) !== pause.key
+  }
+
   // ---------------- alerts and pauses ----------------
 
   /** Developers get the existing provider-health notification (`provider.health_changed`). */
@@ -160,10 +181,10 @@ export class CatalogRefreshService implements OnModuleInit {
     await this.outbox.add(this.db, { aggregateType: "provider", aggregateId: APIFY_PROVIDER_ID, eventType: "provider.health_changed", payload: { provider: "flight catalog", circuit, detail } })
   }
 
-  private async pauseSystem(reason: PauseReason, until: Date | null, detail: string) {
+  private async pauseSystem(reason: PauseReason, until: Date | null, detail: string, key?: string) {
     const st = await this.cfg.state()
     const same = st.pause?.reason === reason
-    await this.cfg.updateState(() => ({ pause: { reason, until: until?.toISOString() ?? null, at: new Date().toISOString(), detail } }))
+    await this.cfg.updateState(() => ({ pause: { reason, until: until?.toISOString() ?? null, at: new Date().toISOString(), detail, ...(key ? { key } : {}) } }))
     if (!same) await this.alert(reason, `Catalog refreshes paused (${reason}): ${detail}`)
     this.log.warn({ reason, until: until?.toISOString(), detail }, "catalog refreshes paused")
   }
@@ -176,7 +197,7 @@ export class CatalogRefreshService implements OnModuleInit {
     const state = await this.cfg.state()
     if (s.paused) return { skipped: "PAUSED" }
     if (state.pause) {
-      const ended = state.pause.reason === "AUTH" ? !!(await this.token()) : !!state.pause.until && Date.parse(state.pause.until) <= now.getTime()
+      const ended = state.pause.reason === "AUTH" ? await this.authRecovered(s, state.pause) : !!state.pause.until && Date.parse(state.pause.until) <= now.getTime()
       if (!ended) return { skipped: state.pause.reason }
       await this.cfg.updateState(() => ({ pause: null, failedTicks: state.pause?.reason === "CIRCUIT" ? 0 : state.failedTicks }))
     }
@@ -187,6 +208,7 @@ export class CatalogRefreshService implements OnModuleInit {
     let started = false
     try {
       await this.sweepStale()
+      if (s.source === "flightapi") return await this.tickFlightapi(s, now, lock)
       const token = await this.token()
       if (!token) {
         await this.pauseSystem("AUTH", null, "the Apify credential is missing or was rejected")
@@ -225,6 +247,98 @@ export class CatalogRefreshService implements OnModuleInit {
     await this.cfg.updateState(() => ({ lastTick: { at: new Date().toISOString(), outcome, tickBudgetUsd: usd(tickBudgetUsd), slots } }))
   }
 
+  // ---------------- FlightAPI (ADR-0035) ----------------
+
+  /** One tick on FlightAPI: its pro-rata share of this month's credits, in priority order, one call per slot. The caller owns the lock. */
+  private async tickFlightapi(s: CatalogSettings, now: Date, lock: string): Promise<Record<string, unknown>> {
+    const key = this.flightapiKey()
+    if (!key) {
+      await this.pauseSystem("AUTH", null, "FLIGHTAPI_KEY is not configured")
+      return { skipped: "AUTH" }
+    }
+    const { used, budget } = await this.budget.credits(s, now)
+    this.log.log({ creditsUsed: used, availableCredits: budget.availableCredits, slotsAllowed: budget.slotsAllowed, ticksLeft: budget.ticksLeft, reserveReleased: budget.reserveReleased }, "catalog tick (flightapi)")
+    if (budget.paused) {
+      await this.pauseSystem("BUDGET", budget.monthEnd, `credits used (${used} of ${s.flightapiMonthlyCredits}); resumes ${budget.monthEnd.toISOString()}`)
+      await this.recordTick("BUDGET_EXHAUSTED", 0, 0)
+      return { skipped: "BUDGET" }
+    }
+    const { slots, routes } = await this.dueSlots(now)
+    const picked = selectFlightapiSlots(slots, new Map(routes.map((r) => [r.id, { id: r.id, enabled: r.enabled, maxResults: r.maxResults, priorityWeight: r.priorityWeight } satisfies PacerRoute])), s, budget, now)
+    if (!picked.length) {
+      await this.recordTick("NOTHING_DUE", 0, 0)
+      return { skipped: "NOTHING_DUE", slotsAllowed: budget.slotsAllowed }
+    }
+    const routeOf = new Map(routes.map((r) => [r.id, r]))
+    const jobs = picked.map((c): FlightapiJob => ({ slotId: c.slot.id, departureDate: c.slot.departureDate, origin: routeOf.get(c.slot.routeId)!.origin, destination: routeOf.get(c.slot.routeId)!.destination, maxResults: c.maxResults }))
+    const run = await this.runCalls(key, s, jobs, "refresh", lock)
+    const sum = await run.done
+    if (sum.fatal === "AUTH") await this.pauseSystem("AUTH", null, "FlightAPI rejected the key (401/403); replace FLIGHTAPI_KEY", fingerprint(key))
+    else if (sum.fatal === "BUDGET") await this.pauseSystem("BUDGET", budget.monthEnd, "FlightAPI reports no credits left (402)")
+    else if (sum.ok === 0) {
+      const st = await this.cfg.updateState((cur) => ({ failedTicks: cur.failedTicks + 1 }))
+      if (st.failedTicks >= CIRCUIT_AFTER) await this.pauseSystem("CIRCUIT", new Date(Date.now() + CIRCUIT_PAUSE_MS), `${st.failedTicks} refresh ticks failed in a row (${sum.error ?? "no detail"})`)
+    } else await this.cfg.updateState((cur) => ({ failedTicks: 0, ...(cur.pause?.reason === "CIRCUIT" ? { pause: null } : {}) }))
+    await this.recordTick(sum.fatal ? `FAILED:${sum.fatal}` : sum.ok ? "RUN_DONE" : "FAILED:TRANSIENT", 0, jobs.length)
+    return { slots: jobs.length, ok: sum.ok, failed: sum.failed, credits: sum.credits }
+  }
+
+  /**
+   * One ledger row per batch (a tick, or one staff action), written before the first call so the credits count while it runs. Calls go out one slot at a time,
+   * two at once at most; each answer is filed with `writeSlot` straight away. The ledger is returned as soon as it is open; `done` settles when the batch ends.
+   */
+  private async runCalls(key: string, s: CatalogSettings, jobs: FlightapiJob[], purpose: UsagePurpose, lock: string, meta?: Meta) {
+    const ledgerId = await this.budget.openLedger({ provider: FLIGHTAPI_PROVIDER_ID, purpose, slotIds: jobs.map((j) => j.slotId), maxResults: Math.max(...jobs.map((j) => j.maxResults)), estCostUsd: 0, maxChargeUsd: 0, credits: jobs.length * FLIGHTAPI_CREDITS_PER_CALL, meta })
+    const done = (async () => {
+      try {
+        return await this.execute(key, s, jobs, purpose, lock, ledgerId, meta)
+      } catch (err) {
+        await this.budget.closeLedger({ id: ledgerId }, { status: "FAILED", error: String(err).slice(0, 300) })
+        throw err
+      }
+    })()
+    return { ledgerId, done }
+  }
+
+  private async execute(key: string, s: CatalogSettings, jobs: FlightapiJob[], purpose: UsagePurpose, lock: string, ledgerId: string, meta?: Meta) {
+    const client = new FlightapiClient(key)
+    const sum = { ok: 0, failed: 0, billed: 0, rows: 0, fatal: null as "AUTH" | "BUDGET" | null, error: null as string | null, credits: 0 }
+    const queue = [...jobs]
+    const fetchedAt = new Date()
+    const policy = await this.compliance.carrierPolicy()
+    const worker = async () => {
+      for (let job = queue.shift(); job && !sum.fatal; job = queue.shift()) {
+        try {
+          const raw = await client.onewayTrip({ from: job.origin, to: job.destination, date: job.departureDate, adults: 1, children: 0, infants: 0, cabin: "Economy", currency: s.currency })
+          sum.billed++
+          if (!raw || typeof raw !== "object" || !Array.isArray((raw as { itineraries?: unknown }).itineraries)) throw new SupplierError("SUPPLIER_UNKNOWN", "FlightAPI answered without an itineraries list")
+          const norm = normaliseResponse(raw, { reference: this.reference.lookup(), fetchedAt, ttlSeconds: OFFER_TTL_S, currency: s.currency, cabin: "ECONOMY", from: job.origin, to: job.destination, date: job.departureDate, maxResults: job.maxResults })
+          sum.ok++
+          sum.rows += norm.offers.length
+          await this.write.writeSlot({ slotId: job.slotId, offers: norm.offers, fetchedAt, notices: norm.notices }, policy).catch((err) => this.log.error({ slot: job.slotId, err: String(err) }, "slot write failed; it stays due"))
+        } catch (err) {
+          const kind = classify(err)
+          const msg = err instanceof SupplierError ? `${err.code}: ${err.message}` : String(err)
+          sum.failed++
+          sum.error ??= msg
+          // A call that was refused or never reached FlightAPI was not billed; one that timed out may have been.
+          if (err instanceof SupplierError && err.code === "SUPPLIER_TIMEOUT") sum.billed++
+          if (kind === "AUTH" || kind === "BUDGET") sum.fatal = kind
+          // A request FlightAPI will keep refusing is marked on the slot, so the error skip stops asking every tick.
+          if (kind === "OTHER") await this.write.writeSlot({ slotId: job.slotId, offers: [], fetchedAt, notices: [], errored: msg }, policy).catch(() => undefined)
+        }
+        await this.renewLock(lock)
+      }
+    }
+    await Promise.all([worker(), worker()])
+    sum.credits = sum.billed * FLIGHTAPI_CREDITS_PER_CALL
+    const status = sum.failed === 0 && sum.ok === jobs.length ? "SUCCEEDED" : sum.ok ? "PARTIAL" : "FAILED"
+    const result = purpose === "admin_revalidate" && meta ? await this.outcome(meta, fetchedAt) : null
+    await this.budget.closeLedger({ id: ledgerId }, { status, rowsBilled: sum.rows, credits: sum.credits, error: sum.error?.slice(0, 300) ?? null, ...(result ? { meta: { ...meta, outcome: result } } : {}) })
+    this.log.log({ ledger: ledgerId, purpose, ok: sum.ok, failed: sum.failed, credits: sum.credits, rows: sum.rows }, "catalog calls done")
+    return sum
+  }
+
   /** Enabled DIRECT routes' slots inside their horizon. Combined routes are never sent to Apify. */
   private async dueSlots(now: Date, only?: string[]) {
     const routes = await this.db.select().from(flightWatchlistRoutes).where(and(eq(flightWatchlistRoutes.enabled, true), eq(flightWatchlistRoutes.kind, "DIRECT")))
@@ -237,7 +351,10 @@ export class CatalogRefreshService implements OnModuleInit {
   /** A run row stuck in RUNNING (worker died mid-run) would count at its charge cap forever; close it as timed out. */
   private async sweepStale() {
     const cutoff = new Date(Date.now() - 2 * RUN_DEADLINE_MS)
-    const stale = await this.db.select().from(providerUsageLedger).where(and(eq(providerUsageLedger.status, "RUNNING"), lt(providerUsageLedger.startedAt, cutoff)))
+    // We hold the lock, so no FlightAPI batch can still be running: whatever is still RUNNING died with its worker. Its credits stay counted (the calls may have been billed).
+    await this.db.update(providerUsageLedger).set({ status: "TIMED-OUT", finishedAt: new Date(), error: "the worker stopped before this batch finished" })
+      .where(and(eq(providerUsageLedger.status, "RUNNING"), eq(providerUsageLedger.provider, FLIGHTAPI_PROVIDER_ID)))
+    const stale = await this.db.select().from(providerUsageLedger).where(and(eq(providerUsageLedger.status, "RUNNING"), eq(providerUsageLedger.provider, APIFY_PROVIDER_ID), lt(providerUsageLedger.startedAt, cutoff)))
     for (const l of stale) {
       await this.budget.closeLedger({ id: l.id }, { status: "TIMED-OUT", estCostUsd: APIFY_START_USD, error: "no collect job finished this run" })
       if (l.providerRunId) await this.db.update(providerRuns).set({ status: "TIMED-OUT", finishedAt: new Date(), errors: ["no collect job finished this run"] }).where(eq(providerRuns.id, l.providerRunId))
@@ -422,8 +539,13 @@ export class CatalogRefreshService implements OnModuleInit {
   async quoteSlotRefresh(slotId: string, actorId: string) {
     const { route } = await this.slotWithRoute(slotId)
     const s = await this.cfg.get()
-    const c = await this.cap(1, route.maxResults ?? s.defaultMaxResults, s)
     const confirmToken = randomToken(24)
+    if (s.source === "flightapi") {
+      const c = await this.creditCap(1, s)
+      await this.redis.set(`catalog:quote:${confirmToken}`, JSON.stringify({ slotId, actorId, credits: c.credits }), "EX", 300)
+      return { slotId, estimatedUsd: 0, reserveLeftUsd: 0, estimatedCredits: c.credits, reserveLeftCredits: c.reserveLeft, confirmToken }
+    }
+    const c = await this.cap(1, route.maxResults ?? s.defaultMaxResults, s)
     await this.redis.set(`catalog:quote:${confirmToken}`, JSON.stringify({ slotId, actorId, maxTotalChargeUsd: c.maxTotalChargeUsd }), "EX", 300)
     return { slotId, estimatedUsd: usd(c.estUsd), reserveLeftUsd: c.reserveLeftUsd, confirmToken }
   }
@@ -436,8 +558,39 @@ export class CatalogRefreshService implements OnModuleInit {
     const { slot, route } = await this.slotWithRoute(slotId)
     const s = await this.cfg.get()
     const maxResults = route.maxResults ?? s.defaultMaxResults
+    if (s.source === "flightapi") {
+      await this.creditCap(1, s)
+      return this.startFlightapiAdmin(s, [{ slotId: slot.id, departureDate: slot.departureDate, origin: route.origin, destination: route.destination, maxResults }], "admin_revalidate")
+    }
     const c = await this.cap(1, maxResults, s)
     return this.startAdminRun(s, { purpose: "admin_revalidate", slots: [slot], routeOf: () => route, maxResults, estUsd: c.estUsd, maxTotalChargeUsd: c.maxTotalChargeUsd, lock: "" })
+  }
+
+  /** Staff calls draw on the reserve credits (ADR-0035); refuses before any call when the reserve cannot cover them. */
+  private async creditCap(calls: number, s: CatalogSettings) {
+    const { budget } = await this.budget.credits(s)
+    const credits = calls * FLIGHTAPI_CREDITS_PER_CALL
+    if (credits > budget.adminAvailableCredits) throw new AppError("RATE_LIMITED", "The admin reserve of FlightAPI credits for this month cannot cover this run")
+    return { credits, reserveLeft: budget.adminAvailableCredits }
+  }
+
+  /** The calls run in the background under the lock; the returned id is the ledger row, which the status route reads. */
+  private async startFlightapiAdmin(s: CatalogSettings, jobs: FlightapiJob[], purpose: UsagePurpose, meta?: Meta): Promise<RecheckStart> {
+    const key = this.flightapiKey()
+    if (!key) throw new AppError("SUPPLIER_UNAVAILABLE", "FLIGHTAPI_KEY is not set")
+    const lock = randomToken(12)
+    if (!(await this.takeLock(lock))) throw new AppError("VERSION_CONFLICT", "A refresh run is already in progress; try again in a minute")
+    try {
+      const run = await this.runCalls(key, s, jobs, purpose, lock, meta)
+      void run.done.then(async (sum) => {
+        if (sum.fatal === "AUTH") await this.pauseSystem("AUTH", null, "FlightAPI rejected the key (401/403); replace FLIGHTAPI_KEY", fingerprint(key))
+        else if (sum.fatal === "BUDGET") await this.pauseSystem("BUDGET", (await this.budget.credits(s)).budget.monthEnd, "FlightAPI reports no credits left (402)")
+      }).catch((err) => this.log.error({ err: String(err) }, "staff FlightAPI run failed")).finally(() => this.releaseLock(lock))
+      return { jobId: run.ledgerId, status: "PENDING" }
+    } catch (err) {
+      await this.releaseLock(lock)
+      throw err
+    }
   }
 
   private async startAdminRun(s: CatalogSettings, spec: RunSpec): Promise<RecheckStart> {
@@ -466,12 +619,17 @@ export class CatalogRefreshService implements OnModuleInit {
     if (!slotIds.length) throw new AppError("VALIDATION_FAILED", "This result's departure date has passed; there is nothing to revalidate")
     const withRoutes = await Promise.all(slotIds.map((id) => this.slotWithRoute(id)))
     const s = await this.cfg.get()
-    const c = await this.cap(withRoutes.length, s.revalidateMaxResults, s)
     const [price] = await this.db.select().from(flightResultPricing).where(eq(flightResultPricing.resultId, res.id))
+    const meta = { resultId: res.id, identityKey: res.identityKey, old: price ? { amountMinor: price.amountMinor, currency: price.currency } : null }
+    if (s.source === "flightapi") {
+      await this.creditCap(withRoutes.length, s)
+      return this.startFlightapiAdmin(s, withRoutes.map((x) => ({ slotId: x.slot.id, departureDate: x.slot.departureDate, origin: x.route.origin, destination: x.route.destination, maxResults: s.revalidateMaxResults })), "admin_revalidate", meta)
+    }
+    const c = await this.cap(withRoutes.length, s.revalidateMaxResults, s)
     const byId = new Map(withRoutes.map((x) => [x.slot.id, x]))
     return this.startAdminRun(s, {
       purpose: "admin_revalidate", slots: withRoutes.map((x) => x.slot), routeOf: (id) => byId.get(id)!.route, maxResults: s.revalidateMaxResults, estUsd: c.estUsd, maxTotalChargeUsd: c.maxTotalChargeUsd, lock: "",
-      meta: { resultId: res.id, identityKey: res.identityKey, old: price ? { amountMinor: price.amountMinor, currency: price.currency } : null },
+      meta,
     })
   }
 
@@ -479,7 +637,10 @@ export class CatalogRefreshService implements OnModuleInit {
   private async revalidateOutcome(led: LedgerRow, fetchedAt: Date) {
     if (!led.providerRunId) return null
     const [pr] = await this.db.select({ result: providerRuns.result }).from(providerRuns).where(eq(providerRuns.id, led.providerRunId))
-    const meta = pr?.result as { resultId?: string; old?: { amountMinor: number; currency: string } | null } | null
+    return this.outcome(pr?.result as Meta | null, fetchedAt)
+  }
+
+  private async outcome(meta: Meta | null, fetchedAt: Date) {
     if (!meta?.resultId) return null
     const [row] = await this.db.select({ isCurrent: flightResults.isCurrent }).from(flightResults).where(eq(flightResults.id, meta.resultId))
     const [price] = await this.db.select().from(flightResultPricing).where(eq(flightResultPricing.resultId, meta.resultId))
@@ -494,7 +655,7 @@ export class CatalogRefreshService implements OnModuleInit {
     if (led.status === "RUNNING") return { jobId, status: "PENDING" }
     if (led.status === "SUCCEEDED" || led.status === "PARTIAL") {
       const [pr] = led.providerRunId ? await this.db.select({ result: providerRuns.result }).from(providerRuns).where(eq(providerRuns.id, led.providerRunId)) : []
-      const o = (pr?.result as { outcome?: { stillListed: boolean; priceChanged: boolean; old: { amountMinor: number; currency: string } | null; new: { amountMinor: number; currency: string } | null; fetchedAt: string } } | null)?.outcome
+      const o = ((pr?.result ?? led.meta) as { outcome?: { stillListed: boolean; priceChanged: boolean; old: { amountMinor: number; currency: string } | null; new: { amountMinor: number; currency: string } | null; fetchedAt: string } } | null)?.outcome
       // A slot refresh (no result behind it) has no price comparison; it is DONE with nothing to compare.
       return { jobId, status: "DONE", result: o ? { ...o, components: [] } : { stillListed: true, priceChanged: false, old: null, new: null, fetchedAt: (led.finishedAt ?? new Date()).toISOString(), components: [] } }
     }

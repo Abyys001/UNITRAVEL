@@ -40,6 +40,10 @@ const Env = z.object({
   APIFY_BASE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   /** ADR-0032 B1: imported once into the encrypted credential store when none is stored, then ignored. Never logged. */
   APIFY_TOKEN: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(8).optional()),
+  /** ADR-0035: FlightAPI.io key (it travels in the URL path, so it is never logged). Read by the catalog pacer in the api and the worker. */
+  FLIGHTAPI_KEY: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(8).optional()),
+  /** ADR-0035: a local mock of FlightAPI, honoured only when `sandboxAllowed()`. */
+  FLIGHTAPI_BASE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   /** ADR-0034: the website's revalidation route. Both optional; when unset the catalog refresh just skips the purge (pages expire by their own `revalidate`). */
   WEB_REVALIDATE_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   WEB_REVALIDATE_SECRET: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(16).optional()),

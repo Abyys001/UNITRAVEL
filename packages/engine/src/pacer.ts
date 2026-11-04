@@ -134,19 +134,24 @@ export interface RunPlan {
   maxTotalChargeUsd: number
 }
 
+/** Due candidates, highest priority first. Inside the last 48 hours (or the reserve window) of a cycle a slot at half its interval already counts as due. */
+function rankCandidates(slots: readonly PacerSlot[], routes: ReadonlyMap<string, PacerRoute>, s: CatalogSettings, hoursLeft: number, now: Date): SlotCandidate[] {
+  const lenient = hoursLeft <= Math.max(48, s.releaseReserveHours)
+  const minOverdue = lenient ? 0.5 : 1
+  return slots.flatMap((sl) => {
+    const r = routes.get(sl.routeId)
+    const c = r ? candidate(sl, r, s, now) : null
+    return c && c.overdue >= minOverdue ? [c] : []
+  }).sort((a, b) => b.priority - a.priority || a.slot.departureDate.localeCompare(b.slot.departureDate))
+}
+
 /**
  * Picks one run for this tick. `maxResults` is a run-level actor field (F3), so the run takes the group of the
  * highest-priority slot; slots of other groups wait for a later tick.
  */
 export function selectRun(slots: readonly PacerSlot[], routes: ReadonlyMap<string, PacerRoute>, s: CatalogSettings, b: TickBudget, now: Date): RunPlan | null {
   if (s.paused || b.paused) return null
-  const lenient = b.hoursLeft <= Math.max(48, s.releaseReserveHours)
-  const minOverdue = lenient ? 0.5 : 1
-  const all = slots.flatMap((sl) => {
-    const r = routes.get(sl.routeId)
-    const c = r ? candidate(sl, r, s, now) : null
-    return c && c.overdue >= minOverdue ? [c] : []
-  }).sort((a, b) => b.priority - a.priority || a.slot.departureDate.localeCompare(b.slot.departureDate))
+  const all = rankCandidates(slots, routes, s, b.hoursLeft, now)
   if (all.length === 0) return null
   const group = all[0]!.maxResults
   const startUsd = APIFY_START_USD * s.costCorrection
@@ -162,6 +167,52 @@ export function selectRun(slots: readonly PacerSlot[], routes: ReadonlyMap<strin
   const cap = Math.min(ceil3(est * 1.15), floor3(b.availableUsd))
   if (cap < APIFY_START_USD + APIFY_ROW_USD) return null
   return { maxResults: group, slots: picked.map((c) => c.slot), estUsd: est, maxTotalChargeUsd: cap }
+}
+
+// ---------- FlightAPI (ADR-0035): the same pacer, counted in credits instead of dollars ----------
+
+/** One one-way call. OBSERVED 4 Nov 2026. */
+export const FLIGHTAPI_CREDITS_PER_CALL = 2
+
+export interface CreditBudgetInput {
+  settings: Pick<CatalogSettings, "flightapiMonthlyCredits" | "flightapiReserveCredits" | "refreshTicksPerDay" | "releaseReserveHours" | "maxSlotsPerRun">
+  /** Credits drawn this calendar month (UTC), refresh and admin together. */
+  usedCredits: number
+  /** The admin part of `usedCredits`. */
+  adminUsedCredits: number
+  now: Date
+}
+
+export interface CreditBudget {
+  monthEnd: Date
+  hoursLeft: number
+  ticksLeft: number
+  reserveReleased: boolean
+  availableCredits: number
+  /** Slots this tick may refresh: its pro-rata share of what is left, at two credits each. */
+  slotsAllowed: number
+  adminAvailableCredits: number
+  paused: boolean
+}
+
+/** Mirror of `tickBudget` on the calendar month: the reserve is held back for staff until the last `releaseReserveHours`, then refreshes may spend it. */
+export function creditBudget(i: CreditBudgetInput): CreditBudget {
+  const s = i.settings
+  const monthEnd = new Date(Date.UTC(i.now.getUTCFullYear(), i.now.getUTCMonth() + 1, 1))
+  const hoursLeft = Math.max(1, (monthEnd.getTime() - i.now.getTime()) / HOUR)
+  const ticksLeft = Math.max(1, Math.floor(hoursLeft / (24 / s.refreshTicksPerDay)))
+  const reserveReleased = hoursLeft <= s.releaseReserveHours
+  const reserveLeft = Math.max(0, s.flightapiReserveCredits - i.adminUsedCredits)
+  const head = Math.max(0, s.flightapiMonthlyCredits - i.usedCredits)
+  const availableCredits = Math.max(0, head - (reserveReleased ? 0 : reserveLeft))
+  const slotsAllowed = Math.min(s.maxSlotsPerRun, Math.floor(availableCredits / ticksLeft / FLIGHTAPI_CREDITS_PER_CALL + 1e-9))
+  return { monthEnd, hoursLeft, ticksLeft, reserveReleased, availableCredits, slotsAllowed, adminAvailableCredits: Math.min(reserveLeft, head), paused: availableCredits < FLIGHTAPI_CREDITS_PER_CALL }
+}
+
+/** The due slots for a FlightAPI tick, best first, capped at the tick's share. */
+export function selectFlightapiSlots(slots: readonly PacerSlot[], routes: ReadonlyMap<string, PacerRoute>, s: CatalogSettings, b: CreditBudget, now: Date): SlotCandidate[] {
+  if (s.paused || b.paused) return []
+  return rankCandidates(slots, routes, s, b.hoursLeft, now).slice(0, b.slotsAllowed)
 }
 
 /** Charge cap for one admin run (revalidate or "refresh now"), or null when the reserve cannot cover it. */

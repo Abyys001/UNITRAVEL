@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 import { CatalogSettings, type CatalogSettingsPatch, DEFAULT_CATALOG_SETTINGS } from "@unitravel/contracts"
 import { type Db, settings } from "@unitravel/db"
 
+import { env } from "../../core/env"
 import { DB, UnitOfWork } from "../../core/infra.module"
 import { AuditService } from "../audit/audit.service"
 
@@ -25,7 +26,7 @@ export interface CycleCache {
 /** Runtime state of the pacer (settings row `catalog.state`): written by the worker, read by the admin views. */
 export interface CatalogRuntimeState {
   /** Set while refreshes are paused by the system (budget, credential, circuit); auto-resume once it passes (AUTH clears when the credential is replaced). */
-  pause: { reason: PauseReason; until: string | null; at: string; detail?: string } | null
+  pause: { reason: PauseReason; until: string | null; at: string; detail?: string; /** AUTH on FlightAPI: fingerprint of the rejected key, so a changed key resumes the pacer. */ key?: string } | null
   failedTicks: number
   lastTick: { at: string; outcome: string; tickBudgetUsd: number; slots: number } | null
   schemaAlert: string | null
@@ -49,7 +50,8 @@ export class CatalogSettingsService {
   async get(): Promise<CatalogSettings> {
     if (this.cache && Date.now() - this.cache.at < CACHE_MS) return this.cache.value
     const [row] = await this.db.select().from(settings).where(eq(settings.key, SETTINGS_KEY))
-    const parsed = CatalogSettings.safeParse({ ...DEFAULT_CATALOG_SETTINGS, ...((row?.value as object | undefined) ?? {}) })
+    // ADR-0035: FlightAPI is the default source once its key is configured; a stored choice always wins.
+    const parsed = CatalogSettings.safeParse({ ...DEFAULT_CATALOG_SETTINGS, source: env().FLIGHTAPI_KEY ? "flightapi" : "apify", ...((row?.value as object | undefined) ?? {}) })
     if (!parsed.success) this.log.error({ issues: parsed.error.issues.length }, "stored catalog settings are invalid; defaults in use")
     const value = parsed.success ? parsed.data : DEFAULT_CATALOG_SETTINGS
     this.cache = { at: Date.now(), value }

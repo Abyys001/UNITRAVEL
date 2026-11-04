@@ -16,13 +16,13 @@ export interface NormalisedRows {
 /** ADR-0029 A4: identity for revalidation is the flight numbers, the first local departure and the cabin. */
 export const identityKey = (flightNumbers: string[], departAt: string, cabinClass: string) => `${flightNumbers.join(",")}|${departAt}|${cabinClass}`
 
-const minor = (amount: number, currency: string) => Math.round(amount * (currency === "JPY" ? 1 : currency === "KWD" || currency === "OMR" || currency === "BHD" ? 1000 : 100))
+export const minor = (amount: number, currency: string) => Math.round(amount * (currency === "JPY" ? 1 : currency === "KWD" || currency === "OMR" || currency === "BHD" ? 1000 : 100))
 const str = (v: unknown) => (typeof v === "string" && v ? v : undefined)
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined)
 const iso = (d: Date) => d.toISOString().replace(/\.\d+Z$/, "Z")
 
 /** "JQ86" with carrier "JQ" → "86"; a flight number without the carrier prefix is kept as given. */
-const numberPart = (flightNumber: string, carrier: string) => (flightNumber.startsWith(carrier) ? flightNumber.slice(carrier.length) : flightNumber.replace(/^[A-Z0-9]{2}(?=\d)/, ""))
+export const numberPart = (flightNumber: string, carrier: string) => (flightNumber.startsWith(carrier) ? flightNumber.slice(carrier.length) : flightNumber.replace(/^[A-Z0-9]{2}(?=\d)/, ""))
 
 /**
  * Apify rows → offers. Brand, baggage, change/refund conditions and seat selection are always UNKNOWN (rule 3, never inferred).

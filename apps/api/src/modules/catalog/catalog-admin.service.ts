@@ -64,7 +64,9 @@ export class CatalogAdminService {
     const scheduled = await this.queues.get("catalog").getJobScheduler("catalog-refresh-tick").catch(() => undefined)
     const next = typeof scheduled?.next === "number" ? new Date(scheduled.next) : state.lastTick ? new Date(Date.parse(state.lastTick.at) + interval) : null
     const reserveLeft = Math.max(0, s.adminReserveUsd - spend.adminSpentUsd)
+    const credits = await this.budget.credits(s, now)
     return {
+      source: s.source, creditsUsed: credits.used, creditsMonthly: s.flightapiMonthlyCredits, creditsReserveLeft: Math.max(0, s.flightapiReserveCredits - credits.adminUsed),
       cycleStart: spend.cycleStart.toISOString(), cycleEnd: spend.cycleEnd.toISOString(), spentUsd: spend.spentUsd, spentSource: spend.spentSource, ledgerUsd: spend.ledgerUsd,
       projectedUsd, budgetUsd: s.monthlyBudgetUsd, availableUsd: usd(budget.availableUsd), reserveLeftUsd: usd(reserveLeft), reserveReleased: budget.reserveReleased,
       rowsPerDay: Math.round((Number(week?.rows ?? 0) / days) * 10) / 10, runsPerDay: Math.round((Number(week?.runs ?? 0) / days) * 10) / 10, costCorrection: s.costCorrection,

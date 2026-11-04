@@ -111,6 +111,10 @@ export const providerUsageLedger = pgTable("provider_usage_ledger", {
   estCostUsd: numeric({ precision: 10, scale: 4 }).notNull().default("0"),
   maxChargeUsd: numeric({ precision: 10, scale: 4 }).notNull().default("0"),
   actualCostUsd: numeric({ precision: 10, scale: 4 }),
+  /** FlightAPI (ADR-0035) is billed in credits, not dollars; Apify rows leave this 0. */
+  credits: integer().notNull().default(0),
+  /** Staff revalidation context and outcome for runs that have no `provider_runs` row (FlightAPI). */
+  meta: jsonb().$type<Record<string, unknown>>(),
   status: text({ enum: ["RUNNING", "SUCCEEDED", "PARTIAL", "FAILED", "TIMED-OUT", "ABORTED"] }).notNull().default("RUNNING"),
   startedAt: tstz().notNull().defaultNow(),
   finishedAt: tstz(),

@@ -1,0 +1,489 @@
+{
+ "itineraries": [
+  {
+   "id": "12585-2611122005--31734-0-13554-2611122105",
+   "leg_ids": [
+    "12585-2611122005--31734-0-13554-2611122105"
+   ],
+   "pricing_options": [
+    {
+     "price": {
+      "amount": 193
+     },
+     "agent_ids": [
+      "bcom"
+     ]
+    },
+    {
+     "price": {
+      "amount": 395.97
+     },
+     "agent_ids": [
+      "edus"
+     ]
+    },
+    {
+     "price": {
+      "amount": 437.76
+     },
+     "agent_ids": [
+      "oojo"
+     ]
+    },
+    {
+     "price": {
+      "amount": 466.99
+     },
+     "agent_ids": [
+      "turk"
+     ]
+    },
+    {
+     "price": {
+      "amount": 466.8
+     },
+     "agent_ids": [
+      "jfus"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "12585-2611121820--32353-1-13554-2611130840",
+   "leg_ids": [
+    "12585-2611121820--32353-1-13554-2611130840"
+   ],
+   "pricing_options": [
+    {
+     "price": {
+      "amount": 1196.07
+     },
+     "agent_ids": [
+      "byus"
+     ]
+    },
+    {
+     "price": {
+      "amount": 1238.08
+     },
+     "agent_ids": [
+      "egyp"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "12585-2611120525--32181-1-13554-2611121220",
+   "leg_ids": [
+    "12585-2611120525--32181-1-13554-2611121220"
+   ],
+   "pricing_options": [
+    {
+     "price": {
+      "amount": 323.3
+     },
+     "agent_ids": [
+      "jaty"
+     ]
+    },
+    {
+     "price": {
+      "amount": 338
+     },
+     "agent_ids": [
+      "bcom"
+     ]
+    },
+    {
+     "price": {
+      "amount": 355.25
+     },
+     "agent_ids": [
+      "jfus"
+     ]
+    },
+    {
+     "price": {
+      "amount": 371.73
+     },
+     "agent_ids": [
+      "byus"
+     ]
+    },
+    {
+     "price": {
+      "amount": 502.16
+     },
+     "agent_ids": [
+      "dhop"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "12585-2611120155--32348-1-13554-2611121350",
+   "leg_ids": [
+    "12585-2611120155--32348-1-13554-2611121350"
+   ],
+   "pricing_options": [
+    {
+     "price": {
+      "amount": 1252.95
+     },
+     "agent_ids": [
+      "jfus"
+     ]
+    },
+    {
+     "price": {
+      "amount": 1261
+     },
+     "agent_ids": [
+      "bcom"
+     ]
+    },
+    {
+     "price": {
+      "amount": 1275.9
+     },
+     "agent_ids": [
+      "oojo"
+     ]
+    },
+    {
+     "price": {
+      "amount": 1310.3
+     },
+     "agent_ids": [
+      "byus"
+     ]
+    },
+    {
+     "price": {
+      "amount": null
+     },
+     "agent_ids": [
+      "emir"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "12585-2611120350--32353-1-13554-2611121235",
+   "leg_ids": [
+    "12585-2611120350--32353-1-13554-2611121235"
+   ],
+   "pricing_options": [
+    {
+     "price": {
+      "amount": 614.99
+     },
+     "agent_ids": [
+      "byus"
+     ]
+    },
+    {
+     "price": {
+      "amount": 638
+     },
+     "agent_ids": [
+      "bcom"
+     ]
+    },
+    {
+     "price": {
+      "amount": 647.27
+     },
+     "agent_ids": [
+      "oojo"
+     ]
+    },
+    {
+     "price": {
+      "amount": 653.08
+     },
+     "agent_ids": [
+      "jfus"
+     ]
+    },
+    {
+     "price": {
+      "amount": 654.08
+     },
+     "agent_ids": [
+      "egyp"
+     ]
+    }
+   ]
+  }
+ ],
+ "legs": [
+  {
+   "id": "12585-2611122005--31734-0-13554-2611122105",
+   "origin_place_id": 12585,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T20:05:00",
+   "arrival": "2026-11-12T21:05:00",
+   "segment_ids": [
+    "12585-13554-2611122005-2611122105--31734"
+   ],
+   "duration": 240,
+   "stop_count": 0,
+   "marketing_carrier_ids": [
+    -31734
+   ],
+   "operating_carrier_ids": [
+    -31734
+   ],
+   "self_transfer": false
+  },
+  {
+   "id": "12585-2611121820--32353-1-13554-2611130840",
+   "origin_place_id": 12585,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T18:20:00",
+   "arrival": "2026-11-13T08:40:00",
+   "segment_ids": [
+    "12585-10337-2611121820-2611121950--32353",
+    "10337-13554-2611130530-2611130840--32353"
+   ],
+   "duration": 1040,
+   "stop_count": 1,
+   "marketing_carrier_ids": [
+    -32353
+   ],
+   "operating_carrier_ids": [
+    -31734,
+    -32353
+   ],
+   "self_transfer": false
+  },
+  {
+   "id": "12585-2611120525--32181-1-13554-2611121220",
+   "origin_place_id": 12585,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T05:25:00",
+   "arrival": "2026-11-12T12:20:00",
+   "segment_ids": [
+    "12585-9817-2611120525-2611120510--32181",
+    "9817-13554-2611121010-2611121220--32181"
+   ],
+   "duration": 595,
+   "stop_count": 1,
+   "marketing_carrier_ids": [
+    -32181
+   ],
+   "operating_carrier_ids": [
+    -32474,
+    -32181
+   ],
+   "self_transfer": true
+  },
+  {
+   "id": "12585-2611120155--32348-1-13554-2611121350",
+   "origin_place_id": 12585,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T01:55:00",
+   "arrival": "2026-11-12T13:50:00",
+   "segment_ids": [
+    "12585-11182-2611120155-2611120725--32348",
+    "11182-13554-2611120940-2611121350--32348"
+   ],
+   "duration": 895,
+   "stop_count": 1,
+   "marketing_carrier_ids": [
+    -32348
+   ],
+   "operating_carrier_ids": [
+    -32301,
+    -32348
+   ],
+   "self_transfer": false
+  },
+  {
+   "id": "12585-2611120350--32353-1-13554-2611121235",
+   "origin_place_id": 12585,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T03:50:00",
+   "arrival": "2026-11-12T12:35:00",
+   "segment_ids": [
+    "12585-10337-2611120350-2611120510--32353",
+    "10337-13554-2611120935-2611121235--32353"
+   ],
+   "duration": 705,
+   "stop_count": 1,
+   "marketing_carrier_ids": [
+    -32353
+   ],
+   "operating_carrier_ids": [
+    -32353
+   ],
+   "self_transfer": false
+  }
+ ],
+ "segments": [
+  {
+   "id": "12585-13554-2611122005-2611122105--31734",
+   "origin_place_id": 12585,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T20:05:00",
+   "arrival": "2026-11-12T21:05:00",
+   "duration": 240,
+   "marketing_flight_number": "1983",
+   "marketing_carrier_id": -31734,
+   "operating_carrier_id": -31734
+  },
+  {
+   "id": "12585-10337-2611121820-2611121950--32353",
+   "origin_place_id": 12585,
+   "destination_place_id": 10337,
+   "departure": "2026-11-12T18:20:00",
+   "arrival": "2026-11-12T19:50:00",
+   "duration": 150,
+   "marketing_flight_number": "9294",
+   "marketing_carrier_id": -32353,
+   "operating_carrier_id": -31734
+  },
+  {
+   "id": "10337-13554-2611130530-2611130840--32353",
+   "origin_place_id": 10337,
+   "destination_place_id": 13554,
+   "departure": "2026-11-13T05:30:00",
+   "arrival": "2026-11-13T08:40:00",
+   "duration": 310,
+   "marketing_flight_number": "783",
+   "marketing_carrier_id": -32353,
+   "operating_carrier_id": -32353
+  },
+  {
+   "id": "12585-9817-2611120525-2611120510--32181",
+   "origin_place_id": 12585,
+   "destination_place_id": 9817,
+   "departure": "2026-11-12T05:25:00",
+   "arrival": "2026-11-12T05:10:00",
+   "duration": 105,
+   "marketing_flight_number": "427",
+   "marketing_carrier_id": -32181,
+   "operating_carrier_id": -32474
+  },
+  {
+   "id": "9817-13554-2611121010-2611121220--32181",
+   "origin_place_id": 9817,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T10:10:00",
+   "arrival": "2026-11-12T12:20:00",
+   "duration": 190,
+   "marketing_flight_number": "210",
+   "marketing_carrier_id": -32181,
+   "operating_carrier_id": -32181
+  },
+  {
+   "id": "12585-11182-2611120155-2611120725--32348",
+   "origin_place_id": 12585,
+   "destination_place_id": 11182,
+   "departure": "2026-11-12T01:55:00",
+   "arrival": "2026-11-12T07:25:00",
+   "duration": 270,
+   "marketing_flight_number": "2215",
+   "marketing_carrier_id": -32348,
+   "operating_carrier_id": -32301
+  },
+  {
+   "id": "11182-13554-2611120940-2611121350--32348",
+   "origin_place_id": 11182,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T09:40:00",
+   "arrival": "2026-11-12T13:50:00",
+   "duration": 490,
+   "marketing_flight_number": "29",
+   "marketing_carrier_id": -32348,
+   "operating_carrier_id": -32348
+  },
+  {
+   "id": "12585-10337-2611120350-2611120510--32353",
+   "origin_place_id": 12585,
+   "destination_place_id": 10337,
+   "departure": "2026-11-12T03:50:00",
+   "arrival": "2026-11-12T05:10:00",
+   "duration": 140,
+   "marketing_flight_number": "746",
+   "marketing_carrier_id": -32353,
+   "operating_carrier_id": -32353
+  },
+  {
+   "id": "10337-13554-2611120935-2611121235--32353",
+   "origin_place_id": 10337,
+   "destination_place_id": 13554,
+   "departure": "2026-11-12T09:35:00",
+   "arrival": "2026-11-12T12:35:00",
+   "duration": 300,
+   "marketing_flight_number": "777",
+   "marketing_carrier_id": -32353,
+   "operating_carrier_id": -32353
+  }
+ ],
+ "places": [
+  {
+   "id": 9817,
+   "display_code": "BEG",
+   "type": "Airport",
+   "name": "Belgrade Nikola Tesla"
+  },
+  {
+   "id": 10337,
+   "display_code": "CAI",
+   "type": "Airport",
+   "name": "Cairo"
+  },
+  {
+   "id": 11182,
+   "display_code": "DXB",
+   "type": "Airport",
+   "name": "Dubai"
+  },
+  {
+   "id": 12585,
+   "display_code": "IST",
+   "type": "Airport",
+   "name": "Istanbul"
+  },
+  {
+   "id": 13554,
+   "display_code": "LHR",
+   "type": "Airport",
+   "name": "London Heathrow"
+  }
+ ],
+ "carriers": [
+  {
+   "id": -32474,
+   "display_code": "FB",
+   "name": "Bulgaria Air"
+  },
+  {
+   "id": -32353,
+   "display_code": "MS",
+   "name": "EgyptAir"
+  },
+  {
+   "id": -32348,
+   "display_code": "EK",
+   "name": "Emirates"
+  },
+  {
+   "id": -32301,
+   "display_code": "FZ",
+   "name": "flydubai"
+  },
+  {
+   "id": -32181,
+   "display_code": "JU",
+   "name": "Air Serbia"
+  },
+  {
+   "id": -31734,
+   "display_code": "TK",
+   "name": "Turkish Airlines"
+  }
+ ]
+}

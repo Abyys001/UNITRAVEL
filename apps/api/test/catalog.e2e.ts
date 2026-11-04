@@ -16,6 +16,7 @@ import { CatalogRefreshService } from "../src/modules/catalog/catalog-refresh.se
 import { CatalogWriteService } from "../src/modules/catalog/catalog-write.service"
 import { FlightDataService } from "../src/modules/suppliers/apify/flight-data.service"
 import { ApifyClient } from "../src/modules/suppliers/adapters/apify/client"
+import { FlightapiClient } from "../src/modules/suppliers/adapters/flightapi/client"
 import { SuppliersService } from "../src/modules/suppliers/suppliers.service"
 import { cleanupTestData, inDays, offer, slotId, TEST_AIRPORTS } from "./catalog-harness"
 import { ADMIN_HOST, dbQuery, Session, useApi } from "./client"
@@ -48,6 +49,7 @@ const fakeQueues = { get: () => fakeQueue, all: () => [], onModuleDestroy: async
 const trap = (what: string) => () => { throw new Error(`${what} was called from a customer path`) }
 const providerSpies = () => [
   ...(["startRun", "runStatus", "items", "limits", "defaultBuild", "setMonthlyCap"] as const).map((m) => vi.spyOn(ApifyClient.prototype, m).mockImplementation(trap(`ApifyClient.${m}`) as never)),
+  vi.spyOn(FlightapiClient.prototype, "onewayTrip").mockImplementation(trap("FlightapiClient.onewayTrip") as never),
   vi.spyOn(SuppliersService.prototype, "search").mockImplementation(trap("SuppliersService.search") as never),
   vi.spyOn(SuppliersService.prototype, "call").mockImplementation(trap("SuppliersService.call") as never),
   vi.spyOn(FlightDataService.prototype, "lookup").mockImplementation(trap("FlightDataService.lookup") as never),

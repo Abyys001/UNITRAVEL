@@ -7,6 +7,7 @@ import { useEffect, useId, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@unitravel/ui/components/button"
+import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { cn } from "@unitravel/ui/lib/utils"
 
 import { Skeleton, StatusChip, TileError } from "@/components/bento"
@@ -99,6 +100,14 @@ export function SettingsSection({ canManage }: { canManage: boolean }) {
           <fieldset className="space-y-3">
             <legend className="cap mb-1">{t("cat.set.budget")}</legend>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <Field label={t("cat.set.source")}>
+                <NativeSelect className="field-input" value={draft.source} disabled={dis} onChange={(e) => set("source", e.target.value as Settings["source"])} data-testid="catalog-source">
+                  <option value="apify">{t("cat.set.srcApify")}</option>
+                  <option value="flightapi">{t("cat.set.srcFlightapi")}</option>
+                </NativeSelect>
+              </Field>
+              <N label={t("cat.set.fapiMonthly")} value={draft.flightapiMonthlyCredits} min={0} onChange={(n) => set("flightapiMonthlyCredits", Math.trunc(n))} disabled={dis} />
+              <N label={t("cat.set.fapiReserve")} value={draft.flightapiReserveCredits} min={0} onChange={(n) => set("flightapiReserveCredits", Math.trunc(n))} disabled={dis} />
               <N label={t("cat.set.monthlyBudget")} value={draft.monthlyBudgetUsd} step={0.05} min={0} onChange={(n) => set("monthlyBudgetUsd", n)} disabled={dis} />
               <N label={t("cat.set.safety")} value={draft.safetyMarginUsd} step={0.05} min={0} onChange={(n) => set("safetyMarginUsd", n)} disabled={dis} />
               <N label={t("cat.set.reserve")} value={draft.adminReserveUsd} step={0.05} min={0} onChange={(n) => set("adminReserveUsd", n)} disabled={dis} />

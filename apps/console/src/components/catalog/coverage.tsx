@@ -22,7 +22,7 @@ import { CATALOG, KEYS, SLOT_CLASS, usd } from "./shared"
 
 type CoverageSlot = CatalogCoverage["routes"][number]["slots"][number]
 // The contracts export the SlotRefreshQuote schema but not its type.
-interface SlotRefreshQuote { slotId: string; estimatedUsd: number; reserveLeftUsd: number; confirmToken: string }
+interface SlotRefreshQuote { slotId: string; estimatedUsd: number; reserveLeftUsd: number; confirmToken: string; estimatedCredits?: number; reserveLeftCredits?: number }
 interface Picked { id: string; label: string; date: string }
 
 const dayNum = (iso: string) => iso.slice(8, 10)
@@ -175,7 +175,7 @@ function SlotPanel({ picked, slot, canManage, onClose }: { picked: Picked; slot:
         </ul>
       )}
       <FormDialog open={!!quote} onOpenChange={(o) => { if (!o) setQuote(null) }} title={t("cat.slot.confirm.title")} submitLabel={t("cat.slot.confirm")} testId="dlg-slot-refresh"
-        description={quote && t("cat.slot.confirm.desc", { date: picked.date, route: picked.label, cost: usd(quote.estimatedUsd), left: usd(quote.reserveLeftUsd) })}
+        description={quote && t("cat.slot.confirm.desc", { date: picked.date, route: picked.label, cost: quote.estimatedCredits != null ? t("cat.credits", { n: quote.estimatedCredits }) : usd(quote.estimatedUsd), left: quote.reserveLeftCredits != null ? t("cat.credits", { n: quote.reserveLeftCredits }) : usd(quote.reserveLeftUsd) })}
         onSubmit={async () => { if (!quote) return; await api(`${CATALOG}/slots/${picked.id}/refresh`, { body: { confirmToken: quote.confirmToken } }); await done() }}>
         {null}
       </FormDialog>

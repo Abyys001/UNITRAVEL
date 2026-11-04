@@ -101,7 +101,7 @@ export const IDENTITY_DOCUMENT_TYPES: readonly z.infer<typeof DocumentType>[] = 
 export const ConfigDomain = z.enum(["ENGINE_RULES", "HUBS", "WORKFLOW", "NOTIFICATION_MATRIX", "AUTH"])
 export const ConfigVersionStatus = z.enum(["DRAFT", "PUBLISHED", "SUPERSEDED"])
 export const ProviderEnv = z.enum(["test", "production"])
-export const ProviderId = z.enum(["fake", "duffel", "amadeus-enterprise", "manual", "apify-google-flights"])
+export const ProviderId = z.enum(["fake", "duffel", "amadeus-enterprise", "manual", "apify-google-flights", "flightapi"])
 
 export type TripType = z.infer<typeof TripType>
 export type Cabin = z.infer<typeof Cabin>

@@ -34,6 +34,7 @@ export function CatalogUsageBody({ u }: { u: CatalogUsage }) {
         <Stat label={t("cat.u.rows")} value={<span className="num">{Math.round(u.rowsPerDay)}</span>} hint={t("cat.u.runs", { n: u.runsPerDay.toFixed(1) })} />
       </div>
       <dl className="grid gap-x-6 gap-y-1 text-meta sm:grid-cols-2">
+        {u.source === "flightapi" && <div className="flex justify-between gap-3" data-testid="catalog-credits"><dt className="text-steel">{t("cat.u.credits")}</dt><dd className="num">{t("cat.u.creditsVal", { used: u.creditsUsed, monthly: u.creditsMonthly, reserve: u.creditsReserveLeft })}</dd></div>}
         <div className="flex justify-between gap-3"><dt className="text-steel">{t("cat.u.correction")}</dt><dd className="num">×{u.costCorrection.toFixed(2)}</dd></div>
         <div className="flex justify-between gap-3"><dt className="text-steel">{t("cat.u.cap")}</dt><dd className="num">{usd(u.accountCapUsd)}</dd></div>
         <div className="flex justify-between gap-3"><dt className="text-steel">{t("cat.u.lastTick")}</dt><dd className="min-w-0 text-end">{u.lastTick ? <>{u.lastTick.outcome} · <span className="num">{fmtDateTime(u.lastTick.at)}</span> · {t("cat.u.tickSlots", { n: u.lastTick.slots, usd: usd(u.lastTick.tickBudgetUsd) })}</> : "—"}</dd></div>

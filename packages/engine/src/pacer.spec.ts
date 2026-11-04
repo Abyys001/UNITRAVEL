@@ -7,7 +7,7 @@ import { joinAtHub } from "./build"
 import { makeOffer } from "./factory"
 import {
   APIFY_ROW_USD, APIFY_START_USD, adminRunCap, backoffFactor, catalogEngineRules, estimateMonthly, foldDemand, type PacerRoute, type PacerSlot,
-  selectRun, slotStatus, tickBudget, tierFor,
+  creditBudget, FLIGHTAPI_CREDITS_PER_CALL, selectFlightapiSlots, selectRun, slotStatus, tickBudget, tierFor,
 } from "./pacer"
 import { RuleResolver } from "./rules"
 
@@ -208,5 +208,42 @@ describe("write-time self-transfer rules", () => {
     const wide = new RuleResolver(catalogEngineRules(DEFAULT_ENGINE_RULES, { ...S.connections, maxLayoverMin: 8 * 60 }))
     const joined = joinAtHub([a], [lhr("1985", "2026-11-10T16:30", "2026-11-10T18:30")], wide, false, 0)
     expect(joined).toHaveLength(1)
+  })
+})
+
+describe("FlightAPI credits (ADR-0035)", () => {
+  const mid = new Date("2026-11-04T12:00:00Z")
+  const base = { settings: { ...S, flightapiMonthlyCredits: 1000, flightapiReserveCredits: 100 }, usedCredits: 0, adminUsedCredits: 0, now: mid }
+
+  it("holds the reserve back, spreads the rest over the ticks left in the calendar month, and costs two credits a slot", () => {
+    const b = creditBudget(base)
+    expect(b.monthEnd.toISOString()).toBe("2026-12-01T00:00:00.000Z")
+    expect(b.availableCredits).toBe(900)
+    expect(b.ticksLeft).toBe(Math.floor(((Date.UTC(2026, 11, 1) - mid.getTime()) / HOUR) / 4))
+    expect(b.slotsAllowed).toBe(Math.floor(900 / b.ticksLeft / FLIGHTAPI_CREDITS_PER_CALL))
+    expect(b.paused).toBe(false)
+  })
+
+  it("releases the reserve inside the last releaseReserveHours and pauses when under one call is left", () => {
+    const late = creditBudget({ ...base, now: new Date("2026-11-30T20:00:00Z"), usedCredits: 900 })
+    expect(late.reserveReleased).toBe(true)
+    expect(late.availableCredits).toBe(100)
+    expect(creditBudget({ ...base, usedCredits: 901 }).paused).toBe(true)
+    expect(creditBudget({ ...base, usedCredits: 5000 }).availableCredits).toBe(0)
+  })
+
+  it("admin credits come out of the reserve first and never exceed what is left of the month", () => {
+    expect(creditBudget({ ...base, adminUsedCredits: 60, usedCredits: 60 }).adminAvailableCredits).toBe(40)
+    expect(creditBudget({ ...base, usedCredits: 990 }).adminAvailableCredits).toBe(10)
+  })
+
+  it("never plans more slots than the tick's share or maxSlotsPerRun, best priority first", () => {
+    const slots: PacerSlot[] = Array.from({ length: 10 }, (_, i) => ({ id: `s${i}`, routeId: "r", departureDate: iso(addDays(mid, i)), lastFetchedAt: null, recentCounts: [], consecutiveEmpty: 0, consecutiveErrors: 0, lastErrorAt: null, demandScore: 0 }))
+    const routes = new Map<string, PacerRoute>([["r", { id: "r", enabled: true, maxResults: null, priorityWeight: 1 }]])
+    const b = { ...creditBudget(base), slotsAllowed: 3 }
+    const picked = selectFlightapiSlots(slots, routes, base.settings, b, mid)
+    expect(picked.map((c) => c.slot.id)).toEqual(["s0", "s1", "s2"])
+    expect(selectFlightapiSlots(slots, routes, { ...base.settings, paused: true }, b, mid)).toEqual([])
+    expect(selectFlightapiSlots(slots, routes, base.settings, { ...b, paused: true }, mid)).toEqual([])
   })
 })

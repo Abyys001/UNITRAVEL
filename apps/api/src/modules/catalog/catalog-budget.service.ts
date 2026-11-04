@@ -4,11 +4,12 @@ import { v7 as uuidv7 } from "uuid"
 
 import type { CatalogSettings, UsagePurpose } from "@unitravel/contracts"
 import { type Db, providerUsageLedger } from "@unitravel/db"
-import { tickBudget, type TickBudget } from "@unitravel/engine"
+import { creditBudget, type CreditBudget, tickBudget, type TickBudget } from "@unitravel/engine"
 
 import { DB } from "../../core/infra.module"
 import { SupplierError } from "../suppliers/adapter"
 import { ApifyClient, APIFY_PROVIDER_ID } from "../suppliers/adapters/apify/client"
+import { FLIGHTAPI_PROVIDER_ID } from "../suppliers/adapters/flightapi/client"
 import { SuppliersService } from "../suppliers/suppliers.service"
 import { type CatalogRuntimeState, CatalogSettingsService, type CycleCache } from "./catalog-settings.service"
 
@@ -35,6 +36,10 @@ export interface LedgerRowInput {
   maxResults: number
   estCostUsd: number
   maxChargeUsd: number
+  /** Defaults to Apify. FlightAPI rows carry `credits` instead of dollars (ADR-0035). */
+  provider?: string
+  credits?: number
+  meta?: Record<string, unknown>
 }
 
 const usd = (n: number) => Math.round(n * 1e6) / 1e6
@@ -55,13 +60,13 @@ export class CatalogBudgetService {
   async openLedger(row: LedgerRowInput): Promise<string> {
     const id = uuidv7()
     await this.db.insert(providerUsageLedger).values({
-      id, provider: APIFY_PROVIDER_ID, purpose: row.purpose, providerRunId: row.providerRunId ?? null, slotIds: row.slotIds, maxResults: row.maxResults,
-      estCostUsd: String(row.estCostUsd), maxChargeUsd: String(row.maxChargeUsd), status: "RUNNING",
+      id, provider: row.provider ?? APIFY_PROVIDER_ID, purpose: row.purpose, providerRunId: row.providerRunId ?? null, slotIds: row.slotIds, maxResults: row.maxResults,
+      estCostUsd: String(row.estCostUsd), maxChargeUsd: String(row.maxChargeUsd), credits: row.credits ?? 0, meta: row.meta ?? null, status: "RUNNING",
     })
     return id
   }
 
-  async closeLedger(where: { id: string } | { providerRunId: string }, patch: Partial<Pick<typeof providerUsageLedger.$inferInsert, "apifyRunId" | "rowsBilled" | "status" | "error">> & { estCostUsd?: number; actualCostUsd?: number | null }) {
+  async closeLedger(where: { id: string } | { providerRunId: string }, patch: Partial<Pick<typeof providerUsageLedger.$inferInsert, "apifyRunId" | "rowsBilled" | "status" | "error" | "credits" | "meta">> & { estCostUsd?: number; actualCostUsd?: number | null }) {
     const { estCostUsd, actualCostUsd, ...rest } = patch
     const set = {
       ...rest, ...(estCostUsd !== undefined ? { estCostUsd: String(estCostUsd) } : {}), ...(actualCostUsd !== undefined ? { actualCostUsd: actualCostUsd === null ? null : String(actualCostUsd) } : {}),
@@ -79,6 +84,23 @@ export class CatalogBudgetService {
     const refresh = by("refresh")
     const admin = rows.filter((r) => r.purpose !== "refresh").reduce((n, r) => n + Number(r.usd), 0)
     return { total: refresh + admin, admin, refresh }
+  }
+
+  // ---------------- FlightAPI credits (ADR-0035) ----------------
+
+  /** Credits drawn this calendar month (UTC) by purpose; a call in flight counts at its full price, so a second call cannot be funded from the same credits. */
+  async creditsThisMonth(now = new Date()): Promise<{ used: number; admin: number }> {
+    const since = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    const rows = await this.db.select({ purpose: providerUsageLedger.purpose, credits: sql<string>`coalesce(sum(${providerUsageLedger.credits}), 0)` }).from(providerUsageLedger)
+      .where(and(eq(providerUsageLedger.provider, FLIGHTAPI_PROVIDER_ID), gte(providerUsageLedger.startedAt, since))).groupBy(providerUsageLedger.purpose)
+    const total = rows.reduce((n, r) => n + Number(r.credits), 0)
+    return { used: total, admin: total - Number(rows.find((r) => r.purpose === "refresh")?.credits ?? 0) }
+  }
+
+  async credits(s?: CatalogSettings, now = new Date()): Promise<{ used: number; adminUsed: number; budget: CreditBudget; settings: CatalogSettings }> {
+    const settings = s ?? (await this.cfg.get())
+    const { used, admin } = await this.creditsThisMonth(now)
+    return { used, adminUsed: admin, settings, budget: creditBudget({ settings, usedCredits: used, adminUsedCredits: admin, now }) }
   }
 
   // ---------------- cycle and spend ----------------

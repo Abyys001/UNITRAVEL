@@ -1739,7 +1739,8 @@
                         "duffel",
                         "amadeus-enterprise",
                         "manual",
-                        "apify-google-flights"
+                        "apify-google-flights",
+                        "flightapi"
                       ]
                     },
                     "name": {
@@ -2367,7 +2368,8 @@
                         "duffel",
                         "amadeus-enterprise",
                         "manual",
-                        "apify-google-flights"
+                        "apify-google-flights",
+                        "flightapi"
                       ]
                     },
                     "month": {
@@ -24914,6 +24916,28 @@
                         "ledger"
                       ]
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "apify",
+                        "flightapi"
+                      ]
+                    },
+                    "creditsUsed": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "creditsMonthly": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "creditsReserveLeft": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "ledgerUsd": {
                       "type": "number"
                     },
@@ -25018,6 +25042,10 @@
                     "cycleEnd",
                     "spentUsd",
                     "spentSource",
+                    "source",
+                    "creditsUsed",
+                    "creditsMonthly",
+                    "creditsReserveLeft",
                     "ledgerUsd",
                     "projectedUsd",
                     "budgetUsd",
@@ -25286,6 +25314,23 @@
                         "paused": {
                           "type": "boolean"
                         },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "apify",
+                            "flightapi"
+                          ]
+                        },
+                        "flightapiMonthlyCredits": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000
+                        },
+                        "flightapiReserveCredits": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100000
+                        },
                         "monthlyBudgetUsd": {
                           "type": "number",
                           "minimum": 0,
@@ -25513,6 +25558,9 @@
                       },
                       "required": [
                         "paused",
+                        "source",
+                        "flightapiMonthlyCredits",
+                        "flightapiReserveCredits",
                         "monthlyBudgetUsd",
                         "safetyMarginUsd",
                         "adminReserveUsd",
@@ -25592,6 +25640,23 @@
                 "properties": {
                   "paused": {
                     "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "apify",
+                      "flightapi"
+                    ]
+                  },
+                  "flightapiMonthlyCredits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "flightapiReserveCredits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000
                   },
                   "monthlyBudgetUsd": {
                     "type": "number",
@@ -25831,6 +25896,23 @@
                         "paused": {
                           "type": "boolean"
                         },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "apify",
+                            "flightapi"
+                          ]
+                        },
+                        "flightapiMonthlyCredits": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000
+                        },
+                        "flightapiReserveCredits": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100000
+                        },
                         "monthlyBudgetUsd": {
                           "type": "number",
                           "minimum": 0,
@@ -26058,6 +26140,9 @@
                       },
                       "required": [
                         "paused",
+                        "source",
+                        "flightapiMonthlyCredits",
+                        "flightapiReserveCredits",
                         "monthlyBudgetUsd",
                         "safetyMarginUsd",
                         "adminReserveUsd",
@@ -26139,6 +26224,23 @@
                 "properties": {
                   "paused": {
                     "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "apify",
+                      "flightapi"
+                    ]
+                  },
+                  "flightapiMonthlyCredits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "flightapiReserveCredits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000
                   },
                   "monthlyBudgetUsd": {
                     "type": "number",
@@ -26829,6 +26931,28 @@
                         "ledger"
                       ]
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "apify",
+                        "flightapi"
+                      ]
+                    },
+                    "creditsUsed": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "creditsMonthly": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "creditsReserveLeft": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "ledgerUsd": {
                       "type": "number"
                     },
@@ -26933,6 +27057,10 @@
                     "cycleEnd",
                     "spentUsd",
                     "spentSource",
+                    "source",
+                    "creditsUsed",
+                    "creditsMonthly",
+                    "creditsReserveLeft",
                     "ledgerUsd",
                     "projectedUsd",
                     "budgetUsd",
@@ -27007,6 +27135,28 @@
                         "ledger"
                       ]
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "apify",
+                        "flightapi"
+                      ]
+                    },
+                    "creditsUsed": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "creditsMonthly": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "creditsReserveLeft": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "ledgerUsd": {
                       "type": "number"
                     },
@@ -27111,6 +27261,10 @@
                     "cycleEnd",
                     "spentUsd",
                     "spentSource",
+                    "source",
+                    "creditsUsed",
+                    "creditsMonthly",
+                    "creditsReserveLeft",
                     "ledgerUsd",
                     "projectedUsd",
                     "budgetUsd",
@@ -27173,6 +27327,16 @@
                     },
                     "confirmToken": {
                       "type": "string"
+                    },
+                    "estimatedCredits": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "reserveLeftCredits": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [

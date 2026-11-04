@@ -36,8 +36,17 @@ export const CatalogConnectionRules = z.object({
 }).refine((c) => c.maxLayoverMin >= c.minLayoverMin, { message: "Maximum layover must be at least the minimum", path: ["maxLayoverMin"] })
 export type CatalogConnectionRules = z.infer<typeof CatalogConnectionRules>
 
+export const CatalogSource = z.enum(["apify", "flightapi"])
+export type CatalogSource = z.infer<typeof CatalogSource>
+
 export const CatalogSettings = z.object({
   paused: z.boolean(),
+  /** ADR-0035: which provider feeds the refresh ticks. The default is flightapi when FLIGHTAPI_KEY is configured (applied by the settings service), else apify. */
+  source: CatalogSource,
+  /** FlightAPI is billed in credits (2 per one-way call); the plan's allowance is not known to us, so staff set it. Calendar month, UTC. */
+  flightapiMonthlyCredits: z.number().int().min(0).max(1_000_000),
+  /** Credits held back for staff "refresh now" and revalidation until the last `releaseReserveHours` of the month. */
+  flightapiReserveCredits: z.number().int().min(0).max(100_000),
   monthlyBudgetUsd: z.number().min(0).max(10_000),
   safetyMarginUsd: z.number().min(0).max(1_000),
   adminReserveUsd: z.number().min(0).max(1_000),
@@ -68,6 +77,9 @@ export type CatalogSettingsPatch = z.infer<typeof CatalogSettingsPatch>
 /** Owner's build brief, 2026-11-04 (overrides spec §8 where they differ). */
 export const DEFAULT_CATALOG_SETTINGS: CatalogSettings = {
   paused: false,
+  source: "apify",
+  flightapiMonthlyCredits: 1000,
+  flightapiReserveCredits: 100,
   monthlyBudgetUsd: 5,
   safetyMarginUsd: 0.2,
   adminReserveUsd: 0.75,
@@ -221,6 +233,11 @@ export const CatalogUsage = z.object({
   cycleEnd: IsoDateTime.nullable(),
   spentUsd: z.number(),
   spentSource: z.enum(["apify", "ledger"]),
+  source: CatalogSource,
+  /** FlightAPI credits drawn this calendar month (UTC), refresh and admin together. */
+  creditsUsed: z.number().int(),
+  creditsMonthly: z.number().int(),
+  creditsReserveLeft: z.number().int(),
   ledgerUsd: z.number(),
   projectedUsd: z.number(),
   budgetUsd: z.number(),
@@ -255,7 +272,7 @@ export type CatalogCoverage = z.infer<typeof CatalogCoverage>
 export const BudgetEstimate = z.object({ rowsPerDay: z.number(), runsPerDay: z.number(), monthlyUsd: z.number(), spendableUsd: z.number(), overBudget: z.boolean() })
 export type BudgetEstimate = z.infer<typeof BudgetEstimate>
 
-export const SlotRefreshQuote = z.object({ slotId: Uuid, estimatedUsd: z.number(), reserveLeftUsd: z.number(), confirmToken: z.string() })
+export const SlotRefreshQuote = z.object({ slotId: Uuid, estimatedUsd: z.number(), reserveLeftUsd: z.number(), confirmToken: z.string(), /** Set instead of the USD figures when the source is flightapi. */ estimatedCredits: z.number().int().optional(), reserveLeftCredits: z.number().int().optional() })
 export type SlotRefreshQuote = z.infer<typeof SlotRefreshQuote>
 export const SlotRefreshConfirm = z.object({ confirmToken: z.string().min(10) })
 

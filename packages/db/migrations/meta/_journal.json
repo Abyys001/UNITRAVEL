@@ -162,6 +162,13 @@
       "when": 1793094000000,
       "tag": "0022_flight_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793095000000,
+      "tag": "0023_flightapi_credits",
+      "breakpoints": true
     }
   ]
 }
