@@ -38,7 +38,7 @@ Source: owner briefs of 2 Nov 2026 (ADR-0029) and 3 Nov 2026 (ADR-0032); ADR-003
 - Price leak:
   - `/en/flights` and `/fa/flights` HTML plus 16 JS chunks, a customer search, an anonymous itinerary read and the listing payload contain no `priceLevel|bookingToken|googleFlightsUrl|google.com/travel|"price"|"amount"`.
   - The only `"total"` is the result count in the search response.
-- `git grep -n "apify_api_"` (also with `--untracked`) finds nothing. `.env` is ignored and not staged. There is no Apify credential in the local database.
+- A search for the Apify token prefix (`git grep`, also with `--untracked`) finds nothing. `.env` is ignored and not staged. There is no Apify credential in the local database.
 - Lint: no workspace has a lint script, so there is nothing to run.
 
 ## Not verified / open
@@ -51,4 +51,4 @@ Source: owner briefs of 2 Nov 2026 (ADR-0029) and 3 Nov 2026 (ADR-0032); ADR-003
 - **Listing requests may fail for other passenger mixes.** Listing searches are for 1 adult. The ch. 12.4 rule that travellers must match the searched passengers may refuse other mixes (INFERRED, `requests.service.ts:147`).
 - **Plan name not shown.** `DevApifyTestResult.plan` is always null, because `/users/me/limits` carries no plan name (UNKNOWN without `GET /v2/users/me`).
 - **Real fixtures, live smoke run and real import are not done.** Recording real fixtures, the live smoke run (`maxTotalChargeUsd=0.02`) and the real token import all wait for owner approval. The fixtures in use are synthetic.
-- Not deployed, not committed.
+- Committed in 17ea4b0 and merged in 092f160 by session unitravel-2c (owner request). Deployed to the VPS on 4 Nov 2026 by the same session; its migration records were checked first (Apify migration applied as 0021). The VPS has no Apify credential yet (INFERRED), so the provider stays off and `/flights` shows the empty state.
