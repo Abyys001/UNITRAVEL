@@ -1,4 +1,4 @@
-import type { Itinerary, Money, QuoteOptionInput, Segment, Slice } from "@unitravel/contracts"
+import type { InvoiceLineType, Itinerary, Money, QuoteOptionInput, Segment, Slice } from "@unitravel/contracts"
 import { priceBreakdownTotal, unknownQuoteFields } from "@unitravel/domain"
 
 /** Builder working copy: amounts as typed strings so half-typed numbers do not jump around. */
@@ -13,6 +13,8 @@ export interface DraftOption {
   /** Extra services and an optional discount (ADR-0013 A5); the server recomputes the total. */
   extras: { label: string; amount: string }[]
   discountLabel: string; discount: string
+  /** Catalogue services (STAGE-26): unit price and quantity as typed; the server turns each into a priced extra. */
+  catalogue?: { catalogueItemId: string; name: string; lineType: InvoiceLineType; unit: string; quantity: string }[]
   baggage: QuoteOptionInput["baggage"]
   conditions: QuoteOptionInput["conditions"]
   internalCost: string
@@ -32,7 +34,8 @@ export function fromInput(o: QuoteOptionInput, key = crypto.randomUUID()): Draft
   return {
     key, label: o.label, source: o.source, slices: o.slices, components: o.components ?? [], ticketingModel: o.ticketingModel,
     fare: major(o.priceBreakdown.fare.amountMinor), taxes: major(o.priceBreakdown.taxes.amountMinor), serviceFee: major(o.priceBreakdown.serviceFee.amountMinor),
-    extras: (o.priceBreakdown.extras ?? []).map((e) => ({ label: e.label, amount: major(e.amount.amountMinor) })),
+    extras: (o.priceBreakdown.extras ?? []).filter((e) => !e.catalogueItemId).map((e) => ({ label: e.label, amount: major(e.amount.amountMinor) })),
+    catalogue: (o.priceBreakdown.extras ?? []).flatMap((e) => (e.catalogueItemId ? [{ catalogueItemId: e.catalogueItemId, name: e.label, lineType: e.lineType ?? ("OTHER" as const), unit: major(e.unitAmountMinor ?? e.amount.amountMinor), quantity: String(e.quantity ?? 1) }] : [])),
     discountLabel: o.priceBreakdown.discount?.label ?? "", discount: o.priceBreakdown.discount ? major(o.priceBreakdown.discount.amount.amountMinor) : "",
     baggage: normaliseBaggage(o.slices, o.baggage), conditions: o.conditions, internalCost: o.internalCostMinor != null ? major(o.internalCostMinor) : "",
     supplierPrice: o.supplierPrice ?? undefined, supplierFetchedAt: o.supplierFetchedAt ?? undefined, supplierExpiresAt: o.supplierExpiresAt ?? undefined,
@@ -61,7 +64,10 @@ export function fromItinerary(it: Itinerary): QuoteOptionInput {
   }
 }
 
-/** The breakdown without its total, in minor units; blank extra rows are dropped. */
+const catalogueLines = (o: DraftOption) => (o.catalogue ?? []).map((l) => ({ catalogueItemId: l.catalogueItemId, priceMinor: minor(l.unit), quantity: Math.max(1, Math.round(Number(l.quantity) || 1)) }))
+const catalogueAmount = (o: DraftOption) => (o.catalogue ?? []).reduce((n, l) => n + minor(l.unit) * Math.max(1, Math.round(Number(l.quantity) || 1)), 0)
+
+/** The breakdown without its total, in minor units; blank extra rows are dropped. Catalogue lines are added by the server. */
 function breakdown(o: DraftOption, currency: string): Omit<QuoteOptionInput["priceBreakdown"], "total"> {
   const m = (n: number) => ({ amountMinor: n, currency })
   const extras = o.extras.filter((e) => e.label.trim() || e.amount.trim()).map((e) => ({ label: e.label.trim(), amount: m(minor(e.amount)) }))
@@ -73,13 +79,14 @@ function breakdown(o: DraftOption, currency: string): Omit<QuoteOptionInput["pri
 }
 
 /** Preview only: the same domain function the server uses (ADR-0013 A5). */
-export const draftTotal = (o: DraftOption, currency: string) => priceBreakdownTotal(breakdown(o, currency))
+export const draftTotal = (o: DraftOption, currency: string) => priceBreakdownTotal(breakdown(o, currency)) + catalogueAmount(o)
 
 export function toInput(o: DraftOption, currency: string): QuoteOptionInput {
   const pb = breakdown(o, currency)
   return {
     label: o.label, source: o.source, slices: o.slices, components: o.components, ticketingModel: o.ticketingModel,
-    priceBreakdown: { ...pb, total: { amountMinor: priceBreakdownTotal(pb), currency } },
+    ...((o.catalogue ?? []).length ? { catalogueLines: catalogueLines(o) } : {}),
+    priceBreakdown: { ...pb, total: { amountMinor: priceBreakdownTotal(pb) + catalogueAmount(o), currency } },
     baggage: normaliseBaggage(o.slices, o.baggage), conditions: { change: sendableCondition(o.conditions.change), refund: sendableCondition(o.conditions.refund) },
     internalCostMinor: o.internalCost ? minor(o.internalCost) : undefined,
     supplierPrice: o.supplierPrice, supplierFetchedAt: o.supplierFetchedAt, supplierExpiresAt: o.supplierExpiresAt,
@@ -90,6 +97,7 @@ export function toInput(o: DraftOption, currency: string): QuoteOptionInput {
 const AMOUNT = /^\s*\d+(\.\d{1,2})?\s*$/
 export const badAmounts = (o: DraftOption): string[] => [
   ...(["fare", "taxes", "serviceFee", "internalCost", "discount"] as const).filter((k) => (o[k] ?? "").trim() !== "" && !AMOUNT.test(o[k] ?? "")),
+  ...(o.catalogue ?? []).flatMap((l, i) => (!AMOUNT.test(l.unit) || minor(l.unit) <= 0 || !/^\d{1,2}$/.test(l.quantity.trim()) || Number(l.quantity) < 1 ? [`catalogue.${i}`] : [])),
   // An extra needs a label and an amount above zero.
   ...o.extras.flatMap((e, i) => ((e.label.trim() || e.amount.trim()) && (!e.label.trim() || !AMOUNT.test(e.amount) || minor(e.amount) <= 0) ? [`extras.${i}`] : [])),
 ]

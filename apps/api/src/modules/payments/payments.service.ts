@@ -23,6 +23,7 @@ import { TimersService } from "../platform/timers.service"
 import { OutboxService } from "../platform/outbox.service"
 import { SYSTEM } from "../requests/requests.service"
 import { FakePaymentAdapter } from "./fake-payment.adapter"
+import { compareSession, type DriftFinding, type DriftReport } from "./payment-drift"
 import type { PaymentProvider, ProviderSession } from "./payment-port"
 import { StripeAdapter } from "./stripe.adapter"
 import { productOf } from "../invoices/product"
@@ -38,6 +39,9 @@ const timerKey = (id: string) => `ps:${id}`
 /** Reconcile a little after the session's expiry, when no webhook can arrive any more. */
 const RECONCILE_GRACE_MS = 2 * 60_000
 const OVERDUE_MS = 30 * 60_000
+/** Daily at 03:30 UTC, off the 10-minute reconcile; the cap bounds provider calls per run. */
+const DRIFT_CRON = "30 3 * * *"
+const DRIFT_MAX_SESSIONS = 500
 const fmt = (minor: number, cur: string) => `${(minor / 100).toFixed(2)} ${cur}`
 const piOf = (v: string | { id: string } | null | undefined) => (typeof v === "string" ? v : v?.id ?? null)
 
@@ -72,6 +76,8 @@ export class PaymentsService implements OnModuleInit {
     this.timers.onReconcile(() => this.reconcileTimers())
     this.workers.registerJob("maintenance", "payments.reconcile", () => this.reconcileOverdue())
     await this.queues.get("maintenance").upsertJobScheduler("payments-reconcile-every-10m", { every: 10 * 60_000 }, { name: "payments.reconcile" }).catch(() => undefined)
+    this.workers.registerJob("maintenance", "payments.drift", () => this.driftSweep())
+    await this.queues.get("maintenance").upsertJobScheduler("payments-drift-daily", { pattern: DRIFT_CRON }, { name: "payments.drift" }).catch(() => undefined)
   }
 
   // ---------------- provider ----------------
@@ -433,6 +439,33 @@ export class PaymentsService implements OnModuleInit {
       try { if ((await this.reconcileSession(r.id)) === "settled") settled++ } catch (err) { this.log.warn({ session: r.id, err: String(err) }, "reconcile failed") }
     }
     return { checked: rows.length, settled }
+  }
+
+  /**
+   * Daily drift report: compares the sessions of ISSUED invoices with what the provider says. It never settles, closes or
+   * refunds anything (only a verified webhook or the reconcile above does); ops read the audit entry. Skips cleanly with
+   * the feature flag off or no usable provider (no keys).
+   */
+  async driftSweep(): Promise<DriftReport> {
+    if (!this.config.flag("payments.online.enabled")) return { skipped: "FLAG_OFF" }
+    const { adapter } = await this.provider()
+    if (!adapter) return { skipped: "NO_PROVIDER" }
+    const rows = await this.db.select({ s: paymentSessions, number: invoices.number }).from(paymentSessions).innerJoin(invoices, eq(invoices.id, paymentSessions.invoiceId))
+      .where(and(eq(invoices.status, "ISSUED"), eq(paymentSessions.provider, adapter.id))).orderBy(desc(paymentSessions.createdAt)).limit(DRIFT_MAX_SESSIONS)
+    const mismatches: DriftFinding[] = []
+    let errors = 0
+    for (const { s, number } of rows) {
+      try {
+        const kind = compareSession(s, await adapter.retrieveSession(s.providerSessionId))
+        if (kind) mismatches.push({ invoiceId: s.invoiceId, invoice: number, sessionId: s.providerSessionId, kind })
+      } catch (err) {
+        errors++
+        this.log.warn({ session: s.id, err: err instanceof Error ? err.name : "Error" }, "drift check failed")
+      }
+    }
+    await this.uow.run((tx) => this.audit.record(tx, { actorKind: "SYSTEM", action: "payment.drift_report", entityType: "payment_drift", entityId: new Date().toISOString().slice(0, 10), after: { provider: adapter.id, checked: rows.length, errors, mismatches } }))
+    if (mismatches.length) this.log.warn({ mismatches: mismatches.length }, "payment drift found; see the audit log")
+    return { checked: rows.length, errors, mismatches }
   }
 
   async reconcileTimers(): Promise<number> {

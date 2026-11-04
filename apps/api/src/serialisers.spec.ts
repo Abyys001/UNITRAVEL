@@ -10,6 +10,7 @@ import { ServicesService } from "./modules/services/services.service"
 
 import { toListingItem } from "./modules/listings/listings.service"
 import { customerItinerary, customerSeatMaps } from "./modules/search/customer-projection"
+import { findForbiddenKeys } from "./testing/leak"
 
 /** Field names that exist on staff/internal records and must never reach a customer (ch. 25.6, 32.2). */
 const INTERNAL = ["internalCostMinor", "internalNotes", "notes", "assigneeId", "assigneeName", "screening", "screeningScore", "riskScore", "complianceCase", "passportNumber", "documentNumberEnc", "supplierRaw", "createdBy", "customerUserId", "contactIdentityId", "costMinor", "supplierPrice", "supplierFetchedAt", "supplierExpiresAt", "priceAtSubmit", "priceRevalidated", "bookingToken", "googleFlightsUrl", "priceLevel", "typicalPriceLow", "typicalPriceHigh", "providerData"]
@@ -58,7 +59,7 @@ const aggregate = fc.record({
   query: fc.constant({ tripType: "ONE_WAY", slices: [{ from: { city: "THR" }, to: { city: "LON" }, date: "2026-11-20", flexDays: 0 }], passengers: [{ type: "ADT" }], cabin: "ECONOMY" }),
   routeLabel: fc.string(), firstTravelDate: fc.constant("2026-11-20"), submittedAt: iso, updatedAt: iso, snapshot: fc.constant(snapshot),
   travellers: fc.array(traveller, { maxLength: 4 }), timeline: fc.array(timeline, { maxLength: 5 }), messages: fc.array(message, { maxLength: 5 }),
-  quotes: fc.constant([sentQuote]), reservation: fc.constant(null), tickets: fc.constant([]), documents: fc.constant([]),
+  quotes: fc.constant([sentQuote]), reservation: fc.constant(null), tickets: fc.constant([]), documents: fc.constant([]), serviceInterests: fc.constant([]),
   actions: fc.subarray(["RESPOND", "CANCEL", "MESSAGE"]), truthBadge: fc.constant("REQUEST"),
 })
 
@@ -85,8 +86,10 @@ describe("customer serialisers never emit internal fields (property)", () => {
 
   it("flight request detail", () => {
     fc.assert(fc.property(aggregate, picks, (a, p) => {
-      const out = JSON.stringify(FlightRequestCustomerView.parse(contaminate(structuredClone(a), p)))
+      const parsed = FlightRequestCustomerView.parse(contaminate(structuredClone(a), p))
+      const out = JSON.stringify(parsed)
       expect(out).not.toContain("SECRET-")
+      expect(findForbiddenKeys(parsed)).toEqual([])
     }), { numRuns: 300 })
   })
 
@@ -355,6 +358,7 @@ describe("public tracking view (spec 4.5)", () => {
       expect(Object.keys(out).sort()).toEqual(["kind", "ref", "serviceType", "status", "timeline"])
       for (const t of out.timeline) expect(Object.keys(t).sort()).toEqual(["at", "status"])
       expect(JSON.stringify(out)).not.toContain("SECRET-")
+      expect(findForbiddenKeys(out)).toEqual([])
       expect(amountPaths(out)).toEqual([])
     }), { numRuns: 200 })
   })

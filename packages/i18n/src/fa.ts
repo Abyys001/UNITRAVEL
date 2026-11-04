@@ -159,7 +159,7 @@ export const fa: DeepString<typeof en> = {
   identity: {
     title: "مشخصات من", intro: "مشخصات خود را دقیق نگه دارید. نام و مشخصات گذرنامه باید دقیقاً مطابق گذرنامه باشد.", detailsLink: "مشخصات و گذرنامهٔ من",
     contactTitle: "تلفن و ایمیل", contactHelp: "با تلفن تأییدشده می‌توانید درخواست ثبت کنید و با ایمیل تأییدشده مدارک را برایتان می‌فرستیم.", addContact: "افزودن تلفن یا ایمیل", phone: "تلفن", email: "ایمیل",
-    sendCode: "ارسال کد", codeSent: "کدی به {value} فرستادیم.", code: "کد", verify: "تأیید", verifiedNow: "تأیید شد", valuePlaceholderPhone: "+98…", valuePlaceholderEmail: "name@example.com", verifyThisPhone: "تأیید شمارهٔ تلفن", verifyInline: "برای ارسال درخواست، یک شمارهٔ تلفن اضافه و تأیید کنید.",
+    sendCode: "ارسال کد", codeSent: "کدی به {value} فرستادیم.", code: "کد", verify: "تأیید", verifiedNow: "تأیید شد", valuePlaceholderPhone: "+98…", valuePlaceholderEmail: "name@example.com", verifyThisPhone: "تأیید شمارهٔ تلفن", verifyInline: "برای ارسال درخواست، یک شمارهٔ تلفن اضافه و تأیید کنید.", inUse: "این شماره یا ایمیل متعلق به حساب دیگری است. با ما تماس بگیرید تا حساب‌ها را یکی کنیم.",
     profileTitle: "پروفایل", contactTime: "بهترین زمان تماس", addressTitle: "نشانی", addressHelp: "اختیاری. فقط وقتی برای فاکتور یا مرسولهٔ باری لازم باشد آن را می‌پرسیم.",
     line1: "نشانی، خط اول", line2: "نشانی، خط دوم", city: "شهر", postcode: "کد پستی", country: "کشور", saveDetails: "ذخیرهٔ مشخصات", saved: "ذخیره شد", clearAddress: "حذف نشانی",
     passportTitle: "گذرنامه و تأیید هویت", passportHelp: "پیش از صدور بلیت، تیم ما مشخصات گذرنامهٔ شما را با تصویر آن مطابقت می‌دهد.",
@@ -431,4 +431,7 @@ export const fa: DeepString<typeof en> = {
     request: "درخواست این پرواز", loading: "در حال بارگذاری مسیرهای پرطرفدار",
     empty: "هم‌اکنون پروازی فهرست نشده است — مسیر و تاریخ سفرتان را بگویید تا تیم ما گزینه‌ها را پیدا کند", emptyAction: "مسیر و تاریخ را بگویید",
   },
+  // STAGE-26 stream B
+  svcInterest: { title: "به این موارد هم علاقه‌مندم", hint: "اختیاری. هر مورد را که دوست دارید تیم ما در پیشنهاد قیمت بررسی کند علامت بزنید. این کار چیزی به درخواست شما اضافه نمی‌کند.", asked: "درباره این موارد پرسیده‌اید", price: "از {price}" },
+  complianceReview: { note: "تیم ما سفرهای مبدأ یا مقصد ایران را پیش از تأیید هر چیزی بررسی می‌کند." },
 }

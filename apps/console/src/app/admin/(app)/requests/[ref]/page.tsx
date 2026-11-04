@@ -187,6 +187,12 @@ export default function FlightRequestPage() {
               </div>
             </Panel>
           )}
+          {d.serviceInterests.length > 0 && (
+            <Panel title={t("rq.interests")}>
+              <ul className="flex flex-wrap gap-1.5" data-testid="service-interests">{d.serviceInterests.map((i) => <li key={i.code} className="rounded-sm border border-rule bg-surface-sunk px-1.5 py-0.5 text-meta"><span dir="auto">{locale === "fa" ? i.nameFa : i.nameEn}</span> <span className="num text-steel">{i.code}</span></li>)}</ul>
+              <p className="mt-1.5 text-caption text-steel">{t("rq.interests.hint")}</p>
+            </Panel>
+          )}
           {d.compliance.length > 0 && (
             <Panel title={t("case.panel.compliance")}>
               <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><StateChip value={c.status} />{can("compliance.case.read") && <Link className="font-medium text-link hover:underline" href={`/compliance/${c.id}`}>{t("case.open")} <Arrow /></Link>}</span></li>)}</ul>
@@ -229,7 +235,7 @@ export default function FlightRequestPage() {
             <dl className="ledger-rows">
               <div className="py-1.5">
                 <dt className="flex justify-between"><span className="text-steel">{t("case.rec.reservation")}</span></dt>
-                {d.reservations.length ? d.reservations.map((r) => <dd key={r.id} className="flex flex-wrap items-center justify-between gap-1"><span><span className="num font-medium">{r.recordLocator}</span> <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-caption">{t("rq.ttl", { t: fmtDateTime(r.ticketingDeadline) })}</span><StateChip value={r.status} /></span></dd>) : <dd>—</dd>}
+                {d.reservations.length ? d.reservations.map((r) => <dd key={r.id} className="flex flex-wrap items-center justify-between gap-1"><span><span className="num font-medium">{r.recordLocator ?? r.externalReference}</span>{!r.recordLocator && <span className="text-caption text-steel"> ({t("res.noPnr")})</span>}{r.note && <span className="block text-caption text-steel" dir="auto">{r.note}</span>} <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-caption">{t("rq.ttl", { t: fmtDateTime(r.ticketingDeadline) })}</span><StateChip value={r.status} /></span></dd>) : <dd>—</dd>}
               </div>
               <div className="py-1.5">
                 <dt className="text-steel">{t("case.rec.tickets")}</dt>

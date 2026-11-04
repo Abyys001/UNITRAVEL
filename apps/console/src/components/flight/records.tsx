@@ -8,6 +8,7 @@ import { FormDialog } from "@/components/form-dialog"
 import { Field } from "@/components/ui"
 import { api, newIdempotencyKey } from "@/lib/api"
 import { toMajor, toMinor } from "@/lib/format"
+import { useT } from "@/lib/i18n"
 import type { FlightDetail, PaymentRecordingState } from "@/lib/types"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
@@ -22,14 +23,15 @@ export function accepted(d: FlightDetail) {
 
 /** Reservation / PNR (ch. 13.7): locator, airline locators, deadline; must refer to the accepted option. */
 export function ReservationDialog({ d, done, ...bind }: Bind & { d: FlightDetail; done: () => Promise<void> }) {
+  const t = useT()
   const acc = accepted(d)
-  const [f, setF] = useState({ system: "AMADEUS_TERMINAL", recordLocator: "", airline: "", deadline: localNow(48), status: "HELD", mismatch: "", travellers: d.travellers.map((t) => t.travellerId) })
+  const [f, setF] = useState({ system: "AMADEUS_TERMINAL", recordLocator: "", externalReference: "", note: "", airline: "", deadline: localNow(48), status: "HELD", mismatch: "", travellers: d.travellers.map((t) => t.travellerId) })
   useEffect(() => { if (bind.open) setF((x) => ({ ...x, travellers: d.travellers.map((t) => t.travellerId) })) }, [bind.open, d.travellers])
   const submit = async () => {
     if (!acc?.option) throw new Error("No accepted quote option to reserve")
     const airlineLocators = Object.fromEntries(f.airline.split(/[,\s]+/).filter(Boolean).map((p) => p.split(":").map((s) => s.trim().toUpperCase()) as [string, string]))
     await api(`/v1/admin/flight-requests/${d.ref}/reservations`, {
-      body: { system: f.system, recordLocator: f.recordLocator.toUpperCase(), airlineLocators, ticketingDeadline: iso(f.deadline), quoteOptionId: acc.option.id, travellerIds: f.travellers, slices: acc.option.slices, status: f.status, mismatchReason: f.mismatch || undefined },
+      body: { system: f.system, recordLocator: f.recordLocator.trim() ? f.recordLocator.toUpperCase() : undefined, externalReference: f.externalReference.trim() || undefined, note: f.note.trim() || undefined, airlineLocators, ticketingDeadline: iso(f.deadline), quoteOptionId: acc.option.id, travellerIds: f.travellers, slices: acc.option.slices, status: f.status, mismatchReason: f.mismatch || undefined },
       headers: { "if-match": String(d.version), "idempotency-key": newIdempotencyKey() },
     })
     await done()
@@ -38,12 +40,14 @@ export function ReservationDialog({ d, done, ...bind }: Bind & { d: FlightDetail
     <FormDialog {...bind} title="Record reservation…" description={acc?.option ? <>For accepted option “{acc.option.label}”. Mirror exactly what the reservation system shows.</> : "There is no accepted option yet."} submitLabel="Record reservation" onSubmit={submit} testId="dlg-reservation">
       <div className="grid grid-cols-2 gap-3">
         <Field label="System"><NativeSelect className="field-input" value={f.system} onChange={(e) => setF({ ...f, system: e.target.value })}>{["AMADEUS_TERMINAL", "DUFFEL_API", "PARTNER", "AIRLINE_DIRECT"].map((s) => <option key={s}>{s}</option>)}</NativeSelect></Field>
-        <Field label="Record locator (PNR)"><input className="field-input font-mono uppercase" value={f.recordLocator} onChange={(e) => setF({ ...f, recordLocator: e.target.value.toUpperCase() })} pattern="[A-Za-z0-9]{6}" maxLength={6} required dir="ltr" /></Field>
+        <Field label="Record locator (PNR)" hint={t("res.pnr.hint")}><input className="field-input font-mono uppercase" value={f.recordLocator} onChange={(e) => setF({ ...f, recordLocator: e.target.value.toUpperCase() })} pattern="[A-Za-z0-9]{6}" maxLength={6} required={!f.externalReference.trim()} dir="ltr" data-testid="res-pnr" /></Field>
+        <Field label={t("res.extRef")} hint={t("res.extRef.hint")}><input className="field-input font-mono" value={f.externalReference} onChange={(e) => setF({ ...f, externalReference: e.target.value })} maxLength={64} required={!f.recordLocator.trim()} dir="ltr" data-testid="res-extref" /></Field>
         <Field label="Airline locators" hint="Carrier:locator, comma separated — TK:ABC12D"><input className="field-input font-mono" value={f.airline} onChange={(e) => setF({ ...f, airline: e.target.value })} dir="ltr" /></Field>
         <Field label="Ticketing deadline"><input type="datetime-local" className="field-input" value={f.deadline} onChange={(e) => setF({ ...f, deadline: e.target.value })} required /></Field>
         <Field label="Status"><NativeSelect className="field-input" value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}><option>HELD</option><option>CONFIRMED</option></NativeSelect></Field>
         <Field label="Mismatch reason" hint="Only if the booked itinerary differs from the option"><input className="field-input" value={f.mismatch} onChange={(e) => setF({ ...f, mismatch: e.target.value })} /></Field>
       </div>
+      <Field label={t("res.note")}><textarea className="field-input min-h-16" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} maxLength={2000} dir="auto" data-testid="res-note" /></Field>
       <fieldset><legend className="cap">Travellers in this PNR</legend>
         {d.travellers.map((t) => <label key={t.travellerId} className="mt-1 flex items-center gap-2"><input type="checkbox" checked={f.travellers.includes(t.travellerId)} onChange={(e) => setF({ ...f, travellers: e.target.checked ? [...f.travellers, t.travellerId] : f.travellers.filter((x) => x !== t.travellerId) })} />{t.name.givenNames} {t.name.surname} <span className="text-steel">· {t.passengerType}</span></label>)}
       </fieldset>
@@ -77,7 +81,7 @@ export function TicketsDialog({ d, done, ...bind }: Bind & { d: FlightDetail; do
     await done()
   }
   return (
-    <FormDialog {...bind} wide title="Record tickets…" description={<>Against reservation <span className="num">{res?.recordLocator ?? "—"}</span>. ATOL mode <span className="num">{d.atolMode}</span>.</>} submitLabel="Record tickets" onSubmit={submit} testId="dlg-tickets">
+    <FormDialog {...bind} wide title="Record tickets…" description={<>Against reservation <span className="num">{res?.recordLocator ?? res?.externalReference ?? "—"}</span>. ATOL mode <span className="num">{d.atolMode}</span>.</>} submitLabel="Record tickets" onSubmit={submit} testId="dlg-tickets">
       <table className="w-full">
         <thead><tr>{["Traveller", "Ticket number", "Carrier", ""].map((h) => <th key={h} className="cap py-1 text-start font-normal">{h}</th>)}</tr></thead>
         <tbody>

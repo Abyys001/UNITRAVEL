@@ -31,7 +31,9 @@ export interface FlightFacts {
   assigneeCanTransition?: boolean
   acceptanceNote?: { calledAt: Date; note: string }
   reservation?: {
-    recordLocator: string
+    /** ADR-0030: null when the external panel gave only its own reference. */
+    recordLocator: string | null
+    externalReference?: string | null
     ticketingDeadline: Date | null
     passengersMatch: boolean
     segmentsMatch: boolean
@@ -121,7 +123,7 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
     inputGuard: (f) => {
       const r = f.reservation
       if (!r) return "Reservation details required"
-      if (!isRecordLocator(r.recordLocator)) return "Record locator must be 6 letters or digits"
+      if (r.recordLocator ? !isRecordLocator(r.recordLocator) : !r.externalReference?.trim()) return r.recordLocator ? "Record locator must be 6 letters or digits" : "Give a record locator or an external reference"
       if (!r.ticketingDeadline || r.ticketingDeadline <= f.now) return "Ticketing deadline must be set in the future"
       if ((!r.passengersMatch || !r.segmentsMatch) && !r.mismatchReason?.trim()) return "Passengers and segments differ from the accepted option: record a reason"
       return null

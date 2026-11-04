@@ -184,7 +184,7 @@ export class OtpService {
   /** A new phone or email stays unverified until its own OTP succeeds; the old verified one stays (ch. 11.2). */
   private async attachIdentity(tx: Tx, userId: string, type: "PHONE" | "EMAIL", value: string, ctx: RequestCtx) {
     const [taken] = await tx.select().from(userIdentities).where(and(eq(userIdentities.type, type), eq(userIdentities.valueNormalised, value), isNull(userIdentities.revokedAt)))
-    if (taken && taken.userId !== userId) throw new AppError("VALIDATION_FAILED", "This identity belongs to another account; ask us to merge accounts")
+    if (taken && taken.userId !== userId) throw new AppError("VALIDATION_FAILED", "This identity belongs to another account; ask us to merge accounts", [{ path: "value", code: "IDENTITY_IN_USE" }])
     if (taken) await tx.update(userIdentities).set({ verifiedAt: new Date() }).where(eq(userIdentities.id, taken.id))
     else {
       const hasPrimary = await tx.select().from(userIdentities).where(and(eq(userIdentities.userId, userId), eq(userIdentities.type, type), eq(userIdentities.isPrimary, true), isNull(userIdentities.revokedAt)))

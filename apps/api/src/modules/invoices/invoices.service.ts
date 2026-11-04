@@ -30,13 +30,13 @@ import { productOf } from "./product"
 
 type Inv = typeof invoices.$inferSelect
 type ReqType = "FLIGHT" | "CARGO" | "SERVICE"
-interface Draft { currency: string; lines: { description: string; quantity: number; unitAmountMinor: number; amountMinor: number }[]; totalMinor: number }
+interface Draft { currency: string; lines: { description: string; quantity: number; unitAmountMinor: number; amountMinor: number; serviceType?: InvoiceLineType }[]; totalMinor: number }
 
 const TIMER = "invoice.expire"
 const timerKey = (id: string) => `inv:${id}`
 const iso = (d: Date | null) => d?.toISOString() ?? null
 
-const LINE_LABEL: Record<InvoiceLineType, string> = { VISA: "Visa", BUS: "Bus", TRAIN: "Train", HOTEL: "Hotel", STAY: "Stay", CIP: "CIP", INSURANCE: "Insurance", TOUR: "Tour", TRANSFER: "Transfer", OTHER: "", DISCOUNT: "Discount" }
+const LINE_LABEL: Record<InvoiceLineType, string> = { VISA: "Visa", BUS: "Bus", TRAIN: "Train", HOTEL: "Hotel", STAY: "Stay", CIP: "CIP", INSURANCE: "Insurance", TOUR: "Tour", TRANSFER: "Transfer", BAGGAGE: "Baggage", OTHER: "", DISCOUNT: "Discount" }
 /** Line types that are not services, so no SERVICE policy can apply to them. */
 const NOT_A_SERVICE: readonly string[] = ["OTHER", "DISCOUNT"]
 const documentLine = (l: { serviceType: string | null; description: string }) => {
@@ -120,7 +120,11 @@ export class InvoicesService implements OnModuleInit {
       const pb = o.priceBreakdown as PriceBreakdown
       // Extras are their own lines; a discount is a negative line, so the lines still add up to the total (ADR-0013 A6).
       lines = [line(`Airfare - ${o.label}`, pb.fare.amountMinor), ...(pb.taxes.amountMinor > 0 ? [line("Taxes, fees and carrier charges", pb.taxes.amountMinor)] : []), ...(pb.serviceFee.amountMinor > 0 ? [line("Uni Travel service fee", pb.serviceFee.amountMinor)] : []),
-        ...(pb.extras ?? []).map((e) => line(e.label, e.amount.amountMinor)), ...(pb.discount ? [line(`Discount - ${pb.discount.label}`, -pb.discount.amount.amountMinor)] : [])]
+        ...(pb.extras ?? []).map((e) =>
+          // Catalogue extras keep their type and quantity x unit (STAGE-26); only use them when they reconcile with the amount.
+          e.lineType && e.quantity && e.unitAmountMinor !== undefined && e.quantity * e.unitAmountMinor === e.amount.amountMinor
+            ? { description: e.label, quantity: e.quantity, unitAmountMinor: e.unitAmountMinor, amountMinor: e.amount.amountMinor, serviceType: e.lineType }
+            : line(e.label, e.amount.amountMinor)), ...(pb.discount ? [line(`Discount - ${pb.discount.label}`, -pb.discount.amount.amountMinor)] : [])]
       totalMinor = pb.total.amountMinor
     } else if (type === "SERVICE") {
       // ADR-0015: the lines staff sent, with a club discount as its own negative line.
@@ -262,6 +266,19 @@ export class InvoicesService implements OnModuleInit {
     return { services: lines.map((l) => `- ${documentLine(l)}${l.quantity > 1 ? ` x ${l.quantity}` : ""}: ${money(l.amountMinor)}`).join("\n"), total: money(inv.totalMinor), documentId: inv.documentId }
   }
 
+  /**
+   * Bank-transfer block for the `invoice.issued` email (en and fa), empty while online payment is on. Only the text staff
+   * entered in settings goes in; with none set the email says to ask us for the details (UNKNOWN stays UNKNOWN).
+   */
+  paymentInstructionBlocks(): { en: string; fa: string } {
+    if (this.config.flag("payments.online.enabled")) return { en: "", fa: "" }
+    const t = this.config.settings().payment.offlineInstructions
+    return {
+      en: t?.en.trim() ? `How to pay (bank transfer):\n${t.en.trim()}\n\n` : "To pay by bank transfer, contact us and we will send you the payment details.\n\n",
+      fa: t?.fa.trim() ? `روش پرداخت (انتقال بانکی):\n${t.fa.trim()}\n\n` : "برای پرداخت با انتقال بانکی با ما تماس بگیرید تا اطلاعات پرداخت را برایتان بفرستیم.\n\n",
+    }
+  }
+
   // ---------------- transitions ----------------
 
   private history(tx: DbOrTx, invoiceId: string, from: InvoiceStatus | null, to: InvoiceStatus, command: string, actorUserId: string | null, actorKind: "STAFF" | "SYSTEM", reason?: { code?: string; text?: string }) {
@@ -308,8 +325,9 @@ export class InvoicesService implements OnModuleInit {
       await tx.update(invoices).set({ status: "ISSUED", number, issuedAt: now, expiresAt, documentId: doc.id, rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
       await this.history(tx, inv.id, "DRAFT", "ISSUED", "issue", actor.userId, "STAFF")
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "invoice.issued", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number, totalMinor: inv.totalMinor, currency: inv.currency, expiresAt: expiresAt.toISOString() } })
-      await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType, ...(await this.emailSummary(tx, { ...inv, documentId: doc.id })) } })
-      if (paid) await this.markPaid(tx, inv.id, "Payment already verified for this request")
+      // Already settled (PAY_ON_TICKETING records the payment at ticketing): a "pay by" email would be wrong, so only the receipt goes, with the PDF.
+      if (!paid) await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.issued", payload: { invoiceId: inv.id, number, ref: inv.requestRef, customerUserId: inv.customerUserId, expiresAt: expiresAt.toISOString(), productType: inv.requestType, paymentInstructions: this.paymentInstructionBlocks(), ...(await this.emailSummary(tx, { ...inv, documentId: doc.id })) } })
+      if (paid) await this.markPaid(tx, inv.id, "Payment already verified for this request", { attachDocument: true })
       return paid ? "PAID" : "ISSUED"
     })
     // Thrown after the commit so the case that was just opened survives.
@@ -348,14 +366,14 @@ export class InvoicesService implements OnModuleInit {
   }
 
   /** The seam for payments (ADR-0006 C11): Phase D's verified webhook calls this with its payment record. */
-  async markPaid(tx: Tx, invoiceId: string, via: string): Promise<boolean> {
+  async markPaid(tx: Tx, invoiceId: string, via: string, opts: { attachDocument?: boolean } = {}): Promise<boolean> {
     const inv = await this.lock(tx, invoiceId)
     if (!evaluate(INVOICE_TRANSITIONS, "mark_paid", this.facts(inv, null), SYSTEM).ok) return false
     await tx.update(invoices).set({ status: "PAID", paidAt: new Date(), rowVersion: inv.rowVersion + 1 }).where(eq(invoices.id, inv.id))
     await this.history(tx, inv.id, "ISSUED", "PAID", "mark_paid", null, "SYSTEM", { text: via })
     await this.audit.record(tx, { actorUserId: null, actorKind: "SYSTEM", action: "invoice.paid", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, before: { status: "ISSUED" }, after: { number: inv.number, via } })
     // Card and verified offline payments alike; the machine allows ISSUED -> PAID once, so the receipt is sent once (ADR-0013 A7).
-    await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.paid", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, productType: inv.requestType }, dedupeKey: `invoice-paid:${inv.id}` })
+    await this.outbox.add(tx, { aggregateType: "invoice", aggregateId: inv.id, eventType: "invoice.paid", payload: { invoiceId: inv.id, number: inv.number, ref: inv.requestRef, customerUserId: inv.customerUserId, productType: inv.requestType, ...(opts.attachDocument ? { documentId: inv.documentId } : {}) }, dedupeKey: `invoice-paid:${inv.id}` })
     return true
   }
 

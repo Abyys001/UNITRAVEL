@@ -1,6 +1,6 @@
 # Master plan: flights → request → services → invoice → payment
 
-Status: **APPROVED by the owner, 2 Nov 2026** (all defaults in §6 accepted: `BAGGAGE` line type, daily drift sweep report-only). Stage: **STAGE-23** (next free number; 22 is Apify). Session: unitravel-5d.
+Status: **APPROVED by the owner, 2 Nov 2026** (all defaults in §6 accepted: `BAGGAGE` line type, daily drift sweep report-only). Stage: **STAGE-26** (built as STAGE-23; renumbered at merge on 4 Nov 2026 because 23–25 were taken by visa, catalog and FlightAPI). Session: unitravel-5d.
 
 Owner choice (2 Nov 2026): option (a). Build on existing modules per `docs/build/PLAN-flights-request-invoice.md` (D1–D6 defaults accepted) and wait for Stream A (session `apify-google-flights-source`, ADR-0029) to commit before branching. This file is the execution plan for that plan; it does not repeat its rationale.
 

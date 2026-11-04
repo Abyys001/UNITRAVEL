@@ -1,6 +1,6 @@
 "use client"
 
-import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Users } from "lucide-react"
+import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Tags, Users } from "lucide-react"
 
 import { normaliseReference } from "@unitravel/domain"
 
@@ -44,6 +44,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       href: "/club", label: t("nav.club"), group: "records", icon: <Gem className="size-[18px]" />,
       tabs: [{ href: "/club", label: t("nav.clubMembers") }, { href: "/club/benefits", label: t("nav.clubBenefits") }, { href: "/club/tiers", label: t("nav.clubTiers") }],
     }] : []),
+    ...(can("service_catalog.manage") ? [{ href: "/services/catalog", label: t("nav.servicesCatalog"), group: "records", icon: <Tags className="size-[18px]" /> }] : []),
     ...(can("listings.write") ? [{ href: "/listings", label: t("nav.listings"), group: "records", icon: <ListChecks className="size-[18px]" /> }] : []),
     ...(can("visa.read") ? [{
       href: "/visa", label: t("nav.visa"), group: "records", icon: <BookCheck className="size-[18px]" />,

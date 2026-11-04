@@ -8,6 +8,8 @@ import {
 } from "./enums"
 import { Condition, SegmentBaggage, Slice } from "./offer"
 import { CustomerItinerary, SearchQuery } from "./search"
+import { InvoiceLineType } from "./invoices"
+import { RequestServiceInterest } from "./service-catalog"
 
 export const SeatPreference = z.enum(["NONE", "WINDOW", "AISLE", "TOGETHER", "EXTRA_LEGROOM"])
 export const SsrCode = z.enum(["WCHR", "WCHS", "WCHC", "VGML", "MOML", "CHML", "DBML", "PETC", "EXST", "UMNR", "MEDA", "OTHER"])
@@ -36,6 +38,7 @@ export const CreateFlightRequestBody = z
     ssrs: z.array(z.object({ travellerId: Uuid, code: SsrCode, note: z.string().max(300).optional() })).default([]),
     bestTimeToCall: z.string().max(80).optional(),
     note: z.string().max(2000).optional(),
+    serviceInterests: RequestServiceInterest.optional(),
     acknowledgements: z.object({
       notABooking: z.literal(true),
       privacy: z.literal(true),
@@ -73,18 +76,36 @@ export const MessageView = z.object({
 export const QuotedCondition = Condition.refine((c) => !c.penalty || c.penalty.amountMinor > 0, { message: "A fee must be greater than zero; use 'Allowed, no fee' if there is none", path: ["penalty", "amountMinor"] })
 
 /** A priced line staff add on top of fare, taxes and service fee (ADR-0013 A5). */
-export const PriceLine = z.object({ label: z.string().trim().min(1).max(80), amount: Money.refine((m) => m.amountMinor > 0, { message: "Must be greater than zero", path: ["amountMinor"] }) })
+export const PriceLine = z.object({
+  label: z.string().trim().min(1).max(80),
+  amount: Money.refine((m) => m.amountMinor > 0, { message: "Must be greater than zero", path: ["amountMinor"] }),
+  /** Set by the server when the line came from the service catalogue (STAGE-26): quantity x unit = amount. */
+  catalogueItemId: Uuid.optional(),
+  lineType: InvoiceLineType.optional(),
+  quantity: z.number().int().min(1).optional(),
+  unitAmountMinor: z.number().int().min(0).optional(),
+})
 export type PriceLine = z.infer<typeof PriceLine>
 
 /** The total is fare + taxes + service fee + extras − discount; the server recomputes it (`priceBreakdownTotal`) and refuses a different one. */
 export const PriceBreakdown = z.object({ fare: Money, taxes: Money, serviceFee: Money, extras: z.array(PriceLine).max(10).optional(), discount: PriceLine.optional(), total: Money })
 export type PriceBreakdown = z.infer<typeof PriceBreakdown>
 
+/** A catalogue service attached to a quote option. Price defaults to the catalogue price; quantity to 1, or the passenger count when the item is per passenger. */
+export const CatalogueLineInput = z.object({
+  catalogueItemId: Uuid,
+  priceMinor: z.number().int().min(0).optional(),
+  quantity: z.number().int().min(1).max(99).optional(),
+})
+export type CatalogueLineInput = z.infer<typeof CatalogueLineInput>
+
 export const QuoteOptionInput = z.object({
   label: z.string().min(1).max(80),
   source: QuoteOptionSource,
   slices: z.array(Slice).min(1),
   components: z.array(z.object({ provider: z.string(), offerId: z.string().optional(), rung: z.string(), fetchedAt: IsoDateTime.optional() })).default([]),
+  /** Server-side these become `priceBreakdown.extras`; the total sent must already include them. */
+  catalogueLines: z.array(CatalogueLineInput).max(10).optional(),
   priceBreakdown: PriceBreakdown,
   baggage: z.array(SegmentBaggage),
   conditions: z.object({ change: tri(QuotedCondition), refund: tri(QuotedCondition) }),
@@ -116,7 +137,7 @@ export const QuoteDraftBody = z.object({
 })
 
 // Customer-facing: supplier cost, offer timestamps and supplier offer ids are staff-only (ch. 25.6).
-export const QuoteOptionView = QuoteOptionInput.omit({ internalCostMinor: true, supplierPrice: true, supplierFetchedAt: true, supplierExpiresAt: true, components: true }).extend({
+export const QuoteOptionView = QuoteOptionInput.omit({ catalogueLines: true, internalCostMinor: true, supplierPrice: true, supplierFetchedAt: true, supplierExpiresAt: true, components: true }).extend({
   id: Uuid,
   attestedBy: z.string().nullable(),
   unknownFields: z.array(z.string()),
@@ -138,7 +159,10 @@ export type QuoteView = z.infer<typeof QuoteView>
 
 export const ReservationBody = z.object({
   system: ReservationSystem,
-  recordLocator: z.string().regex(/^[A-Z0-9]{6}$/),
+  recordLocator: z.string().regex(/^[A-Z0-9]{6}$/).optional(),
+  /** ADR-0030: some external panels give only their own reference instead of a 6-character PNR. */
+  externalReference: z.string().trim().min(1).max(64).optional(),
+  note: z.string().max(2000).optional(),
   airlineLocators: z.record(z.string(), z.string().regex(/^[A-Z0-9]{5,8}$/)).default({}),
   ticketingDeadline: IsoDateTime,
   quoteOptionId: Uuid,
@@ -146,7 +170,7 @@ export const ReservationBody = z.object({
   slices: z.array(Slice).min(1),
   status: z.enum(["HELD", "CONFIRMED"]).default("HELD"),
   mismatchReason: z.string().max(500).optional(),
-})
+}).refine((b) => !!b.recordLocator || !!b.externalReference, { message: "Give a record locator or an external reference", path: ["recordLocator"] })
 export type ReservationBody = z.infer<typeof ReservationBody>
 
 export const TicketInput = z.object({
@@ -182,7 +206,7 @@ export const PaymentView = z.object({
   status: PaymentRecordStatus, recordedBy: z.string(), verifiedBy: z.string().nullable(), needsSecondVerifier: z.boolean(),
 })
 export const ReservationView = z.object({
-  id: Uuid, system: ReservationSystem, recordLocator: z.string(), status: ReservationStatus, ticketingDeadline: IsoDateTime,
+  id: Uuid, system: ReservationSystem, recordLocator: z.string().nullable(), externalReference: z.string().nullable(), note: z.string().nullable(), status: ReservationStatus, ticketingDeadline: IsoDateTime,
   quoteOptionId: Uuid.nullable(), mismatchReason: z.string().nullable(), recordedBy: z.string(), createdAt: IsoDateTime,
 })
 export const TicketView = z.object({
@@ -226,6 +250,8 @@ export const FlightRequestCustomerView = z.object({
   reservation: z.object({ status: ReservationStatus, ticketingDeadline: IsoDateTime }).nullable(),
   tickets: z.array(TicketView.pick({ ticketNumber: true, travellerName: true, status: true, documentId: true, validatingCarrier: true })),
   documents: z.array(z.object({ id: Uuid, type: z.string(), filename: z.string(), createdAt: IsoDateTime })),
+  /** Add-on services the customer said they are interested in at submit; codes and names only. */
+  serviceInterests: z.array(z.object({ code: z.string(), nameEn: z.string(), nameFa: z.string() })),
   actions: z.array(CustomerAction),
   truthBadge: z.string(),
 })

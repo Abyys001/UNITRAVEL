@@ -62,6 +62,7 @@ export const PERMISSIONS = [
   "notification.template.write",
   "audit.read",
   "diagnostics.read",
+  "service_catalog.manage",
 ] as const
 
 export type Permission = (typeof PERMISSIONS)[number]
@@ -136,6 +137,8 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "notification.template.write": { privileged: true },
   "audit.read": { privileged: false },
   "diagnostics.read": { privileged: false },
+  // Sets the default prices staff put on requests and invoices, so it is privileged like invoice.direct.
+  "service_catalog.manage": { privileged: true },
 }
 
 export const PRIVILEGED_PERMISSIONS: readonly Permission[] = PERMISSIONS.filter((p) => PERMISSION_CATALOGUE[p].privileged)
@@ -161,7 +164,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
     "flight_request.note.internal", "quote.create", "pricing.read.internal", "pricing.write", "commercial_document.issue", "reservation.record", "ticket.record",
     "payment.record", "payment.refund.request", "payment.refund.approve", "customer.read.pii", "customer.read.documents", "identity.verify", "engine.rules.read",
     "service_request.read.any", "service_request.write", "loyalty.read", "loyalty.manage", "loyalty.benefit.approve", "cms.read", "cms.write",
-    "customer.read", "service.assign", "invoice.direct", "support.read", "support.reply", "call.log", "listings.write", "visa.read", "visa.write",
+    "customer.read", "service.assign", "invoice.direct", "service_catalog.manage", "support.read", "support.reply", "call.log", "listings.write", "visa.read", "visa.write",
     "catalog.read", "catalog.manage",
   ],
   cargo_admin: [

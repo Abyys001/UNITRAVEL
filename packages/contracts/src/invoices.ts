@@ -18,7 +18,7 @@ export type InvoiceCancelCode = z.infer<typeof InvoiceCancelCode>
 export const InvoiceCancelBody = z.object({ reasonCode: InvoiceCancelReason, note: z.string().trim().max(500).optional() })
   .refine((b) => b.reasonCode !== "OTHER" || !!b.note, { message: "Explain why", path: ["note"] })
 
-export const INVOICE_LINE_TYPES = ["VISA", "BUS", "TRAIN", "HOTEL", "STAY", "CIP", "INSURANCE", "TOUR", "TRANSFER", "OTHER", "DISCOUNT"] as const
+export const INVOICE_LINE_TYPES = ["VISA", "BUS", "TRAIN", "HOTEL", "STAY", "CIP", "INSURANCE", "TOUR", "TRANSFER", "BAGGAGE", "OTHER", "DISCOUNT"] as const
 export const InvoiceLineType = z.enum(INVOICE_LINE_TYPES)
 export type InvoiceLineType = z.infer<typeof InvoiceLineType>
 

@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "openapi": "node --env-file-if-exists=../../.env dist/openapi.js",
     "test": "vitest run --project unit",
-    "test:e2e": "vitest run --project e2e"
+    "test:e2e": "vitest run --project e2e",
+    "drill:email": "vitest run --project drill test/drills/email-outage.drill.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.3.0",

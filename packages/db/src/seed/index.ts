@@ -9,8 +9,10 @@ import { createDb, type Db } from "../index"
 import * as s from "../schema"
 import { AIRCRAFT, AIRLINES, AIRPORTS, CITIES, COUNTRIES } from "./reference-data"
 import { TEMPLATES } from "./templates"
+import { upgradeInvoiceIssuedEmail } from "./template-upgrades"
 import { DEMO_TOTP_SECRET_HEX, devEncrypt } from "./dev-crypto"
 import { seedContent } from "./content"
+import { seedServiceCatalog } from "./service-catalog"
 import { providerSeedRows, shouldSeedDemo } from "./providers"
 
 const FLAG_META: Record<string, { owner: string; removeBy: string | null; description: string }> = {
@@ -82,6 +84,7 @@ export async function seedConfig(db: Db) {
     }
     await db.insert(s.notificationTemplates).values(rows).onConflictDoNothing()
   }
+  await upgradeInvoiceIssuedEmail(db)
 
   await db.insert(s.providers).values(providerSeedRows(process.env.APP_ENV)).onConflictDoNothing()
 }
@@ -232,6 +235,7 @@ async function main() {
   }
   const content = await seedContent(db)
   console.log(content ? `content: ${content.entries} entries, ${content.terms} glossary terms added` : "content: skipped (no owner user yet)")
+  await seedServiceCatalog(db)
   await pool.end()
   console.log("seed complete")
 }

@@ -166,6 +166,13 @@ describe("fail-closed route declarations", () => {
     for (const [m, p] of [["GET", "/v1/admin/listings"], ["GET", "/v1/admin/listings/:id"], ["POST", "/v1/admin/listings"], ["PATCH", "/v1/admin/listings/:id"]] as const) expect({ p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, perms: ["listings.write"], staff: true })
   })
 
+  it("services catalogue (STAGE-26): the customer list is public, management needs service_catalog.manage, quote options need pricing.write", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    expect(find("GET", "/v1/services-catalog")).toMatchObject({ isPublic: true, staff: false })
+    for (const [m, p] of [["GET", "/v1/admin/services-catalog"], ["POST", "/v1/admin/services-catalog"], ["PATCH", "/v1/admin/services-catalog/:id"]] as const) expect({ p, perms: find(m, p)?.permissions, staff: find(m, p)?.staff }).toEqual({ p, perms: ["service_catalog.manage"], staff: true })
+    expect({ perms: find("GET", "/v1/admin/services-catalog/options")?.permissions, staff: find("GET", "/v1/admin/services-catalog/options")?.staff }).toEqual({ perms: ["pricing.write"], staff: true })
+  })
+
   it("flags a route that lacks a declaration (the check fails the build)", () => {
     @Controller("v1/oops")
     class Undeclared {

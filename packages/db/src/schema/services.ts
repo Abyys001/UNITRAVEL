@@ -1,7 +1,9 @@
-import { index, jsonb, pgEnum, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import { boolean, char, check, index, integer, jsonb, pgEnum, pgTable, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
 
-import { id, rowVersion, timestamps, tstz } from "./columns"
+import { createdAt, id, rowVersion, timestamps, tstz } from "./columns"
 import { userIdentities, users } from "./identity"
+import { flightRequests } from "./requests"
 
 export const serviceRequestType = pgEnum("service_request_type", ["VISA", "TOUR_CALLBACK", "CIP", "INSURANCE", "HOTEL", "STAY", "TRAIN", "BUS"])
 export const serviceRequestStatus = pgEnum("service_request_status", [
@@ -38,3 +40,31 @@ export const serviceRequests = pgTable("service_requests", {
   index("sr_type_idx").on(t.type, t.status),
 ])
 
+
+/** Stream C (STAGE-26): staff-managed add-on services. The code is the stable key and never changes after creation. */
+export const serviceCatalogItems = pgTable("service_catalog_items", {
+  id: id(),
+  code: varchar({ length: 32 }).notNull().unique(),
+  nameEn: varchar({ length: 120 }).notNull(),
+  nameFa: varchar({ length: 120 }).notNull(),
+  descriptionEn: text(),
+  descriptionFa: text(),
+  lineType: varchar({ length: 20 }).notNull(),
+  defaultPriceMinor: integer().notNull(),
+  currency: char({ length: 3 }).notNull(),
+  perPassenger: boolean().notNull().default(false),
+  showPriceToCustomer: boolean().notNull().default(false),
+  active: boolean().notNull().default(true),
+  createdBy: uuid().notNull().references(() => users.id),
+  ...timestamps,
+}, (t) => [check("service_catalog_price_chk", sql`${t.defaultPriceMinor} >= 0`)])
+
+/** What a customer ticked when submitting a flight request; interest only, never a purchase. */
+export const requestServiceInterests = pgTable("request_service_interests", {
+  requestId: uuid().notNull().references(() => flightRequests.id, { onDelete: "cascade" }),
+  catalogueItemId: uuid().notNull().references(() => serviceCatalogItems.id),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("rsi_pair_uq").on(t.requestId, t.catalogueItemId),
+  index("rsi_request_idx").on(t.requestId),
+])

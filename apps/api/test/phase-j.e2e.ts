@@ -20,7 +20,8 @@ async function until<T>(fn: () => Promise<T>, ok: (v: T) => boolean, ms = 20_000
 const GBP = (n: number) => ({ amountMinor: n, currency: "GBP" })
 const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6390"
 const redis = new Redis(REDIS_URL)
-const maintenance = new Queue("maintenance", { connection: { host: "localhost", port: 6390 } })
+const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6390")
+const maintenance = new Queue("maintenance", { connection: { host: redisUrl.hostname, port: Number(redisUrl.port) } })
 const key = () => `e2e-${Math.random().toString(36).slice(2)}${Date.now()}`
 
 let dev: Session, admin: Session, owner: Session, cargo: Session, compliance: Session

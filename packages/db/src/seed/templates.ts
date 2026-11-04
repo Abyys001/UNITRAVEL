@@ -73,11 +73,11 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     smsEn: "Uni Travel: quotation {number} for {ref} is ready until {expires_at_local}. {link}", smsFa: "یونی‌تراول: پیش‌فاکتور {number} برای {ref} تا {expires_at_local} معتبر است. {link}",
   },
   "invoice.issued": {
-    vars: ["ref", "number", "expires_at_local", "link", "services", "total"],
+    vars: ["ref", "number", "expires_at_local", "link", "services", "total", "payment_instructions"],
     en: { title: "Invoice {number} · {ref}", body: "Invoice {number} for {ref} has been issued. If it is still unpaid it expires on {expires_at_local}." },
     fa: { title: "فاکتور {number} · {ref}", body: "فاکتور {number} برای {ref} صادر شد. اگر پرداخت نشده باشد در {expires_at_local} منقضی می‌شود." },
-    emailEn: { title: "Your Uni Travel invoice {number}", body: "Invoice {number} ({ref}) has been issued.\n\nServices:\n{services}\n\nTotal: {total}\nPay by: {expires_at_local}\n\nThe PDF is attached. Sign in to view and pay this invoice:\n{link}" },
-    emailFa: { title: "فاکتور یونی‌تراول {number}", body: "فاکتور {number} ({ref}) صادر شد.\n\nخدمات:\n{services}\n\nمبلغ کل: {total}\nمهلت پرداخت: {expires_at_local}\n\nفایل PDF پیوست است. برای دیدن و پرداخت این فاکتور وارد شوید:\n{link}" },
+    emailEn: { title: "Your Uni Travel invoice {number}", body: "Invoice {number} ({ref}) has been issued.\n\nServices:\n{services}\n\nTotal: {total}\nPay by: {expires_at_local}\n\n{payment_instructions}The PDF is attached. Sign in to view and pay this invoice:\n{link}" },
+    emailFa: { title: "فاکتور یونی‌تراول {number}", body: "فاکتور {number} ({ref}) صادر شد.\n\nخدمات:\n{services}\n\nمبلغ کل: {total}\nمهلت پرداخت: {expires_at_local}\n\n{payment_instructions}فایل PDF پیوست است. برای دیدن و پرداخت این فاکتور وارد شوید:\n{link}" },
     smsEn: "Uni Travel: invoice {number} for {ref} issued; unpaid it expires {expires_at_local}. {link}", smsFa: "یونی‌تراول: فاکتور {number} برای {ref} صادر شد؛ در صورت عدم پرداخت {expires_at_local} منقضی می‌شود. {link}",
   },
   // ADR-0013 A7: payment messages carry no amounts (ADR-0004); the link opens the invoice after sign-in.

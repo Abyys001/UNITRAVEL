@@ -7,7 +7,7 @@ import {
 } from "@unitravel/contracts"
 import {
   type AmendmentSide, afterSalesCases, contactAttempts, creditOverrides, type Db, type DbOrTx, documents, flightRequests, offerSnapshots, paymentRecords, quoteOptions, quotes, requestMessages,
-  requestAmendments, requestNotes, requestStatusHistory, requestTravellers, reservations, serviceRequests, tickets, type Tx, userIdentities, users, customerProfiles, cargoRequests,
+  requestAmendments, requestNotes, requestServiceInterests, serviceCatalogItems, requestStatusHistory, requestTravellers, reservations, serviceRequests, tickets, type Tx, userIdentities, users, customerProfiles, cargoRequests,
 } from "@unitravel/db"
 import {
   allowedCommands, amendState, computePaymentStatus, evaluate, FLIGHT_TERMINAL, FLIGHT_TRANSITIONS, type FlightCommandName, type FlightFacts, generateReference,
@@ -29,6 +29,7 @@ import { NotificationsService } from "../notifications/notifications.service"
 import { addBusinessMinutes } from "../platform/business-hours"
 import { OutboxService } from "../platform/outbox.service"
 import { ReferenceService } from "../reference/reference.service"
+import { ServicesCatalogService } from "../services-catalog/services-catalog.service"
 import { customerItinerary } from "../search/customer-projection"
 import { SERVICE_STATUS_LABELS } from "../services/service-labels"
 
@@ -75,6 +76,7 @@ export class RequestsService {
     private readonly documents: DocumentsService,
     private readonly notifications: NotificationsService,
     private readonly numbers: DocumentNumbersService,
+    private readonly catalog: ServicesCatalogService,
   ) {}
 
   setSearchPort(p: SearchPort) {
@@ -129,6 +131,7 @@ export class RequestsService {
     // The contact number can be changed only to another verified number (ch. 11.3).
     if (auth.requireVerifiedPhoneForRequests && !contact.verifiedAt) throw new AppError("PHONE_NOT_VERIFIED", "Verify your phone number before submitting a request")
     const trav = await Promise.all(body.travellers.map((t) => this.customers.owned(actor.userId, t.travellerId)))
+    const interests = await this.catalog.resolveActiveCodes(this.db, body.serviceInterests ?? [])
     const umnr = body.ssrs.some((s) => s.code === "UMNR") || body.travellers.every((t) => t.passengerType === "CHD" || t.passengerType === "INF" || t.passengerType === "INS")
     let kind = body.kind
     let query: SearchQuery
@@ -181,8 +184,9 @@ export class RequestsService {
         slaDueAt: addBusinessMinutes(wf.businessHours, now, wf.sla.unassignedMinutes), submittedAt: now,
       }).returning()
       await tx.insert(requestTravellers).values(trav.map((t, i) => ({ requestId: req!.id, travellerId: t.id, passengerType: body.travellers[i]!.passengerType, nameSnapshot: { title: t.title, givenNames: t.givenNames, surname: t.surname, nameFa: t.nameFa, dateOfBirth: t.dateOfBirth } })))
+      if (interests.length) await tx.insert(requestServiceInterests).values(interests.map((i) => ({ requestId: req!.id, catalogueItemId: i.id })))
       await tx.insert(requestStatusHistory).values({ requestType: "FLIGHT", requestId: req!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: "CUSTOMER" })
-      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "flight_request.submitted", entityType: "flight_request", entityId: req!.id, contextRef: ref, after: { kind, tripType: query.tripType, travellers: trav.length, snapshot: !!snapshotId }, ip: actor.ip, requestId: ctx.requestId })
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "flight_request.submitted", entityType: "flight_request", entityId: req!.id, contextRef: ref, after: { kind, tripType: query.tripType, travellers: trav.length, snapshot: !!snapshotId, serviceInterests: interests.map((i) => i.code) }, ip: actor.ip, requestId: ctx.requestId })
       await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: req!.id, eventType: "flight_request.submitted", payload: { requestId: req!.id, ref, customerUserId: actor.userId, routeLabel: this.routeLabel(query, ctx.locale), urgent, route: demandRoute(query) }, dedupeKey: `fr-submitted:${req!.id}` })
       return { ref, status: "SUBMITTED" as const, kind }
     })
@@ -534,6 +538,11 @@ export class RequestsService {
     return { id: s.id, itinerary: includeInternal ? s.itinerary : customerItinerary(s.itinerary), ...prices, ...sources, ruleVersion: s.ruleVersion, engineVersion: s.engineVersion, contentHash: s.contentHash, createdAt: s.createdAt.toISOString() }
   }
 
+  private async interestViews(requestId: string) {
+    return this.db.select({ code: serviceCatalogItems.code, nameEn: serviceCatalogItems.nameEn, nameFa: serviceCatalogItems.nameFa }).from(requestServiceInterests)
+      .innerJoin(serviceCatalogItems, eq(serviceCatalogItems.id, requestServiceInterests.catalogueItemId)).where(eq(requestServiceInterests.requestId, requestId)).orderBy(asc(serviceCatalogItems.code))
+  }
+
   /** Customer-facing serialisation: never notes, internal costs, assignee details or screening results (ch. 25.6). */
   async customerDetail(ref: string, actor: Actor, locale: Locale) {
     const r = await this.ownedByRef(ref, actor.userId)
@@ -559,6 +568,7 @@ export class RequestsService {
       reservation: res[0] && ["HELD", "CONFIRMED"].includes(res[0].status) ? { status: res[0].status, ticketingDeadline: res[0].ticketingDeadline.toISOString() } : null,
       tickets: tks.map((t) => ({ ticketNumber: t.ticketNumber, travellerName: rt.find((x) => x.travellerId === t.travellerId)?.nameSnapshot.surname ?? "", status: t.status, documentId: t.documentId, validatingCarrier: t.validatingCarrier })),
       documents: docs.filter((d) => d.visibility === "CUSTOMER").map((d) => ({ id: d.id, type: d.type, filename: d.filename, createdAt: d.createdAt.toISOString() })),
+      serviceInterests: await this.interestViews(r.id),
       actions: this.customerActions(r, f),
       truthBadge: status === "TICKETED" || status === "COMPLETED" ? "TICKET_ISSUED" : status === "RESERVED" ? "SEATS_RESERVED" : r.offerSnapshotId ? "SNAPSHOT" : "REQUEST",
     })
@@ -591,7 +601,10 @@ export class RequestsService {
     const [acceptedOpt] = await this.db.select({ total: quoteOptions.totalMinor, breakdown: quoteOptions.priceBreakdown }).from(quotes).innerJoin(quoteOptions, eq(quoteOptions.id, quotes.acceptedOptionId)).where(and(eq(quotes.requestType, "FLIGHT"), eq(quotes.requestId, r.id), eq(quotes.status, "ACCEPTED"))).limit(1)
     const paymentRecording = paymentRecordingState({ product: "FLIGHT", status: r.status, atolMode: this.config.get("WORKFLOW").atolMode, acceptedTotal: acceptedOpt ? { amountMinor: acceptedOpt.total, currency: (acceptedOpt.breakdown as { total: { currency: string } }).total.currency } : null, recordedMinor: pays.filter((x) => x.status === "RECORDED" || x.status === "VERIFIED").reduce((n, x) => n + x.amountMinor, 0) })
     // The assignee is picked in the assign dialog, so its guard cannot be judged here; the command re-checks it.
-    const actions = allowedCommands(FLIGHT_TRANSITIONS, { ...f, assigneeCanTransition: true }, staffActor(actor), ["claim", "assign", "request_info", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "close", "reopen", "cancel", "decline"])
+    // Likewise in PAY_ON_TICKETING the payment is recorded inside the ticketing step (bookings.service recordTickets),
+    // so ticketing is offered before the request is PAID; the command still refuses it without a payment or override.
+    const payOnTicketing = this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" && r.status === "RESERVED"
+    const actions = allowedCommands(FLIGHT_TRANSITIONS, { ...f, assigneeCanTransition: true, ...(payOnTicketing ? { paymentStatus: "PAID" as const } : {}) }, staffActor(actor), ["claim", "assign", "request_info", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "close", "reopen", "cancel", "decline"])
     return {
       ref: r.ref, id: r.id, kind: r.kind, status: r.status, paymentStatus: r.paymentStatus, version: r.version, tripType: r.tripType, query: r.query, manual: r.manual, preferences: r.preferences,
       customerNote: r.customerNote, urgent: r.urgent, firstTravelDate: r.firstTravelDate, submittedAt: r.submittedAt.toISOString(), submittedVia: r.submittedVia, submittedLocale: r.submittedLocale,
@@ -614,7 +627,8 @@ export class RequestsService {
       notes: notes.map(({ n, author }) => ({ id: n.id, body: n.body, author, createdAt: n.createdAt.toISOString() })),
       contacts: contacts.map(({ c, staff }) => ({ id: c.id, channel: c.channel, outcome: c.outcome, note: c.note, callBackAt: c.callBackAt?.toISOString() ?? null, staff, createdAt: c.createdAt.toISOString() })),
       quotes: await this.quoteViews(r.id, true, actor.permissions.has("pricing.read.internal")),
-      reservations: res.map((x) => ({ id: x.id, system: x.system, recordLocator: x.recordLocator, airlineLocators: x.airlineLocators, status: x.status, ticketingDeadline: x.ticketingDeadline.toISOString(), quoteOptionId: x.quoteOptionId, mismatchReason: x.mismatchReason, recordedBy: names.get(x.recordedBy) ?? x.recordedBy, createdAt: x.createdAt.toISOString() })),
+      serviceInterests: await this.interestViews(r.id),
+      reservations: res.map((x) => ({ id: x.id, system: x.system, recordLocator: x.recordLocator, externalReference: x.externalReference, note: x.note, airlineLocators: x.airlineLocators, status: x.status, ticketingDeadline: x.ticketingDeadline.toISOString(), quoteOptionId: x.quoteOptionId, mismatchReason: x.mismatchReason, recordedBy: names.get(x.recordedBy) ?? x.recordedBy, createdAt: x.createdAt.toISOString() })),
       tickets: tks.map((t) => ({ id: t.id, travellerId: t.travellerId, travellerName: (() => { const n = rt.find((x) => x.travellerId === t.travellerId)?.nameSnapshot; return n ? `${n.givenNames} ${n.surname}` : "" })(), ticketNumber: t.ticketNumber, validatingCarrier: t.validatingCarrier, issueDate: t.issueDate, status: t.status, documentId: t.documentId })),
       payments: pays.map((x) => ({ id: x.id, amount: { amountMinor: x.amountMinor, currency: x.currency }, method: x.method, receivedAt: x.receivedAt.toISOString(), externalReference: x.externalReference, payerName: x.payerName, status: x.status, recordedBy: x.recordedBy ? names.get(x.recordedBy) ?? x.recordedBy : "System (card payment)", verifiedBy: x.verifiedBy ? names.get(x.verifiedBy) ?? x.verifiedBy : null, needsSecondVerifier: x.status === "RECORDED" && x.amountMinor > threshold })),
       documents: docs.map((d) => ({ id: d.id, type: d.type, filename: d.filename, visibility: d.visibility, createdAt: d.createdAt.toISOString() })),
