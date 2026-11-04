@@ -21,6 +21,13 @@ const escapeLike = (s: string) => `%${s.replace(/[\\%_]/g, "\\$&")}%`
 
 /** Popular-route cards show the next few departures that currently have flights in the catalog (ADR-0034). */
 const CARD_LIMIT = 5
+/** Read past today's flights before limiting: they are dropped (may have departed), and must not use up the card limit. */
+const UPCOMING_FETCH = 50
+
+/** Cards for one route: departures after today only, then the first CARD_LIMIT. */
+export function upcomingCards(rows: PublicItinerary[], today: string): FlightListingItem[] {
+  return rows.filter((i) => i.departureDate > today).slice(0, CARD_LIMIT).map(toListingItem)
+}
 
 /** A catalog snapshot row as a price-free listing card. `offerRef` is null: catalog rows are not stored searches, so the card offers "Ask our team". */
 export function toListingItem(it: PublicItinerary): FlightListingItem {
@@ -28,6 +35,17 @@ export function toListingItem(it: PublicItinerary): FlightListingItem {
     label: "CACHED_OFFER", fetchedAt: it.fetchedAt, origin: it.origin, destination: it.destination, departureDate: it.departureDate, carriers: it.carriers, stops: it.stops,
     durationMin: it.durationMin, departureLocal: it.departLocal, arrivalLocal: it.arriveLocal, offerRef: null, complianceReview: it.complianceReview,
   }
+}
+
+/**
+ * Routes for the popular-route cards: the configured ones first, then every route the catalog tracks (ADR-0034). Without the
+ * tracked routes, a host whose stored settings predate `listings.flightRoutes` (the schema then defaults it to empty) lists nothing
+ * even when the catalog has flights.
+ */
+export function popularRoutes(configured: { from: string; to: string }[], tracked: { origin: string; destination: string }[]): { from: string; to: string }[] {
+  const out = new Map(configured.map((r) => [`${r.from}-${r.to}`, r]))
+  for (const t of tracked) if (!out.has(`${t.origin}-${t.destination}`)) out.set(`${t.origin}-${t.destination}`, { from: t.origin, to: t.destination })
+  return [...out.values()]
 }
 
 /**
@@ -72,12 +90,14 @@ export class ListingsService implements OnModuleInit {
 
   /** The configured popular routes (or the requested one) from the catalog's snapshots; departed flights are never listed. No amounts. */
   async flights(q: PublicListingQuery, now = new Date()): Promise<FlightListingsView> {
-    const routes = q.from && q.to ? [{ from: q.from.toUpperCase(), to: q.to.toUpperCase() }] : this.config.settings().listings.flightRoutes
+    const routes = q.from && q.to
+      ? [{ from: q.from.toUpperCase(), to: q.to.toUpperCase() }]
+      : popularRoutes(this.config.settings().listings.flightRoutes, (await this.catalog.trackedRoutes(now).catch(() => ({ routes: [] }))).routes)
     const today = now.toISOString().slice(0, 10)
     const items: FlightListingItem[] = []
     for (const r of routes) {
       if (!/^[A-Z]{3}$/.test(r.from) || !/^[A-Z]{3}$/.test(r.to)) continue
-      items.push(...(await this.catalog.upcoming(r.from, r.to, CARD_LIMIT, now)).filter((i) => i.departureDate > today).map(toListingItem))
+      items.push(...upcomingCards(await this.catalog.upcoming(r.from, r.to, UPCOMING_FETCH, now), today))
     }
     // A query that names only one side filters the configured routes.
     const to = q.to && !q.from ? q.to.toUpperCase() : null
