@@ -48,7 +48,12 @@ export class RefundsService {
       if (remaining <= 0) throw new AppError("INVALID_TRANSITION", "Nothing is left to refund on this payment")
       if (amount < 1 || amount > remaining) throw new AppError("VALIDATION_FAILED", `The refund must be between 0.01 and ${(remaining / 100).toFixed(2)} ${inv.currency}`)
       const [row] = await tx.insert(refundRequests).values({ invoiceId: inv.id, paymentRecordId: p.id, amountMinor: amount, currency: p.currency, reasonCode: body.reasonCode, note: body.note ?? null, requestedBy: actor.userId }).returning()
-      const four = needsSecondVerifier(amount, this.threshold())
+      // The threshold applies to the running total of refunds on this payment that no second person approved (the
+      // requester's own submissions), so splitting one refund into several small ones cannot avoid the second approver
+      // (ch. 13.7). Amounts a different person approved do not count.
+      const earlier = await tx.select({ amountMinor: refundRequests.amountMinor, requestedBy: refundRequests.requestedBy, approvedBy: refundRequests.approvedBy }).from(refundRequests).where(and(eq(refundRequests.paymentRecordId, p.id), inArray(refundRequests.status, ["SUBMITTED", "COMPLETED"])))
+      const selfApproved = earlier.filter((r) => r.approvedBy === r.requestedBy).reduce((s, r) => s + r.amountMinor, 0)
+      const four = needsSecondVerifier(amount + selfApproved, this.threshold())
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "refund.requested", entityType: "refund_request", entityId: row!.id, contextRef: inv.requestRef, after: { invoice: inv.number, amountMinor: amount, currency: p.currency, reasonCode: body.reasonCode, fourEyes: four } })
       return { row: row!, four }
     })
@@ -124,11 +129,11 @@ export class RefundsService {
   private async toViews(rows: Refund[], withAmounts: boolean): Promise<RefundView[]> {
     const ids = [...new Set(rows.flatMap((r) => [r.requestedBy, r.approvedBy].filter((x): x is string => !!x)))]
     const names = new Map((ids.length ? await this.db.select({ id: users.id, name: users.displayName }).from(users).where(inArray(users.id, ids)) : []).map((u) => [u.id, u.name]))
-    const threshold = this.threshold()
     return rows.map((r) => ({
       id: r.id, status: r.status, amount: withAmounts ? { amountMinor: r.amountMinor, currency: r.currency } : null, reasonCode: r.reasonCode, note: r.note,
       requestedBy: names.get(r.requestedBy) ?? r.requestedBy, approvedBy: r.approvedBy ? names.get(r.approvedBy) ?? r.approvedBy : null,
-      needsSecondApprover: r.status === "PENDING_APPROVAL" && needsSecondVerifier(r.amountMinor, threshold), failure: r.failure, createdAt: r.createdAt.toISOString(), decidedAt: r.decidedAt?.toISOString() ?? null,
+      // Within-threshold requests are submitted at once, so a pending one always waits for a second person.
+      needsSecondApprover: r.status === "PENDING_APPROVAL", failure: r.failure, createdAt: r.createdAt.toISOString(), decidedAt: r.decidedAt?.toISOString() ?? null,
     }))
   }
 

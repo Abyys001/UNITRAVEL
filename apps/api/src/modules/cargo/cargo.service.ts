@@ -350,7 +350,14 @@ export class CargoService implements OnModuleInit {
         }
         case "send_quote": {
           const quoteId = String(body.quoteId)
+          // The quote must be a draft of this very request: an id from another request would send that customer's
+          // prices to this customer (and flip the other request's quote to SENT).
+          const [own] = await tx.select({ status: quotes.status }).from(quotes).where(and(eq(quotes.id, quoteId), eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id)))
+          if (!own) throw new AppError("NOT_FOUND", "Quote not found on this request")
           if (r.status === "EXCEPTION") {
+            if (!actor.permissions.has("cargo_request.transition")) throw new AppError("FORBIDDEN", "Requires cargo_request.transition")
+            if (expectedVersion !== undefined && expectedVersion !== r.version) throw new AppError("VERSION_CONFLICT", `Request changed (version ${r.version}); reload`)
+            if (own.status !== "DRAFT") throw new AppError("INVALID_TRANSITION", "Only a draft can be sent")
             // Revised quote after a re-weigh: the shipment stays in EXCEPTION until the customer accepts (ch. 14.5).
             if (r.exceptionReason !== "REWEIGH") throw new AppError("INVALID_TRANSITION", "Revised quotes are for re-weigh exceptions")
             await tx.update(quotes).set({ status: "SUPERSEDED" }).where(and(eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id), ne(quotes.id, quoteId), inArray(quotes.status, ["SENT", "ACCEPTED"])))
@@ -479,7 +486,7 @@ export class CargoService implements OnModuleInit {
   async staffMessage(ref: string, actor: Actor, body: string, documentIds: string[]) {
     return this.uow.run(async (tx) => {
       const r = await this.byRef(ref, tx)
-      for (const d of documentIds) await this.docs.publish(tx, d)
+      for (const d of documentIds) await this.docs.publish(tx, d, { requestType: "CARGO", requestId: r.id, customerUserId: r.customerUserId, staffUserId: actor.userId })
       await tx.insert(requestMessages).values({ requestType: "CARGO", requestId: r.id, authorId: actor.userId, direction: "TO_CUSTOMER", body, documentIds })
       await this.outbox.add(tx, { aggregateType: "cargo_request", aggregateId: r.id, eventType: "cargo_request.message", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, direction: "TO_CUSTOMER", message: body } })
       return { ok: true }
@@ -535,7 +542,7 @@ export class CargoService implements OnModuleInit {
 
   /** The cargo quotation PDF: the sent quote's lines, pieces and weights with the document number (ADR-0006 C1), in the customer's language and zone. */
   private async quotationPdf(tx: Tx, r: typeof cargoRequests.$inferSelect, quoteId: string, actor: Actor) {
-    const [q] = await tx.select().from(quotes).where(eq(quotes.id, quoteId))
+    const [q] = await tx.select().from(quotes).where(and(eq(quotes.id, quoteId), eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id)))
     if (!q?.documentNumber) return
     const [lane] = await tx.select().from(cargoLanes).where(eq(cargoLanes.id, r.laneId))
     const c = CargoQuoteLines.parse(q.cargoLines)

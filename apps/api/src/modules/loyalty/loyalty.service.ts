@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import { and, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm"
+import { and, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm"
 
 import type {
   ClubCandidate, CustomerClubView, LoyaltyBenefitBody, LoyaltyBenefitView, LoyaltyLedgerEntry, LoyaltyMemberView, LoyaltyTierView, Money,
@@ -275,7 +275,10 @@ export class LoyaltyService {
       if (body.amount.amountMinor <= 0) throw new AppError("VALIDATION_FAILED", "Amount must be greater than zero", [{ path: "amount", code: "INVALID" }])
       if (body.kind === "GRANTED") {
         if (m.status !== "ACTIVE") throw new AppError("VALIDATION_FAILED", "The customer is not an active member", [{ path: "userId", code: "NOT_A_MEMBER" }])
-        if (body.amount.amountMinor > this.threshold()) throw new AppError("FOUR_EYES_REQUIRED", "Grant larger amounts as a bonus-credit benefit so a second person approves it")
+        // Manual grants to one customer are added up over 24 hours, so several small grants cannot replace one large one.
+        const recent = await tx.select({ amountMinor: loyaltyLedger.amountMinor }).from(loyaltyLedger)
+          .where(and(eq(loyaltyLedger.userId, body.userId), eq(loyaltyLedger.kind, "GRANTED"), isNull(loyaltyLedger.benefitId), gte(loyaltyLedger.createdAt, new Date(Date.now() - 86400_000))))
+        if (body.amount.amountMinor + recent.reduce((s, x) => s + x.amountMinor, 0) > this.threshold()) throw new AppError("FOUR_EYES_REQUIRED", "Grant larger amounts as a bonus-credit benefit so a second person approves it")
       }
       if (body.kind === "USED") {
         if (!body.invoiceId) throw new AppError("VALIDATION_FAILED", "Name the invoice the credit is used on", [{ path: "invoiceId", code: "REQUIRED" }])

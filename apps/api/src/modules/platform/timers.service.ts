@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, type OnApplicationBootstrap, type OnModuleI
 
 import { Queues } from "../../core/queues"
 import { PROCESS_ROLE, type ProcessRole, WorkerRegistry } from "../../core/workers"
+import { safeError } from "../../core/safe-error"
 import type { DispatchedEvent } from "./outbox.dispatcher"
 
 type TimerHandler = (data: Record<string, unknown>) => Promise<unknown>
@@ -41,7 +42,7 @@ export class TimersService implements OnModuleInit, OnApplicationBootstrap {
 
   onApplicationBootstrap() {
     if (this.role !== "worker") return
-    void this.reconcile().catch((err: unknown) => this.log.error({ err: String(err) }, "timer reconcile failed"))
+    void this.reconcile().catch((err: unknown) => this.log.error({ err: safeError(err) }, "timer reconcile failed"))
   }
 
   onReconcile(h: ReconcileHandler) {

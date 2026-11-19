@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common"
-import { and, desc, eq, gt, isNotNull, isNull } from "drizzle-orm"
+import { and, desc, eq, gt, isNotNull, isNull, ne } from "drizzle-orm"
 import type { Redis } from "ioredis"
 import { v7 as uuidv7 } from "uuid"
 
@@ -68,7 +68,7 @@ export class SessionsService {
     const refreshExpiresAt = new Date(Math.min(s.absoluteExpiresAt.getTime(), Date.now() + auth.refreshTtlDays * 86400_000))
     await tx.insert(refreshTokens).values({ sessionId: s.id, tokenHash: sha256(refresh), familyId, expiresAt: refreshExpiresAt })
     const { token, expiresAt } = await this.tokens.signAccess({ sub: s.userId, sid: s.id, aud: CLIENT_AUDIENCE[s.client], pv: acc.permVersion, perms: acc.permissions, mfa: s.mfaLevel }, auth.accessTtlSeconds)
-    await this.redis.set(`perm:${s.userId}`, String(acc.permVersion))
+    await this.access.cachePermVersion(s.userId, acc.permVersion)
     return { accessToken: token, accessExpiresAt: expiresAt, refreshToken: `${s.id}.${refresh}`, refreshExpiresAt, sessionId: s.id }
   }
 
@@ -93,6 +93,7 @@ export class SessionsService {
       const [s] = await tx.select().from(sessions).where(eq(sessions.id, rt.sessionId))
       if (!s || s.revokedAt) throw new AppError("UNAUTHENTICATED", "Session ended")
       if (rt.expiresAt <= new Date() || s.absoluteExpiresAt <= new Date()) throw new AppError("UNAUTHENTICATED", "Session expired")
+      // The console idle timeout must hold across refreshes too, or a stolen refresh cookie would last the full 12 hours.
       const auth = this.config.get("AUTH")
       if (s.client === "CONSOLE" && Date.now() - s.lastSeenAt.getTime() > auth.staffIdleMinutes * 60_000) return { idle: s.id }
       const acc = await this.access.load(s.userId, tx)
@@ -232,6 +233,17 @@ export class SessionsService {
       await this.audit.record(tx, { actorUserId: actor.userId, actorKind: actor.audience === "console" ? "STAFF" : "CUSTOMER", action: "user.signed_out", entityType: "session", entityId: actor.sessionId, ip: actor.ip, userAgent: actor.userAgent, requestId })
       if (actor.audience !== "console") await tx.insert(customerActivity).values({ userId: actor.userId, sessionId: actor.sessionId, kind: "SIGN_OUT", client: actor.audience === "mobile" ? "MOBILE" : "WEB", network: actor.ip ? ipPrefix(actor.ip) : null })
     })
+  }
+
+  /** Sign out everywhere: every session of the user, optionally keeping the one making the request. */
+  async revokeAll(userId: string, reason: string, keepSessionId?: string): Promise<number> {
+    const rows = await this.db.update(sessions).set({ revokedAt: new Date(), revokedReason: reason })
+      .where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt), keepSessionId ? ne(sessions.id, keepSessionId) : undefined)).returning({ id: sessions.id })
+    for (const r of rows) {
+      await this.db.update(refreshTokens).set({ revokedAt: new Date() }).where(and(eq(refreshTokens.sessionId, r.id), isNull(refreshTokens.revokedAt)))
+      await this.redis.set(`sess:${r.id}:revoked`, "1", "EX", 13 * 3600)
+    }
+    return rows.length
   }
 
   async list(userId: string) {

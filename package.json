@@ -13,6 +13,8 @@
     "infra:down": "docker compose -f infra/compose.dev.yml down",
     "db:migrate": "pnpm --filter @unitravel/db migrate",
     "db:seed": "pnpm --filter @unitravel/db seed",
+    "db:create-owner": "pnpm --filter @unitravel/db create-owner",
+    "setup": "scripts/setup-local.sh",
     "dev:api": "pnpm --filter @unitravel/api dev",
     "dev:worker": "pnpm --filter @unitravel/api dev:worker"
   },

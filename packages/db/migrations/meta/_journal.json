@@ -176,6 +176,13 @@
       "when": 1793096000000,
       "tag": "0024_stage23_service_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793182500000,
+      "tag": "0026_append_only_deletes",
+      "breakpoints": true
     }
   ]
 }

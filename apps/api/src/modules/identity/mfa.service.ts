@@ -14,7 +14,20 @@ import { env } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { DB, REDIS } from "../../core/infra.module"
 import { AuditService } from "../audit/audit.service"
+import { ConfigService } from "../config/config.service"
 import { SessionsService } from "./sessions.service"
+
+/**
+ * Passkeys are scoped to the longest domain both console hosts share (admin.example.co.uk + dev.example.co.uk ->
+ * example.co.uk), so one passkey works on both. Taking the last two labels would give "co.uk", which browsers refuse.
+ */
+export function passkeyRpId(adminUrl: string, devUrl: string): string {
+  const a = new URL(adminUrl).hostname.split(".").reverse()
+  const b = new URL(devUrl).hostname.split(".").reverse()
+  const common: string[] = []
+  for (let i = 0; i < Math.min(a.length, b.length) && a[i] === b[i]; i++) common.push(a[i]!)
+  return common.length ? common.reverse().join(".") : new URL(adminUrl).hostname
+}
 
 const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 export function base32Encode(buf: Buffer): string {
@@ -54,16 +67,31 @@ export function totp(secret: Buffer, at = Date.now(), step = 30): string {
  */
 @Injectable()
 export class MfaService {
-  constructor(@Inject(DB) private readonly db: Db, @Inject(REDIS) private readonly redis: Redis, private readonly sessions: SessionsService, private readonly audit: AuditService) {}
+  constructor(@Inject(DB) private readonly db: Db, @Inject(REDIS) private readonly redis: Redis, private readonly sessions: SessionsService, private readonly audit: AuditService, private readonly config: ConfigService) {}
 
   private rp() {
-    const u = new URL(env().PUBLIC_CONSOLE_ADMIN_URL)
-    // Passkeys are scoped to the registrable domain so admin. and dev. hosts share them.
-    const rpID = u.hostname.split(".").slice(-2).join(".") === "localhost" ? "localhost" : u.hostname.split(".").slice(-2).join(".")
-    return { rpID, rpName: "Uni Travel", origins: [env().PUBLIC_CONSOLE_ADMIN_URL, env().PUBLIC_CONSOLE_DEV_URL] }
+    return { rpID: passkeyRpId(env().PUBLIC_CONSOLE_ADMIN_URL, env().PUBLIC_CONSOLE_DEV_URL), rpName: "Uni Travel", origins: [env().PUBLIC_CONSOLE_ADMIN_URL, env().PUBLIC_CONSOLE_DEV_URL] }
   }
 
-  async enrolTotp(userId: string) {
+  /** True when this session passed a second factor inside the step-up window. */
+  private async freshlyVerified(sessionId: string): Promise<boolean> {
+    const st = await this.sessions.guardState(sessionId)
+    const window = this.config.get("AUTH").stepUpWindowMinutes * 60_000
+    return !!st && st.mfaLevel >= 1 && !!st.mfaVerifiedAt && Date.now() - st.mfaVerifiedAt.getTime() <= window
+  }
+
+  /**
+   * A new factor may only be added by someone who already proved an existing one: otherwise anyone holding just the
+   * sign-in code (first factor) could enrol their own authenticator and lift the session past the staff second factor.
+   * The very first factor is the bootstrap case and needs only the signed-in session.
+   */
+  private async assertMayEnrol(userId: string, sessionId: string) {
+    const confirmed = await this.enrolled(userId)
+    if (confirmed.length > 0 && !(await this.freshlyVerified(sessionId))) throw new AppError("STEP_UP_REQUIRED", "Verify an existing second factor before adding another")
+  }
+
+  async enrolTotp(userId: string, sessionId: string) {
+    await this.assertMayEnrol(userId, sessionId)
     const secret = randomBytes(20)
     const [u] = await this.db.select().from(users).where(eq(users.id, userId))
     const enc = encryptField(secret.toString("hex"))
@@ -81,12 +109,16 @@ export class MfaService {
 
   /** Verifies a TOTP code against confirmed factors (or confirms a pending one) and raises the session's MFA level. */
   async verifyTotp(userId: string, sessionId: string, code: string, ctx: { ip?: string; requestId?: string }) {
-    const replayKey = `mfa:totp:${userId}:${code}`
-    if (await this.redis.get(replayKey)) throw new AppError("OTP_INVALID")
     const factors = await this.db.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId), eq(mfaFactors.type, "TOTP")))
-    const match = factors.find((f) => f.secretCiphertext && this.checkTotp(decryptField(f.secretCiphertext), code))
+    // A pending (unconfirmed) factor only counts when no factor is confirmed yet, or when this session already passed
+    // one; otherwise a freshly enrolled authenticator would bypass the existing second factor.
+    const anyConfirmed = (await this.enrolled(userId)).length > 0
+    const pendingAllowed = !anyConfirmed || (await this.freshlyVerified(sessionId))
+    const candidates = factors.filter((f) => f.secretCiphertext && (f.confirmedAt || pendingAllowed))
+    const match = candidates.find((f) => this.checkTotp(decryptField(f.secretCiphertext!), code))
     if (!match) throw new AppError("OTP_INVALID")
-    await this.redis.set(replayKey, "1", "EX", 90)
+    // Claim the code atomically: two concurrent requests with the same code cannot both succeed (RFC 6238 §5.2).
+    if ((await this.redis.set(`mfa:totp:${userId}:${code}`, "1", "EX", 90, "NX")) !== "OK") throw new AppError("OTP_INVALID")
     await this.db.update(mfaFactors).set({ lastUsedAt: new Date(), confirmedAt: match.confirmedAt ?? new Date() }).where(eq(mfaFactors.id, match.id))
     // Unconfirmed duplicates from abandoned enrolments are removed once one factor is confirmed.
     for (const f of factors) if (f.id !== match.id && !f.confirmedAt) await this.db.delete(mfaFactors).where(eq(mfaFactors.id, f.id))
@@ -113,7 +145,8 @@ export class MfaService {
     return [...new Set(rows.map((r) => r.type))]
   }
 
-  async webauthnRegistrationOptions(userId: string) {
+  async webauthnRegistrationOptions(userId: string, sessionId: string) {
+    await this.assertMayEnrol(userId, sessionId)
     const { rpID, rpName } = this.rp()
     const [u] = await this.db.select().from(users).where(eq(users.id, userId))
     const existing = await this.db.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId), eq(mfaFactors.type, "WEBAUTHN")))
@@ -122,33 +155,36 @@ export class MfaService {
       excludeCredentials: existing.filter((e) => e.credentialId).map((e) => ({ id: e.credentialId! })),
       authenticatorSelection: { residentKey: "preferred", userVerification: "preferred" },
     })
-    await this.redis.set(`webauthn:reg:${userId}`, options.challenge, "EX", 300)
+    await this.redis.set(`webauthn:reg:${sessionId}`, options.challenge, "EX", 300)
     return options
   }
 
   async webauthnRegister(userId: string, sessionId: string, response: Record<string, unknown>) {
+    await this.assertMayEnrol(userId, sessionId)
     const { rpID, origins } = this.rp()
-    const challenge = await this.redis.get(`webauthn:reg:${userId}`)
+    // Challenges are single use and bound to the session that asked for them.
+    const challenge = await this.redis.getdel(`webauthn:reg:${sessionId}`)
     if (!challenge) throw new AppError("OTP_EXPIRED")
     const v = await verifyRegistrationResponse({ response: response as never, expectedChallenge: challenge, expectedOrigin: origins, expectedRPID: rpID })
     if (!v.verified || !v.registrationInfo) throw new AppError("OTP_INVALID")
     const cred = v.registrationInfo.credential
     await this.db.insert(mfaFactors).values({ userId, type: "WEBAUTHN", credentialId: cred.id, publicKey: Buffer.from(cred.publicKey).toString("base64url"), counter: cred.counter, confirmedAt: new Date(), lastUsedAt: new Date() })
     await this.sessions.markMfa(sessionId, 2)
+    await this.db.transaction((tx) => this.audit.record(tx, { actorUserId: userId, actorKind: "STAFF", action: "mfa.enrolled", entityType: "mfa_factor", entityId: userId, after: { type: "WEBAUTHN" } }))
     return { level: 2 }
   }
 
-  async webauthnAuthOptions(userId: string) {
+  async webauthnAuthOptions(userId: string, sessionId: string) {
     const { rpID } = this.rp()
     const creds = await this.db.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId), eq(mfaFactors.type, "WEBAUTHN")))
     const options = await generateAuthenticationOptions({ rpID, allowCredentials: creds.map((c) => ({ id: c.credentialId! })), userVerification: "preferred" })
-    await this.redis.set(`webauthn:auth:${userId}`, options.challenge, "EX", 300)
+    await this.redis.set(`webauthn:auth:${sessionId}`, options.challenge, "EX", 300)
     return options
   }
 
   async webauthnAuthenticate(userId: string, sessionId: string, response: Record<string, unknown>) {
     const { rpID, origins } = this.rp()
-    const challenge = await this.redis.get(`webauthn:auth:${userId}`)
+    const challenge = await this.redis.getdel(`webauthn:auth:${sessionId}`)
     if (!challenge) throw new AppError("OTP_EXPIRED")
     const [cred] = await this.db.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId), eq(mfaFactors.credentialId, String(response.id))))
     if (!cred) throw new AppError("OTP_INVALID")

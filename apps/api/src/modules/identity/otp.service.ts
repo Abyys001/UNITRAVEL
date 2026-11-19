@@ -9,10 +9,10 @@ import { customerProfiles, type Db, mfaFactors, otpChallenges, roles, type Tx, u
 import { normaliseDigits } from "@unitravel/domain"
 
 import { constantTimeEqual, encryptField, otpHash, randomDigits } from "../../core/crypto"
-import { env } from "../../core/env"
+import { env, testSignInForStaff } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { DB, REDIS } from "../../core/infra.module"
-import { ipPrefix, RateLimiter } from "../../core/http/rate-limit"
+import { ipKey, ipPrefix, RateLimiter } from "../../core/http/rate-limit"
 import { AccessService } from "../access/access.service"
 import { AuditService } from "../audit/audit.service"
 import { ConfigService } from "../config/config.service"
@@ -42,6 +42,21 @@ export function normaliseIdentity(channel: "PHONE" | "EMAIL", raw: string, defau
   if (t && BLOCKED_TYPES.has(t)) throw new AppError("DESTINATION_NOT_ALLOWED", "This number type cannot receive codes")
   return { type: "PHONE", value: p.number, country: testNumber ? "GB" : p.country }
 }
+
+/**
+ * Counts one verification attempt atomically. Returns nil when the challenge is gone, else
+ * {outcome, hash, attempts, max} with outcome LOCKED (no attempts left), UNBOUND (other device or network) or CHECK.
+ */
+const OTP_ATTEMPT_LUA = `
+local raw = redis.call("GET", KEYS[1])
+if not raw then return nil end
+local st = cjson.decode(raw)
+if st.attempts >= st.max then return {"LOCKED", "", st.attempts, st.max} end
+if st.deviceId ~= ARGV[1] or st.ipPrefix ~= ARGV[2] then return {"UNBOUND", "", st.attempts, st.max} end
+st.attempts = st.attempts + 1
+redis.call("SET", KEYS[1], cjson.encode(st), "KEEPTTL")
+return {"CHECK", st.hash, st.attempts, st.max}
+`
 
 export interface RequestCtx { ip: string; userAgent?: string; requestId?: string; locale: "en" | "fa"; userId?: string }
 
@@ -78,12 +93,18 @@ export class OtpService {
       const wait = Math.ceil((lastHour[0].createdAt.getTime() + cooldown * 1000 - Date.now()) / 1000)
       if (wait > 0) throw new AppError("RATE_LIMITED", "Please wait before requesting another code", undefined, { retryAfter: wait })
     }
-    await this.limiter.enforce("otp-number-1h", id.value, auth.maxPerHour, 3600)
-    await this.limiter.enforce("otp-number-1d", id.value, auth.maxPerDay, 86400)
-    await this.limiter.enforce("otp-ip-1h", ctx.ip, 20, 3600)
-    await this.limiter.enforce("otp-net-1h", ipPrefix(ctx.ip), 60, 3600)
-    await this.limiter.enforce("otp-device-1h", body.deviceId, 10, 3600)
-    if (id.country) await this.limiter.enforce("otp-country-1h", id.country, 2000, 3600)
+    // Every window is checked before any is recorded, and the requester's own budgets (IP, network, device) come first:
+    // a client that has used up its own budget can no longer fill a victim's per-number window and lock them out.
+    const windows: [string, string, number, number][] = [
+      ["otp-ip-1h", ipKey(ctx.ip), 20, 3600],
+      ["otp-net-1h", ipPrefix(ctx.ip), 60, 3600],
+      ["otp-device-1h", body.deviceId, 10, 3600],
+      ["otp-number-1h", id.value, auth.maxPerHour, 3600],
+      ["otp-number-1d", id.value, auth.maxPerDay, 86400],
+      ...(id.country ? [["otp-country-1h", id.country, 2000, 3600] as [string, string, number, number]] : []),
+    ]
+    for (const [name, key, limit, window] of windows) await this.limiter.check(name, key, limit, window)
+    for (const [name, key, , window] of windows) await this.limiter.hit(name, key, window)
     await this.limiter.hit("otp-ip-10m", ctx.ip, 600)
     if (id.country) await this.limiter.hit("otp-sent-country-1d", id.country, 86400)
 
@@ -103,24 +124,26 @@ export class OtpService {
   }
 
   async verify(body: OtpVerifyBody, ctx: RequestCtx): Promise<{ userId: string; isNewUser: boolean; needsProfile: boolean; tokens?: IssuedTokens; mfaRequired: boolean; mfaEnrolmentRequired: boolean; purpose: string }> {
-    await this.limiter.enforce("otp-verify-ip", ctx.ip, this.config.get("AUTH").verifyIpLimitPer10Min, 600)
+    await this.limiter.enforce("otp-verify-ip", ipKey(ctx.ip), this.config.get("AUTH").verifyIpLimitPer10Min, 600)
     const code = normaliseDigits(body.code)
-    const raw = await this.redis.get(`otp:${body.challengeId}`)
     const [row] = await this.db.select().from(otpChallenges).where(eq(otpChallenges.id, body.challengeId))
-    if (!row || !raw || row.consumedAt) throw new AppError(row && row.expiresAt < new Date() ? "OTP_EXPIRED" : "OTP_INVALID")
-    const st = JSON.parse(raw) as { hash: string; attempts: number; deviceId: string; ipPrefix: string; max: number }
-    if (row.lockedAt || st.attempts >= st.max) throw new AppError("OTP_LOCKED")
+    if (!row || row.consumedAt) throw new AppError(row && row.expiresAt < new Date() ? "OTP_EXPIRED" : "OTP_INVALID")
+    if (row.lockedAt) throw new AppError("OTP_LOCKED")
+    // One atomic step counts the attempt before the code is compared, so parallel guesses each spend an attempt.
+    const res = (await this.redis.eval(OTP_ATTEMPT_LUA, 1, `otp:${body.challengeId}`, body.deviceId, ipPrefix(ctx.ip))) as [string, string, number, number] | null
+    if (!res) throw new AppError(row.expiresAt < new Date() ? "OTP_EXPIRED" : "OTP_INVALID")
+    const [outcome, hash, attempts, max] = res
+    if (outcome === "LOCKED") throw new AppError("OTP_LOCKED")
     // Binding: verification from a different device or network range needs a new code (ch. 25.1).
-    if (st.deviceId !== body.deviceId || st.ipPrefix !== ipPrefix(ctx.ip)) throw new AppError("OTP_INVALID")
-    st.attempts += 1
-    const ttl = await this.redis.ttl(`otp:${body.challengeId}`)
-    await this.redis.set(`otp:${body.challengeId}`, JSON.stringify(st), "EX", Math.max(1, ttl))
-    await this.db.update(otpChallenges).set({ attempts: st.attempts, lockedAt: st.attempts >= st.max ? new Date() : null }).where(eq(otpChallenges.id, row.id))
-    if (!constantTimeEqual(st.hash, otpHash(code, row.id))) throw new AppError(st.attempts >= st.max ? "OTP_LOCKED" : "OTP_INVALID")
-    await this.redis.del(`otp:${body.challengeId}`)
+    if (outcome === "UNBOUND") throw new AppError("OTP_INVALID")
+    await this.db.update(otpChallenges).set({ attempts, lockedAt: attempts >= max ? new Date() : null }).where(and(eq(otpChallenges.id, row.id), isNull(otpChallenges.consumedAt)))
+    if (!constantTimeEqual(hash, otpHash(code, row.id))) throw new AppError(attempts >= max ? "OTP_LOCKED" : "OTP_INVALID")
+    // Single use: only the request that deletes the challenge wins; a concurrent correct guess gets OTP_INVALID.
+    if ((await this.redis.del(`otp:${body.challengeId}`)) !== 1) throw new AppError("OTP_INVALID")
 
     return this.db.transaction(async (tx) => {
-      await tx.update(otpChallenges).set({ consumedAt: new Date(), deliveryStatus: "DELIVERED" }).where(eq(otpChallenges.id, row.id))
+      const consumed = await tx.update(otpChallenges).set({ consumedAt: new Date(), deliveryStatus: "DELIVERED" }).where(and(eq(otpChallenges.id, row.id), isNull(otpChallenges.consumedAt))).returning({ id: otpChallenges.id })
+      if (consumed.length !== 1) throw new AppError("OTP_INVALID")
       if (row.purpose === "SIGN_IN") return this.signIn(tx, { type: row.identityType, value: row.identityValue }, body, ctx)
       if (!row.userId) throw new AppError("UNAUTHENTICATED")
       if (row.purpose === "STEP_UP") return { userId: row.userId, isNewUser: false, needsProfile: false, mfaRequired: false, mfaEnrolmentRequired: false, purpose: row.purpose }
@@ -129,7 +152,7 @@ export class OtpService {
     })
   }
 
-  /** ADR-0012: sign-in without a code for the testing phase; the controller only calls it when TEST_SIGN_IN=on. */
+  /** ADR-0012: sign-in without a code for the testing phase; the controller only calls it when TEST_SIGN_IN is on or customers. */
   async testSignIn(body: TestSignInBody, ctx: RequestCtx) {
     const id = normaliseIdentity("EMAIL", body.email)
     return this.db.transaction((tx) => this.signIn(tx, id, body, ctx, true))
@@ -166,6 +189,8 @@ export class OtpService {
     const staff = this.access.isStaff(acc.permissions)
     // Refused before a session exists, so a customer phone can never reach TOTP enrolment on the console (ch. 25.2).
     if (body.client === "CONSOLE" && !staff) throw new AppError("OTP_INVALID")
+    // TEST_SIGN_IN=customers: staff accounts never sign in without a code (one answer for every refusal).
+    if (test && (staff || body.client === "CONSOLE") && !testSignInForStaff()) throw new AppError("OTP_INVALID")
     const factors = staff ? await tx.select().from(mfaFactors).where(and(eq(mfaFactors.userId, userId))) : []
     const confirmed = factors.filter((f) => f.confirmedAt)
     const needsMfa = !test && staff && this.config.get("AUTH").staffSecondFactor && body.client !== "WEB"

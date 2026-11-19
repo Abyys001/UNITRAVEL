@@ -13,7 +13,14 @@ describe("Apify client", () => {
     vi.stubEnv("APP_ENV", appEnv)
     if (base) vi.stubEnv("APIFY_BASE_URL", base)
     else vi.stubEnv("APIFY_BASE_URL", "")
-    for (const k of ["JWT_PRIVATE_KEY", "JWT_PUBLIC_KEYS", "MASTER_ENCRYPTION_KEY", "OTP_PEPPER"]) vi.stubEnv(k, "x")
+    // Non-local environments must pass the start-up preflight (ADR-0017), so give them deployable-looking secrets.
+    const strong = "s".repeat(48)
+    for (const k of ["JWT_PRIVATE_KEY", "JWT_PUBLIC_KEYS", "MASTER_ENCRYPTION_KEY", "OTP_PEPPER"]) vi.stubEnv(k, appEnv === "local" ? "x" : `${k}-${strong}`)
+    if (appEnv !== "local") {
+      vi.stubEnv("OBJECT_STORAGE_SECRET_KEY", strong)
+      vi.stubEnv("DATABASE_URL", `postgres://app_rw:${strong}@db:5432/unitravel`)
+      vi.stubEnv("REDIS_URL", `redis://:${strong}@valkey:6379`)
+    }
     return import("./client.js")
   }
 

@@ -5,9 +5,16 @@ import { providerSeedRows } from "@unitravel/db"
 // ADR-0014: FAKE adapters and sandbox credentials exist only with APP_ENV=local; deployed hosts serve live data only.
 describe("live data only on deployed hosts (ADR-0014)", () => {
   afterEach(() => { vi.unstubAllEnvs(); vi.resetModules() })
+  // Deployable-looking values: a deployed host refuses to start on placeholders or short secrets (ADR-0017).
   const asEnv = (appEnv: string) => {
+    const strong = "unit-test-value-Q7v9xZ2pL4mN8rT3"
+    vi.stubEnv("TEST_SIGN_IN", "off")
     vi.stubEnv("APP_ENV", appEnv)
-    for (const k of ["JWT_PRIVATE_KEY", "JWT_PUBLIC_KEYS", "MASTER_ENCRYPTION_KEY", "OTP_PEPPER"]) vi.stubEnv(k, "x")
+    for (const k of ["JWT_PRIVATE_KEY", "JWT_PUBLIC_KEYS", "MASTER_ENCRYPTION_KEY", "OTP_PEPPER"]) vi.stubEnv(k, `${k}-${strong}`)
+    vi.stubEnv("OBJECT_STORAGE_SECRET_KEY", strong)
+    vi.stubEnv("DATABASE_URL", `postgres://app_rw:${strong}@localhost:5462/unitravel`)
+    vi.stubEnv("REDIS_URL", `redis://:${strong}@localhost:6390`)
+    for (const k of ["PUBLIC_WEB_URL", "PUBLIC_API_URL"]) vi.stubEnv(k, "https://example.com")
   }
 
   it.each(["staging", "production"])("the FAKE flight and payment adapters refuse APP_ENV=%s", async (appEnv) => {

@@ -9,7 +9,8 @@ describe("ADR-0012 test sign-in", () => {
   it("reports whether it is enabled", async () => {
     const r = await new Session("WEB").get("/v1/auth/test-sign-in")
     expect(r.status).toBe(200)
-    expect(r.body).toEqual({ enabled: true })
+    // `staff` is false with TEST_SIGN_IN=customers (ADR-0017); the local .env uses "on".
+    expect(r.body).toEqual({ enabled: true, staff: true })
   })
 
   it("signs a new customer in on the web with only an email, then asks for the profile", async () => {

@@ -11,7 +11,7 @@ import { normaliseReference } from "@unitravel/domain"
 
 import { constantTimeEqual, encryptField, otpHash, randomDigits } from "../../core/crypto"
 import { AppError } from "../../core/errors"
-import { ipPrefix, RateLimiter } from "../../core/http/rate-limit"
+import { ipKey, ipPrefix, RateLimiter } from "../../core/http/rate-limit"
 import { DB, REDIS } from "../../core/infra.module"
 import { CargoService } from "../cargo/cargo.service"
 import { ConfigService } from "../config/config.service"
@@ -32,6 +32,17 @@ type Kind = PublicTrackView["kind"]
  * code goes by SMS to the phone on record only when it did. Verify answers with the status timeline alone: no names,
  * passport data, amounts or documents.
  */
+/** Spends one attempt and returns {hash, challengeId}, or nil when the code is gone or has no attempts left. */
+const TRACK_ATTEMPT_LUA = `
+local raw = redis.call("GET", KEYS[1])
+if not raw then return nil end
+local st = cjson.decode(raw)
+if st.attempts >= st.max then return nil end
+st.attempts = st.attempts + 1
+redis.call("SET", KEYS[1], cjson.encode(st), "KEEPTTL")
+return {st.hash, st.challengeId}
+`
+
 @Injectable()
 export class TrackService {
   constructor(
@@ -91,7 +102,7 @@ export class TrackService {
     if (!auth.allowedCountries.includes(phone.country!)) throw new AppError("DESTINATION_NOT_ALLOWED", "Codes cannot be sent to this country")
     // The same layered limits as OTP sign-in, spent before and independently of the match (separate counters: an
     // attacker must not be able to burn a victim's sign-in budget through this public route).
-    const recentFromIp = await this.limiter.count("track-ip-10m", ctx.ip, 600)
+    const recentFromIp = await this.limiter.count("track-ip-10m", ipKey(ctx.ip), 600)
     if (auth.challengeAfterRequestsPerIp10Min > 0 && recentFromIp >= auth.challengeAfterRequestsPerIp10Min && !(await this.pow.verify(body.challenge))) {
       throw new AppError("CHALLENGE_REQUIRED", "Please complete the check", undefined, { challenge: this.pow.create() })
     }
@@ -100,10 +111,10 @@ export class TrackService {
     }
     await this.limiter.enforce("track-number-1h", phone.value, auth.maxPerHour, 3600)
     await this.limiter.enforce("track-number-1d", phone.value, auth.maxPerDay, 86400)
-    await this.limiter.enforce("track-ip-1h", ctx.ip, 20, 3600)
+    await this.limiter.enforce("track-ip-1h", ipKey(ctx.ip), 20, 3600)
     await this.limiter.enforce("track-net-1h", ipPrefix(ctx.ip), 60, 3600)
     await this.limiter.enforce("track-device-1h", body.deviceId, 10, 3600)
-    await this.limiter.hit("track-ip-10m", ctx.ip, 600)
+    await this.limiter.hit("track-ip-10m", ipKey(ctx.ip), 600)
 
     const ref = normaliseReference(body.ref)
     const rec = ref ? await this.phoneOnRecord(ref) : null
@@ -119,19 +130,18 @@ export class TrackService {
 
   async verify(body: TrackVerifyBody, ctx: TrackCtx): Promise<PublicTrackView> {
     const auth = this.config.get("AUTH")
-    await this.limiter.enforce("track-verify-ip", ctx.ip, auth.verifyIpLimitPer10Min, 600)
+    await this.limiter.enforce("track-verify-ip", ipKey(ctx.ip), auth.verifyIpLimitPer10Min, 600)
     const phone = normaliseIdentity("PHONE", body.phone).value
     const ref = normaliseReference(body.ref)
     const raw = ref ? await this.redis.get(this.key(ref, phone)) : null
     // One answer for every failure (unknown pair, expired, locked, wrong): the code is the only thing a caller can learn about.
     if (!ref || !raw) throw new AppError("OTP_INVALID")
-    const st = JSON.parse(raw) as { hash: string; challengeId: string; attempts: number; max: number }
-    if (st.attempts >= st.max) throw new AppError("OTP_INVALID")
-    st.attempts += 1
-    const ttl = await this.redis.ttl(this.key(ref, phone))
-    await this.redis.set(this.key(ref, phone), JSON.stringify(st), "EX", Math.max(1, ttl))
-    if (!constantTimeEqual(st.hash, otpHash(body.code, st.challengeId))) throw new AppError("OTP_INVALID")
-    await this.redis.del(this.key(ref, phone))
+    // Counted atomically before the comparison, so parallel guesses each spend an attempt.
+    const st = (await this.redis.eval(TRACK_ATTEMPT_LUA, 1, this.key(ref, phone))) as [string, string] | null
+    if (!st) throw new AppError("OTP_INVALID")
+    const [hash, challengeId] = st
+    if (!constantTimeEqual(hash, otpHash(body.code, challengeId))) throw new AppError("OTP_INVALID")
+    if ((await this.redis.del(this.key(ref, phone))) !== 1) throw new AppError("OTP_INVALID")
     const rec = await this.phoneOnRecord(ref)
     if (!rec) throw new AppError("OTP_INVALID")
     return this.view(ref, rec.kind, rec.id)

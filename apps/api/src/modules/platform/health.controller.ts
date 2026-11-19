@@ -1,7 +1,7 @@
 import { Controller, Get } from "@nestjs/common"
 import { ApiExcludeController } from "@nestjs/swagger"
 
-import { Public } from "../../core/http/decorators"
+import { Public, RateLimit } from "../../core/http/decorators"
 import { HealthService } from "./health.service"
 
 @ApiExcludeController()
@@ -17,8 +17,8 @@ export class HealthController {
 
   @Get("ready")
   @Public()
-  async ready() {
-    const d = await this.health.diagnostics()
-    return { ready: d.database.ok && d.redis.ok, database: d.database.ok, redis: d.redis.ok }
+  @RateLimit({ name: "ready", limit: 120, windowSeconds: 60, key: "ip" })
+  ready() {
+    return this.health.readiness()
   }
 }

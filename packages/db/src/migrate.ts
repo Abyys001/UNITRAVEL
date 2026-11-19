@@ -20,7 +20,7 @@ async function main() {
     if (url) {
       const pw = decodeURIComponent(new URL(url).password)
       await client.query(`ALTER ROLE ${role} WITH LOGIN PASSWORD '${pw.replace(/'/g, "''")}'`)
-    }
+    } else console.warn(`${role}: password not changed (${role === "app_rw" ? "DATABASE_APP_URL" : "DATABASE_RO_URL"} is not set); a new database leaves the role unable to sign in`)
   }
   const { rows } = await client.query<{ tablename: string }>("SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '%\\_20%' AND tablename NOT LIKE '%\\_default'")
   await client.query("GRANT USAGE ON SCHEMA public TO app_rw, app_ro")

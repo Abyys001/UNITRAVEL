@@ -55,6 +55,9 @@ JWT_PUBLIC_KEYS='[{"kty":"OKP","crv":"Ed25519","x":"$jwt_x","kid":"k1"}]'
 MASTER_ENCRYPTION_KEY=$(openssl rand -base64 32)
 OTP_PEPPER=$(openssl rand -base64 32)
 
+# Valkey password (ADR-0017)
+REDIS_PASSWORD=$(hex 32)
+
 OBJECT_STORAGE_PUBLIC_ENDPOINT=https://$web
 OBJECT_STORAGE_BUCKET=unitravel-documents
 OBJECT_STORAGE_ACCESS_KEY=$(hex 16)
@@ -77,6 +80,14 @@ EOF
 }
 
 load_env() { set -a; . "$ROOT/$ENV_FILE"; set +a; }
+
+# Settings added after a host was first deployed are appended once, so `git pull && scripts/vps-deploy.sh` keeps working.
+upgrade_env() {
+  if ! grep -q '^REDIS_PASSWORD=' "$ENV_FILE"; then
+    log "Adding REDIS_PASSWORD to $ENV_FILE (Valkey now requires a password, ADR-0017)"
+    printf '\n# Valkey password (ADR-0017)\nREDIS_PASSWORD=%s\n' "$(hex 32)" >> "$ENV_FILE"
+  fi
+}
 
 write_nginx() {
   load_env
@@ -121,6 +132,12 @@ status() {
   for u in "https://$MOBILE_HOST/health" "https://$WEB_HOST/en" "https://$ADMIN_HOST/" "https://$MOBILE_HOST/" "https://$MOBILE_HOST/app/" "https://$DEV_HOST/"; do
     printf '%-45s %s\n' "$u" "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$u" || echo ERR)"
   done
+  log "Last database maintenance run"
+  "${COMPOSE[@]}" logs --no-log-prefix --tail 3 db-maintenance 2>/dev/null || true
+  case "${TEST_SIGN_IN:-off}" in
+    on) printf '\033[1;31mWARNING\033[0m TEST_SIGN_IN=on: anyone can sign in to any account, staff included, with an email alone.\n        Use TEST_SIGN_IN=customers (staff need code + second factor) or off before real data arrives.\n' ;;
+    customers) printf '\033[1;33mNOTE\033[0m TEST_SIGN_IN=customers: customer accounts sign in with an email alone (testing phase).\n' ;;
+  esac
 }
 
 case "${1:-deploy}" in
@@ -129,6 +146,7 @@ case "${1:-deploy}" in
   deploy)
     command -v docker >/dev/null && command -v nginx >/dev/null && command -v certbot >/dev/null || { echo "needs docker, nginx, certbot" >&2; exit 1; }
     write_env
+    upgrade_env
     log "Building images (first build takes a while: Next.js apps and the Flutter SDK)"
     "${COMPOSE[@]}" build
     log "Starting the stack"

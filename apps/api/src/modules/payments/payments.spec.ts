@@ -39,6 +39,7 @@ describe("adapters are gated (ADR-0007 P1, P12)", () => {
   })
   it("the FAKE adapter refuses a production build even when APP_ENV is local, like the FAKE flight adapter", () => {
     vi.stubEnv("NODE_ENV", "production")
+    vi.stubEnv("APP_ENV", "local")
     expect(() => new FakePaymentAdapter({} as never)).toThrowError(/APP_ENV=local/)
   })
   it("FAKE events are signed in Stripe's format and verify through the same code", async () => {

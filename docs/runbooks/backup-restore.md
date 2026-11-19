@@ -8,6 +8,9 @@ Booklet ch. 30.6. Targets: RPO at most 15 minutes, RTO at most 4 hours. Trigger:
 - Redis (Valkey): AOF persistence for queues; caches need no backup. Note SLA timers live there.
 - Hosting region and provider for the production backup bucket: UNKNOWN (ch. 34.4); WAL archiving and PITR are the production design and are not configured by anything in this repository. `infra/compose.prod.yml` runs a single PostgreSQL service with a volume; PITR must be added on the chosen host or managed database.
 
+## What the deployment does now (ADR-0017)
+`infra/compose.prod.yml` runs `db-maintenance` (script `infra/scripts/db-maintenance.sh`, owner role): at start and then every 24 hours it calls `ensure_monthly_partitions` for `audit_log` and `provider_calls`, and writes `pg_dump --format=custom` to the `backups` volume as `unitravel-<UTC time>.dump`, deleting files older than `BACKUP_KEEP_DAYS` (default 14). Each run logs one line per step. These dumps are on the same host: copying them (and the `storage` volume) off the host, encrypting them with a key kept elsewhere, WAL archiving and PITR are still the operator's to set up. Restore a dump with `pg_restore -d <db> --no-owner --exit-on-error <file>`.
+
 ## Local drill (what is proven)
 `scripts/backup-restore-drill.sh` (booklet ch. 30.6 monthly test, logical-dump form): `pg_dump -Fc` of the live database, restore into a scratch database `<name>_restore_drill`, row counts compared across every public table, scratch database dropped, dump deleted. Measured locally on 22-23 Oct 2026: dump 0.6 s, restore 2.7 s, 82 tables, row counts identical. This proves the dumps restore and the schema is restorable; it does not prove WAL archiving, PITR, encryption of backups or production-scale timings.
 
