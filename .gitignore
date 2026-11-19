@@ -24,3 +24,29 @@ graphify-out/20[0-9][0-9]-*/
 apps/mobile/test/golden/failures/
 .playwright-mcp/
 .pnpm-store/
+
+# Screenshots and photos dropped into the repo root can carry credentials
+# (two such images were removed on 19 Nov 2026). Assets belong under apps/*/public or docs/.
+/*.jpg
+/*.jpeg
+/*.png
+/*.heic
+/*.webp
+WhatsApp Image*
+Screenshot*.png
+# Local credential files
+*.credentials.json
+credentials*.json
+.claude/settings.local.json
+.env.*
+!.env.example
+*.local.json
+*.pem
+*.p12
+service-account*.json
+*.bak
+*.orig
+*.tmp
+*.swp
+.DS_Store
+.claude/worktrees/
