@@ -162,15 +162,15 @@ export class CatalogRefreshService implements OnModuleInit {
     return (await this.suppliers.credentials(APIFY_PROVIDER_ID))?.token ?? null
   }
 
-  /** ADR-0035: the FlightAPI key is an environment secret; it is never stored, logged or echoed. */
-  protected flightapiKey(): string | null {
-    return env().FLIGHTAPI_KEY ?? null
+  /** ADR-0036 E12: the key staff entered in the Developer Panel wins; `FLIGHTAPI_KEY` stays as the fallback. Never logged or echoed. */
+  protected async flightapiKey(): Promise<string | null> {
+    return (await this.suppliers.credentials(FLIGHTAPI_PROVIDER_ID))?.apiKey ?? env().FLIGHTAPI_KEY ?? null
   }
 
   /** A pause for a rejected credential ends when the credential changes: Apify through the store, FlightAPI by the key's fingerprint. */
   private async authRecovered(s: CatalogSettings, pause: NonNullable<Awaited<ReturnType<CatalogSettingsService["state"]>>["pause"]>): Promise<boolean> {
     if (s.source !== "flightapi") return !!(await this.token())
-    const key = this.flightapiKey()
+    const key = await this.flightapiKey()
     return !!key && fingerprint(key) !== pause.key
   }
 
@@ -251,9 +251,9 @@ export class CatalogRefreshService implements OnModuleInit {
 
   /** One tick on FlightAPI: its pro-rata share of this month's credits, in priority order, one call per slot. The caller owns the lock. */
   private async tickFlightapi(s: CatalogSettings, now: Date, lock: string): Promise<Record<string, unknown>> {
-    const key = this.flightapiKey()
+    const key = await this.flightapiKey()
     if (!key) {
-      await this.pauseSystem("AUTH", null, "FLIGHTAPI_KEY is not configured")
+      await this.pauseSystem("AUTH", null, "the FlightAPI key is not configured")
       return { skipped: "AUTH" }
     }
     const { used, budget } = await this.budget.credits(s, now)
@@ -273,7 +273,7 @@ export class CatalogRefreshService implements OnModuleInit {
     const jobs = picked.map((c): FlightapiJob => ({ slotId: c.slot.id, departureDate: c.slot.departureDate, origin: routeOf.get(c.slot.routeId)!.origin, destination: routeOf.get(c.slot.routeId)!.destination, maxResults: c.maxResults }))
     const run = await this.runCalls(key, s, jobs, "refresh", lock)
     const sum = await run.done
-    if (sum.fatal === "AUTH") await this.pauseSystem("AUTH", null, "FlightAPI rejected the key (401/403); replace FLIGHTAPI_KEY", fingerprint(key))
+    if (sum.fatal === "AUTH") await this.pauseSystem("AUTH", null, "FlightAPI rejected the key (401/403); replace the key", fingerprint(key))
     else if (sum.fatal === "BUDGET") await this.pauseSystem("BUDGET", budget.monthEnd, "FlightAPI reports no credits left (402)")
     else if (sum.ok === 0) {
       const st = await this.cfg.updateState((cur) => ({ failedTicks: cur.failedTicks + 1 }))
@@ -576,14 +576,14 @@ export class CatalogRefreshService implements OnModuleInit {
 
   /** The calls run in the background under the lock; the returned id is the ledger row, which the status route reads. */
   private async startFlightapiAdmin(s: CatalogSettings, jobs: FlightapiJob[], purpose: UsagePurpose, meta?: Meta): Promise<RecheckStart> {
-    const key = this.flightapiKey()
-    if (!key) throw new AppError("SUPPLIER_UNAVAILABLE", "FLIGHTAPI_KEY is not set")
+    const key = await this.flightapiKey()
+    if (!key) throw new AppError("SUPPLIER_UNAVAILABLE", "The FlightAPI key is not set")
     const lock = randomToken(12)
     if (!(await this.takeLock(lock))) throw new AppError("VERSION_CONFLICT", "A refresh run is already in progress; try again in a minute")
     try {
       const run = await this.runCalls(key, s, jobs, purpose, lock, meta)
       void run.done.then(async (sum) => {
-        if (sum.fatal === "AUTH") await this.pauseSystem("AUTH", null, "FlightAPI rejected the key (401/403); replace FLIGHTAPI_KEY", fingerprint(key))
+        if (sum.fatal === "AUTH") await this.pauseSystem("AUTH", null, "FlightAPI rejected the key (401/403); replace the key", fingerprint(key))
         else if (sum.fatal === "BUDGET") await this.pauseSystem("BUDGET", (await this.budget.credits(s)).budget.monthEnd, "FlightAPI reports no credits left (402)")
       }).catch((err) => this.log.error({ err: String(err) }, "staff FlightAPI run failed")).finally(() => this.releaseLock(lock))
       return { jobId: run.ledgerId, status: "PENDING" }

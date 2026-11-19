@@ -95,8 +95,8 @@ describe("permission matrix", () => {
 
   it("includes the Apify Developer Panel routes, so the role sweeps cover them (ADR-0032)", () => {
     const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
-    // POST /v1/dev/providers/apify-google-flights/test is a parameter-less write, so it is not swept; routes.spec.ts pins its permission.
-    for (const [m, p] of [["GET", "/v1/dev/providers/:id"], ["GET", "/v1/dev/providers/:id/usage"], ["GET", "/v1/admin/providers/apify-google-flights/usage"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
+    // POST /v1/dev/providers/apify-google-flights/test is a parameter-less write, so it is not swept; routes.spec.ts pins its permission (and the Aviation Edge test and coverage, ADR-0036).
+    for (const [m, p] of [["GET", "/v1/dev/providers/:id"], ["GET", "/v1/dev/providers/:id/usage"], ["GET", "/v1/admin/providers/apify-google-flights/usage"], ["GET", "/v1/dev/providers/aviation-edge/status"]] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
     for (const role of ["customer", "admin", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("provider.config.write")
     // The admin dashboard card (ADR-0032 B7) is read-only: developer and owner only, never a customer.
     for (const role of ["customer", "admin", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("provider.config.read")

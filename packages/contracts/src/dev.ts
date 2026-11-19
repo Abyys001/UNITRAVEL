@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { Iata, IsoDateTime, Uuid } from "./common"
+import { Iata, IsoDate, IsoDateTime, Uuid } from "./common"
 import { ConfigDomain, ConfigVersionStatus, ProviderEnv, ProviderId, UserStatus } from "./enums"
 import { PERMISSIONS } from "./permissions"
 import { SearchQuery } from "./search"
@@ -87,6 +87,50 @@ export const DevApifyTestResult = z.object({
   testedAt: IsoDateTime,
 })
 export type DevApifyTestResult = z.infer<typeof DevApifyTestResult>
+
+/** `POST /v1/dev/providers/aviation-edge/test` (ADR-0036): one future-schedule call (IKA→IST, today + 8 days). Never the key. */
+export const DevAviationEdgeTestResult = z.object({
+  ok: z.boolean(),
+  latencyMs: z.number().int().nonnegative(),
+  probe: z.object({ from: z.string(), to: z.string(), date: IsoDate }),
+  rows: z.number().int().nonnegative(),
+  carriers: z.array(z.string()),
+  sampleFlight: z.string().nullable(),
+  /** AUTH, RATE_LIMITED, UNAVAILABLE, BAD_RESPONSE or a short message; null when ok. */
+  detail: z.string().nullable(),
+  testedAt: IsoDateTime,
+})
+export type DevAviationEdgeTestResult = z.infer<typeof DevAviationEdgeTestResult>
+
+/** `POST /v1/dev/providers/aviation-edge/coverage` (ADR-0036): departures per priority airport on one date. Staff-triggered only. */
+export const AVIATION_EDGE_COVERAGE_AIRPORTS = ["IKA", "IST", "SAW", "DXB", "DOH", "LHR", "LGW", "FRA", "CDG", "AMS"] as const
+export const DevAviationEdgeCoverage = z.object({
+  date: IsoDate,
+  airports: z.array(z.object({
+    iata: z.string(),
+    departures: z.number().int().nonnegative().nullable(),
+    carriers: z.array(z.string()),
+    destinations: z.number().int().nonnegative(),
+    error: z.string().nullable(),
+  })),
+  callsUsed: z.number().int().nonnegative(),
+  ranAt: IsoDateTime,
+  ranBy: z.string().nullable(),
+})
+export type DevAviationEdgeCoverage = z.infer<typeof DevAviationEdgeCoverage>
+
+/** Aviation Edge page status: budget and pacer state, no secret. */
+export const DevAviationEdgeStatus = z.object({
+  callsUsedThisMonth: z.number().int().nonnegative(),
+  monthlyCalls: z.number().int().nonnegative(),
+  reserveCalls: z.number().int().nonnegative(),
+  pause: z.enum(["NONE", "AUTH", "RATE_LIMITED", "CIRCUIT", "BUDGET", "DISABLED", "NO_KEY"]),
+  lastTickAt: IsoDateTime.nullable(),
+  slotsWithSchedules: z.number().int().nonnegative(),
+  schedulesCurrent: z.number().int().nonnegative(),
+  lastCoverage: DevAviationEdgeCoverage.nullable(),
+})
+export type DevAviationEdgeStatus = z.infer<typeof DevAviationEdgeStatus>
 
 export const ProviderRunView = z.object({
   id: Uuid, provider: ProviderId, externalRunId: z.string().nullable(), pool: z.enum([...MeteringPool.options, "catalog"]), purpose: z.enum(["SEARCH", "RECHECK", "PREWARM", "CATALOG"]), searchId: Uuid.nullable(),

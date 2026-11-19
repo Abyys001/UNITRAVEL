@@ -47,6 +47,15 @@ export const CatalogSettings = z.object({
   flightapiMonthlyCredits: z.number().int().min(0).max(1_000_000),
   /** Credits held back for staff "refresh now" and revalidation until the last `releaseReserveHours` of the month. */
   flightapiReserveCredits: z.number().int().min(0).max(100_000),
+  /** ADR-0036: Aviation Edge schedule layer. Its own pacer, beside the priced source; on/off is the `aviation-edge` provider row. Calls per calendar month, UTC. */
+  aviationEdgeMonthlyCalls: z.number().int().min(0).max(10_000_000),
+  /** Calls held back for staff tests and coverage probes. */
+  aviationEdgeReserveCalls: z.number().int().min(0).max(1_000_000),
+  /** Future schedules start about a week out (DOCUMENTED); nearer dates are left to the priced source. */
+  aviationEdgeMinDaysAhead: z.number().int().min(0).max(365),
+  aviationEdgeMaxDaysAhead: z.number().int().min(1).max(365),
+  /** Predicted schedules change slowly; a slot is re-asked after this many hours. */
+  aviationEdgeRefreshHours: z.number().min(4).max(24 * 30),
   monthlyBudgetUsd: z.number().min(0).max(10_000),
   safetyMarginUsd: z.number().min(0).max(1_000),
   adminReserveUsd: z.number().min(0).max(1_000),
@@ -80,6 +89,11 @@ export const DEFAULT_CATALOG_SETTINGS: CatalogSettings = {
   source: "apify",
   flightapiMonthlyCredits: 1000,
   flightapiReserveCredits: 100,
+  aviationEdgeMonthlyCalls: 30_000,
+  aviationEdgeReserveCalls: 500,
+  aviationEdgeMinDaysAhead: 7,
+  aviationEdgeMaxDaysAhead: 60,
+  aviationEdgeRefreshHours: 72,
   monthlyBudgetUsd: 5,
   safetyMarginUsd: 0.2,
   adminReserveUsd: 0.75,
@@ -141,6 +155,9 @@ export const WatchRoute = z.object({
 })
 export type WatchRoute = z.infer<typeof WatchRoute>
 
+export const ItineraryBasis = z.enum(["OFFER", "SCHEDULE"])
+export type ItineraryBasis = z.infer<typeof ItineraryBasis>
+
 // ---------- Public (customer) shapes: an allowlist. No amount, currency, fare, baggage or provider field exists here. ----------
 
 const PublicPoint = z.object({ iata: Iata, local: z.string(), terminal: z.string().optional() })
@@ -172,6 +189,11 @@ export const PublicItinerary = z.object({
   /** ADR-0031 I3/I5: an Iran lane on REVIEW. The customer sees the review notice; a request goes to COMPLIANCE_HOLD. */
   complianceReview: z.boolean(),
   fetchedAt: IsoDateTime,
+  /**
+   * ADR-0036. OFFER: from a priced source (an indicative offer existed). SCHEDULE: from a provider schedule only (Aviation Edge future
+   * schedules, an algorithmic prediction): no availability, fare or seat is implied. Snapshots written before 0036 parse as OFFER.
+   */
+  basis: ItineraryBasis.default("OFFER"),
 })
 export type PublicItinerary = z.infer<typeof PublicItinerary>
 

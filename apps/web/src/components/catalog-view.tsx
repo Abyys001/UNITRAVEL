@@ -54,6 +54,17 @@ function Freshness({ iso, stale }: { iso: string; stale?: boolean }) {
   return <p className={`text-xs ${stale ? "font-semibold text-orange-700" : "text-steel"}`}>{t("catalog.updated", { ago: ago(iso, locale) })}</p>
 }
 
+/** ADR-0036: a SCHEDULE result is a predicted timetable, never an offer; the explanation is tied to the badge for assistive tech. */
+function ScheduleBadge({ id, visibleNote = false }: { id: string; visibleNote?: boolean }) {
+  const { t } = useI18n()
+  return (
+    <>
+      <span aria-describedby={id} title={t("catalog.scheduleNote")} data-testid="schedule-badge"><Tag kind="manual">{t("catalog.scheduleBadge")}</Tag></span>
+      <span id={id} className={visibleNote ? "mt-2 block text-xs text-steel" : "sr-only"}>{t("catalog.scheduleNote")}</span>
+    </>
+  )
+}
+
 function Notices({ it }: { it: PublicItinerary }) {
   const { t } = useI18n()
   const flags = flagsOf(it)
@@ -110,6 +121,7 @@ function ResultCard({ it, stale }: { it: PublicItinerary; stale: boolean }) {
           <Ltr className="font-mono text-navy-950">{[it.origin, ...it.layovers.map((l) => l.at), it.destination].join(" → ")}</Ltr>
           <span>{date(it.departureDate, { dateOnly: true, weekday: true })}</span>
         </p>
+        {it.basis === "SCHEDULE" && <div className="mb-3"><ScheduleBadge id={`sched-${it.id}`} /></div>}
         <Summary it={it} />
         <Layovers it={it} />
         <Notices it={it} />
@@ -198,6 +210,7 @@ export function CatalogDetailView({ d, shape }: { d: PublicItineraryDetail; shap
       <p className="mb-6 mt-2 text-steel">{date(d.departureDate, { dateOnly: true, weekday: true })}{sep}{t("catalog.total")}: {duration(d.durationMin)}{sep}{d.stops === 0 ? t("results.direct") : t(d.stops === 1 ? "results.stops" : "results.stopsMany", { n: d.stops })}</p>
       {!d.isCurrent && <NoticeLine tone="warn"><span data-testid="no-longer-listed">{t("catalog.noLongerListed")} {t("catalog.lastSeen", { ago: ago(d.lastSeenAt, locale) })}</span></NoticeLine>}
       <div className="card-brand rounded-2xl p-4 sm:p-5">
+        {d.basis === "SCHEDULE" && <div className="mb-4"><ScheduleBadge id="schedule-note" visibleNote /></div>}
         <ol className="space-y-5">
           {d.legs.map((leg, i) => (
             <li key={i}>
@@ -209,11 +222,11 @@ export function CatalogDetailView({ d, shape }: { d: PublicItineraryDetail; shap
               )}
               <p className="mb-2 flex flex-wrap items-center gap-x-2 text-sm font-semibold"><Plane aria-hidden className="size-4 text-royal rtl:-scale-x-100" />{t("catalog.leg", { n: i + 1 })}{sep}<Ltr className="font-mono">{leg.carrier} {leg.flightNumber}</Ltr>{leg.operatingCarrier && leg.operatingCarrier !== leg.carrier && <span className="text-xs font-normal text-steel">{t("catalog.operatedBy", { carrier: leg.operatingCarrier })}</span>}</p>
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                <div><p className="font-display text-2xl tabular-nums"><Ltr>{clock(leg.from.local)}</Ltr></p><p className="text-sm font-semibold"><Ltr>{leg.from.iata}</Ltr></p>{leg.from.terminal && <p className="text-xs text-steel">{t("catalog.terminal", { terminal: leg.from.terminal })}</p>}</div>
+                <div><p className="font-display text-2xl tabular-nums"><Ltr>{clock(leg.from.local)}</Ltr></p><p className="text-sm font-semibold"><Ltr>{leg.from.iata}</Ltr></p><p className="text-xs text-steel">{leg.from.terminal ? t("catalog.terminal", { terminal: leg.from.terminal }) : `${t("catalog.terminalLabel")}: ${t("catalog.notProvided")}`}</p></div>
                 <p className="text-xs font-semibold text-steel">{duration(leg.durationMin)}</p>
-                <div className="text-end"><p className="font-display text-2xl tabular-nums"><Ltr>{clock(leg.to.local)}</Ltr></p><p className="text-sm font-semibold"><Ltr>{leg.to.iata}</Ltr></p>{leg.to.terminal && <p className="text-xs text-steel">{t("catalog.terminal", { terminal: leg.to.terminal })}</p>}</div>
+                <div className="text-end"><p className="font-display text-2xl tabular-nums"><Ltr>{clock(leg.to.local)}</Ltr></p><p className="text-sm font-semibold"><Ltr>{leg.to.iata}</Ltr></p><p className="text-xs text-steel">{leg.to.terminal ? t("catalog.terminal", { terminal: leg.to.terminal }) : `${t("catalog.terminalLabel")}: ${t("catalog.notProvided")}`}</p></div>
               </div>
-              {leg.aircraft && <p className="mt-2 text-xs text-steel">{t("catalog.aircraft")}: <Ltr className="font-semibold text-navy-950">{leg.aircraft}</Ltr></p>}
+              <p className="mt-2 text-xs text-steel">{t("catalog.aircraft")}: {leg.aircraft ? <Ltr className="font-semibold text-navy-950">{leg.aircraft}</Ltr> : t("catalog.notProvided")}</p>
             </li>
           ))}
         </ol>

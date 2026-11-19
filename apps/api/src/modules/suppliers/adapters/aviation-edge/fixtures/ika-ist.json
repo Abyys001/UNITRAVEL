@@ -1,0 +1,255 @@
+[
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "1",
+   "gate": "G12",
+   "scheduledTime": "02:55"
+  },
+  "arrival": {
+   "iataCode": "IST",
+   "icaoCode": "LTFM",
+   "terminal": "I",
+   "gate": "",
+   "scheduledTime": "05:20"
+  },
+  "aircraft": {
+   "modelCode": "A321",
+   "modelText": "A321"
+  },
+  "airline": {
+   "name": "Turkish Airlines",
+   "iataCode": "TK",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "879",
+   "iataNumber": "TK879",
+   "icaoNumber": "THY879"
+  }
+ },
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "1",
+   "gate": "G12",
+   "scheduledTime": "23:30"
+  },
+  "arrival": {
+   "iataCode": "IST",
+   "icaoCode": "LTFM",
+   "terminal": "I",
+   "gate": "",
+   "scheduledTime": "02:10"
+  },
+  "aircraft": {
+   "modelCode": "A320",
+   "modelText": ""
+  },
+  "airline": {
+   "name": "Turkish Airlines",
+   "iataCode": "TK",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "881",
+   "iataNumber": "TK881",
+   "icaoNumber": "THY881"
+  }
+ },
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "",
+   "gate": "G12",
+   "scheduledTime": "08:00"
+  },
+  "arrival": {
+   "iataCode": "IST",
+   "icaoCode": "LTFJ",
+   "terminal": "",
+   "gate": "",
+   "scheduledTime": "10:30"
+  },
+  "aircraft": {
+   "modelCode": "A321",
+   "modelText": "A321"
+  },
+  "airline": {
+   "name": "PC",
+   "iataCode": "PC",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "1",
+   "iataNumber": "PC1",
+   "icaoNumber": "THY1"
+  }
+ },
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "1",
+   "gate": "G12",
+   "scheduledTime": "02:55"
+  },
+  "arrival": {
+   "iataCode": "IST",
+   "icaoCode": "LTFM",
+   "terminal": "I",
+   "gate": "",
+   "scheduledTime": "05:20"
+  },
+  "aircraft": {
+   "modelCode": "A321",
+   "modelText": "A321"
+  },
+  "airline": {
+   "name": "Turkish Airlines",
+   "iataCode": "TK",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "879",
+   "iataNumber": "TK879",
+   "icaoNumber": "THY879"
+  }
+ },
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "1",
+   "gate": "G12",
+   "scheduledTime": "09:00"
+  },
+  "arrival": {
+   "iataCode": "IST",
+   "icaoCode": "LTFM",
+   "terminal": "I",
+   "gate": "",
+   "scheduledTime": "05:00"
+  },
+  "aircraft": {
+   "modelCode": "A321",
+   "modelText": "A321"
+  },
+  "airline": {
+   "name": "Turkish Airlines",
+   "iataCode": "TK",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "883",
+   "iataNumber": "TK883",
+   "icaoNumber": "THY883"
+  }
+ },
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "1",
+   "gate": "G12",
+   "scheduledTime": "12:00"
+  },
+  "arrival": {
+   "iataCode": "IST",
+   "icaoCode": "LTFM",
+   "terminal": "I",
+   "gate": "",
+   "scheduledTime": "14:30:00"
+  },
+  "aircraft": {
+   "modelCode": "A321",
+   "modelText": "A321"
+  },
+  "airline": {
+   "name": "W5",
+   "iataCode": "W5",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "1141",
+   "iataNumber": "W51141",
+   "icaoNumber": "THY1141"
+  }
+ },
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "1",
+   "gate": "G12",
+   "scheduledTime": "13:00"
+  },
+  "arrival": {
+   "iataCode": "SAW",
+   "icaoCode": "LTFJ",
+   "terminal": "I",
+   "gate": "",
+   "scheduledTime": "15:30"
+  },
+  "aircraft": {
+   "modelCode": "A321",
+   "modelText": "A321"
+  },
+  "airline": {
+   "name": "PC",
+   "iataCode": "PC",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "2",
+   "iataNumber": "PC2",
+   "icaoNumber": "THY2"
+  }
+ },
+ {
+  "weekday": "3",
+  "departure": {
+   "iataCode": "IKA",
+   "icaoCode": "OIIE",
+   "terminal": "1",
+   "gate": "G12",
+   "scheduledTime": "13:00"
+  },
+  "arrival": {
+   "iataCode": "IST",
+   "icaoCode": "LTFM",
+   "terminal": "I",
+   "gate": "",
+   "scheduledTime": "15:30"
+  },
+  "aircraft": {
+   "modelCode": "A321",
+   "modelText": "A321"
+  },
+  "airline": {
+   "name": "Turkish Airlines",
+   "iataCode": "TK",
+   "icaoCode": "THY"
+  },
+  "flight": {
+   "number": "ABCDE",
+   "iataNumber": "TKABCDE",
+   "icaoNumber": "THYABCDE"
+  }
+ },
+ {
+  "departure": {
+   "iataCode": "IKA"
+  }
+ }
+]

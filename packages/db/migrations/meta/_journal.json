@@ -178,6 +178,13 @@
       "breakpoints": true
     },
     {
+      "idx": 25,
+      "version": "7",
+      "when": 1793182400000,
+      "tag": "0025_aviation_edge_schedules",
+      "breakpoints": true
+    },
+    {
       "idx": 26,
       "version": "7",
       "when": 1793182500000,

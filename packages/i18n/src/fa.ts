@@ -420,6 +420,7 @@ export const fa: DeepString<typeof en> = {
     askTeam: "از تیم ما بپرسید", requestFlight: "درخواست این پرواز", viewDetails: "جزئیات پرواز",
     detailTitle: "جزئیات پرواز", leg: "پرواز {n}", terminal: "ترمینال {terminal}", aircraft: "هواپیما", operatedBy: "اجراکننده: {carrier}", total: "کل سفر",
     noLongerListed: "این پرواز دیگر فهرست نشده است. از تیم ما گزینه‌های فعلی را بخواهید.", lastSeen: "آخرین مشاهده: {ago}", backToSearch: "بازگشت به جست‌وجو", layoverAt: "توقف در {at}: {time}",
+    scheduleBadge: "برنامهٔ پروازی · موجودی تأیید نشده", scheduleNote: "برنامهٔ پیش‌بینی‌شده از یک ارائه‌دهندهٔ داده‌های پرواز. صندلی، نرخ و موجودی را تیم ما هنگام ثبت درخواست شما تأیید می‌کند.", notProvided: "اعلام نشده", terminalLabel: "ترمینال", noPrice: "قیمت: از این منبع در دسترس نیست",
   },
   credits: { title: "اعتبار عکس‌ها و ویدیو", lead: "عکس‌ها و ویدیوهای این سایت رسانهٔ تزئینی از بانک‌های تصویر هستند. فقط مکان‌ها را نشان می‌دهند و پیشنهاد، قیمت یا موجودی نیستند.", item: "عنوان", creator: "پدیدآور", source: "منبع", licence: "مجوز", usedOn: "محل استفاده", none: "هنوز اعتباری ثبت نشده است." },
   // ADR-0032: popular routes on /flights (Apify Google Flights schedules, indicative only).

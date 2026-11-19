@@ -4,8 +4,8 @@ import { Inject, Injectable, Logger } from "@nestjs/common"
 import { and, eq, gte, inArray, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
-import { type CatalogDateGroup, type CatalogRoutesResponse, type CatalogSearchQuery, type CatalogSearchResponse, type CatalogSettings, type CatalogState, DEFAULT_CATALOG_SETTINGS, type PublicItinerary, PublicItineraryDetail } from "@unitravel/contracts"
-import { catalogPublicSnapshots, catalogSlots, type Db, flightResults, flightWatchlistRoutes } from "@unitravel/db"
+import { type CatalogDateGroup, type CatalogRoutesResponse, type CatalogSearchQuery, type CatalogSearchResponse, type CatalogSettings, type CatalogState, DEFAULT_CATALOG_SETTINGS, type PublicItinerary, PublicItineraryDetail, type PublicLeg } from "@unitravel/contracts"
+import { catalogPublicSnapshots, catalogScheduleSlots, catalogSlots, type Db, flightResults, flightSchedules, flightWatchlistRoutes } from "@unitravel/db"
 import { daysOut, tierFor } from "@unitravel/engine"
 
 import { AppError } from "../../core/errors"
@@ -14,6 +14,7 @@ import { ReferenceService } from "../reference/reference.service"
 import { etagOf } from "./catalog-model"
 import { CatalogSettingsService } from "./catalog-settings.service"
 import { datesKey, latestKey, SNAPSHOT_TTL_S, type SnapshotBlob, slotIndexKey, snapshotKey } from "./catalog-write.service"
+import { scheduleKey } from "./schedule-write.service"
 
 type RouteRow = typeof flightWatchlistRoutes.$inferSelect
 
@@ -25,6 +26,8 @@ const DEMAND_VIEW = 1
 export const DEMAND_REQUEST = 5
 
 const isoDate = (d: Date) => d.toISOString().slice(0, 10)
+/** What makes a priced and a schedule itinerary the same flight (ADR-0036 E4): the flight numbers and the local departure minute. */
+const flightKey = (i: Pick<PublicItinerary, "flightNumbers" | "departLocal">) => `${i.flightNumbers.join(",")}|${i.departLocal.slice(0, 16)}`
 const shift = (date: string, n: number) => isoDate(new Date(Date.parse(`${date}T00:00:00Z`) + n * DAY))
 
 export interface SearchOutcome {
@@ -137,6 +140,40 @@ export class CatalogReadService {
     } catch { /* the next request tries again */ }
   }
 
+  /**
+   * ADR-0036: the schedule layer's snapshot per route and date. Redis first, then Postgres (a miss is cached for five minutes as "0"; the writer
+   * replaces it). Never throws: a schedule problem must not take the priced results down with it.
+   */
+  private async scheduleBlobs(pairs: { routeId: string; date: string }[]): Promise<Map<string, SnapshotBlob | null>> {
+    const out = new Map<string, SnapshotBlob | null>()
+    const key = (p: { routeId: string; date: string }) => `${p.routeId}:${p.date}`
+    if (!pairs.length) return out
+    let redisOk = true
+    try {
+      const raw = await this.redis.mget(...pairs.map((p) => scheduleKey(p.routeId, p.date)))
+      pairs.forEach((p, i) => { if (raw[i]) out.set(key(p), raw[i] === "0" ? null : (JSON.parse(raw[i]!) as SnapshotBlob)) })
+    } catch {
+      redisOk = false
+    }
+    const missing = pairs.filter((p) => !out.has(key(p)))
+    if (!missing.length) return out
+    try {
+      const rows = await this.db.select({ routeId: catalogSlots.routeId, date: catalogSlots.departureDate, sched: catalogScheduleSlots }).from(catalogScheduleSlots)
+        .innerJoin(catalogSlots, eq(catalogSlots.id, catalogScheduleSlots.slotId))
+        .where(and(inArray(catalogSlots.routeId, [...new Set(missing.map((p) => p.routeId))]), inArray(catalogSlots.departureDate, [...new Set(missing.map((p) => p.date))])))
+      const found = new Map(rows.map((r) => [`${r.routeId}:${r.date}`, r.sched]))
+      for (const p of missing) {
+        const r = found.get(key(p))
+        const blob: SnapshotBlob | null = r && r.version > 0 ? { slotId: r.slotId, version: r.version, fetchedAt: r.lastFetchedAt?.toISOString() ?? null, status: r.status === "FRESH" ? "FRESH" : r.status === "EMPTY" ? "EMPTY" : r.status === "ERROR" ? "ERROR" : "NEVER", payload: r.payload } : null
+        out.set(key(p), blob)
+        if (redisOk) void this.redis.set(scheduleKey(p.routeId, p.date), blob ? JSON.stringify(blob) : "0", "EX", blob ? SNAPSHOT_TTL_S : 300).catch(() => undefined)
+      }
+    } catch (err) {
+      this.log.warn({ err: (err as Error).message }, "schedule layer unavailable; serving the priced results only")
+    }
+    return out
+  }
+
   /** Dates of a route that currently show flights (for the empty state's "nearby dates"). Cached 5 minutes. */
   private async datesWithResults(routeId: string, hideAfterDays: number): Promise<string[]> {
     try {
@@ -177,6 +214,7 @@ export class CatalogReadService {
     } catch {
       return { body: { ...base, tracked: true, state: "UNAVAILABLE", fetchedAt: null, results: [], dates: [], nearbyDates: [] }, etag: etagOf(["UNAVAILABLE", q.from, q.to, q.date]), cacheable: false }
     }
+    const sched = await this.scheduleBlobs(routes.flatMap((r) => window.map((date) => ({ routeId: r.id, date }))))
     const used: string[] = []
     const groups: CatalogDateGroup[] = window.sort().map((date) => {
       const tierH = tierFor(daysOut(date, now), s.tiers).intervalHours
@@ -187,10 +225,24 @@ export class CatalogReadService {
         const age = b.fetchedAt ? now.getTime() - Date.parse(b.fetchedAt) : Infinity
         return b.payload.length && age <= s.hideAfterDays * DAY ? [{ b, age }] : []
       })
-      if (!usable.length) return { date, state: "EMPTY" as CatalogState, fetchedAt: null, results: [] }
-      const oldest = usable.reduce((a, x) => (x.age > a.age ? x : a))
-      const state: CatalogState = usable.some((x) => x.age > 3 * tierH * HOUR) ? "STALE" : "RESULTS"
-      return { date, state, fetchedAt: oldest.b.fetchedAt, results: usable.flatMap((x) => x.b.payload).sort((a, b) => a.departLocal.localeCompare(b.departLocal) || a.id.localeCompare(b.id)) }
+      // ADR-0036 E4: the schedule layer adds flights the priced layer does not list; a priced itinerary with the same flights and local departure wins.
+      const listed = new Set(usable.flatMap((x) => x.b.payload.map(flightKey)))
+      const scheduled = routes.flatMap((r) => {
+        const b = sched.get(`${r.id}:${date}`)
+        if (!b) return []
+        used.push(`${b.slotId}@sched${b.version}`)
+        const age = b.fetchedAt ? now.getTime() - Date.parse(b.fetchedAt) : Infinity
+        const items = b.payload.filter((i) => !listed.has(flightKey(i)))
+        return items.length && age <= s.hideAfterDays * DAY ? [{ b, age, items }] : []
+      })
+      if (!usable.length && !scheduled.length) return { date, state: "EMPTY" as CatalogState, fetchedAt: null, results: [] }
+      // The priced layer decides the state when it has rows; the schedule layer ages on its own clock (3 x its refresh interval).
+      const deciding = usable.length ? usable : scheduled
+      const oldest = deciding.reduce((a, x) => (x.age > a.age ? x : a))
+      const staleAfter = usable.length ? 3 * tierH * HOUR : 3 * s.aviationEdgeRefreshHours * HOUR
+      const state: CatalogState = deciding.some((x) => x.age > staleAfter) ? "STALE" : "RESULTS"
+      const results = [...usable.flatMap((x) => x.b.payload), ...scheduled.flatMap((x) => x.items)].sort((a, b) => a.departLocal.localeCompare(b.departLocal) || a.id.localeCompare(b.id))
+      return { date, state, fetchedAt: oldest.b.fetchedAt, results }
     })
     const main = groups.find((g) => g.date === q.date)!
     let nearbyDates: string[] = []
@@ -230,12 +282,50 @@ export class CatalogReadService {
 
   // ---------------- detail and routes ----------------
 
-  /** One result's customer view. Selects named columns only: the provider offer and the pricing table are never read here. */
+  /**
+   * One result's customer view. Selects named columns only: the provider offer and the pricing table are never read here.
+   * ADR-0036: a SCHEDULE result id resolves from `flight_schedules` (current rows only), and a priced result's legs take the terminal and
+   * aircraft of the same scheduled flight where its own are missing. That enrichment happens here, on read; nothing is written back.
+   */
   async detail(id: string, now = new Date()): Promise<PublicItineraryDetail> {
     const [r] = await this.db.select({ id: flightResults.id, detail: flightResults.detail, isCurrent: flightResults.isCurrent, lastSeenAt: flightResults.lastSeenAt }).from(flightResults).where(eq(flightResults.id, id))
     const s = await this.settings()
-    if (!r || (!r.isCurrent && now.getTime() - r.lastSeenAt.getTime() > s.hideAfterDays * DAY)) throw new AppError("NOT_FOUND", "Flight not found")
-    return PublicItineraryDetail.strict().parse({ id: r.id, ...r.detail, isCurrent: r.isCurrent, lastSeenAt: r.lastSeenAt.toISOString() })
+    if (!r) return this.scheduleDetail(id)
+    if (!r.isCurrent && now.getTime() - r.lastSeenAt.getTime() > s.hideAfterDays * DAY) throw new AppError("NOT_FOUND", "Flight not found")
+    return PublicItineraryDetail.strict().parse({ id: r.id, ...(await this.enrichLegs(r.detail)), isCurrent: r.isCurrent, lastSeenAt: r.lastSeenAt.toISOString() })
+  }
+
+  private async scheduleDetail(id: string): Promise<PublicItineraryDetail> {
+    const [r] = await this.db.select({ id: flightSchedules.id, detail: flightSchedules.detail, isCurrent: flightSchedules.isCurrent, lastSeenAt: flightSchedules.lastSeenAt }).from(flightSchedules).where(eq(flightSchedules.id, id))
+    if (!r?.isCurrent) throw new AppError("NOT_FOUND", "Flight not found")
+    return PublicItineraryDetail.strict().parse({ id: r.id, ...r.detail, isCurrent: true, lastSeenAt: r.lastSeenAt.toISOString() })
+  }
+
+  private async enrichLegs<D extends { legs: PublicLeg[]; origin: string; destination: string }>(detail: D): Promise<D> {
+    const legKey = (l: PublicLeg) => `${l.flightNumber}|${l.from.local.slice(0, 16)}`
+    const needs = detail.legs.filter((l) => !l.from.terminal || !l.to.terminal || !l.aircraft)
+    if (!needs.length) return detail
+    try {
+      const rows = await this.db.select({ identityKey: flightSchedules.identityKey, detail: flightSchedules.detail }).from(flightSchedules)
+        .where(and(inArray(flightSchedules.identityKey, needs.map(legKey)), eq(flightSchedules.isCurrent, true), eq(flightSchedules.selfTransfer, false)))
+      const byKey = new Map(rows.map((x) => [x.identityKey, x.detail.legs[0]]))
+      if (!byKey.size) return detail
+      return {
+        ...detail,
+        legs: detail.legs.map((l) => {
+          const sc = byKey.get(legKey(l))
+          if (!sc) return l
+          return {
+            ...l,
+            from: { ...l.from, ...(!l.from.terminal && sc.from.terminal ? { terminal: sc.from.terminal } : {}) },
+            to: { ...l.to, ...(!l.to.terminal && sc.to.terminal ? { terminal: sc.to.terminal } : {}) },
+            ...(!l.aircraft && sc.aircraft ? { aircraft: sc.aircraft } : {}),
+          }
+        }),
+      }
+    } catch {
+      return detail
+    }
   }
 
   /** The next departures with flights on a route pair (popular-route cards): up to `limit` itineraries from the nearest dates. Snapshot reads only. */

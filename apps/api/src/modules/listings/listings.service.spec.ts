@@ -5,7 +5,7 @@ import { popularRoutes, toListingItem, upcomingCards } from "./listings.service"
 
 const card: PublicItinerary = {
   id: "0190f000-0000-7000-8000-000000000002", origin: "IST", destination: "LHR", departureDate: "2026-11-22", departLocal: "2026-11-22T08:40", arriveLocal: "2026-11-22T10:55", durationMin: 255,
-  stops: 0, carriers: ["TK"], flightNumbers: ["TK1979"], selfTransfer: false, layovers: [], riskFlags: [], complianceReview: true, fetchedAt: "2026-11-21T10:00:00.000Z",
+  stops: 0, carriers: ["TK"], flightNumbers: ["TK1979"], selfTransfer: false, layovers: [], riskFlags: [], complianceReview: true, fetchedAt: "2026-11-21T10:00:00.000Z", basis: "OFFER",
 }
 
 describe("popular-route cards from the flight catalog (ADR-0034, replaces the ADR-0032 B3 prewarm)", () => {

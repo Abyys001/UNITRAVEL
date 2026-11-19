@@ -11,6 +11,8 @@ import { CatalogReadController } from "./catalog/catalog-read.controller"
 import { CatalogReadService } from "./catalog/catalog-read.service"
 import { CatalogRefreshService } from "./catalog/catalog-refresh.service"
 import { CatalogWriteService } from "./catalog/catalog-write.service"
+import { ScheduleRefreshService } from "./catalog/schedule-refresh.service"
+import { ScheduleWriteService } from "./catalog/schedule-write.service"
 import { ComplianceController } from "./compliance/compliance.controller"
 import { ComplianceService } from "./compliance/compliance.service"
 import { AdminCustomersController, AdminVerificationsController, MyDetailsController, TravellersController } from "./customers/customers.controller"
@@ -71,7 +73,7 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   PublicServicesCatalogController, AdminServicesCatalogController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, CatalogRefreshService, CatalogReadService, CatalogAdminService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, ScheduleWriteService, ScheduleRefreshService, CatalogRefreshService, CatalogReadService, CatalogAdminService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

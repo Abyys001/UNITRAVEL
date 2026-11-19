@@ -122,6 +122,18 @@ export function SettingsSection({ canManage }: { canManage: boolean }) {
             </div>
           </fieldset>
 
+          <fieldset className="space-y-3" data-testid="ae-settings">
+            <legend className="cap mb-1">{t("cat.set.ae")}</legend>
+            <p className="text-caption text-steel">{t("cat.set.aeHint")}</p>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <N label={t("cat.set.aeMonthly")} value={draft.aviationEdgeMonthlyCalls} min={0} max={10_000_000} onChange={(n) => set("aviationEdgeMonthlyCalls", Math.trunc(n))} disabled={dis} />
+              <N label={t("cat.set.aeReserve")} value={draft.aviationEdgeReserveCalls} min={0} max={1_000_000} onChange={(n) => set("aviationEdgeReserveCalls", Math.trunc(n))} disabled={dis} />
+              <N label={t("cat.set.aeMin")} value={draft.aviationEdgeMinDaysAhead} min={0} max={365} onChange={(n) => set("aviationEdgeMinDaysAhead", Math.trunc(n))} disabled={dis} />
+              <N label={t("cat.set.aeMax")} value={draft.aviationEdgeMaxDaysAhead} min={1} max={365} onChange={(n) => set("aviationEdgeMaxDaysAhead", Math.trunc(n))} disabled={dis} />
+              <N label={t("cat.set.aeRefresh")} value={draft.aviationEdgeRefreshHours} min={4} max={720} onChange={(n) => set("aviationEdgeRefreshHours", n)} disabled={dis} />
+            </div>
+          </fieldset>
+
           <fieldset className="space-y-3">
             <legend className="cap mb-1">{t("cat.set.tiers")}</legend>
             <p className="text-caption text-steel">{t("cat.set.tiersHint")}</p>

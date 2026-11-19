@@ -36,7 +36,7 @@ All ten are unanswered. No counsel position has been recorded, so nothing below 
 | 6 | ATOL mode and wording | BLOCKED | Mode `PAY_ON_TICKETING` implemented as config; wording is placeholder pending counsel |
 | 7 | Cargo: brokering, lanes, goods, personal effects | BLOCKED | Lanes GB-IR, IR-GB, DE-IR disabled with compliance approval required; `IR:*` lane policy REVIEW; `IR:EXCESS_BAGGAGE` BLOCK; goods categories and keywords seeded as starting proposals (ch. 14.4); partners' compliance status gates booking |
 | 8 | Screening lists, thresholds, evidence retention | BLOCKED | Live UK/OFAC/EU lists every 6 hours; matcher threshold from compliance settings; retention proposal in ch. 28.6 |
-| 9 | Vendor sanctions clauses | BLOCKED | No vendor contracted; see A5 and F |
+| 9 | Vendor sanctions clauses | BLOCKED | No vendor contracted; see A5 and F. Aviation Edge (ADR-0036): API terms §8.6 make the subscriber represent it is not subject to sanctions or export restrictions, and §8.1 forbids keeping data after the subscription ends; counsel to confirm Uni Travel can give §8.6 before a paid key is used. Code ships with the provider disabled |
 | 10 | Consumer law information, cancellation, complaints | BLOCKED | Terms version recorded at sign-up; wording owed |
 
 D-01 (carriers): counsel's position is represented as compliance policy data (above) awaiting sign-off. It is not hard-coded; weakening it in code is forbidden (CLAUDE.md).

@@ -48,6 +48,12 @@ describe("fail-closed route declarations", () => {
     expect(find("PUT", "/v1/dev/providers/:id/credentials")).toMatchObject({ permissions: ["provider.config.write"], staff: true, dev: true })
     // The Admin Panel dashboard's usage card reads the same view without the dev host (ADR-0032 B7).
     expect(find("GET", "/v1/admin/providers/apify-google-flights/usage")).toMatchObject({ permissions: ["provider.config.read"], staff: true, dev: false })
+    // Aviation Edge (ADR-0036 E11): all three are declared before `:id/test`; the two that spend calls need write, the coverage probe also a step-up.
+    expect(find("POST", "/v1/dev/providers/aviation-edge/test")).toMatchObject({ permissions: ["provider.config.write"], staff: true, dev: true })
+    expect(find("POST", "/v1/dev/providers/aviation-edge/coverage")).toMatchObject({ permissions: ["provider.config.write"], staff: true, dev: true, stepUp: true })
+    expect(find("GET", "/v1/dev/providers/aviation-edge/status")).toMatchObject({ permissions: ["provider.config.read"], staff: true, dev: true })
+    const order = (m: string, p: string) => routes.findIndex((r) => r.method === m && r.path === p)
+    expect(order("POST", "/v1/dev/providers/aviation-edge/test")).toBeLessThan(order("POST", "/v1/dev/providers/:id/test"))
     // The live aircraft board is gone (ADR-0032 B6).
     expect(routes.some((r) => r.path.startsWith("/v1/live-flights"))).toBe(false)
   })

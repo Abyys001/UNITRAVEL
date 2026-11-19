@@ -728,7 +728,8 @@
                           "flags.write",
                           "notification.template.write",
                           "audit.read",
-                          "diagnostics.read"
+                          "diagnostics.read",
+                          "service_catalog.manage"
                         ]
                       }
                     },
@@ -1781,7 +1782,8 @@
                         "amadeus-enterprise",
                         "manual",
                         "apify-google-flights",
-                        "flightapi"
+                        "flightapi",
+                        "aviation-edge"
                       ]
                     },
                     "name": {
@@ -2410,7 +2412,8 @@
                         "amadeus-enterprise",
                         "manual",
                         "apify-google-flights",
-                        "flightapi"
+                        "flightapi",
+                        "aviation-edge"
                       ]
                     },
                     "month": {
@@ -5002,6 +5005,7 @@
                             "INSURANCE",
                             "TOUR",
                             "TRANSFER",
+                            "BAGGAGE",
                             "OTHER",
                             "DISCOUNT"
                           ]
@@ -5119,6 +5123,7 @@
                             "INSURANCE",
                             "TOUR",
                             "TRANSFER",
+                            "BAGGAGE",
                             "OTHER",
                             "DISCOUNT"
                           ]
@@ -5426,6 +5431,7 @@
                                   "INSURANCE",
                                   "TOUR",
                                   "TRANSFER",
+                                  "BAGGAGE",
                                   "OTHER",
                                   "DISCOUNT"
                                 ]
@@ -24368,6 +24374,14 @@
                             "type": "string",
                             "format": "date-time",
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "basis": {
+                            "default": "OFFER",
+                            "type": "string",
+                            "enum": [
+                              "OFFER",
+                              "SCHEDULE"
+                            ]
                           }
                         },
                         "required": [
@@ -24385,7 +24399,8 @@
                           "layovers",
                           "riskFlags",
                           "complianceReview",
-                          "fetchedAt"
+                          "fetchedAt",
+                          "basis"
                         ],
                         "additionalProperties": false
                       }
@@ -24536,6 +24551,14 @@
                                   "type": "string",
                                   "format": "date-time",
                                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                "basis": {
+                                  "default": "OFFER",
+                                  "type": "string",
+                                  "enum": [
+                                    "OFFER",
+                                    "SCHEDULE"
+                                  ]
                                 }
                               },
                               "required": [
@@ -24553,7 +24576,8 @@
                                 "layovers",
                                 "riskFlags",
                                 "complianceReview",
-                                "fetchedAt"
+                                "fetchedAt",
+                                "basis"
                               ],
                               "additionalProperties": false
                             }
@@ -24798,6 +24822,14 @@
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                     },
+                    "basis": {
+                      "default": "OFFER",
+                      "type": "string",
+                      "enum": [
+                        "OFFER",
+                        "SCHEDULE"
+                      ]
+                    },
                     "legs": {
                       "type": "array",
                       "items": {
@@ -24896,6 +24928,7 @@
                     "riskFlags",
                     "complianceReview",
                     "fetchedAt",
+                    "basis",
                     "legs",
                     "isCurrent",
                     "lastSeenAt"
@@ -25372,6 +25405,31 @@
                           "minimum": 0,
                           "maximum": 100000
                         },
+                        "aviationEdgeMonthlyCalls": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000000
+                        },
+                        "aviationEdgeReserveCalls": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000
+                        },
+                        "aviationEdgeMinDaysAhead": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 365
+                        },
+                        "aviationEdgeMaxDaysAhead": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 365
+                        },
+                        "aviationEdgeRefreshHours": {
+                          "type": "number",
+                          "minimum": 4,
+                          "maximum": 720
+                        },
                         "monthlyBudgetUsd": {
                           "type": "number",
                           "minimum": 0,
@@ -25602,6 +25660,11 @@
                         "source",
                         "flightapiMonthlyCredits",
                         "flightapiReserveCredits",
+                        "aviationEdgeMonthlyCalls",
+                        "aviationEdgeReserveCalls",
+                        "aviationEdgeMinDaysAhead",
+                        "aviationEdgeMaxDaysAhead",
+                        "aviationEdgeRefreshHours",
                         "monthlyBudgetUsd",
                         "safetyMarginUsd",
                         "adminReserveUsd",
@@ -25698,6 +25761,31 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100000
+                  },
+                  "aviationEdgeMonthlyCalls": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000000
+                  },
+                  "aviationEdgeReserveCalls": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "aviationEdgeMinDaysAhead": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 365
+                  },
+                  "aviationEdgeMaxDaysAhead": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 365
+                  },
+                  "aviationEdgeRefreshHours": {
+                    "type": "number",
+                    "minimum": 4,
+                    "maximum": 720
                   },
                   "monthlyBudgetUsd": {
                     "type": "number",
@@ -25954,6 +26042,31 @@
                           "minimum": 0,
                           "maximum": 100000
                         },
+                        "aviationEdgeMonthlyCalls": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000000
+                        },
+                        "aviationEdgeReserveCalls": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000
+                        },
+                        "aviationEdgeMinDaysAhead": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 365
+                        },
+                        "aviationEdgeMaxDaysAhead": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 365
+                        },
+                        "aviationEdgeRefreshHours": {
+                          "type": "number",
+                          "minimum": 4,
+                          "maximum": 720
+                        },
                         "monthlyBudgetUsd": {
                           "type": "number",
                           "minimum": 0,
@@ -26184,6 +26297,11 @@
                         "source",
                         "flightapiMonthlyCredits",
                         "flightapiReserveCredits",
+                        "aviationEdgeMonthlyCalls",
+                        "aviationEdgeReserveCalls",
+                        "aviationEdgeMinDaysAhead",
+                        "aviationEdgeMaxDaysAhead",
+                        "aviationEdgeRefreshHours",
                         "monthlyBudgetUsd",
                         "safetyMarginUsd",
                         "adminReserveUsd",
@@ -26282,6 +26400,31 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 100000
+                  },
+                  "aviationEdgeMonthlyCalls": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000000
+                  },
+                  "aviationEdgeReserveCalls": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "aviationEdgeMinDaysAhead": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 365
+                  },
+                  "aviationEdgeMaxDaysAhead": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 365
+                  },
+                  "aviationEdgeRefreshHours": {
+                    "type": "number",
+                    "minimum": 4,
+                    "maximum": 720
                   },
                   "monthlyBudgetUsd": {
                     "type": "number",
@@ -27598,6 +27741,14 @@
                             "format": "date-time",
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                           },
+                          "basis": {
+                            "default": "OFFER",
+                            "type": "string",
+                            "enum": [
+                              "OFFER",
+                              "SCHEDULE"
+                            ]
+                          },
                           "legs": {
                             "type": "array",
                             "items": {
@@ -27747,6 +27898,7 @@
                           "riskFlags",
                           "complianceReview",
                           "fetchedAt",
+                          "basis",
                           "legs",
                           "isCurrent",
                           "lastSeenAt",

@@ -6,7 +6,7 @@ import { buildItinerary, catalogEngineRules, joinAtHub, makeOffer, RuleResolver 
 import { DEFAULT_CATALOG_SETTINGS } from "@unitravel/contracts"
 
 import { reference } from "../../../test/fixtures/apify/helpers"
-import { combinedIdentity, detailFromItinerary, detailFromOffer, etagOf, snapshotPayload, toPublicItinerary } from "./catalog-model"
+import { combinedIdentity, detailFromItinerary, detailFromOffer, detailFromSegments, etagOf, snapshotPayload, toPublicItinerary } from "./catalog-model"
 
 const FETCHED = "2026-11-10T06:00:00Z"
 const direct = (id: string, dep: string, arr: string, from: string, to: string, fromTz: string, toTz: string, minor = 23100) => makeOffer({
@@ -22,7 +22,7 @@ const withSecrets = (o: NormalisedOffer): NormalisedOffer => ({ ...o, providerDa
 describe("catalog allowlist serializer (ADR-0034 C8)", () => {
   it("a single-ticket offer becomes a price-free detail whose keys are exactly the allowlist", () => {
     const d = detailFromOffer(withSecrets(istLhr), false)
-    expect(Object.keys(d).sort()).toEqual(["arriveLocal", "carriers", "complianceReview", "departLocal", "departureDate", "destination", "durationMin", "fetchedAt", "flightNumbers", "layovers", "legs", "origin", "riskFlags", "selfTransfer", "stops"])
+    expect(Object.keys(d).sort()).toEqual(["arriveLocal", "basis", "carriers", "complianceReview", "departLocal", "departureDate", "destination", "durationMin", "fetchedAt", "flightNumbers", "layovers", "legs", "origin", "riskFlags", "selfTransfer", "stops"])
     expect(d).toMatchObject({ origin: "IST", destination: "LHR", departureDate: "2026-11-12", departLocal: "2026-11-12T16:30", arriveLocal: "2026-11-12T18:45", stops: 0, flightNumbers: ["TK1979"], carriers: ["TK"], selfTransfer: false, complianceReview: false })
     expect(d.legs[0]).toMatchObject({ carrier: "TK", flightNumber: "TK1979", from: { iata: "IST", local: "2026-11-12T16:30", terminal: "1" }, to: { iata: "LHR", terminal: "2" }, aircraft: "Airbus A321" })
     expect(JSON.stringify(d)).not.toMatch(/SECRET|111222|333444|amount|price|currency|USD|bookingToken|googleFlights|baggage|fare/i)
@@ -45,6 +45,22 @@ describe("catalog allowlist serializer (ADR-0034 C8)", () => {
       expect(out).not.toContain("SECRET")
       expect(out).not.toMatch(/amount|currency|"price"|bookingToken|googleFlights|provider/i)
     }), { numRuns: 100 })
+  })
+
+  it("a priced result is basis OFFER and a scheduled one SCHEDULE, and a schedule snapshot is price-free whatever the provider sent (ADR-0036)", () => {
+    expect(detailFromOffer(istLhr, false).basis).toBe("OFFER")
+    const seg = { ...istLhr.slices[0]!.segments[0]!, gate: "SECRET-gate", providerData: { predictedGate: "SECRET-G9" } }
+    const d = detailFromSegments([seg as never], false, FETCHED)
+    expect(d.basis).toBe("SCHEDULE")
+    const payload = snapshotPayload([{ id: "0190f000-0000-7000-8000-000000000005", detail: d }])
+    expect(payload[0]!.basis).toBe("SCHEDULE")
+    const out = JSON.stringify(payload)
+    expect(out).not.toMatch(/SECRET|amount|currency|"price"|bookingToken|provider|fare|baggage/i)
+    expect(PublicItinerary.strict().safeParse(payload[0]).success).toBe(true)
+    expect(PublicItineraryDetail.strict().safeParse({ id: "0190f000-0000-7000-8000-000000000005", ...d, isCurrent: true, lastSeenAt: FETCHED }).success).toBe(true)
+    // A snapshot written before ADR-0036 has no basis and reads as OFFER.
+    const { basis: _drop, ...old } = payload[0]!
+    expect(PublicItinerary.parse(old).basis).toBe("OFFER")
   })
 
   it("a self-transfer keeps the engine's layover and its separate-ticket flag, and carries the review flag of its legs", () => {

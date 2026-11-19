@@ -121,3 +121,46 @@ export const providerUsageLedger = pgTable("provider_usage_ledger", {
   error: text(),
   createdAt: createdAt(),
 }, (t) => [index("provider_usage_ledger_started_idx").on(t.provider, t.startedAt)])
+
+// ADR-0036: the Aviation Edge schedule layer. Separate from offers (rule 3): no price, no availability. Merged with the priced
+// snapshot on read; a priced itinerary wins over a schedule row for the same flights.
+
+/** Schedule-layer state and customer snapshot per catalog slot. */
+export const catalogScheduleSlots = pgTable("catalog_schedule_slots", {
+  slotId: uuid().primaryKey().references(() => catalogSlots.id, { onDelete: "cascade" }),
+  provider: varchar({ length: 40 }).notNull(),
+  status: text({ enum: ["NEVER", "FRESH", "EMPTY", "ERROR"] }).notNull().default("NEVER"),
+  lastFetchedAt: tstz(),
+  nextDueAt: tstz().notNull().defaultNow(),
+  lastResultCount: integer().notNull().default(0),
+  consecutiveErrors: integer().notNull().default(0),
+  lastError: text(),
+  notices: jsonb().$type<string[]>().notNull().default([]),
+  version: integer().notNull().default(0),
+  /** Allowlisted customer view, every item `basis: "SCHEDULE"`. */
+  payload: jsonb().$type<PublicItinerary[]>().notNull().default([]),
+  ...timestamps,
+}, (t) => [index("catalog_schedule_slots_due_idx").on(t.nextDueAt)])
+
+/** One scheduled flight (or schedule-built self-transfer) per slot and identity `flightNumbers|departLocal`. */
+export const flightSchedules = pgTable("flight_schedules", {
+  id: id(),
+  slotId: uuid().references(() => catalogSlots.id, { onDelete: "set null" }),
+  provider: varchar({ length: 40 }).notNull(),
+  origin: varchar({ length: 3 }).notNull(),
+  destination: varchar({ length: 3 }).notNull(),
+  departureDate: date({ mode: "string" }).notNull(),
+  identityKey: varchar({ length: 300 }).notNull(),
+  selfTransfer: boolean().notNull().default(false),
+  complianceReview: boolean().notNull().default(false),
+  detail: jsonb().$type<Omit<PublicItineraryDetail, "id" | "isCurrent" | "lastSeenAt">>().notNull(),
+  /** Provider fields we keep for staff (e.g. predicted gate, ICAO codes). Never served on a public path. */
+  providerData: jsonb().$type<Record<string, unknown>>(),
+  firstSeenAt: tstz().notNull().defaultNow(),
+  lastSeenAt: tstz().notNull().defaultNow(),
+  isCurrent: boolean().notNull().default(true),
+  ...timestamps,
+}, (t) => [
+  uniqueIndex("flight_schedules_slot_identity_uq").on(t.slotId, t.identityKey),
+  index("flight_schedules_slot_current_idx").on(t.slotId).where(sql`${t.isCurrent}`),
+])

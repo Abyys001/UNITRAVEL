@@ -157,7 +157,7 @@ describe("customer serialisers never emit internal fields (property)", () => {
   })
 
   it("popular-route listings carry no amount, price level, booking token, Google link or provider data, whatever the record carries (ADR-0032 B4, ADR-0034 C8)", () => {
-    const snapshot = { id: "3e9d4c0b-6f40-4c0d-8e5b-8a7f6e5d4c30", origin: "IST", destination: "LHR", departureDate: "2026-11-20", departLocal: "2026-11-20T08:40", arriveLocal: "2026-11-20T10:55", durationMin: 255, stops: 0, carriers: ["TK"], flightNumbers: ["TK879"], selfTransfer: false, layovers: [], riskFlags: [], complianceReview: false, fetchedAt: "2026-11-19T10:00:00.000Z" }
+    const snapshot = { id: "3e9d4c0b-6f40-4c0d-8e5b-8a7f6e5d4c30", origin: "IST", destination: "LHR", departureDate: "2026-11-20", departLocal: "2026-11-20T08:40", arriveLocal: "2026-11-20T10:55", durationMin: 255, stops: 0, carriers: ["TK"], flightNumbers: ["TK879"], selfTransfer: false, layovers: [], riskFlags: [], complianceReview: false, fetchedAt: "2026-11-19T10:00:00.000Z", basis: "OFFER" as const }
     const items = [toListingItem(snapshot)]
     expect(items[0]).toMatchObject({ fetchedAt: snapshot.fetchedAt, offerRef: null, carriers: ["TK"] })
     const check = (v: unknown) => {

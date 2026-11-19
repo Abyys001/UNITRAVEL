@@ -416,6 +416,7 @@ export const en = {
     askTeam: "Ask our team", requestFlight: "Request this flight", viewDetails: "Flight details",
     detailTitle: "Flight details", leg: "Flight {n}", terminal: "Terminal {terminal}", aircraft: "Aircraft", operatedBy: "Operated by {carrier}", total: "Total journey",
     noLongerListed: "This flight is no longer listed. Ask our team for current options.", lastSeen: "Last seen {ago}", backToSearch: "Back to search", layoverAt: "Layover at {at}: {time}",
+    scheduleBadge: "Scheduled · not confirmed availability", scheduleNote: "Predicted schedule from a flight data provider. Seats, fares and availability are confirmed by our team when you request.", notProvided: "Not provided", terminalLabel: "Terminal", noPrice: "Price: not available from this source",
   },
   credits: { title: "Photo and video credits", lead: "The photographs and video on this site are decorative stock media. They show places only; they are not offers, prices or availability.", item: "Title", creator: "Creator", source: "Source", licence: "Licence", usedOn: "Used on", none: "No credits listed yet." },
   // ADR-0032: popular routes on /flights (Apify Google Flights schedules, indicative only).

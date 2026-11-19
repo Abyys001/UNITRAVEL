@@ -1,4 +1,4 @@
-import type { NormalisedOffer } from "@unitravel/contracts"
+import type { NormalisedOffer, Segment } from "@unitravel/contracts"
 
 import type { CarrierPolicy, FilterStats, ReferenceLookup } from "./types"
 
@@ -30,15 +30,15 @@ export function laneKeyMatches(key: string, origin: string, destination: string)
   return key === `${origin}:*` || key === `*:${destination}` || key === `${origin}:${destination}` || key === `${destination}:*`
 }
 
-/** Country pairs an offer travels: every slice end to end, every segment, and every technical stop. */
-function offerCountryPairs(o: NormalisedOffer, ref: ReferenceLookup): [string, string][] {
+/** Country pairs a set of slices travels: every slice end to end, every segment, and every technical stop. */
+function countryPairs(slices: readonly (readonly Segment[])[], ref: ReferenceLookup): [string, string][] {
   const country = (iata: string) => ref.airport(iata)?.country
   const pairs: [string | undefined, string | undefined][] = []
-  for (const s of o.slices) {
-    const first = s.segments[0]
-    const last = s.segments[s.segments.length - 1]
+  for (const segments of slices) {
+    const first = segments[0]
+    const last = segments[segments.length - 1]
     if (first && last) pairs.push([country(first.origin.iata), country(last.destination.iata)])
-    for (const seg of s.segments) {
+    for (const seg of segments) {
       pairs.push([country(seg.origin.iata), country(seg.destination.iata)])
       for (const t of seg.technicalStops) pairs.push([country(seg.origin.iata), country(t.iata)], [country(t.iata), country(seg.destination.iata)])
     }
@@ -46,15 +46,32 @@ function offerCountryPairs(o: NormalisedOffer, ref: ReferenceLookup): [string, s
   return pairs.filter((p): p is [string, string] => !!p[0] && !!p[1])
 }
 
-/** Flight lane verdict for one offer (ADR-0031 I3): BLOCK wins over REVIEW; null when no lane policy applies. */
-export function offerLaneVerdict(o: NormalisedOffer, policy: CarrierPolicy, ref: ReferenceLookup): "BLOCK" | "REVIEW" | null {
+function laneVerdict(slices: readonly (readonly Segment[])[], policy: CarrierPolicy, ref: ReferenceLookup): "BLOCK" | "REVIEW" | null {
   const blocked = policy.blockedLanes
   const review = policy.reviewLanes
   if (!blocked?.size && !review?.size) return null
-  const pairs = offerCountryPairs(o, ref)
+  const pairs = countryPairs(slices, ref)
   if (blocked && [...blocked].some((k) => pairs.some(([a, b]) => laneKeyMatches(k, a, b)))) return "BLOCK"
   if (review && [...review].some((k) => pairs.some(([a, b]) => laneKeyMatches(k, a, b)))) return "REVIEW"
   return null
+}
+
+/** Flight lane verdict for one offer (ADR-0031 I3): BLOCK wins over REVIEW; null when no lane policy applies. */
+export function offerLaneVerdict(o: NormalisedOffer, policy: CarrierPolicy, ref: ReferenceLookup): "BLOCK" | "REVIEW" | null {
+  return laneVerdict(o.slices.map((s) => s.segments), policy, ref)
+}
+
+/**
+ * The same carrier, airport and lane rules as `filterOffers`, for segments that are not an offer (ADR-0036 schedules): BLOCK when a
+ * marketing or operating carrier, an airport or a lane is blocked; REVIEW for a lane on review; null otherwise.
+ */
+export function segmentsVerdict(segments: readonly Segment[], policy: CarrierPolicy, ref: ReferenceLookup): "BLOCK" | "REVIEW" | null {
+  for (const seg of segments) {
+    if (policy.blockedCarriers.has(seg.marketing.carrier) || policy.blockedCarriers.has(seg.operating.carrier)) return "BLOCK"
+    const airports = [seg.origin.iata, seg.destination.iata, ...seg.technicalStops.map((t) => t.iata)]
+    if (airports.some((a) => policy.blockedAirports.has(a))) return "BLOCK"
+  }
+  return laneVerdict([segments], policy, ref)
 }
 
 /**

@@ -189,7 +189,7 @@ export class CatalogWriteService {
   }
 
   /** The two DIRECT feeder routes of a combined route, if the pair is enabled and its hub is allowed. */
-  private async feedersOf(cr: RouteRow, s: CatalogSettings): Promise<{ a: RouteRow; b: RouteRow } | null> {
+  async feedersOf(cr: RouteRow, s: CatalogSettings): Promise<{ a: RouteRow; b: RouteRow } | null> {
     const pair = s.connections.pairs.find((p) => p.enabled && p.from === cr.origin && p.to === cr.destination && p.via === cr.viaHub)
     if (!pair || !s.connections.hubs.some((h) => h.enabled && h.iata === pair.via)) return null
     const routes = await this.db.select().from(flightWatchlistRoutes).where(and(eq(flightWatchlistRoutes.kind, "DIRECT"), eq(flightWatchlistRoutes.enabled, true)))
@@ -262,7 +262,7 @@ export class CatalogWriteService {
     return true
   }
 
-  private rulesFor(s: CatalogSettings): EngineRules {
+  rulesFor(s: CatalogSettings): EngineRules {
     return catalogEngineRules(this.config.get("ENGINE_RULES"), s.connections)
   }
 

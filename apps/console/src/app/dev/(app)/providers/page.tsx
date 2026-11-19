@@ -22,6 +22,9 @@ import { useSession } from "@/lib/session"
 type Patch = Pick<ProviderView, "enabled" | "environment" | "priority" | "capabilities" | "limits" | "markets" | "shadowMode">
 const patchOf = (p: ProviderView): Patch => ({ enabled: p.enabled, environment: p.environment, priority: p.priority, shadowMode: p.shadowMode, capabilities: p.capabilities, limits: p.limits, markets: p.markets })
 
+/** These providers have no generic test: Aviation Edge has its own page, FlightAPI is exercised by the catalog's "refresh now". */
+const OWN_PAGE = new Set(["aviation-edge", "flightapi"])
+
 function ProviderCard({ p }: { p: ProviderView }) {
   const qc = useQueryClient()
   const { can } = useSession()
@@ -55,9 +58,13 @@ function ProviderCard({ p }: { p: ProviderView }) {
             <p className="text-meta">{p.credentials.set ? <>{t("prov.set")} · {t("prov.rotated", { at: fmtDateTime(p.credentials.rotatedAt) })}{p.credentials.rotatedBy && ` · ${p.credentials.rotatedBy}`}</> : <span className="text-danger">{t("prov.notSet")}</span>}</p>
             {can("provider.config.write") && <Button size="xs" variant="outline" className="mt-2" onClick={() => setSecrets(true)}>{p.credentials.set ? t("prov.rotate") : t("prov.enter")}</Button>}
             {p.id === "apify-google-flights" && <Link href="/providers/apify-google-flights" className="mt-2 block font-medium text-link hover:underline" data-testid="apify-page-link">{t("apify.page.open")}</Link>}
+            {p.id === "aviation-edge" && <Link href="/providers/aviation-edge" className="mt-2 block font-medium text-link hover:underline" data-testid="ae-page-link">{t("ae.page.open")}</Link>}
+            {p.id === "flightapi" && <p className="mt-2 text-caption text-steel" data-testid="flightapi-note">{t("prov.flightapiNote")}</p>}
           </div>
           <div>
-            <Button size="xs" variant="outline" onClick={() => void runTest()} loading={busy === "test"} data-testid={`test-${p.id}`}>{t("prov.test")}</Button>
+            {OWN_PAGE.has(p.id)
+              ? p.id === "aviation-edge" && <Link href="/providers/aviation-edge" className="inline-flex" data-testid={`open-${p.id}`}><Button size="xs" variant="outline" tabIndex={-1}>{t("prov.openPage")}</Button></Link>
+              : <Button size="xs" variant="outline" onClick={() => void runTest()} loading={busy === "test"} data-testid={`test-${p.id}`}>{t("prov.test")}</Button>}
             {test && <p className={cn("mt-2 rounded-md p-2 text-meta", test.ok ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")} role="status" data-testid="provider-test-result">{test.ok ? t("prov.test.ok", { ms: test.latencyMs }) : t("prov.test.fail")}{test.detail && <span className="block break-words">{test.detail}</span>}</p>}
           </div>
           {can("provider.config.write") && dirty && <div className="flex gap-2 border-t border-rule pt-4"><Button size="sm" onClick={() => void save()} loading={busy === "save"}>{t("prov.save")}</Button><Button size="sm" variant="ghost" onClick={() => setDraft(patchOf(p))}>{t("ud.reset")}</Button></div>}

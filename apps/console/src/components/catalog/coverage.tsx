@@ -157,6 +157,7 @@ function SlotPanel({ picked, slot, canManage, onClose }: { picked: Picked; slot:
                   <p className="num font-medium text-ink" dir="ltr">{r.departLocal.slice(11, 16)} → {r.arriveLocal.slice(11, 16)} · {r.carriers.join(", ")} {r.flightNumbers.join(" + ")}</p>
                   <p className="text-steel">{t("cat.res.shape", { stops: r.stops, h: Math.floor(r.durationMin / 60), m: r.durationMin % 60 })}{!r.isCurrent && ` · ${t("cat.res.notCurrent")}`}</p>
                   <div className="flex flex-wrap gap-1.5">
+                    {r.basis === "SCHEDULE" && <StatusChip tone="info" data-testid="result-schedule">{t("cat.res.schedule")}</StatusChip>}
                     {r.selfTransfer && <StatusChip tone="warn">{t("cat.res.selfTransfer")}</StatusChip>}
                     {r.complianceReview && <StatusChip tone="danger">{t("cat.res.review")}</StatusChip>}
                     {r.layovers.map((l, i) => <StatusChip key={i}>{t("cat.res.layover", { at: l.at, h: Math.floor(l.minutes / 60), m: l.minutes % 60 })}</StatusChip>)}
@@ -164,7 +165,7 @@ function SlotPanel({ picked, slot, canManage, onClose }: { picked: Picked; slot:
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  {p ? <p className="num text-body font-semibold text-ink" data-testid="result-price">{ltrIsolate(money({ amountMinor: p.amountMinor, currency: p.currency }))} <span className="text-caption font-normal text-steel">{t("cat.indicativeShort")}</span></p> : <p className="text-steel">—</p>}
+                  {p ? <p className="num text-body font-semibold text-ink" data-testid="result-price">{ltrIsolate(money({ amountMinor: p.amountMinor, currency: p.currency }))} <span className="text-caption font-normal text-steel">{t("cat.indicativeShort")}</span></p> : <p className="text-steel" data-testid="result-no-price">{r.basis === "SCHEDULE" ? t("cat.res.noPrice") : "—"}</p>}
                   {changed && p && <p className="num text-caption text-orange-700 dark:text-orange-300">{t("cat.res.was", { was: ltrIsolate(money({ amountMinor: p.previousAmountMinor!, currency: p.currency })), at: fmtDateTime(p.changedAt) })}</p>}
                   {canManage && <Button size="xs" variant="outline" data-testid="result-revalidate"
                     onClick={() => confirm.ask({ title: t("cat.res.revalidate.title"), description: t("cat.res.revalidate.desc"), label: t("cat.res.revalidate"), run: async () => { await api(`${CATALOG}/results/${r.id}/revalidate`, { body: {} }); await done() } })}>{t("cat.res.revalidate")}</Button>}

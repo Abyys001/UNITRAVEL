@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto"
 
-import type { Itinerary, NormalisedOffer, PublicLeg, RiskFlag, Segment } from "@unitravel/contracts"
+import type { Itinerary, ItineraryBasis, NormalisedOffer, PublicLeg, RiskFlag, Segment } from "@unitravel/contracts"
 import { PublicItinerary } from "@unitravel/contracts"
 
 /** What `flight_results.detail` holds: the customer-safe view of one result, without its id or liveness (those live in columns). */
@@ -25,7 +25,7 @@ function legOf(s: Segment): PublicLeg {
  * The allowlist (ADR-0034 C8): every field is copied by name, so a field added to an offer later cannot reach a customer.
  * No amount, currency, fare, baggage, booking token or provider appears here.
  */
-function detailOf(segments: Segment[], extra: { selfTransfer: boolean; complianceReview: boolean; fetchedAt: string; layovers?: ResultDetail["layovers"]; riskFlags?: RiskFlag[] }): ResultDetail {
+function detailOf(segments: Segment[], extra: { selfTransfer: boolean; complianceReview: boolean; fetchedAt: string; layovers?: ResultDetail["layovers"]; riskFlags?: RiskFlag[]; basis?: ItineraryBasis }): ResultDetail {
   const first = segments[0]!
   const last = segments[segments.length - 1]!
   const layovers = extra.layovers ?? segments.slice(0, -1).map((a, i) => ({ at: a.destination.iata, minutes: minutes(a.arrival.utc, segments[i + 1]!.departure.utc), flags: [] as RiskFlag[] }))
@@ -44,6 +44,7 @@ function detailOf(segments: Segment[], extra: { selfTransfer: boolean; complianc
     riskFlags: extra.riskFlags ?? [],
     complianceReview: extra.complianceReview,
     fetchedAt: extra.fetchedAt,
+    basis: extra.basis ?? "OFFER",
     legs: segments.map(legOf),
   }
 }
@@ -53,11 +54,16 @@ export function detailFromOffer(offer: NormalisedOffer, complianceReview: boolea
   return detailOf(offer.slices[0]!.segments, { selfTransfer: false, complianceReview, fetchedAt: iso(offer.source.fetchedAt) })
 }
 
+/** ADR-0036: a scheduled flight, which has segments but no offer. Never carries a price; `basis` is SCHEDULE. */
+export function detailFromSegments(segments: Segment[], complianceReview: boolean, fetchedAt: string): ResultDetail {
+  return detailOf(segments, { selfTransfer: false, complianceReview, fetchedAt, basis: "SCHEDULE" })
+}
+
 /** A self-transfer built by the engine from two feeder offers; layovers and risk flags come from the engine's own connection check. */
-export function detailFromItinerary(it: Pick<Itinerary, "components" | "connections" | "riskFlags" | "complianceReview">, fetchedAt: string): ResultDetail {
+export function detailFromItinerary(it: Pick<Itinerary, "components" | "connections" | "riskFlags" | "complianceReview">, fetchedAt: string, basis: ItineraryBasis = "OFFER"): ResultDetail {
   const segments = it.components.flatMap((c) => c.slices[0]!.segments)
   return detailOf(segments, {
-    selfTransfer: true, complianceReview: it.complianceReview, fetchedAt,
+    selfTransfer: true, complianceReview: it.complianceReview, fetchedAt, basis,
     layovers: it.connections.map((c) => ({ at: c.at, minutes: c.layoverMin, flags: c.flags })),
     riskFlags: [...it.riskFlags],
   })
@@ -68,7 +74,7 @@ export function toPublicItinerary(id: string, d: ResultDetail): PublicItinerary 
   return PublicItinerary.strict().parse({
     id, origin: d.origin, destination: d.destination, departureDate: d.departureDate, departLocal: d.departLocal, arriveLocal: d.arriveLocal, durationMin: d.durationMin,
     stops: d.stops, carriers: d.carriers, flightNumbers: d.flightNumbers, selfTransfer: d.selfTransfer, layovers: d.layovers, riskFlags: d.riskFlags,
-    complianceReview: d.complianceReview, fetchedAt: d.fetchedAt,
+    complianceReview: d.complianceReview, fetchedAt: d.fetchedAt, basis: d.basis,
   })
 }
 

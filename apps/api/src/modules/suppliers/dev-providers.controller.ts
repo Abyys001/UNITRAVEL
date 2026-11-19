@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 import { z } from "zod"
 
-import { CredentialsBody, DevApifyTestResult, ProviderId, ProviderPatchBody, ProviderRunsQuery, ProviderUsageView, ProviderView } from "@unitravel/contracts"
+import { CredentialsBody, DevApifyTestResult, DevAviationEdgeCoverage, DevAviationEdgeStatus, DevAviationEdgeTestResult, ProviderId, ProviderPatchBody, ProviderRunsQuery, ProviderUsageView, ProviderView } from "@unitravel/contracts"
 import { type Db, providers } from "@unitravel/db"
 
 import { sandboxAllowed } from "../../core/env"
@@ -14,6 +14,7 @@ import { type Actor, Ctx, CurrentActor, DevSurface, RequirePermission, type Requ
 import { ApiZodResponse, zbody } from "../../core/http/zod"
 import { AuditService } from "../audit/audit.service"
 import { OutboxService } from "../platform/outbox.service"
+import { AviationEdgeService } from "./aviation-edge/aviation-edge.service"
 import { APIFY_ID, FlightDataService } from "./apify/flight-data.service"
 import { SuppliersService } from "./suppliers.service"
 
@@ -41,7 +42,7 @@ export class AdminProvidersController {
 @DevSurface()
 @StaffOnly()
 export class DevProvidersController {
-  constructor(@Inject(DB) private readonly db: Db, @Inject(REDIS) private readonly redis: Redis, private readonly uow: UnitOfWork, private readonly suppliers: SuppliersService, private readonly audit: AuditService, private readonly outbox: OutboxService, private readonly flightData: FlightDataService) {}
+  constructor(@Inject(DB) private readonly db: Db, @Inject(REDIS) private readonly redis: Redis, private readonly uow: UnitOfWork, private readonly suppliers: SuppliersService, private readonly audit: AuditService, private readonly outbox: OutboxService, private readonly flightData: FlightDataService, private readonly aviationEdge: AviationEdgeService) {}
 
   @Get()
   @RequirePermission("provider.config.read")
@@ -123,11 +124,43 @@ export class DevProvidersController {
     return this.flightData.testConnection()
   }
 
+  /**
+   * ADR-0036 E11: one future-schedule call (IKA→IST, today + 8 days). It spends a call and flags a rejected key, so it needs write permission.
+   * Declared before `:id/test`.
+   */
+  @Post("aviation-edge/test")
+  @RequirePermission("provider.config.write")
+  @HttpCode(200)
+  @ApiZodResponse(200, DevAviationEdgeTestResult)
+  testAviationEdge() {
+    return this.aviationEdge.test()
+  }
+
+  /** ADR-0036: ten departure calls, one per priority airport. Never automatic; step-up because it draws on the call reserve. */
+  @Post("aviation-edge/coverage")
+  @RequirePermission("provider.config.write")
+  @StepUp()
+  @HttpCode(200)
+  @ApiZodResponse(200, DevAviationEdgeCoverage)
+  coverageAviationEdge(@CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.aviationEdge.coverage({ userId: actor.userId, ip: actor.ip }, ctx.id)
+  }
+
+  /** Budget, pause reason and the last coverage probe; no secret. */
+  @Get("aviation-edge/status")
+  @RequirePermission("provider.config.read")
+  @ApiZodResponse(200, DevAviationEdgeStatus)
+  statusAviationEdge() {
+    return this.aviationEdge.status()
+  }
+
   /** Runs a harmless call and shows the raw status, latency and any error code. */
   @Post(":id/test")
   @RequirePermission("provider.config.read")
   @HttpCode(200)
   test(@Param("id", zbody(ProviderId)) id: z.infer<typeof ProviderId>) {
+    // These two have no searchable adapter: a test is not "a health check", and the generic route would only fail with a gateway error.
+    if (id === "aviation-edge" || id === "flightapi") throw new AppError("VALIDATION_FAILED", `Test ${id} from its own provider page`, [{ path: "id", code: "USE_PROVIDER_PAGE" }])
     return this.suppliers.testConnection(id)
   }
 }

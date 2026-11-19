@@ -40,3 +40,32 @@ Snapshots are built when data is written. Changing a carrier or lane policy queu
 ## After deploying migration 0022
 1. Clear Valkey `perm:*` so admin and developer pick up `catalog.read` and `catalog.manage`.
 2. Set `WEB_REVALIDATE_URL` and `WEB_REVALIDATE_SECRET` on the api and worker, and the same secret on web.
+
+## Aviation Edge schedules (ADR-0036)
+Aviation Edge adds **predicted schedules, without prices**, beside the priced source. It has its own pacer: every 4 h under `catalog:schedule:lock`, for DIRECT slots 7 to 60 days out, each slot refreshed every 72 h, one call per slot. COMBINED routes are built from the hub slots' schedules. Customers see these results as "Scheduled · not confirmed availability". A priced result for the same flights always wins.
+
+### Turn it on
+1. Developer Panel → Providers → **Aviation Edge** → **Replace key**. Enter the key (step-up). It is stored encrypted, and the panel only ever shows the last 4 characters. Do not put it in `.env`; there is no environment variable for it.
+2. **Test connection.** This spends 1 call (IKA→IST, today + 8 days). A 401/403 marks the key invalid.
+3. **Coverage probe.** This needs step-up and spends 10 calls: departures from IKA, IST, SAW, DXB, DOH, LHR, LGW, FRA, CDG and AMS on today + 8 days. Copy the result into `docs/stages/STAGE-27.md`.
+4. Console → Flight catalog → Settings → **Aviation Edge schedules**. Set `aviationEdgeMonthlyCalls` to the plan's allowance (Developer 30k, Business 100k) and keep a reserve.
+5. Developer Panel → Aviation Edge → **Enable**.
+
+### Pauses
+- **AUTH:** the key was rejected. Replace the key; the pacer resumes on the next tick.
+- **RATE_LIMITED:** the plan's quota is used up. The tick stops.
+- **CIRCUIT:** 3 failed ticks in a row.
+- **BUDGET:** the monthly calls minus the reserve are used up.
+- **DISABLED / NO_KEY:** self-explanatory.
+
+Calls used: `select sum(credits) from provider_usage_ledger where provider = 'aviation-edge' and started_at >= date_trunc('month', now() at time zone 'utc');`
+
+### When the subscription ends (terms §8.1)
+Aviation Edge data may not be kept or used after the subscription ends.
+1. Disable the provider.
+2. Delete its data:
+   ```sql
+   delete from flight_schedules where provider = 'aviation-edge';
+   update catalog_schedule_slots set payload = '[]', status = 'NEVER', version = version + 1 where provider = 'aviation-edge';
+   ```
+3. Flush the schedule cache: `valkey-cli --scan --pattern 'cat:sched:*' | xargs valkey-cli del`. Also clear `aviation-edge:coverage:last` and `catalog:schedule:state`.

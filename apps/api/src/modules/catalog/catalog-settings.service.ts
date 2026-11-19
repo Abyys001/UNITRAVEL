@@ -7,6 +7,8 @@ import { type Db, settings } from "@unitravel/db"
 import { env } from "../../core/env"
 import { DB, UnitOfWork } from "../../core/infra.module"
 import { AuditService } from "../audit/audit.service"
+import { FLIGHTAPI_PROVIDER_ID } from "../suppliers/adapters/flightapi/client"
+import { SuppliersService } from "../suppliers/suppliers.service"
 
 const SETTINGS_KEY = "catalog"
 const STATE_KEY = "catalog.state"
@@ -45,13 +47,19 @@ export class CatalogSettingsService {
   private readonly log = new Logger("CatalogSettings")
   private cache?: { at: number; value: CatalogSettings }
 
-  constructor(@Inject(DB) private readonly db: Db, private readonly uow: UnitOfWork, private readonly audit: AuditService) {}
+  constructor(@Inject(DB) private readonly db: Db, private readonly uow: UnitOfWork, private readonly audit: AuditService, private readonly suppliers: SuppliersService) {}
+
+  /** ADR-0036 E12: a FlightAPI key from the Developer Panel or, failing that, the environment. */
+  private async flightapiKeyAvailable(): Promise<boolean> {
+    if (env().FLIGHTAPI_KEY) return true
+    return !!(await this.suppliers.credentials(FLIGHTAPI_PROVIDER_ID).catch(() => null))?.apiKey
+  }
 
   async get(): Promise<CatalogSettings> {
     if (this.cache && Date.now() - this.cache.at < CACHE_MS) return this.cache.value
     const [row] = await this.db.select().from(settings).where(eq(settings.key, SETTINGS_KEY))
-    // ADR-0035: FlightAPI is the default source once its key is configured; a stored choice always wins.
-    const parsed = CatalogSettings.safeParse({ ...DEFAULT_CATALOG_SETTINGS, source: env().FLIGHTAPI_KEY ? "flightapi" : "apify", ...((row?.value as object | undefined) ?? {}) })
+    // ADR-0035: FlightAPI is the default source once its key is configured (panel or environment); a stored choice always wins.
+    const parsed = CatalogSettings.safeParse({ ...DEFAULT_CATALOG_SETTINGS, source: (await this.flightapiKeyAvailable()) ? "flightapi" : "apify", ...((row?.value as object | undefined) ?? {}) })
     if (!parsed.success) this.log.error({ issues: parsed.error.issues.length }, "stored catalog settings are invalid; defaults in use")
     const value = parsed.success ? parsed.data : DEFAULT_CATALOG_SETTINGS
     this.cache = { at: Date.now(), value }
