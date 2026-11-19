@@ -32,9 +32,12 @@ export function proxy(req: NextRequest) {
 
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
   const dev = process.env.NODE_ENV !== "production"
+  // Staff uploads PUT straight to object storage and ticket previews fetch signed files from it (ADR-0038), so its origin
+  // is the one extra connect target; the fetched PDFs are shown from blob: frames created by this page.
+  const storage = new URL(process.env.OBJECT_STORAGE_PUBLIC_ENDPOINT ?? process.env.OBJECT_STORAGE_ENDPOINT ?? "http://localhost:9010").origin
   const csp = [
     "default-src 'none'", `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ""}`, "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:", "font-src 'self'", `connect-src 'self'${dev ? " ws:" : ""}`, "manifest-src 'self'", "frame-ancestors 'none'", "frame-src 'none'",
+    "img-src 'self' data: blob:", "font-src 'self'", `connect-src 'self' ${storage}${dev ? " ws:" : ""}`, "manifest-src 'self'", "frame-ancestors 'none'", "frame-src blob:",
     "base-uri 'none'", "form-action 'self'", "object-src 'none'", "worker-src 'self'",
   ].join("; ")
   const headers = new Headers(req.headers)

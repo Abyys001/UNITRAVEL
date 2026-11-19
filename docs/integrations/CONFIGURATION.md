@@ -59,3 +59,43 @@ Written 2026-10-29 from the code (apps/api/src/modules/suppliers, packages/db/sr
 4. Keep `dailyBudget` and `rps` at or below the provider's contract; Duffel adds a fee beyond a 1500:1 search-to-book ratio.
 5. Never paste a credential into chat, logs, tickets, fixtures or screenshots. Rotate through the Panel (step-up, audited).
 6. Sanctions and carrier restrictions stay data in `compliance_policies`; enabling a provider does not change them.
+
+## Flight Builder
+
+Written 2026-11-19 from ADR-0037 and `docs/integrations/FLIGHT-BUILDER-DESIGN.md`. Flight Builder is a staff-capture source: there is no HTTP client and nothing is fetched from the panel (DOCUMENTED, ADR-0037 D1).
+
+### Credentials
+- Enter them in the Developer Panel, Providers, Flight Builder (`PUT /v1/dev/providers/flight-builder/credentials`, step-up required). Keys: `username`, `password`.
+- They are write-only and encrypted with `MASTER_ENCRYPTION_KEY`, the only environment value involved. No code path decrypts them today (ADR-0037 D7).
+- The panel URL is a non-secret setting. It must be https with no userinfo, is shown as a link and is never fetched by the server.
+
+### Settings key `flight_builder`
+
+| Field | Default | Notes |
+|---|---|---|
+| `enabled` | false | |
+| `panelUrl` | empty | Link only |
+| `syncMode` | DISABLED | DISABLED, MANUAL or SCHEDULED. Cannot leave DISABLED while the authorisation gate is unmet (409 `AUTHORISATION_REQUIRED`) |
+| `syncInterval` | DAILY | HOURLY, DAILY or WEEKLY |
+| `freshHours` | 6 | FRESH below this |
+| `staleHours` | 24 | AGING below this, then STALE (hidden from customers) |
+| `deadlineWarnHours` | 48 | Customer deadline warning |
+
+### Authorisation record and sync gate
+- The owner records the written Amadeus permission (document reference, grantor name, scope, optional daily search limit and expiry) at `POST /v1/dev/providers/flight-builder/authorisations`. Permission `provider.authorisation.record`, owner only, step-up. Revocation uses the same permission.
+- The sync gate needs an active authorisation and an adapter. The adapter does not exist, so refresh and scheduled runs record a BLOCKED run and make no provider call (D9).
+- Connection state is derived, never stored. CONNECTED is unreachable today (D6).
+
+### Freshness and quota
+- A 15-minute sweep marks fares STALE or EXPIRED without calling the provider. The ticketing-deadline timezone is UNKNOWN, so expiry is 00:00 UTC of the deadline date.
+- Quota thresholds are 45 (warning) and 50 (critical) scans per booking (OBSERVED). Observations are manual, append-only entries. Headroom is labelled ESTIMATED and nothing is decremented automatically (D8). Whether displayed prices include proFee is UNKNOWN (Q9).
+
+### Permissions
+
+| Permission | Roles | Covers |
+|---|---|---|
+| `catalog.capture` | admin, owner | Record and retire options, record usage observations |
+| `catalog.read` | existing | View options and usage |
+| `provider.authorisation.record` | owner only, privileged, step-up | Record or revoke the written permission |
+| `provider.config.read` / `provider.config.write` | existing | View state; change settings and refresh |
+| `pricing.read.internal` | existing | Supplier price, fare type, fare basis and rules text (ADR-0004) |

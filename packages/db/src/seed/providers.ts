@@ -25,6 +25,8 @@ export function providerSeedRows(appEnv = "local"): (typeof s.providers.$inferIn
     // ADR-0036: schedule-only source (no prices). ADR-0035 follow-up: FlightAPI's key can be entered in the panel. Neither is a searchable offer adapter.
     { id: "aviation-edge", name: "Aviation Edge (future schedules, no prices)", environment: "production" as const, enabled: false, priority: 10, capabilities: { search: false, price: false, seatMap: false, order: false }, limits: { timeoutMs: 20000, maxConcurrent: 2, rps: 2, dailyBudget: 5000, lookToBookAlert: 0 }, markets: { pointOfSale: "GB", currency: "GBP", originRegions: [], destinationRegions: [] } },
     { id: "flightapi", name: "FlightAPI.io (catalog source, indicative)", environment: "production" as const, enabled: false, priority: 11, capabilities: { search: false, price: false, seatMap: false, order: false }, limits: { timeoutMs: 90000, maxConcurrent: 2, rps: 1, dailyBudget: 2000, lookToBookAlert: 0 }, markets: { pointOfSale: "GB", currency: "GBP", originRegions: [], destinationRegions: [] } },
+    // ADR-0037: staff-capture source. No capability, never an offer adapter; the row only lets credentials and settings live in the Developer Panel.
+    { id: "flight-builder", name: "Flight Builder (staff capture, no automated access)", environment: "production" as const, enabled: false, priority: 12, capabilities: { search: false, price: false, seatMap: false, order: false }, limits: { timeoutMs: 20000, maxConcurrent: 1, rps: 1, dailyBudget: 0, lookToBookAlert: 0 }, markets: { pointOfSale: "GB", currency: "GBP", originRegions: [], destinationRegions: [] } },
   ]
   // ADR-0015: every provider seeded today serves flights.
   return rows.map((r) => ({ ...r, vertical: "FLIGHT" as const }))

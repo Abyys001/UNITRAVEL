@@ -29,11 +29,17 @@ export function matchesDeclaredType(body: Buffer, mime: string): boolean {
   if (mime === "application/pdf") return body.subarray(0, 1024).includes("%PDF-")
   if (mime === "image/png") return body.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
   if (mime === "image/jpeg") return body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff
+  // Only the cover logo may be SVG (ADR-0038 D7): it is rasterised server-side and never served inline.
+  if (mime === "image/svg+xml") {
+    const head = body.subarray(0, 4096).toString("utf8").replace(/^\uFEFF/, "").trimStart()
+    return /^(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*(<!DOCTYPE svg[^>]*>\s*)?<svg[\s>]/i.test(head) && !/<script|\son\w+\s*=|<foreignObject/i.test(body.toString("utf8"))
+  }
   return false
 }
 
 export const isIdentityType = (type: string) => (IDENTITY_DOCUMENT_TYPES as readonly string[]).includes(type)
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+export const TICKET_FILE_TYPES: readonly string[] = ["TICKET_ORIGINAL", "TICKET_BRANDED", "BRAND_LOGO"]
 const EICAR = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 /** The queue's own retries (Table 26.2: 3, about 6 s in all) are long over by now, so a pending upload here has been left behind. */
 export const STUCK_SCAN_AFTER_MS = 10 * 60_000
@@ -101,18 +107,25 @@ export class DocumentsService implements OnModuleInit {
     return d.storageBucket ?? this.storage.bucket
   }
 
-  async createUpload(input: { ownerUserId: string | null; filename: string; mime: string; size: number; type: string; requestType?: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE"; requestId?: string; visibility?: "INTERNAL" | "CUSTOMER"; createdBy: string }) {
+  /**
+   * `accept` narrows the allowed types for a purpose (ticket originals are PDF only, the cover logo PNG/JPEG/SVG) and
+   * `keyPrefix` places the object, e.g. under the write-once `tickets/original/` prefix (ADR-0038 D2).
+   */
+  async createUpload(input: { ownerUserId: string | null; filename: string; mime: string; size: number; type: string; requestType?: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE"; requestId?: string; visibility?: "INTERNAL" | "CUSTOMER"; createdBy: string; accept?: Record<string, string[]>; keyPrefix?: string; maxBytes?: number }) {
     const ext = input.filename.toLowerCase().slice(input.filename.lastIndexOf("."))
     const identity = isIdentityType(input.type)
     if (identity) {
       if (!IDENTITY_UPLOAD_TYPES[input.mime]?.includes(ext)) throw new AppError("VALIDATION_FAILED", "Passport scans must be JPG or PNG images", [{ path: "mime", code: "TYPE_NOT_ALLOWED" }])
+    } else if (input.accept) {
+      if (!input.accept[input.mime]?.includes(ext)) throw new AppError("VALIDATION_FAILED", `Only ${Object.values(input.accept).flat().join(", ")} files are accepted`, [{ path: "mime", code: "TYPE_NOT_ALLOWED" }])
     } else if (!UPLOAD_TYPES[input.mime]?.includes(ext)) throw new AppError("VALIDATION_FAILED", "Only PDF, JPG and PNG files are accepted", [{ path: "mime", code: "TYPE_NOT_ALLOWED" }])
-    if (input.size <= 0 || input.size > MAX_UPLOAD_BYTES) throw new AppError("VALIDATION_FAILED", "Files must be 10 MB or smaller", [{ path: "size", code: "TOO_LARGE" }])
-    const storageKey = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}${ext}`
+    const max = Math.min(input.maxBytes ?? MAX_UPLOAD_BYTES, MAX_UPLOAD_BYTES)
+    if (input.size <= 0 || input.size > max) throw new AppError("VALIDATION_FAILED", `Files must be ${Math.round(max / 1024 / 1024)} MB or smaller`, [{ path: "size", code: "TOO_LARGE" }])
+    const storageKey = `${input.keyPrefix ?? ""}${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}${ext}`
     const storageBucket = identity ? this.storage.identityBucket : null
     const [doc] = await this.db.insert(documents).values({ ownerUserId: input.ownerUserId, requestType: input.requestType, requestId: input.requestId, type: input.type, filename: input.filename.slice(0, 200), mime: input.mime, size: input.size, storageKey, storageBucket, visibility: identity ? "INTERNAL" : input.visibility ?? "INTERNAL", createdBy: input.createdBy }).returning()
-    const { url } = await this.storage.presignPut(storageKey, input.mime, input.size, 300, storageBucket ?? this.storage.bucket)
-    return { documentId: doc!.id, uploadUrl: url, method: "PUT", headers: { "content-type": input.mime, ...(identity ? { "x-amz-server-side-encryption": "AES256" } : {}) }, expiresInSeconds: 300 }
+    const { url, headers } = await this.storage.presignPut(storageKey, input.mime, input.size, 300, storageBucket ?? this.storage.bucket)
+    return { documentId: doc!.id, uploadUrl: url, method: "PUT" as const, headers: { ...headers, ...(identity ? { "x-amz-server-side-encryption": "AES256" } : {}) }, expiresInSeconds: 300 }
   }
 
   async complete(documentId: string, userId: string) {
@@ -190,7 +203,8 @@ export class DocumentsService implements OnModuleInit {
 
   async forRequest(requestType: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE", requestId: string, customerView: boolean) {
     const rows = await this.db.select().from(documents).where(and(eq(documents.requestType, requestType), eq(documents.requestId, requestId)))
-    return rows.filter((d) => d.scanStatus === "CLEAN" && d.uploadCompletedAt && (!customerView || d.visibility === "CUSTOMER" || d.ownerUserId === d.createdBy))
+    // Ticket files have their own views and integrity-checked downloads (ADR-0038), so they are not listed as plain documents.
+    return rows.filter((d) => d.scanStatus === "CLEAN" && d.uploadCompletedAt && !TICKET_FILE_TYPES.includes(d.type) && (!customerView || d.visibility === "CUSTOMER" || d.ownerUserId === d.createdBy))
   }
 
   async attach(tx: DbOrTx, ids: string[], requestType: "FLIGHT" | "CARGO" | "AFTER_SALES" | "SERVICE", requestId: string, userId: string) {
@@ -248,9 +262,9 @@ export class DocumentsService implements OnModuleInit {
     return this.storage.get(d.storageKey, this.bucketOf(d))
   }
 
-  async downloadUrl(d: typeof documents.$inferSelect) {
+  async downloadUrl(d: typeof documents.$inferSelect, disposition: "attachment" | "inline" = "attachment") {
     if (d.erasedAt) throw new AppError("NOT_FOUND")
     if (d.scanStatus !== "CLEAN") throw new AppError("VALIDATION_FAILED", d.scanStatus === "PENDING" ? "The file is still being checked" : "The file failed the virus check")
-    return { url: await this.storage.presignGet(d.storageKey, d.filename, 300, this.bucketOf(d)), expiresInSeconds: 300 }
+    return { url: await this.storage.presignGet(d.storageKey, d.filename, 300, this.bucketOf(d), disposition), expiresInSeconds: 300 }
   }
 }

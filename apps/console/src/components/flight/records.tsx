@@ -13,8 +13,8 @@ import type { FlightDetail, PaymentRecordingState } from "@/lib/types"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 type Bind = { open: boolean; onOpenChange: (o: boolean) => void }
-const localNow = (plusHours = 0) => { const d = new Date(Date.now() + plusHours * 3600_000); d.setSeconds(0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
-const iso = (local: string) => new Date(local).toISOString()
+export const localNow = (plusHours = 0) => { const d = new Date(Date.now() + plusHours * 3600_000); d.setSeconds(0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
+export const iso = (local: string) => new Date(local).toISOString()
 
 export function accepted(d: FlightDetail) {
   const q = d.quotes.find((x) => x.status === "ACCEPTED")
@@ -106,8 +106,8 @@ export function TicketsDialog({ d, done, ...bind }: Bind & { d: FlightDetail; do
   )
 }
 
-type Pay = { amount: string; currency: string; method: string; ref: string; payer: string; received: string }
-function PaymentFields({ p, set }: { p: Pay; set: (p: Pay) => void }) {
+export type Pay = { amount: string; currency: string; method: string; ref: string; payer: string; received: string }
+export function PaymentFields({ p, set }: { p: Pay; set: (p: Pay) => void }) {
   return (
     <div className="grid grid-cols-3 gap-3">
       <Field label="Amount"><input className="field-input num" inputMode="decimal" value={p.amount} onChange={(e) => set({ ...p, amount: e.target.value })} required dir="ltr" /></Field>

@@ -1,9 +1,11 @@
 import { Inject, Injectable } from "@nestjs/common"
+import { and, eq, inArray } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
 import { DEFAULT_WORKFLOW, CARGO_SMS_STATUSES } from "@unitravel/contracts"
+import { type Db, ticketDocuments } from "@unitravel/db"
 
-import { REDIS } from "../../core/infra.module"
+import { DB, REDIS } from "../../core/infra.module"
 import { AccessService } from "../access/access.service"
 import { ConfigService } from "../config/config.service"
 import { isBusinessTime } from "../platform/business-hours"
@@ -24,7 +26,12 @@ export class NotificationRouter {
     private readonly access: AccessService,
     private readonly config: ConfigService,
     @Inject(REDIS) private readonly redis: Redis,
+    @Inject(DB) private readonly db: Db,
   ) {}
+
+  /** ADR-0038 D6: the wording of `{attachments_note}` in the ticket emails. */
+  private static readonly ATTACHED = { attachments_note_en: "Your Uni Travel ticket and the airline's original document are attached as PDF files. Keep the original for check-in and boarding.", attachments_note_fa: "بلیت یونی‌تراول و سند اصلی شرکت هواپیمایی به‌صورت فایل PDF پیوست شده‌اند. سند اصلی را برای پذیرش و سوار شدن نگه دارید." }
+  private static readonly IN_ACCOUNT = { attachments_note_en: "Your ticket documents will be available in your account.", attachments_note_fa: "اسناد بلیت شما در حساب کاربری‌تان در دسترس خواهد بود." }
 
   private requestPath(ref: string) {
     return ref.startsWith("UT-C") ? `/cargo/${ref}` : ref.startsWith("UT-S") ? `/services/${ref}` : `/requests/${ref}`
@@ -122,8 +129,23 @@ export class NotificationRouter {
         return
       case "reservation.recorded":
         return this.n.notify({ ...base, eventType: "reservation.recorded", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, deadline_at: p.deadline }, linkPath: this.requestPath(p.ref) })
-      case "ticket.recorded":
-        return this.n.notify({ ...base, eventType: "ticket.issued", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, ticket_numbers: (p.ticketNumbers ?? []).join(", ") }, linkPath: this.requestPath(p.ref) })
+      case "ticket.recorded": {
+        // ADR-0038: when the tickets were recorded from the ticket-document wizard, the document's own email (with the PDFs) is the notice.
+        const [doc] = await this.db.select({ id: ticketDocuments.id }).from(ticketDocuments).where(and(eq(ticketDocuments.requestId, p.requestId), inArray(ticketDocuments.status, ["DRAFT", "ISSUED"]))).limit(1)
+        if (doc) return
+        return this.n.notify({ ...base, eventType: "ticket.issued", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, ticket_numbers: (p.ticketNumbers ?? []).join(", "), ...NotificationRouter.IN_ACCOUNT }, linkPath: this.requestPath(p.ref) })
+      }
+      case "ticket_document.issued":
+      case "ticket_document.resent": {
+        // ADR-0038 D6: the branded file and the unchanged original both go as attachments; a passenger address is a second delivery.
+        const t = e.payload as unknown as { ticketDocumentId: string; ref: string; customerUserId: string; ticketNumbers: string[]; attachments: string[]; passengerEmailEnc?: string | null; toAccount?: boolean }
+        return this.n.notify({
+          eventId: e.id, requestKey: t.ref, eventType: e.type === "ticket_document.issued" ? "ticket.issued" : "ticket.resent", audience: "CUSTOMER", userIds: [t.customerUserId], documentDelivery: true,
+          vars: { ref: t.ref, ticket_numbers: t.ticketNumbers.join(", "), ...NotificationRouter.ATTACHED }, linkPath: this.requestPath(t.ref),
+          data: { ref: t.ref, ticketDocumentId: t.ticketDocumentId, attachments: t.attachments.map((documentId) => ({ documentId, via: "ticket-document" })) },
+          ticketDocumentId: t.ticketDocumentId, extraEmails: t.passengerEmailEnc ? [t.passengerEmailEnc] : [], skipAccountEmail: t.toAccount === false,
+        })
+      }
       case "compliance.case_opened": {
         const officers = await this.access.usersWithPermission("compliance.case.decide")
         return this.n.notify({ ...base, eventType: "compliance.hold_created", audience: "COMPLIANCE", userIds: officers, vars: { ref: p.ref, trigger: String((e.payload as { trigger?: string }).trigger ?? "") }, linkPath: `/compliance` })

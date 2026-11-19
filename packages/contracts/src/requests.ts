@@ -10,6 +10,7 @@ import { Condition, SegmentBaggage, Slice } from "./offer"
 import { CustomerItinerary, SearchQuery } from "./search"
 import { InvoiceLineType } from "./invoices"
 import { RequestServiceInterest } from "./service-catalog"
+import { PublicFare } from "./flight-builder"
 
 export const SeatPreference = z.enum(["NONE", "WINDOW", "AISLE", "TOGETHER", "EXTRA_LEGROOM"])
 export const SsrCode = z.enum(["WCHR", "WCHS", "WCHC", "VGML", "MOML", "CHML", "DBML", "PETC", "EXST", "UMNR", "MEDA", "OTHER"])
@@ -21,6 +22,8 @@ export const CreateFlightRequestBody = z
     searchId: Uuid.optional(),
     itineraryId: z.string().optional(),
     query: SearchQuery.optional(),
+    /** ADR-0037: a staff-captured catalog fare (kind CATALOG). */
+    catalog: z.object({ resultId: Uuid, fareId: Uuid }).optional(),
     manual: z
       .object({
         flexibility: z.string().max(500).optional(),
@@ -47,6 +50,7 @@ export const CreateFlightRequestBody = z
   })
   .superRefine((b, ctx) => {
     if (b.kind === "ITINERARY" && (!b.searchId || !b.itineraryId)) ctx.addIssue({ code: "custom", path: ["itineraryId"], message: "Itinerary requests need searchId and itineraryId" })
+    if (b.kind === "CATALOG" && !b.catalog) ctx.addIssue({ code: "custom", path: ["catalog"], message: "Catalog requests need resultId and fareId" })
     if (b.kind === "MANUAL" && !b.query) ctx.addIssue({ code: "custom", path: ["query"], message: "Manual requests need the search details" })
   })
 export type CreateFlightRequestBody = z.infer<typeof CreateFlightRequestBody>
@@ -225,6 +229,8 @@ export const OfferSnapshotView = z.object({
   engineVersion: z.string(),
   contentHash: z.string(),
   createdAt: IsoDateTime,
+  /** ADR-0037: the catalog fare exactly as the customer saw it (CATALOG requests only). */
+  fare: PublicFare.nullable().default(null),
 })
 
 export const CustomerAction = z.enum(["PROVIDE_PASSPORT", "RESPOND", "ACCEPT_QUOTE", "CANCEL", "MESSAGE"])

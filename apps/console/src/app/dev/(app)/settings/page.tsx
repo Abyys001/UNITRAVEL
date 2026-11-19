@@ -12,6 +12,7 @@ import { useConfirm } from "@/components/confirm"
 import { Segmented } from "@/components/controls"
 import { type Issue, SchemaForm } from "@/components/schema-form"
 import { SETTINGS_EXTRA_PATHS, SettingsExtras } from "@/components/settings-extras"
+import { BRANDING_PATHS, BrandingSettings } from "@/components/tickets/branding"
 import { DevPage, Section } from "@/components/dev-ui"
 import { ErrorLine, Loading, PageHead } from "@/components/ui"
 import { api, errText } from "@/lib/api"
@@ -55,7 +56,7 @@ export default function SettingsPage() {
       <DevPage className="grid items-start gap-4 space-y-0 xl:grid-cols-[minmax(0,1fr)_minmax(24rem,32rem)]">
         <Section title={t("set.app")} hint={t("set.appHint")} aside={issues.length ? <span className="rounded-full bg-danger-subtle px-2.5 py-0.5 text-danger">{t("cfg.issues", { n: issues.length })}</span> : dirty ? <span className="text-steel">{t("set.unsaved")}</span> : null}>
           <ErrorLine error={settings.error} />
-          {draft == null ? <Loading /> : <><SchemaForm value={draft as never} onChange={setDraft} issues={issues} hide={SETTINGS_EXTRA_PATHS} /><SettingsExtras draft={draft as object} onChange={setDraft} issues={issues} /></>}
+          {draft == null ? <Loading /> : <><SchemaForm value={draft as never} onChange={setDraft} issues={issues} hide={[...SETTINGS_EXTRA_PATHS, ...BRANDING_PATHS]} /><BrandingSettings draft={draft as object} onChange={setDraft} issues={issues} /><SettingsExtras draft={draft as object} onChange={setDraft} issues={issues} /></>}
           {can("settings.write") && <div className="-mx-4 mt-5 -mb-4 flex gap-2 border-t border-rule bg-surface-sunk px-4 py-3 md:-mx-5 md:-mb-5 md:px-5"><Button size="sm" onClick={() => void save()} loading={busy} disabled={!!issues.length || !dirty}>{t("set.save")}</Button>{dirty && <Button size="sm" variant="ghost" onClick={() => setDraft(structuredClone(settings.data))}>{t("ud.reset")}</Button>}</div>}
         </Section>
         <Section title={t("hl.flags")} hint={t("set.flagsHint")} flush aside={flags.data ? <span className="text-steel" data-testid="flags-summary">{t("set.flags.summary", { n: flags.data.length, on: flags.data.filter((f) => f.enabled).length })}</span> : undefined}>

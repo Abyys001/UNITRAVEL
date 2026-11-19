@@ -1,6 +1,6 @@
 "use client"
 
-import { Armchair, BedDouble, BookA, BookOpen, Bus, ChevronDown, ClipboardList, CreditCard, Globe, House, Inbox, LifeBuoy, Menu, Package, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
+import { Armchair, BedDouble, BookA, BookOpen, Bus, ChevronDown, ClipboardList, CreditCard, Globe, House, Inbox, LifeBuoy, Menu, Package, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, Ticket, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useRef, useState } from "react"
@@ -83,7 +83,7 @@ export function Header() {
   const help: NavLink[] = [
     { href: href("/track"), label: t("nav.track"), icon: SearchCheck },
     { href: href("/requests"), label: t("nav.requests"), icon: ClipboardList },
-    ...(me ? [{ href: href("/billing"), label: t("nav.billing"), icon: ReceiptText }] : []),
+    ...(me ? [{ href: href("/account/tickets"), label: t("nav.tickets"), icon: Ticket }, { href: href("/billing"), label: t("nav.billing"), icon: ReceiptText }] : []),
     ...(on("club") ? [{ href: href("/club"), label: t("nav.club"), icon: Star }] : []),
     { href: href("/support"), label: t("nav.support"), icon: LifeBuoy },
     { href: href("/blog"), label: t("nav.blog"), icon: BookOpen },

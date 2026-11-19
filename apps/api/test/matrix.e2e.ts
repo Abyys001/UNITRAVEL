@@ -93,6 +93,17 @@ describe("permission matrix", () => {
     expect(DEFAULT_ROLE_PERMISSIONS.owner).toContain("payments.mode.approve")
   })
 
+  it("sweeps the Flight Builder routes, parameterised ones included (ADR-0037)", () => {
+    const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
+    for (const [m, p] of [
+      ["GET", "/v1/admin/flight-builder/options"], ["GET", "/v1/admin/flight-builder/options/:id"], ["POST", "/v1/admin/flight-builder/options/:id/retire"], ["GET", "/v1/admin/flight-builder/usage"],
+      ["POST", "/v1/admin/flight-requests/:ref/quotes/from-catalog"], ["GET", "/v1/dev/providers/flight-builder/state"], ["GET", "/v1/dev/providers/flight-builder/sync-runs"],
+      ["POST", "/v1/dev/providers/flight-builder/authorisations/:id/revoke"],
+    ] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
+    // Capture, settings, authorisation and refresh have no path parameter and mutate, so they are not swept; routes.spec.ts pins them.
+    for (const role of ["customer", "cargo_admin"] as BuiltInRole[]) for (const perm of ["catalog.capture", "provider.authorisation.record"] as Permission[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain(perm)
+  })
+
   it("includes the Apify Developer Panel routes, so the role sweeps cover them (ADR-0032)", () => {
     const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
     // POST /v1/dev/providers/apify-google-flights/test is a parameter-less write, so it is not swept; routes.spec.ts pins its permission (and the Aviation Edge test and coverage, ADR-0036).
@@ -115,6 +126,18 @@ describe("permission matrix", () => {
     const phaseJ: Permission[] = ["customer.read", "service.assign", "invoice.direct", "support.read", "support.reply", "call.log", "listings.write"]
     for (const role of ["admin", "owner"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).toEqual(expect.arrayContaining(phaseJ))
     for (const role of ["customer", "cargo_admin", "compliance_officer", "developer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => phaseJ.includes(p))).toEqual([])
+  })
+
+  it("sweeps the ticket document routes, parameterised ones included (ADR-0038)", () => {
+    const has = (method: string, path: string) => routes.some((r) => r.method === method && r.path === path)
+    for (const [m, p] of [
+      ["GET", "/v1/admin/ticket-documents"], ["GET", "/v1/admin/ticket-documents/:id"], ["GET", "/v1/admin/ticket-documents/:id/preview"], ["GET", "/v1/admin/ticket-documents/:id/files/:which"],
+      ["POST", "/v1/admin/ticket-documents/:id/issue"], ["POST", "/v1/admin/ticket-documents/:id/resend"], ["POST", "/v1/admin/ticket-documents/:id/replace"], ["POST", "/v1/admin/ticket-documents/:id/reissue"],
+      ["POST", "/v1/admin/ticket-documents/:id/revoke"], ["POST", "/v1/admin/ticket-documents/uploads/:id/complete"], ["GET", "/v1/admin/ticket-documents/uploads/:id"],
+      ["GET", "/v1/admin/flight-requests/:ref/ticket-documents"], ["GET", "/v1/ticket-documents"], ["GET", "/v1/ticket-documents/:id"], ["GET", "/v1/ticket-documents/:id/files/:which"], ["GET", "/v1/ticket-documents/:id/codes/:index"],
+    ] as const) expect({ m, p, has: has(m, p) }).toEqual({ m, p, has: true })
+    // Upload sessions and draft creation have no path parameter and write, so they are not swept; routes.spec.ts pins them.
+    for (const role of ["customer", "cargo_admin", "compliance_officer", "developer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => p.startsWith("ticket.document"))).toEqual([])
   })
 
   for (const [name, phone] of Object.entries(STAFF)) {

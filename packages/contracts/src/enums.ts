@@ -19,7 +19,7 @@ export const FlightRequestStatus = z.enum([
   "ACCEPTED", "RESERVED", "TICKETED", "COMPLETED", "DECLINED", "CANCELLED", "EXPIRED",
 ])
 export const PaymentStatus = z.enum(["NONE", "PARTIAL", "PAID", "REFUND_PENDING", "REFUNDED"])
-export const FlightRequestKind = z.enum(["ITINERARY", "MANUAL"])
+export const FlightRequestKind = z.enum(["ITINERARY", "MANUAL", "CATALOG"])
 
 // Chapter 14.5 — cargo.
 export const CargoStatus = z.enum([
@@ -43,7 +43,7 @@ export const Incoterm = z.enum(["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP",
 
 // Chapter 13.6–13.8 — quotes, records, after-sales.
 export const QuoteStatus = z.enum(["DRAFT", "SENT", "ACCEPTED", "DECLINED", "EXPIRED", "SUPERSEDED"])
-export const QuoteOptionSource = z.enum(["SNAPSHOT", "STAFF_SEARCH", "MANUAL"])
+export const QuoteOptionSource = z.enum(["SNAPSHOT", "STAFF_SEARCH", "MANUAL", "CATALOG"])
 export const ReservationSystem = z.enum(["AMADEUS_TERMINAL", "DUFFEL_API", "PARTNER", "AIRLINE_DIRECT"])
 export const ReservationStatus = z.enum(["HELD", "CONFIRMED", "CANCELLED", "LAPSED"])
 export const TicketStatus = z.enum(["ISSUED", "VOIDED", "EXCHANGED", "REFUNDED"])
@@ -89,19 +89,21 @@ export const CaseDecision = z.enum(["RELEASE", "DECLINE", "ESCALATE", "OVERRIDE"
 
 // Chapter 23.10 — notifications, documents, config.
 export const Channel = z.enum(["INBOX", "PUSH", "SMS", "EMAIL"])
-export const DeliveryStatus = z.enum(["QUEUED", "SENT", "DELIVERED", "FAILED", "UNDELIVERABLE", "SKIPPED"])
+export const DeliveryStatus = z.enum(["QUEUED", "SENT", "DELIVERED", "FAILED", "UNDELIVERABLE", "SKIPPED", "BOUNCED"])
 export const ScanStatus = z.enum(["PENDING", "CLEAN", "INFECTED"])
 export const DocumentVisibility = z.enum(["INTERNAL", "CUSTOMER"])
 export const DocumentType = z.enum([
   "E_TICKET_RECEIPT", "ITINERARY", "INVOICE", "RECEIPT", "QUOTE_PDF", "COMMERCIAL_INVOICE", "PACKING_LIST", "ID", "PASSPORT_SCAN",
   "CONTENT_PHOTO", "PAYMENT_EVIDENCE", "SHIPMENT_SUMMARY", "EXPORT_LICENCE", "OTHER",
+  // ADR-0038: the provider's ticket PDF (write-once), our branded wrapper, and the cover logo.
+  "TICKET_ORIGINAL", "TICKET_BRANDED", "BRAND_LOGO",
 ])
 /** Document types that identify a person: staff need `customer.read.documents` to open them and the scan is metadata-stripped (ADR-0005). */
 export const IDENTITY_DOCUMENT_TYPES: readonly z.infer<typeof DocumentType>[] = ["PASSPORT_SCAN", "ID"]
 export const ConfigDomain = z.enum(["ENGINE_RULES", "HUBS", "WORKFLOW", "NOTIFICATION_MATRIX", "AUTH"])
 export const ConfigVersionStatus = z.enum(["DRAFT", "PUBLISHED", "SUPERSEDED"])
 export const ProviderEnv = z.enum(["test", "production"])
-export const ProviderId = z.enum(["fake", "duffel", "amadeus-enterprise", "manual", "apify-google-flights", "flightapi", "aviation-edge"])
+export const ProviderId = z.enum(["fake", "duffel", "amadeus-enterprise", "manual", "apify-google-flights", "flightapi", "aviation-edge", "flight-builder"])
 
 export type TripType = z.infer<typeof TripType>
 export type Cabin = z.infer<typeof Cabin>

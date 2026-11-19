@@ -1,6 +1,6 @@
 // Staff-side response shapes (apps/api/src/modules/**). Contracts cover the customer views; these mirror the staff
 // serialisers so the console renders exactly what the API computed (allowed actions, guard reasons, unknowns).
-import type { AllowedCommand, CaseView, CreditOverrideView, Itinerary, Money, QuoteOptionInput, SearchQuery, Segment, Slice, StaffAfterSalesItem, StaffDirectoryEntry, TimelineEntry } from "@unitravel/contracts"
+import type { StaffFare, StaffFareNoPrice, AllowedCommand, CaseView, CreditOverrideView, Itinerary, Money, QuoteOptionInput, SearchQuery, Segment, Slice, StaffAfterSalesItem, StaffDirectoryEntry, TimelineEntry } from "@unitravel/contracts"
 
 export type { AllowedCommand, CaseView, CreditOverrideView, Itinerary, Money, QuoteOptionInput, Segment, Slice, StaffAfterSalesItem, StaffDirectoryEntry }
 
@@ -46,7 +46,9 @@ export interface FlightDetail {
     history: { ref: string; status: string; submittedAt: string; productType: string }[]
   }
   travellers: StaffTraveller[]
-  snapshot: { id: string; itinerary: Itinerary; priceAtSubmit?: Money; priceRevalidated?: Money | null; revalidatedAt?: string | null; sources?: SnapshotSource[]; ruleVersion: number; engineVersion: string; contentHash: string; createdAt: string } | null
+  snapshot: { id: string; itinerary: Itinerary; priceAtSubmit?: Money; priceRevalidated?: Money | null; revalidatedAt?: string | null; sources?: SnapshotSource[]; ruleVersion: number; engineVersion: string; contentHash: string; createdAt: string
+    /** ADR-0037: catalog fare as captured by staff. Price fields are present only for callers with `pricing.read.internal`. */
+    staffFare?: (StaffFare | StaffFareNoPrice) & { sourceRecordId?: string | null } | null } | null
   timeline: TimelineEntry[]
   messages: { id: string; direction: "TO_CUSTOMER" | "FROM_CUSTOMER"; body: string; authorName: string; createdAt: string; readAt: string | null; documentIds: string[] }[]
   notes: { id: string; body: string; author: string | null; createdAt: string }[]

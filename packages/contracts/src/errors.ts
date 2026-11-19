@@ -35,6 +35,18 @@ export const ERROR_STATUS = {
   ONLINE_PAYMENT_NOT_OFFERED: 403,
   COMPLIANCE_REVIEW_REQUIRED: 409,
   SEARCH_EXPIRED: 410,
+  /** ADR-0037: a staff capture touches a blocked carrier, airport or lane. */
+  POLICY_BLOCKED: 422,
+  /** ADR-0037: a staff capture on a route the catalog does not track. */
+  ROUTE_NOT_TRACKED: 422,
+  /** ADR-0037 D9: sync mode cannot leave DISABLED without a recorded authorisation. */
+  AUTHORISATION_REQUIRED: 409,
+  SOURCE_NOT_AUTHORISED: 409,
+  NO_ADAPTER: 409,
+  /** ADR-0038 D4: a code found in the provider's original is missing or altered in the branded file; the document cannot be issued. */
+  CODE_INTEGRITY_FAILED: 409,
+  /** ADR-0038 D2: a stored original no longer matches the sha256 recorded at upload; it is never served. */
+  INTEGRITY_ALERT: 409,
   /** An integration has no credentials or no vendor API implemented yet (for example click-to-call before the Bonline docs, ADR-0019). */
   NOT_CONFIGURED: 501,
   INTERNAL: 500,

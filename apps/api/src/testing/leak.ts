@@ -10,6 +10,7 @@ export const FORBIDDEN_CUSTOMER_KEYS: readonly string[] = [
   "supplierFetchedAt", "supplierExpiresAt", "priceAtSubmit", "priceRevalidated", "score", "explain",
   "priceLevel", "typicalPriceLow", "typicalPriceHigh", "typicalPriceRange", "bookingToken", "googleFlightsUrl", "bookingOptions",
   "bookingUrl", "totalPrice", "cheapestReturn", "priceNote", "fareMinor", "baseFare",
+  "baseMinor", "taxesMinor", "fareType", "fareBasis", "rulesText", "sourceRecordId", "panelUrl", "username", "password", "staffFare",
 ]
 
 const FORBIDDEN_URL = /google\.com\/(travel|flights)/i

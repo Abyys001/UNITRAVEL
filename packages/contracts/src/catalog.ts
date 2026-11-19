@@ -2,6 +2,7 @@ import { z } from "zod"
 
 import { Iata, IsoDate, IsoDateTime, Uuid } from "./common"
 import { RiskFlag } from "./enums"
+import { PublicFare } from "./flight-builder"
 
 // ADR-0034: the scheduled flight catalog. Customers read only stored, customer-safe snapshots; nothing on a public path
 // can start a provider call. Prices exist only in admin DTOs (ADR-0029: indicative, staff-only).
@@ -201,6 +202,8 @@ export const PublicItineraryDetail = PublicItinerary.extend({
   legs: z.array(PublicLeg),
   isCurrent: z.boolean(),
   lastSeenAt: IsoDateTime,
+  /** ADR-0037: LIVE staff-captured fares, customer-safe (no price). Absent or empty for feed-only results; the API always fills it on the detail route. Optional (not default) so stored ResultDetail rows still type-check. */
+  fares: z.array(PublicFare).optional(),
 })
 export type PublicItineraryDetail = z.infer<typeof PublicItineraryDetail>
 

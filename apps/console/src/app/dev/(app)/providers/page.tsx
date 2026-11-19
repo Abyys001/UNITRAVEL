@@ -9,6 +9,7 @@ import { ProviderEnv, type ProviderView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 
+import { FlightBuilderCard } from "@/components/flight-builder/dev-panel"
 import { SchemaForm } from "@/components/schema-form"
 import { SecretDialog } from "@/components/secret-form"
 import { DevPage, KV, KVRow, Section } from "@/components/dev-ui"
@@ -85,7 +86,7 @@ export default function ProvidersPage() {
   return (
     <div>
       <PageHead kicker={t("dnav.integrations")} title={t("dnav.providers")}><span className="text-meta text-steel">{t("prov.desc")}</span></PageHead>
-      <DevPage data-testid="providers">{q.data.map((p) => <ProviderCard key={`${p.id}-${p.version}`} p={p} />)}<VisaResearchCard /></DevPage>
+      <DevPage data-testid="providers">{q.data.filter((p) => p.id !== "flight-builder").map((p) => <ProviderCard key={`${p.id}-${p.version}`} p={p} />)}<FlightBuilderCard href="/providers/flight-builder" /><VisaResearchCard /></DevPage>
     </div>
   )
 }

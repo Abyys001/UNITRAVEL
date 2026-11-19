@@ -22,6 +22,8 @@ import { AmendDialog } from "@/components/flight/amend-dialog"
 import { IndicativeSource } from "@/components/flight/apify-source"
 import { CustomerCard, TravellerCard, TripSummary } from "@/components/flight/request-panels"
 import { AfterSalesDialog, CreditOverrideDialog, PaymentDialog, ReservationDialog, TicketsDialog } from "@/components/flight/records"
+import { StaffFarePanel } from "@/components/flight-builder/staff-fare-panel"
+import { TicketDocumentsPanel } from "@/components/tickets/request-panel"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
 import { Composer, MessagesList, NotesList } from "@/components/thread"
 import { Arrow, Empty, ErrorLine, Field, Loading, Panel, RouteText, Tag, useAct } from "@/components/ui"
@@ -184,6 +186,7 @@ export default function FlightRequestPage() {
                 <p className="mt-2 flex flex-wrap gap-x-4 text-meta text-steel">{d.snapshot.priceAtSubmit && <span>{t("rq.atSubmission")} <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>{t("rq.revalidated")} <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>{t("rq.rules", { v: d.snapshot.ruleVersion })} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
                 {recheck.error && <ErrorLine error={recheck.error} />}
                 <IndicativeSource d={d} />
+                {d.snapshot.staffFare && <StaffFarePanel fare={d.snapshot.staffFare} />}
               </div>
             </Panel>
           )}
@@ -277,6 +280,7 @@ export default function FlightRequestPage() {
               )}
             </dl>
           </Panel>
+          <TicketDocumentsPanel requestRef={d.ref} status={d.status} />
           <Panel title={t("case.panel.documents")}>
             {!d.documents.length ? <Empty>{t("case.docs.none")}</Empty> : <ul className="ledger-rows">{d.documents.map((doc) => <li key={doc.id} className="flex items-center justify-between gap-2 py-1"><button type="button" className="truncate text-start underline-offset-2 hover:underline" onClick={() => void download(doc.id)}>{doc.filename}</button><span className="flex gap-1"><Tag value={doc.type} /><Tag value={doc.visibility} /></span></li>)}</ul>}
           </Panel>

@@ -12,7 +12,7 @@ Gate (ch. 31.2): counsel's written position on D-01, payments/ATOL and cargo; at
 
 | # | Item | Status | What the code does meanwhile |
 |---|---|---|---|
-| A1 | Amadeus Enterprise: read-only discovery of the Flight Builder panel; Enterprise API questions (ch. 6); contract and sandbox, or decision to use another GDS | BLOCKED | Adapter `amadeus-enterprise` present, disabled by default, reports BLOCKED/CONTENT_RESTRICTED until a contract exists; the engine skips disabled providers. Seat maps for the contract: UNKNOWN (ch. 34.4) |
+| A1 | Amadeus Enterprise: read-only discovery of the Flight Builder panel (done 19 Nov 2026: docs/integrations/EXTERNAL-FLIGHT-PANEL-RESEARCH.md; scan quota near its critical threshold, no API, staff tool only; staff-capture workflow built under ADR-0037 (STAGE-28)); Enterprise API questions (ch. 6, plus Q7–Q9 in that document); contract and sandbox, or decision to use another GDS | BLOCKED | Adapter `amadeus-enterprise` present, disabled by default, reports BLOCKED/CONTENT_RESTRICTED until a contract exists; the engine skips disabled providers. Seat maps for the contract: UNKNOWN (ch. 34.4) |
 | A2 | Duffel: test account; written confirmation that the customer profile is acceptable | BLOCKED | Duffel adapter implemented (search, price, seat maps), disabled by default; needs credentials (Developer Panel, write-only) and the written acceptance before enabling. Sanctions terms and airline list: UNKNOWN (ch. 34.4) |
 | A3 | FAKE supplier for development and tests | DONE-IN-CODE | FAKE adapter, local/test only; refused in production (build and `PATCH /v1/dev/providers/fake` reject `environment: production`; production image smoke test confirms) |
 | A4 | Counsel: answers to ch. 4.8; initial carrier policy list; ATOL mode; cargo lanes position | BLOCKED | See section B |
@@ -79,7 +79,8 @@ D-01 (carriers): counsel's position is represented as compliance policy data (ab
 |---|---|---|
 | Whether Iraqi Airways and SalamAir Iran services appear in Amadeus or Duffel content | UNKNOWN | Sandbox searches owed; manual options are a first-class path |
 | Current gateway timetables (Van, Erzurum, Yerevan) | UNKNOWN | Supplier searches once providers are live |
-| Flight Builder API existence | UNKNOWN | Not relied on |
+| Flight Builder API existence | UNKNOWN (the web panel is server-rendered HTML with no data API, OBSERVED 19 Nov 2026) | Not relied on |
+| Flight Builder availability shown to customers (Q10) | UNKNOWN (owner decided to show it; Amadeus permission not yet asked or answered) | Shown with 9 labelled "9 or more (not confirmed)" and observation time, ADR-0037 D4 |
 | Cargo carrier status for Iran (DHL, UPS, Aramex...) | UNKNOWN | Service availability register seeded: Royal Mail/Parcelforce, FedEx, Send My Bag, cargo.one marked SUSPENDED with source URLs; DHL and UPS marked UNKNOWN |
 | Exact goods lists (SI 2026/983 schedules); personal effects exception | UNKNOWN | Counsel; starting-proposal policies as data |
 

@@ -6,13 +6,14 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useMemo, useState } from "react"
 
-import type { CustomerItinerary, SearchQuery, TravellerView } from "@unitravel/contracts"
+import type { CustomerItinerary, PublicFare, PublicItineraryDetail, SearchQuery, TravellerView } from "@unitravel/contracts"
 import { IconBadge } from "@unitravel/ui/brand/art"
 import { Button } from "@unitravel/ui/components/button"
 import { Textarea } from "@unitravel/ui/components/textarea"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { Auto, Ltr } from "@/components/badges"
+import { FareSummary } from "@/components/fare-picker"
 import { ItineraryView } from "@/components/itinerary-view"
 import { type SearchParamsShape, toQuery } from "@/components/search-form"
 import { AddIdentity } from "@/components/add-identity"
@@ -30,6 +31,20 @@ const ADULT_LIKE = ["ADT", "YTH", "STU"]
 const mixOf = (types: string[]): Mix => ({ a: types.filter((x) => ADULT_LIKE.includes(x)).length, c: types.filter((x) => x === "CHD").length, i: types.filter((x) => x === "INF" || x === "INS").length })
 const sameMix = (x: Mix, y: Mix) => x.a === y.a && x.c === y.c && x.i === y.i
 
+/** The chosen catalog fare, shown before sending; a fare that is gone from the flight (or a flight that is gone) offers the way back instead of a form that cannot succeed. */
+function CatalogChoice({ id, loading, d, fare }: { id: string; loading: boolean; d?: PublicItineraryDetail; fare?: PublicFare }) {
+  const { t, href, date, duration, sep } = useI18n()
+  if (loading) return <p className="mt-5 text-steel">{t("common.loading")}</p>
+  if (!d || !fare) return <p role="alert" data-testid="fare-missing" className="mt-5 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{t("fare.expired")} <Link className="font-semibold underline" href={href(`/flights/results/${id}`)}>{t("fare.backToFlight")}</Link></p>
+  return (
+    <section data-testid="catalog-choice" className="card-brand mt-5 p-5">
+      <p className="font-display text-2xl"><Ltr>{d.origin} → {d.destination}</Ltr></p>
+      <p className="mb-3 mt-1 text-sm text-steel">{date(d.departureDate, { dateOnly: true, weekday: true })}{sep}{duration(d.durationMin)}{sep}<Ltr>{d.flightNumbers.join(", ")}</Ltr></p>
+      <FareSummary fare={fare} />
+    </section>
+  )
+}
+
 function RequestForm() {
   const { t, href, money, locale, sep } = useI18n()
   const { me, loading } = useSession()
@@ -39,7 +54,11 @@ function RequestForm() {
   const searchId = sp.get("s")
   const itineraryId = sp.get("i")
   const manual = useMemo(() => { try { const m = sp.get("manual"); return m ? (JSON.parse(decodeURIComponent(escape(atob(m)))) as SearchParamsShape) : null } catch { return null } }, [sp])
-  const kind = itineraryId ? "ITINERARY" : "MANUAL"
+  const catalogId = sp.get("catalog")
+  const fareId = sp.get("fare")
+  const kind = catalogId && fareId ? "CATALOG" : itineraryId ? "ITINERARY" : "MANUAL"
+  const result = useQuery({ queryKey: ["catalog-result", catalogId], queryFn: () => api<PublicItineraryDetail>(`/v1/flights/results/${catalogId}`), enabled: kind === "CATALOG", retry: false })
+  const fare = result.data?.fares?.find((f) => f.id === fareId)
   const itn = useQuery({ queryKey: ["itn", itineraryId], queryFn: () => api<{ itinerary: CustomerItinerary; query: SearchQuery }>(`/v1/itineraries/${itineraryId}`), enabled: !!itineraryId })
   const travellers = useQuery({ queryKey: ["travellers"], queryFn: () => api<TravellerView[]>("/v1/me/travellers"), enabled: !!me })
   const [chosen, setChosen] = useState<Record<string, string>>({})
@@ -80,7 +99,8 @@ function RequestForm() {
     setBusy(true); setErr(null)
     const query = kind === "MANUAL" && manual ? toQuery(manual) : undefined
     const body = {
-      kind, searchId: searchId ?? undefined, itineraryId: itineraryId ?? undefined, query, contactIdentityId: contact,
+      kind, searchId: searchId ?? undefined, itineraryId: itineraryId ?? undefined, query,
+      catalog: kind === "CATALOG" ? { resultId: catalogId!, fareId: fareId! } : undefined, contactIdentityId: contact,
       travellers: selected.map(([travellerId, passengerType]) => ({ travellerId, passengerType })),
       manual: kind === "MANUAL" ? { flexibility: form.flexibility || undefined, budget: form.budget ? { amountMinor: Math.round(Number(form.budget) * 100), currency: "GBP" } : undefined, airlinesAvoid: form.avoid.split(/[ ,]+/).filter((x) => /^[A-Z0-9]{2}$/.test(x)), airlinesPrefer: form.prefer.split(/[ ,]+/).filter((x) => /^[A-Z0-9]{2}$/.test(x)), overlandAcceptable: form.overland } : undefined,
       alternativeContact: form.altName && form.altPhone ? { name: form.altName, phone: form.altPhone, relationship: form.altRel || "family" } : undefined,
@@ -115,8 +135,9 @@ function RequestForm() {
   )
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 md:py-10">
-      <h1 className="font-display text-3xl md:text-4xl">{kind === "ITINERARY" ? t("request.title") : t("request.manualTitle")}</h1>
+      <h1 className="font-display text-3xl md:text-4xl">{kind !== "MANUAL" ? t("request.title") : t("request.manualTitle")}</h1>
       {it && <div className="mt-5"><ItineraryView it={it} /></div>}
+      {kind === "CATALOG" && <CatalogChoice id={catalogId!} loading={result.isLoading} d={result.data} fare={fare} />}
       <ComplianceReviewNote show={!!it?.complianceReview} className="mt-4" />
       {manual && <p className="mt-3 text-steel"><Ltr>{manual.from.code} → {manual.to.code}</Ltr>{sep}{manual.date}</p>}
       <section className="card-brand mt-6 p-5">
@@ -171,8 +192,9 @@ function RequestForm() {
         <label className="flex items-start gap-3"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={ack.privacy} onChange={(e) => setAck({ ...ack, privacy: e.target.checked })} /><span>{t("request.ackPrivacy")} <Link className="underline" href={href("/privacy")}>{t("footer.privacy")}</Link></span></label>
         {separate && <label className="flex items-start gap-3 font-medium text-danger"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={ack.self} onChange={(e) => setAck({ ...ack, self: e.target.checked })} />{t("request.ackSelfTransfer")}</label>}
       </section>
-      {err && <p role="alert" className="mt-4 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err.problem.detail ?? err.problem.title}{err.problem.errors?.map((x) => <span key={x.path} className="block">{x.path}: {x.message}</span>)}</p>}
-      <button type="button" className="btn-orange mt-6 h-13 w-full text-base" disabled={busy || !selected.length || !mixOk || !ack.booking || !ack.privacy || (separate && !ack.self) || !contactVerified} onClick={() => void submit()}>{t("request.submit")}</button>
+      {err?.code === "OFFER_EXPIRED" && <p role="alert" data-testid="offer-expired" className="mt-4 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{t("fare.expired")} <Link className="font-semibold underline" href={href(`/flights/results/${catalogId}`)}>{t("fare.backToFlight")}</Link></p>}
+      {err && err.code !== "OFFER_EXPIRED" && <p role="alert" className="mt-4 rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err.problem.detail ?? err.problem.title}{err.problem.errors?.map((x) => <span key={x.path} className="block">{x.path}: {x.message}</span>)}</p>}
+      <button type="button" className="btn-orange mt-6 h-13 w-full text-base" disabled={busy || (kind === "CATALOG" && !fare) || !selected.length || !mixOk || !ack.booking || !ack.privacy || (separate && !ack.self) || !contactVerified} onClick={() => void submit()}>{t("request.submit")}</button>
       <p className="mt-2 text-center text-xs text-steel" lang={locale}>{t("itinerary.requestNote")}</p>
     </div>
   )

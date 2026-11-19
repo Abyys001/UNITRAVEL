@@ -8,6 +8,7 @@ import { CatalogRoutesResponse, CatalogSearchQuery, CatalogSearchResponse, Publi
 import { Public, RateLimit } from "../../core/http/decorators"
 import { ApiZodQuery, ApiZodResponse, zbody } from "../../core/http/zod"
 import { CatalogReadService } from "./catalog-read.service"
+import { FlightBuilderService } from "./flight-builder.service"
 
 /**
  * ADR-0034 C1: the customer flight endpoints. Public, answered from stored snapshots, and unable to reach a provider: this controller
@@ -16,7 +17,7 @@ import { CatalogReadService } from "./catalog-read.service"
 @ApiTags("flights")
 @Controller("v1/flights")
 export class CatalogReadController {
-  constructor(private readonly read: CatalogReadService) {}
+  constructor(private readonly read: CatalogReadService, private readonly fb: FlightBuilderService) {}
 
   @Get("search")
   @Public()
@@ -52,7 +53,8 @@ export class CatalogReadController {
   @Header("Cache-Control", "public, max-age=60, s-maxage=300, stale-while-revalidate=900")
   @RateLimit({ name: "flights-detail", limit: 300, windowSeconds: 60, key: "ip" })
   @ApiZodResponse(200, PublicItineraryDetail)
-  detail(@Param("id", zbody(z.uuid())) id: string) {
-    return this.read.detail(id)
+  async detail(@Param("id", zbody(z.uuid())) id: string) {
+    // ADR-0037: the customer-safe fares of a staff capture ride along; PublicFare is strict, so no price key can pass.
+    return this.fb.publicDetail(await this.read.detail(id))
   }
 }

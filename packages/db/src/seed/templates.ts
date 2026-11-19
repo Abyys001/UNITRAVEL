@@ -144,12 +144,20 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     emailFa: { title: "مهلت صدور بلیت: {ref}", body: "رزرو {ref} باید تا {deadline_local} صادر شود." },
   },
   "ticket.issued": {
-    vars: ["ref", "ticket_numbers", "link"],
+    vars: ["ref", "ticket_numbers", "attachments_note", "link"],
     en: { title: "Ticket issued · {ref}", body: "Your ticket numbers: {ticket_numbers}. Receipts are in your request." },
     fa: { title: "بلیت صادر شد · {ref}", body: "شماره بلیت‌ها: {ticket_numbers}. رسیدها در درخواست شما موجود است." },
     smsEn: "Uni Travel: ticket issued for {ref}: {ticket_numbers}. {link}", smsFa: "یونی‌تراول: بلیت {ref} صادر شد: {ticket_numbers} {link}",
-    emailEn: { title: "Your ticket for {ref}", body: "Your ticket has been issued. Ticket numbers: {ticket_numbers}. Your e-ticket receipt is attached in your account." },
-    emailFa: { title: "بلیت شما برای {ref}", body: "بلیت شما صادر شد. شماره بلیت‌ها: {ticket_numbers}. رسید بلیت الکترونیکی در حساب شما موجود است." },
+    // ADR-0038 D6: {attachments_note} says whether the ticket PDFs are attached (an issued ticket document) or follow in the account.
+    emailEn: { title: "Your ticket for {ref}", body: "Your ticket has been issued. Ticket numbers: {ticket_numbers}. {attachments_note}" },
+    emailFa: { title: "بلیت شما برای {ref}", body: "بلیت شما صادر شد. شماره بلیت‌ها: {ticket_numbers}. {attachments_note}" },
+  },
+  "ticket.resent": {
+    vars: ["ref", "ticket_numbers", "attachments_note", "link"],
+    en: { title: "Your ticket again · {ref}", body: "We have sent your ticket for {ref} again. Ticket numbers: {ticket_numbers}." },
+    fa: { title: "ارسال دوبارهٔ بلیت · {ref}", body: "بلیت {ref} را دوباره برایتان فرستادیم. شماره بلیت‌ها: {ticket_numbers}." },
+    emailEn: { title: "Your ticket for {ref} (sent again)", body: "As requested, here is your ticket for {ref} again. Ticket numbers: {ticket_numbers}. {attachments_note}\n\nView it after signing in:\n{link}" },
+    emailFa: { title: "بلیت شما برای {ref} (ارسال دوباره)", body: "طبق درخواست، بلیت {ref} را دوباره می‌فرستیم. شماره بلیت‌ها: {ticket_numbers}. {attachments_note}\n\nپس از ورود مشاهده کنید:\n{link}" },
   },
   "sla.unassigned": { vars: ["ref", "minutes"], en: { title: "Unassigned for {minutes} min · {ref}", body: "{ref} is waiting in New." }, fa: { title: "بدون مسئول · {ref}", body: "{ref} در صف جدید منتظر است." } },
   "sla.first_contact_due": { vars: ["ref"], en: { title: "First contact due · {ref}", body: "Please contact the customer for {ref}." }, fa: { title: "زمان اولین تماس · {ref}", body: "لطفاً با مشتری {ref} تماس بگیرید." } },

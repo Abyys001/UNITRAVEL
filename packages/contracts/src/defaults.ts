@@ -1,4 +1,4 @@
-import type { AppSettings, AuthConfig, EngineRules, HubsConfig, NotificationMatrix, WorkflowConfig } from "./config"
+import { type AppSettings, type AuthConfig, DEFAULT_BRAND_COLOURS, type EngineRules, type HubsConfig, type NotificationMatrix, type WorkflowConfig } from "./config"
 import { DEFAULT_COMMERCIAL_DOCUMENTS } from "./invoices"
 
 // Defaults are the booklet's proposals (Table 22.1, ch. 13.5, 16.2, 17.2, 36.2). They seed version 1 of each
@@ -176,6 +176,8 @@ export const DEFAULT_NOTIFICATION_MATRIX: NotificationMatrix = {
     { event: "reservation.deadline_approaching", audience: "ASSIGNEE", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "reservation.deadline_approaching", audience: "OWNERS", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "ticket.issued", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS", "EMAIL"], sms: "IMMEDIATE", critical: true, locked: false },
+    // ADR-0038 D6: a resend of an issued ticket document is a copy by email (and inbox); no SMS.
+    { event: "ticket.resent", audience: "CUSTOMER", channels: ["INBOX", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "identity.verification_verified", audience: "CUSTOMER", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
     { event: "identity.verification_rejected", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
     { event: "identity.verification_correction", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
@@ -221,7 +223,7 @@ export const DEFAULT_AUTH: AuthConfig = {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  company: { name: "Uni Travel Ltd", address: "London, United Kingdom", phone: "+44 20 0000 0000", email: "help@unitravel.example", registration: "Registered in England and Wales" },
+  company: { name: "Uni Travel Ltd", address: "London, United Kingdom", phone: "+44 20 0000 0000", email: "help@unitravel.example", registration: "Registered in England and Wales", logoDocumentId: null, brandColours: DEFAULT_BRAND_COLOURS },
   supportedLanguages: ["en", "fa"],
   displayCurrencies: ["GBP", "EUR"],
   legal: { termsVersion: "2026-10-22", privacyVersion: "2026-10-22" },

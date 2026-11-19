@@ -14,6 +14,9 @@ export const PERMISSIONS = [
   "commercial_document.issue",
   "reservation.record",
   "ticket.record",
+  /** ADR-0038 D8: upload, preview, issue, replace, reissue and revoke issued ticket documents. */
+  "ticket.document.issue",
+  "ticket.document.resend",
   "payment.record",
   "payment.refund.request",
   "payment.refund.approve",
@@ -45,6 +48,7 @@ export const PERMISSIONS = [
   "listings.write",
   "catalog.read",
   "catalog.manage",
+  "catalog.capture",
   "visa.read",
   "visa.write",
   "identity.verify",
@@ -55,6 +59,7 @@ export const PERMISSIONS = [
   "user.role.assign.privileged",
   "provider.config.read",
   "provider.config.write",
+  "provider.authorisation.record",
   "engine.rules.read",
   "engine.rules.publish",
   "settings.write",
@@ -85,6 +90,8 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "commercial_document.issue": { privileged: false },
   "reservation.record": { privileged: false },
   "ticket.record": { privileged: false },
+  "ticket.document.issue": { privileged: false },
+  "ticket.document.resend": { privileged: false },
   "payment.record": { privileged: false },
   "payment.refund.request": { privileged: false },
   "payment.refund.approve": { privileged: true },
@@ -119,6 +126,8 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   // ADR-0034: the flight catalog. Reading shows indicative prices (staff only); managing spends the Apify budget, so it is privileged.
   "catalog.read": { privileged: false },
   "catalog.manage": { privileged: true },
+  // ADR-0037: staff record Flight Builder options and quota observations by hand; no provider call is made.
+  "catalog.capture": { privileged: false },
   // ADR-0033: staff read and edit the visa requirements database; an override is audited and needs an official source.
   "visa.read": { privileged: false },
   "visa.write": { privileged: false },
@@ -130,6 +139,8 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "user.role.assign.privileged": { privileged: true },
   "provider.config.read": { privileged: false },
   "provider.config.write": { privileged: true },
+  // ADR-0037 D11: recording or revoking the written permission to automate a source.
+  "provider.authorisation.record": { privileged: true },
   "engine.rules.read": { privileged: false },
   "engine.rules.publish": { privileged: true },
   "settings.write": { privileged: true },
@@ -161,11 +172,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
   ],
   admin: [
     "flight_search.run", "flight_request.read.any", "flight_request.assign", "flight_request.transition",
-    "flight_request.note.internal", "quote.create", "pricing.read.internal", "pricing.write", "commercial_document.issue", "reservation.record", "ticket.record",
+    "flight_request.note.internal", "quote.create", "pricing.read.internal", "pricing.write", "commercial_document.issue", "reservation.record", "ticket.record", "ticket.document.issue", "ticket.document.resend",
     "payment.record", "payment.refund.request", "payment.refund.approve", "customer.read.pii", "customer.read.documents", "identity.verify", "engine.rules.read",
     "service_request.read.any", "service_request.write", "loyalty.read", "loyalty.manage", "loyalty.benefit.approve", "cms.read", "cms.write",
     "customer.read", "service.assign", "invoice.direct", "service_catalog.manage", "support.read", "support.reply", "call.log", "listings.write", "visa.read", "visa.write",
-    "catalog.read", "catalog.manage",
+    "catalog.read", "catalog.manage", "catalog.capture",
   ],
   cargo_admin: [
     "flight_search.run", "flight_request.note.internal", "payment.record", "cargo_request.read.any",

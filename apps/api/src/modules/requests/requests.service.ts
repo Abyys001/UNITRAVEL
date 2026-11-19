@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from "@nestjs/common"
 import { and, asc, desc, eq, ilike, inArray, isNull, lt, ne, or, sql } from "drizzle-orm"
 
 import {
-  type AmendFlightRequestBody, type CreateFlightRequestBody, FlightRequestCustomerView, FlightRequestListItem, type FlightRequestStatus, type Itinerary, type PaymentStatus, RESERVED_AWAITING_PAYMENT, RESERVED_ISSUING, type SearchQuery,
+  type AmendFlightRequestBody, type CreateFlightRequestBody, ENGINE_VERSION, SearchQuery as SearchQuerySchema, FlightRequestCustomerView, FlightRequestListItem, type FlightRequestStatus, type Itinerary, type PaymentStatus, RESERVED_AWAITING_PAYMENT, RESERVED_ISSUING, type SearchQuery,
   type StaffRequestChangedEvent,
 } from "@unitravel/contracts"
 import {
@@ -20,6 +20,7 @@ import { DB, UnitOfWork } from "../../core/infra.module"
 import type { Actor } from "../../core/http/decorators"
 import { AccessService } from "../access/access.service"
 import { AuditService } from "../audit/audit.service"
+import { FlightBuilderService } from "../catalog/flight-builder.service"
 import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
 import { CustomersService } from "../customers/customers.service"
@@ -77,6 +78,7 @@ export class RequestsService {
     private readonly notifications: NotificationsService,
     private readonly numbers: DocumentNumbersService,
     private readonly catalog: ServicesCatalogService,
+    private readonly flightBuilder: FlightBuilderService,
   ) {}
 
   setSearchPort(p: SearchPort) {
@@ -135,7 +137,8 @@ export class RequestsService {
     const umnr = body.ssrs.some((s) => s.code === "UMNR") || body.travellers.every((t) => t.passengerType === "CHD" || t.passengerType === "INF" || t.passengerType === "INS")
     let kind = body.kind
     let query: SearchQuery
-    let snapshotInput: { itinerary: Itinerary; ruleVersion: number; engineVersion: string; searchResultId: string | null; searchId: string; priceAtSubmit: number; revalidated?: { total: number; at: Date }; revalidationOutcome?: "NOT_REVALIDATABLE" } | null = null
+    let catalogSnap: Awaited<ReturnType<FlightBuilderService["catalogSnapshot"]>> & { resultId: string } | null = null
+    let snapshotInput: { itinerary: Itinerary; ruleVersion: number; engineVersion: string; searchResultId: string | null; searchId: string | null; priceAtSubmit: number; revalidated?: { total: number; at: Date }; revalidationOutcome?: "NOT_REVALIDATABLE" } | null = null
     if (body.kind === "ITINERARY") {
       if (!this.search) throw new AppError("FEATURE_DISABLED", "Search is not available yet; send a manual request")
       const found = await this.search.itineraryForSubmit(body.searchId!, body.itineraryId!, actor)
@@ -153,6 +156,18 @@ export class RequestsService {
         if (rv.outcome === "NOT_REVALIDATABLE") snapshotInput.revalidationOutcome = rv.outcome
         else if (rv.total) snapshotInput.revalidated = { total: rv.total.amountMinor, at: new Date() }
       }
+    } else if (body.kind === "CATALOG") {
+      // ADR-0037 D5: a staff-captured fare. No provider is called; the query is derived from the stored result, never taken from the client.
+      const c = await this.flightBuilder.catalogSnapshot(body.catalog!.resultId, body.catalog!.fareId)
+      const ageOn = (dob: string) => Math.max(0, Math.floor((Date.parse(`${c.date}T00:00:00Z`) - Date.parse(`${dob}T00:00:00Z`)) / (365.25 * 86_400_000)))
+      const parsed = SearchQuerySchema.safeParse({
+        tripType: "ONE_WAY", slices: [{ from: { airport: c.origin }, to: { airport: c.destination }, date: c.date, flexDays: 0 }], cabin: c.cabin,
+        passengers: body.travellers.map((t, i) => ({ type: t.passengerType, age: ageOn(trav[i]!.dateOfBirth) })),
+      })
+      if (!parsed.success) throw new AppError("VALIDATION_FAILED", parsed.error.issues[0]?.message ?? "The travellers do not fit this fare", [{ path: "travellers", code: "INVALID" }])
+      query = parsed.data
+      snapshotInput = { itinerary: c.itinerary, ruleVersion: this.config.version("ENGINE_RULES"), engineVersion: ENGINE_VERSION, searchResultId: null, searchId: null, priceAtSubmit: c.staffFare.totalMinor }
+      catalogSnap = { ...c, resultId: body.catalog!.resultId }
     } else query = body.query!
     // The snapshot is priced for the searched mix; a different set of travellers would be quoted and invoiced at the wrong price (ADR-0008 W6, ch. 12.4).
     const mixIssue = passengerMixMismatch(query.passengers.map((p) => p.type), body.travellers.map((t) => t.passengerType))
@@ -165,12 +180,13 @@ export class RequestsService {
     return this.uow.run(async (tx) => {
       let snapshotId: string | null = null
       if (snapshotInput) {
-        const content = JSON.stringify(snapshotInput.itinerary)
+        const content = catalogSnap?.contentHash ?? JSON.stringify(snapshotInput.itinerary)
         const [snap] = await tx.insert(offerSnapshots).values({
           searchResultId: snapshotInput.searchResultId, searchId: snapshotInput.searchId, itinerary: snapshotInput.itinerary,
           components: snapshotInput.itinerary.components.map((c) => ({ provider: c.source.provider, offerId: c.source.providerOfferId, rung: c.source.rung, fetchedAt: c.source.fetchedAt })),
           priceAtSubmitMinor: snapshotInput.priceAtSubmit, priceRevalidatedMinor: snapshotInput.revalidated?.total ?? null, revalidationOutcome: snapshotInput.revalidationOutcome ?? null, currency: snapshotInput.itinerary.price.total.currency,
-          revalidatedAt: snapshotInput.revalidated?.at ?? null, ruleVersion: snapshotInput.ruleVersion, engineVersion: snapshotInput.engineVersion, contentHash: sha256(content),
+          revalidatedAt: snapshotInput.revalidated?.at ?? null, ruleVersion: snapshotInput.ruleVersion, engineVersion: snapshotInput.engineVersion, contentHash: catalogSnap ? content : sha256(content),
+          ...(catalogSnap ? { catalogResultId: catalogSnap.resultId, fare: catalogSnap.staffFare, customerView: catalogSnap.customerView } : {}),
         }).returning()
         snapshotId = snap!.id
       }
@@ -186,7 +202,7 @@ export class RequestsService {
       await tx.insert(requestTravellers).values(trav.map((t, i) => ({ requestId: req!.id, travellerId: t.id, passengerType: body.travellers[i]!.passengerType, nameSnapshot: { title: t.title, givenNames: t.givenNames, surname: t.surname, nameFa: t.nameFa, dateOfBirth: t.dateOfBirth } })))
       if (interests.length) await tx.insert(requestServiceInterests).values(interests.map((i) => ({ requestId: req!.id, catalogueItemId: i.id })))
       await tx.insert(requestStatusHistory).values({ requestType: "FLIGHT", requestId: req!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: "CUSTOMER" })
-      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "flight_request.submitted", entityType: "flight_request", entityId: req!.id, contextRef: ref, after: { kind, tripType: query.tripType, travellers: trav.length, snapshot: !!snapshotId, serviceInterests: interests.map((i) => i.code) }, ip: actor.ip, requestId: ctx.requestId })
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "flight_request.submitted", entityType: "flight_request", entityId: req!.id, contextRef: ref, after: { kind, tripType: query.tripType, travellers: trav.length, snapshot: !!snapshotId, catalogResultId: catalogSnap?.resultId, serviceInterests: interests.map((i) => i.code) }, ip: actor.ip, requestId: ctx.requestId })
       await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: req!.id, eventType: "flight_request.submitted", payload: { requestId: req!.id, ref, customerUserId: actor.userId, routeLabel: this.routeLabel(query, ctx.locale), urgent, route: demandRoute(query) }, dedupeKey: `fr-submitted:${req!.id}` })
       return { ref, status: "SUBMITTED" as const, kind }
     })
@@ -539,7 +555,9 @@ export class RequestsService {
         ...(includeInternal ? { price: c.price.total, priceLevel: c.providerData?.priceLevel ?? null, googleFlightsUrl: c.providerData?.googleFlightsUrl ?? null } : {}),
       })),
     } : {}
-    return { id: s.id, itinerary: includeInternal ? s.itinerary : customerItinerary(s.itinerary), ...prices, ...sources, ruleVersion: s.ruleVersion, engineVersion: s.engineVersion, contentHash: s.contentHash, createdAt: s.createdAt.toISOString() }
+    // ADR-0037: the fare exactly as the customer saw it; the staff copy (with price) only for pricing.read.internal, otherwise without price fields.
+    const catalog = s.catalogResultId ? { fare: s.customerView ?? null, ...(staff ? { catalogResultId: s.catalogResultId, staffFare: this.flightBuilder.snapshotStaffFare(s.fare, includeInternal), sourceRecordId: await this.flightBuilder.sourceRecordIdOf(s.catalogResultId) } : {}) } : { fare: null }
+    return { id: s.id, itinerary: includeInternal ? s.itinerary : customerItinerary(s.itinerary), ...prices, ...sources, ...catalog, ruleVersion: s.ruleVersion, engineVersion: s.engineVersion, contentHash: s.contentHash, createdAt: s.createdAt.toISOString() }
   }
 
   private async interestViews(requestId: string) {
@@ -646,13 +664,14 @@ export class RequestsService {
     }
   }
 
-  async adminList(q: { tab?: string; status?: string; assignee?: string; q?: string; from?: string; to?: string; limit: number; cursor?: string; flags?: string }, actor: Actor) {
+  async adminList(q: { tab?: string; status?: string; assignee?: string; q?: string; from?: string; to?: string; limit: number; cursor?: string; flags?: string; customerUserId?: string }, actor: Actor) {
     const conds = []
     const tabStatus: Record<string, FlightRequestStatus[]> = { new: ["NEW"], awaiting: ["AWAITING_CUSTOMER"], quoted: ["QUOTED"], reserved: ["RESERVED", "ACCEPTED"], hold: ["COMPLIANCE_HOLD"], open: ["NEW", "IN_REVIEW", "AWAITING_CUSTOMER", "QUOTED", "ACCEPTED", "RESERVED", "COMPLIANCE_HOLD", "SUBMITTED"] }
     if (q.tab === "mine") conds.push(eq(flightRequests.assigneeUserId, actor.userId), inArray(flightRequests.status, tabStatus.open!))
     else if (q.tab && tabStatus[q.tab]) conds.push(inArray(flightRequests.status, tabStatus[q.tab]!))
     if (q.status) conds.push(eq(flightRequests.status, q.status as FlightRequestStatus))
     if (q.assignee) conds.push(eq(flightRequests.assigneeUserId, q.assignee))
+    if (q.customerUserId) conds.push(eq(flightRequests.customerUserId, q.customerUserId))
     if (q.from) conds.push(sql`${flightRequests.firstTravelDate} >= ${q.from}`)
     if (q.to) conds.push(sql`${flightRequests.firstTravelDate} <= ${q.to}`)
     if (q.flags === "urgent") conds.push(eq(flightRequests.urgent, true))

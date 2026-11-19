@@ -11,6 +11,10 @@ import { CatalogReadController } from "./catalog/catalog-read.controller"
 import { CatalogReadService } from "./catalog/catalog-read.service"
 import { CatalogRefreshService } from "./catalog/catalog-refresh.service"
 import { CatalogWriteService } from "./catalog/catalog-write.service"
+import { FlightBuilderAdminController } from "./catalog/flight-builder-admin.controller"
+import { FlightBuilderDevController } from "./catalog/flight-builder-dev.controller"
+import { FlightBuilderJobsService } from "./catalog/flight-builder-jobs.service"
+import { FlightBuilderService } from "./catalog/flight-builder.service"
 import { ScheduleRefreshService } from "./catalog/schedule-refresh.service"
 import { ScheduleWriteService } from "./catalog/schedule-write.service"
 import { ComplianceController } from "./compliance/compliance.controller"
@@ -45,6 +49,8 @@ import { AdminServicesCatalogController, PublicServicesCatalogController } from 
 import { ServicesCatalogService } from "./services-catalog/services-catalog.service"
 import { SiteController } from "./site/site.controller"
 import { SiteService } from "./site/site.service"
+import { AdminTicketDocumentsController, CustomerTicketDocumentsController, DevBrandingController } from "./ticket-documents/ticket-documents.controller"
+import { TicketDocumentsService } from "./ticket-documents/ticket-documents.service"
 import { TrackController } from "./track/track.controller"
 import { TrackService } from "./track/track.service"
 import { StaffEvents } from "./platform/staff-events"
@@ -69,11 +75,12 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
   MeActivityController, AdminCustomerListController, SupportTicketsController, AdminSupportController, AdminCallsController, BonlineWebhookController, AdminAssignmentsController, PublicListingsController, AdminListingsController,
   PublicVisaController, AdminVisaController, DevVisaResearchController,
-  CatalogReadController, CatalogAdminController, ApifyIntegrationController,
+  CatalogReadController, CatalogAdminController, ApifyIntegrationController, FlightBuilderAdminController, FlightBuilderDevController,
   PublicServicesCatalogController, AdminServicesCatalogController,
+  AdminTicketDocumentsController, CustomerTicketDocumentsController, DevBrandingController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, ScheduleWriteService, ScheduleRefreshService, CatalogRefreshService, CatalogReadService, CatalogAdminService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, ScheduleWriteService, ScheduleRefreshService, CatalogRefreshService, CatalogReadService, CatalogAdminService, FlightBuilderService, FlightBuilderJobsService, TicketDocumentsService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

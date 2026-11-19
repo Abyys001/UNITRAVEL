@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
 
 import { createdAt, id, timestamps, tstz } from "./columns"
@@ -25,15 +26,24 @@ export const notificationDeliveries = pgTable("notification_deliveries", {
   channel: text({ enum: ["INBOX", "PUSH", "SMS", "EMAIL"] }).notNull(),
   provider: varchar({ length: 40 }),
   destination: varchar({ length: 260 }),
-  status: text({ enum: ["QUEUED", "SENT", "DELIVERED", "FAILED", "UNDELIVERABLE", "SKIPPED"] }).notNull().default("QUEUED"),
+  status: text({ enum: ["QUEUED", "SENT", "DELIVERED", "FAILED", "UNDELIVERABLE", "SKIPPED", "BOUNCED"] }).notNull().default("QUEUED"),
   providerMessageId: varchar({ length: 160 }),
   error: text(),
   attempts: integer().notNull().default(0),
   scheduledFor: tstz(),
   sentAt: tstz(),
   deliveredAt: tstz(),
+  /** ADR-0038 D6: a send of an issued ticket document is linked to its version. */
+  ticketDocumentId: uuid(),
+  /** ACCOUNT = the notification's user; PASSENGER = an extra address staff entered for one issue or resend (encrypted). */
+  recipient: text({ enum: ["ACCOUNT", "PASSENGER"] }).notNull().default("ACCOUNT"),
+  addressEnc: text(),
   createdAt: createdAt(),
-}, (t) => [uniqueIndex("deliveries_notification_channel_uq").on(t.notificationId, t.channel), index("deliveries_provider_idx").on(t.provider, t.createdAt)])
+}, (t) => [
+  uniqueIndex("deliveries_notification_channel_recipient_uq").on(t.notificationId, t.channel, t.recipient),
+  index("deliveries_provider_idx").on(t.provider, t.createdAt),
+  index("deliveries_ticket_document_idx").on(t.ticketDocumentId).where(sql`${t.ticketDocumentId} is not null`),
+])
 
 export const notificationTemplates = pgTable("notification_templates", {
   id: id(),

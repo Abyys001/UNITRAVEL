@@ -11,7 +11,8 @@ export const VENDOR_CREDENTIAL_SCHEMAS = {
   "sms:infobip": z.strictObject({ baseUrl: z.string().regex(/^[a-z0-9.-]+\.infobip\.com$/i, "Use the host from your Infobip account, such as xxxx.api.infobip.com"), apiKey: secret, sender: secret, webhookSecret: optionalSecret }),
   "push:expo": z.strictObject({ accessToken: secret }),
   "push:pushy": z.strictObject({ secretApiKey: secret }),
-  "email:brevo": z.strictObject({ smtpUser: secret, smtpKey: secret }),
+  /** `webhookSecret` (ADR-0038 D6): Brevo sends it as the `x-webhook-secret` header configured on its transactional webhook. */
+  "email:brevo": z.strictObject({ smtpUser: secret, smtpKey: secret, webhookSecret: z.string().min(16).max(4096).optional() }),
   /** ADR-0020: any SMTP relay. Values arrive as strings from the Developer Panel, so the port and the TLS switch are strings here. */
   "email:smtp": z.strictObject({
     host: z.string().min(3).max(253).regex(/^[A-Za-z0-9.-]+$/, "A host name such as smtp.example.com"),

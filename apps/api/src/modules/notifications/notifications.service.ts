@@ -40,7 +40,16 @@ export interface NotifyInput {
    * predate this phase need no matrix migration; with no verified email the same event goes by SMS (decision 6).
    */
   documentDelivery?: boolean
+  /** ADR-0038 D6: every delivery of this notification is linked to the ticket document version it carries. */
+  ticketDocumentId?: string
+  /** Extra email addresses (encryptField ciphertexts) that get the same email as a PASSENGER delivery of the notification. */
+  extraEmails?: string[]
+  /** The account holder gets the inbox entry but no email (a resend addressed to a passenger only). */
+  skipAccountEmail?: boolean
 }
+
+type Attachment = { filename: string; content: Buffer; contentType: string }
+type AttachmentResolver = (documentId: string, userId: string) => Promise<Attachment | null>
 
 interface Recipient {
   id: string
@@ -80,11 +89,14 @@ export class NotificationsService {
     return { id: u.id, locale: u.preferredLocale, tz: u.timezone, calendar: u.calendar, prefs: u.notificationPrefs, phone: phone?.valueNormalised ?? null, email: email?.valueNormalised ?? null }
   }
 
-  private attachmentResolver?: (documentId: string, userId: string) => Promise<{ filename: string; content: Buffer; contentType: string } | null>
+  private readonly attachmentResolvers = new Map<string, AttachmentResolver>()
 
-  /** The documents module sits above this one, so it registers how to read an attachment (ADR-0028 D8). */
-  onAttachment(resolver: NonNullable<NotificationsService["attachmentResolver"]>) {
-    this.attachmentResolver = resolver
+  /**
+   * The documents module sits above this one, so it registers how to read an attachment (ADR-0028 D8). `via` names the
+   * reader: `data.attachDocumentId` uses "default" (invoices); `data.attachments[].via` picks another (ticket documents, ADR-0038).
+   */
+  onAttachment(resolver: AttachmentResolver, via = "default") {
+    this.attachmentResolvers.set(via, resolver)
   }
 
   private async template(eventType: string, channel: "INBOX" | "PUSH" | "SMS" | "EMAIL", locale: "en" | "fa") {
@@ -169,14 +181,17 @@ export class NotificationsService {
       const devs = await this.workingDevices(userId)
 
       if ((rule.channels.includes("PUSH") || input.silentPush) && devs.length > 0 && allowed("PUSH")) {
-        await this.queueDelivery(n.id, "PUSH", "notify.push", input.silentPush ? 0 : defer, { silent: !!input.silentPush })
+        await this.queueDelivery(n.id, "PUSH", "notify.push", input.silentPush ? 0 : defer, { silent: !!input.silentPush }, { ticketDocumentId: input.ticketDocumentId })
       }
-      if (rule.channels.includes("EMAIL") && r.email && allowed("EMAIL")) await this.queueDelivery(n.id, "EMAIL", "notify.email", defer)
-      else if (input.documentDelivery && !r.email && r.phone && allowed("SMS")) await this.queueDelivery(n.id, "SMS", "notify.sms", defer)
+      const doc = { ticketDocumentId: input.ticketDocumentId }
+      if (rule.channels.includes("EMAIL") && r.email && allowed("EMAIL") && !input.skipAccountEmail) await this.queueDelivery(n.id, "EMAIL", "notify.email", defer, {}, doc)
+      else if (input.documentDelivery && !r.email && r.phone && allowed("SMS") && !input.skipAccountEmail) await this.queueDelivery(n.id, "SMS", "notify.sms", defer, {}, doc)
+      // Addresses staff entered for this one send go out at once: they are not the account holder's preferences or quiet hours.
+      for (const addressEnc of input.extraEmails ?? []) await this.queueDelivery(n.id, "EMAIL", "notify.email", 0, {}, { ...doc, recipient: "PASSENGER", addressEnc })
       if (rule.channels.includes("SMS") && r.phone && allowed("SMS")) {
         // +98 users without a working push token get escalation immediately (ch. 17.3 rule 4).
         const iranNoPush = r.phone.startsWith("+98") && devs.length === 0
-        if (rule.sms === "IMMEDIATE" || (rule.sms === "ESCALATING" && iranNoPush)) await this.queueDelivery(n.id, "SMS", "notify.sms", defer)
+        if (rule.sms === "IMMEDIATE" || (rule.sms === "ESCALATING" && iranNoPush)) await this.queueDelivery(n.id, "SMS", "notify.sms", defer, {}, doc)
         else if (rule.sms === "ESCALATING") {
           await this.queues.get("notify.escalate").add("escalate", { notificationId: n.id }, { jobId: `esc--${n.id}`, delay: Math.max(defer, (rule.escalateAfterMinutes ?? 30) * 60_000) })
         }
@@ -184,8 +199,8 @@ export class NotificationsService {
     }
   }
 
-  private async queueDelivery(notificationId: string, channel: "PUSH" | "SMS" | "EMAIL", queue: "notify.push" | "notify.sms" | "notify.email", delay: number, extra: Record<string, unknown> = {}) {
-    const [d] = await this.db.insert(notificationDeliveries).values({ notificationId, channel, status: "QUEUED", scheduledFor: delay ? new Date(Date.now() + delay) : null }).onConflictDoNothing().returning()
+  private async queueDelivery(notificationId: string, channel: "PUSH" | "SMS" | "EMAIL", queue: "notify.push" | "notify.sms" | "notify.email", delay: number, extra: Record<string, unknown> = {}, link: { ticketDocumentId?: string; recipient?: "ACCOUNT" | "PASSENGER"; addressEnc?: string } = {}) {
+    const [d] = await this.db.insert(notificationDeliveries).values({ notificationId, channel, status: "QUEUED", scheduledFor: delay ? new Date(Date.now() + delay) : null, ticketDocumentId: link.ticketDocumentId ?? null, recipient: link.recipient ?? "ACCOUNT", addressEnc: link.addressEnc ?? null }).onConflictDoNothing().returning()
     if (!d) return
     await this.queues.get(queue).add(channel, { deliveryId: d.id, notificationId, ...extra }, { jobId: `${queue}--${d.id}`, delay })
   }
@@ -293,15 +308,27 @@ export class NotificationsService {
     if (!d || d.status === "SENT") return
     const [n] = await this.db.select().from(notifications).where(eq(notifications.id, d.notificationId))
     const r = n ? await this.recipient(n.userId) : null
-    if (!n || !r?.email) return this.markDelivery(deliveryId, "SKIPPED", null, "No verified email")
+    // A passenger address (ADR-0038 D6) gets the account holder's email in the account holder's language.
+    const to = d.recipient === "PASSENGER" ? (d.addressEnc ? decryptField(d.addressEnc) : null) : r?.email
+    if (!n || !r || !to) return this.markDelivery(deliveryId, "SKIPPED", null, "No verified email")
     const t = await this.template(n.eventType, "EMAIL", r.locale)
     const vars = (n.data as { vars?: Record<string, string> }).vars ?? {}
     try {
       // A read failure fails the delivery so the job retries: the email says a PDF is attached.
-      const documentId = (n.data as { attachDocumentId?: string }).attachDocumentId
-      const file = documentId && this.attachmentResolver ? await this.attachmentResolver(documentId, n.userId) : null
-      const sent = await this.email.send(r.email, renderTemplate(t?.title ?? n.title, vars), renderTemplate(t?.body ?? n.body, vars), r.locale, file ? [file] : undefined)
-      await this.markDelivery(deliveryId, "SENT", sent.provider, null, sent.messageId, r.email)
+      const data = n.data as { attachDocumentId?: string; attachments?: { documentId: string; via: string }[] }
+      const wanted = [...(data.attachDocumentId ? [{ documentId: data.attachDocumentId, via: "default" }] : []), ...(data.attachments ?? [])]
+      const files: Attachment[] = []
+      for (const a of wanted) {
+        const resolver = this.attachmentResolvers.get(a.via)
+        if (!resolver) {
+          if (a.via === "default") continue
+          throw new Error(`No attachment reader for ${a.via}`)
+        }
+        const file = await resolver(a.documentId, n.userId)
+        if (file) files.push(file)
+      }
+      const sent = await this.email.send(to, renderTemplate(t?.title ?? n.title, vars), renderTemplate(t?.body ?? n.body, vars), r.locale, files.length ? files : undefined)
+      await this.markDelivery(deliveryId, "SENT", sent.provider, null, sent.messageId, to)
     } catch (err) {
       await this.markDelivery(deliveryId, "FAILED", null, String(err))
       throw err
@@ -324,17 +351,17 @@ export class NotificationsService {
     }
   }
 
-  private async markDelivery(id: string, status: "SENT" | "FAILED" | "SKIPPED" | "DELIVERED" | "UNDELIVERABLE", provider: string | null, error: string | null, providerMessageId?: string, destination?: string) {
+  private async markDelivery(id: string, status: "SENT" | "FAILED" | "SKIPPED" | "DELIVERED" | "UNDELIVERABLE" | "BOUNCED", provider: string | null, error: string | null, providerMessageId?: string, destination?: string) {
     await this.db.update(notificationDeliveries).set({
       status, provider, error, providerMessageId, destination: destination ? `${destination.slice(0, 4)}••${destination.slice(-2)}` : undefined,
       attempts: sql`${notificationDeliveries.attempts} + 1`, sentAt: status === "SENT" ? new Date() : undefined,
     }).where(eq(notificationDeliveries.id, id))
   }
 
-  /** Delivery reports from SMS providers (ch. 17.5). */
-  async deliveryReport(provider: string, messageId: string, status: "DELIVERED" | "FAILED" | "UNDELIVERABLE") {
+  /** Delivery reports from SMS providers (ch. 17.5) and, for email, Brevo's webhook (ADR-0038 D6). */
+  async deliveryReport(provider: string, messageId: string, status: "DELIVERED" | "FAILED" | "UNDELIVERABLE" | "BOUNCED") {
     await this.db.update(notificationDeliveries).set({ status, deliveredAt: status === "DELIVERED" ? new Date() : null }).where(and(eq(notificationDeliveries.provider, provider), eq(notificationDeliveries.providerMessageId, messageId)))
-    await this.db.update(otpChallenges).set({ deliveryStatus: status }).where(eq(otpChallenges.providerMessageId, messageId))
+    await this.db.update(otpChallenges).set({ deliveryStatus: status === "BOUNCED" ? "UNDELIVERABLE" : status }).where(eq(otpChallenges.providerMessageId, messageId))
   }
 
   // ---------------- inbox ----------------

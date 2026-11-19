@@ -1,9 +1,10 @@
-import { bigint, boolean, date, index, integer, jsonb, numeric, pgTable, primaryKey, real, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
+import { bigint, boolean, char, date, index, integer, jsonb, numeric, pgTable, primaryKey, real, text, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
-import type { NormalisedOffer, PublicItinerary, PublicItineraryDetail } from "@unitravel/contracts"
+import type { CapturedBaggage, CapturedCondition, FareStatus, FareType, FareVerification, NormalisedOffer, PublicItinerary, PublicItineraryDetail, SyncRunStatus, UsageSource } from "@unitravel/contracts"
 
 import { createdAt, id, timestamps, tstz } from "./columns"
+import { users } from "./identity"
 import { providerRuns } from "./suppliers"
 
 // ADR-0034: the scheduled flight catalog. Customers read `catalog_public_snapshots` only; results and pricing are staff-side.
@@ -63,6 +64,14 @@ export const flightResults = pgTable("flight_results", {
   firstSeenAt: tstz().notNull().defaultNow(),
   lastSeenAt: tstz().notNull().defaultNow(),
   isCurrent: boolean().notNull().default(true),
+  /** ADR-0037 D2: FEED rows are replaced by each refresh; STAFF rows are recorded by hand and survive it. */
+  capture: text({ enum: ["FEED", "STAFF"] }).notNull().default("FEED"),
+  capturedBy: uuid().references(() => users.id),
+  sourceRecordId: text(),
+  verification: text({ enum: ["RECORDED", "VERIFIED"] }).$type<FareVerification>(),
+  /** Staff-only context of a capture; never part of a customer view. */
+  requestRef: varchar({ length: 12 }),
+  captureNote: text(),
   ...timestamps,
 }, (t) => [
   uniqueIndex("flight_results_slot_identity_uq").on(t.slotId, t.identityKey),
@@ -164,3 +173,64 @@ export const flightSchedules = pgTable("flight_schedules", {
   uniqueIndex("flight_schedules_slot_identity_uq").on(t.slotId, t.identityKey),
   index("flight_schedules_slot_current_idx").on(t.slotId).where(sql`${t.isCurrent}`),
 ])
+
+/** ADR-0037 D3: one bookable class option of a staff-captured result. Price, fare type, basis and rules are staff-only (ADR-0004). */
+export const flightResultFares = pgTable("flight_result_fares", {
+  id: id(),
+  resultId: uuid().notNull().references(() => flightResults.id, { onDelete: "cascade" }),
+  position: integer().notNull(),
+  cabin: text().notNull(),
+  bookingClasses: text().array().notNull(),
+  /** One per segment, exactly as written ("9" means UNKNOWN, never a count). */
+  seatsRaw: text().array().notNull(),
+  fareBasis: text().array().notNull().default(sql`'{}'::text[]`),
+  fareType: varchar({ length: 8 }).$type<FareType>().notNull(),
+  fareTypeRaw: text(),
+  baseMinor: bigint({ mode: "number" }),
+  taxesMinor: bigint({ mode: "number" }),
+  totalMinor: bigint({ mode: "number" }).notNull(),
+  currency: char({ length: 3 }).notNull(),
+  baggage: jsonb().$type<CapturedBaggage[]>().notNull(),
+  /** Change and refund tri-state plus the staff-only rules text and who confirmed it. */
+  conditions: jsonb().$type<{ change: CapturedCondition; refund: CapturedCondition; rulesText?: string; confirmedBy?: string; confirmedAt?: string }>().notNull(),
+  ticketingDeadline: date({ mode: "string" }),
+  status: text({ enum: ["LIVE", "STALE", "EXPIRED", "RETIRED"] }).$type<FareStatus>().notNull().default("LIVE"),
+  observedAt: tstz().notNull(),
+  ...timestamps,
+}, (t) => [
+  uniqueIndex("flight_result_fares_result_position_uq").on(t.resultId, t.position),
+  index("flight_result_fares_deadline_live_idx").on(t.ticketingDeadline).where(sql`${t.status} = 'LIVE'`),
+  index("flight_result_fares_live_idx").on(t.resultId).where(sql`${t.status} = 'LIVE'`),
+])
+
+/** ADR-0037 D8: append-only log of Scan Hits readings entered by staff. Nothing is seeded or decremented automatically. */
+export const flightBuilderUsageObservations = pgTable("flight_builder_usage_observations", {
+  id: id(),
+  observedAt: tstz().notNull(),
+  bookings: integer().notNull(),
+  scanHits: integer().notNull(),
+  warningThreshold: integer().notNull().default(45),
+  criticalThreshold: integer().notNull().default(50),
+  remainingReported: integer(),
+  source: text({ enum: ["MANUAL", "REPORTED", "ESTIMATED"] }).$type<UsageSource>().notNull(),
+  observerUserId: uuid().notNull().references(() => users.id),
+  note: text(),
+  createdAt: createdAt(),
+}, (t) => [index("fb_usage_observed_idx").on(t.observedAt)])
+
+/** ADR-0037 D9: every refresh attempt. While no adapter and no authorisation exist, each row is BLOCKED and no call was made. */
+export const flightBuilderSyncRuns = pgTable("flight_builder_sync_runs", {
+  id: id(),
+  trigger: text({ enum: ["MANUAL", "SCHEDULED"] }).notNull(),
+  scope: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+  status: text({ enum: ["BLOCKED", "RUNNING", "SUCCEEDED", "PARTIAL", "FAILED"] }).$type<SyncRunStatus>().notNull(),
+  blockedReason: text(),
+  imported: integer().notNull().default(0),
+  updated: integer().notNull().default(0),
+  skipped: integer().notNull().default(0),
+  errors: integer().notNull().default(0),
+  errorDetail: jsonb(),
+  actorUserId: uuid().references(() => users.id),
+  startedAt: tstz().notNull().defaultNow(),
+  finishedAt: tstz(),
+}, (t) => [index("fb_sync_runs_started_idx").on(t.startedAt)])

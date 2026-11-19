@@ -1,15 +1,17 @@
 import { Inject, Injectable, Logger } from "@nestjs/common"
-import { and, eq, inArray, isNotNull, notInArray, sql } from "drizzle-orm"
+import { and, eq, gte, inArray, isNotNull, notInArray, sql } from "drizzle-orm"
 import type { Redis } from "ioredis"
 
 import type { CatalogSettings, EngineRules, NormalisedOffer, PublicItinerary, SearchQuery, SlotStatus } from "@unitravel/contracts"
-import { catalogPublicSnapshots, catalogSlots, type Db, flightResultLegs, flightResultPricing, flightResults, flightWatchlistRoutes, type Tx } from "@unitravel/db"
+import { catalogPublicSnapshots, catalogSlots, type Db, flightResultFares, flightResultLegs, flightResultPricing, flightResults, flightWatchlistRoutes, type Tx } from "@unitravel/db"
 import { buildItinerary, catalogEngineRules, type CarrierPolicy, emptyStats, filterOffers, joinAtHub, nextDueAt, offerLaneVerdict, RuleResolver, slotStatus } from "@unitravel/engine"
 
+import { AppError } from "../../core/errors"
 import { DB, REDIS, UnitOfWork } from "../../core/infra.module"
 import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
 import { OutboxService } from "../platform/outbox.service"
+import type { NormalisedCapture } from "../suppliers/adapters/flight-builder/normalise"
 import { ReferenceService } from "../reference/reference.service"
 import { combinedIdentity, detailFromItinerary, detailFromOffer, type ResultDetail, snapshotPayload } from "./catalog-model"
 import { CatalogSettingsService } from "./catalog-settings.service"
@@ -95,8 +97,9 @@ export class CatalogWriteService {
           rows.push({ id: r!.id, detail })
         }
         // "No longer listed": the row stays as history with is_current = false (spec §3).
+        // ADR-0037 D2: only FEED rows are retired by a feed refresh; staff captures survive it and leave through the freshness sweep or a retire.
         await tx.update(flightResults).set({ isCurrent: false, updatedAt: now })
-          .where(and(eq(flightResults.slotId, slot.id), eq(flightResults.isCurrent, true), keptIds.length ? notInArray(flightResults.id, keptIds) : undefined))
+          .where(and(eq(flightResults.slotId, slot.id), eq(flightResults.capture, "FEED"), eq(flightResults.isCurrent, true), keptIds.length ? notInArray(flightResults.id, keptIds) : undefined))
         // Counts follow what Apify returned (billed rows), not what policy let through, so the pacer's cost estimate stays honest.
         const count = w.offers.length
         const recent = [count, ...slot.recentCounts].slice(0, 3)
@@ -107,13 +110,134 @@ export class CatalogWriteService {
           lastFetchedAt: now, nextDueAt: nextDueAt({ departureDate: slot.departureDate, consecutiveEmpty: empty, lastFetchedAt: now }, s, now), status, lastResultCount: count, recentCounts: recent,
           consecutiveEmpty: empty, consecutiveErrors: 0, lastErrorAt: null, lastError: null, notices: w.notices.slice(0, 20), version, updatedAt: now,
         }).where(eq(catalogSlots.id, slot.id))
-        const blob = await this.commitSnapshot(tx, slot, version, now, status, snapshotPayload(rows))
+        const blob = await this.commitSnapshot(tx, slot, version, now, status, snapshotPayload(await this.snapshotRows(tx, slot.id)))
         return { blob, kept: rows.length }
       })
     }
     await this.cacheSnapshot(slot, result.blob)
     await this.rebuildForFeeder(slot.id, pol).catch((err) => this.log.error({ err: String(err), slot: slot.id }, "combined rebuild failed"))
     return { version: result.blob.version, kept: result.kept, dropped: w.offers.length - kept.length }
+  }
+
+  /**
+   * ADR-0037 D2: what a slot's snapshot is built from, every time: all current rows, FEED and STAFF. When a FEED row and a STAFF row
+   * describe the same flights at the same local departure, the STAFF row wins (a person looked at the panel); the FEED row stays stored.
+   */
+  private async snapshotRows(tx: Tx, slotId: string): Promise<{ id: string; detail: ResultDetail }[]> {
+    const rows = await tx.select({ id: flightResults.id, detail: flightResults.detail, capture: flightResults.capture }).from(flightResults)
+      .where(and(eq(flightResults.slotId, slotId), eq(flightResults.isCurrent, true)))
+    const keyOf = (d: ResultDetail) => `${d.flightNumbers.join(",")}|${d.departLocal}`
+    const staff = new Set(rows.filter((r) => r.capture === "STAFF").map((r) => keyOf(r.detail)))
+    return rows.filter((r) => r.capture === "STAFF" || !staff.has(keyOf(r.detail))).map(({ id, detail }) => ({ id, detail }))
+  }
+
+  /**
+   * Rebuilds one slot's snapshot from its current rows without touching the slot's pacer fields (ADR-0037): the freshness sweep and a
+   * retire use it. The snapshot's fetch time is the newer of the slot's last feed fetch and the newest staff observation shown.
+   */
+  async rebuildSnapshot(slotId: string, now = new Date()): Promise<void> {
+    const [slot] = await this.db.select().from(catalogSlots).where(eq(catalogSlots.id, slotId))
+    if (!slot) return
+    const blob = await this.uow.run(async (tx) => this.commitStaffSnapshot(tx, slot, now))
+    await this.cacheSnapshot(slot, blob)
+  }
+
+  private async commitStaffSnapshot(tx: Tx, slot: SlotRow, now: Date): Promise<SnapshotBlob> {
+    const rows = await this.snapshotRows(tx, slot.id)
+    const [obs] = rows.length
+      ? await tx.select({ at: sql<Date | null>`max(${flightResults.lastSeenAt})` }).from(flightResults).where(and(eq(flightResults.slotId, slot.id), eq(flightResults.isCurrent, true), eq(flightResults.capture, "STAFF")))
+      : []
+    const staffAt = obs?.at ? new Date(obs.at) : null
+    const fetchedAt = staffAt && (!slot.lastFetchedAt || staffAt > slot.lastFetchedAt) ? staffAt : slot.lastFetchedAt
+    const version = slot.version + 1
+    await tx.update(catalogSlots).set({ version, updatedAt: now }).where(eq(catalogSlots.id, slot.id))
+    return this.commitSnapshot(tx, slot, version, fetchedAt, slot.status, snapshotPayload(rows))
+  }
+
+  /**
+   * ADR-0037 D2: records one staff-captured option. The caller has normalised it; this applies the compliance filter, finds the catalog slot
+   * (creating the row for a tracked route's date if needed; feed polling follows the route's own horizon and is not changed), upserts the result
+   * on `fb:{flight numbers}:{date}`, upserts its fares by position (extra old positions are RETIRED, so fare ids stay stable) and rebuilds the
+   * snapshot. `inTx` runs in the same transaction (audit, request note).
+   */
+  async writeStaffOption(w: {
+    capture: NormalisedCapture
+    actorUserId: string
+    observedAt: Date
+    sourceRecordId?: string
+    requestRef?: string
+    note?: string
+    now?: Date
+  }, inTx?: (tx: Tx, r: { resultId: string; slotId: string; created: boolean; review: boolean }) => Promise<void>): Promise<{ resultId: string; slotId: string; created: boolean; review: boolean; slotCreated: boolean }> {
+    const now = w.now ?? new Date()
+    const { offer, fares, identityKey } = w.capture
+    const pol = await this.compliance.carrierPolicy()
+    const ref = this.reference.lookup()
+    const stats = emptyStats()
+    if (!filterOffers([offer], pol, ref, now, stats).length) {
+      if (stats.removedByPolicy) throw new AppError("POLICY_BLOCKED", "This flight uses a carrier, airport or lane the compliance policy blocks, so it cannot be recorded")
+      throw new AppError("VALIDATION_FAILED", "This flight failed the catalog checks (times or time zones)")
+    }
+    const review = offerLaneVerdict(offer, pol, ref) === "REVIEW"
+    const origin = offer.slices[0]!.origin
+    const destination = offer.slices[0]!.destination
+    const date = offer.slices[0]!.segments[0]!.departure.local.slice(0, 10)
+    if (date < now.toISOString().slice(0, 10)) throw new AppError("VALIDATION_FAILED", "The departure date is in the past", [{ path: "segments.0.departLocal", code: "PAST" }])
+    const [route] = await this.db.select().from(flightWatchlistRoutes).where(and(eq(flightWatchlistRoutes.origin, origin), eq(flightWatchlistRoutes.destination, destination), eq(flightWatchlistRoutes.kind, "DIRECT"), eq(flightWatchlistRoutes.enabled, true)))
+    if (!route) throw new AppError("ROUTE_NOT_TRACKED", `${origin}-${destination} is not a tracked catalog route; add it to the watchlist first`)
+    let slotCreated = false
+    let [slot] = await this.db.select().from(catalogSlots).where(and(eq(catalogSlots.routeId, route.id), eq(catalogSlots.departureDate, date)))
+    if (!slot) {
+      await this.db.insert(catalogSlots).values({ routeId: route.id, departureDate: date, nextDueAt: now }).onConflictDoNothing({ target: [catalogSlots.routeId, catalogSlots.departureDate] })
+      slotCreated = true
+      ;[slot] = await this.db.select().from(catalogSlots).where(and(eq(catalogSlots.routeId, route.id), eq(catalogSlots.departureDate, date)))
+    }
+    const detail = detailFromOffer(offer, review)
+    const rep = offer.price.total
+    const out = await this.uow.run(async (tx) => {
+      const [r] = await tx.insert(flightResults).values({
+        slotId: slot!.id, origin, destination, departureDate: date, identityKey, selfTransfer: false, complianceReview: review, offer, detail, firstSeenAt: w.observedAt, lastSeenAt: w.observedAt, isCurrent: true,
+        capture: "STAFF", capturedBy: w.actorUserId, sourceRecordId: w.sourceRecordId ?? null, verification: "RECORDED", requestRef: w.requestRef ?? null, captureNote: w.note ?? null,
+      }).onConflictDoUpdate({
+        target: [flightResults.slotId, flightResults.identityKey],
+        set: { offer, detail, complianceReview: review, lastSeenAt: w.observedAt, isCurrent: true, capturedBy: w.actorUserId, sourceRecordId: w.sourceRecordId ?? null, requestRef: w.requestRef ?? null, captureNote: w.note ?? null, updatedAt: now },
+      }).returning({ id: flightResults.id, created: sql<boolean>`(xmax = 0)` })
+      const resultId = r!.id
+      await tx.insert(flightResultFares).values(fares.map((f) => ({
+        resultId, position: f.position, cabin: f.cabin, bookingClasses: f.bookingClasses, seatsRaw: f.seatsRaw, fareBasis: f.fareBasis, fareType: f.fareType, fareTypeRaw: f.fareTypeRaw,
+        baseMinor: f.baseMinor, taxesMinor: f.taxesMinor, totalMinor: f.totalMinor, currency: f.currency, baggage: f.baggage, conditions: f.conditions, ticketingDeadline: f.ticketingDeadline,
+        status: "LIVE" as const, observedAt: w.observedAt,
+      }))).onConflictDoUpdate({
+        target: [flightResultFares.resultId, flightResultFares.position],
+        set: {
+          cabin: sql`excluded.cabin`, bookingClasses: sql`excluded.booking_classes`, seatsRaw: sql`excluded.seats_raw`, fareBasis: sql`excluded.fare_basis`, fareType: sql`excluded.fare_type`, fareTypeRaw: sql`excluded.fare_type_raw`,
+          baseMinor: sql`excluded.base_minor`, taxesMinor: sql`excluded.taxes_minor`, totalMinor: sql`excluded.total_minor`, currency: sql`excluded.currency`, baggage: sql`excluded.baggage`, conditions: sql`excluded.conditions`,
+          ticketingDeadline: sql`excluded.ticketing_deadline`, status: sql`'LIVE'`, observedAt: sql`excluded.observed_at`, updatedAt: now,
+        },
+      })
+      await tx.update(flightResultFares).set({ status: "RETIRED", updatedAt: now }).where(and(eq(flightResultFares.resultId, resultId), gte(flightResultFares.position, fares.length)))
+      await this.upsertPrice(tx, resultId, rep.amountMinor, rep.currency, now)
+      if (inTx) await inTx(tx, { resultId, slotId: slot!.id, created: r!.created, review })
+      const blob = await this.commitStaffSnapshot(tx, slot!, now)
+      return { blob, resultId, created: r!.created }
+    })
+    await this.cacheSnapshot(slot!, out.blob)
+    return { resultId: out.resultId, slotId: slot!.id, created: out.created, review, slotCreated }
+  }
+
+  /** Staff retire a captured option: its fares are RETIRED, the row leaves the snapshot, and the history stays (ADR-0037). Returns false when it is not a staff capture. */
+  async retireStaffOption(resultId: string, inTx?: (tx: Tx, r: { slotId: string | null }) => Promise<void>, now = new Date()): Promise<boolean> {
+    const [row] = await this.db.select({ slotId: flightResults.slotId, capture: flightResults.capture }).from(flightResults).where(eq(flightResults.id, resultId))
+    if (!row || row.capture !== "STAFF") return false
+    const [slot] = row.slotId ? await this.db.select().from(catalogSlots).where(eq(catalogSlots.id, row.slotId)) : []
+    const blob = await this.uow.run(async (tx) => {
+      await tx.update(flightResultFares).set({ status: "RETIRED", updatedAt: now }).where(eq(flightResultFares.resultId, resultId))
+      await tx.update(flightResults).set({ isCurrent: false, updatedAt: now }).where(eq(flightResults.id, resultId))
+      if (inTx) await inTx(tx, { slotId: row.slotId })
+      return slot ? this.commitStaffSnapshot(tx, slot, now) : null
+    })
+    if (slot && blob) await this.cacheSnapshot(slot, blob)
+    return true
   }
 
   private async markError(tx: Tx, slot: SlotRow, message: string, notices: string[], now: Date, s: CatalogSettings): Promise<{ blob: SnapshotBlob; kept: number }> {
@@ -167,7 +291,8 @@ export class CatalogWriteService {
   private async currentOffers(slotIds: string[]) {
     if (!slotIds.length) return []
     return this.db.select({ id: flightResults.id, offer: flightResults.offer, slotId: flightResults.slotId }).from(flightResults)
-      .where(and(inArray(flightResults.slotId, slotIds), eq(flightResults.isCurrent, true), isNotNull(flightResults.offer)))
+      // STAFF captures never feed self-transfer combinations (ADR-0037 D2): their fares are not an offer a customer can be combined onto.
+      .where(and(inArray(flightResults.slotId, slotIds), eq(flightResults.isCurrent, true), eq(flightResults.capture, "FEED"), isNotNull(flightResults.offer)))
   }
 
   /** After a feeder slot changed: rebuild every combined slot that includes it (spec §5 step 5). */
@@ -298,7 +423,7 @@ export class CatalogWriteService {
           const review = offerLaneVerdict(r.offer!, policy, ref) === "REVIEW"
           await tx.update(flightResults).set({ complianceReview: review, detail: { ...r.detail, complianceReview: review }, updatedAt: new Date() }).where(eq(flightResults.id, r.id))
         }
-        const current = await tx.select({ id: flightResults.id, detail: flightResults.detail }).from(flightResults).where(and(eq(flightResults.slotId, slot.id), eq(flightResults.isCurrent, true)))
+        const current = await this.snapshotRows(tx, slot.id)
         const version = slot.version + 1
         await tx.update(catalogSlots).set({ version, updatedAt: new Date() }).where(eq(catalogSlots.id, slot.id))
         return this.commitSnapshot(tx, slot, version, slot.lastFetchedAt, slot.status, snapshotPayload(current))

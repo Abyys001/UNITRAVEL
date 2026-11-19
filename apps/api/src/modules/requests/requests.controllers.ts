@@ -16,6 +16,7 @@ import { AccessService } from "../access/access.service"
 import { BookingsService } from "../bookings/bookings.service"
 import { StaffEvents } from "../platform/staff-events"
 import { DashboardService } from "./dashboard.service"
+import { FlightBuilderService } from "../catalog/flight-builder.service"
 import { QuotesService } from "./quotes.service"
 import { RequestsService } from "./requests.service"
 
@@ -92,7 +93,7 @@ export class CustomerFlightRequestsController {
 @Controller("v1/admin")
 @StaffOnly()
 export class AdminFlightRequestsController {
-  constructor(private readonly requests: RequestsService, private readonly quotes: QuotesService, private readonly bookings: BookingsService, private readonly uow: UnitOfWork, private readonly access: AccessService, private readonly staffEvents: StaffEvents, private readonly dashboard: DashboardService) {}
+  constructor(private readonly requests: RequestsService, private readonly quotes: QuotesService, private readonly bookings: BookingsService, private readonly uow: UnitOfWork, private readonly access: AccessService, private readonly staffEvents: StaffEvents, private readonly dashboard: DashboardService, private readonly flightBuilder: FlightBuilderService) {}
 
   /** Staff directory for the assign dialog: whoever may assign needs to see who can be assigned. */
   @Get("staff")
@@ -157,7 +158,7 @@ export class AdminFlightRequestsController {
 
   @Get("flight-requests")
   @RequirePermission("flight_request.read.any")
-  list(@Query(zbody(z.object({ tab: z.string().optional(), status: z.string().optional(), assignee: z.string().optional(), q: z.string().max(60).optional(), from: z.string().optional(), to: z.string().optional(), flags: z.string().optional(), limit: z.coerce.number().int().min(1).max(100).default(25), cursor: z.string().optional() }))) q: { tab?: string; status?: string; assignee?: string; q?: string; from?: string; to?: string; flags?: string; limit: number; cursor?: string }, @CurrentActor() actor: Actor) {
+  list(@Query(zbody(z.object({ tab: z.string().optional(), status: z.string().optional(), assignee: z.string().optional(), q: z.string().max(60).optional(), from: z.string().optional(), to: z.string().optional(), flags: z.string().optional(), customerUserId: z.string().uuid().optional(), limit: z.coerce.number().int().min(1).max(100).default(25), cursor: z.string().optional() }))) q: { tab?: string; status?: string; assignee?: string; q?: string; from?: string; to?: string; flags?: string; customerUserId?: string; limit: number; cursor?: string }, @CurrentActor() actor: Actor) {
     return this.requests.adminList(q, actor)
   }
 
@@ -211,6 +212,15 @@ export class AdminFlightRequestsController {
   @RequirePermission("pricing.read.internal")
   fromSnapshot(@Param("ref") ref: string) {
     return this.quotes.fromSnapshot(ref)
+  }
+
+  /** ADR-0037: "+ From catalog option". The captured fare's tri-state baggage and conditions are copied as captured (UNKNOWN stays UNKNOWN and blocks sending). Price fields only with `pricing.read.internal`. */
+  @Post("flight-requests/:ref/quotes/from-catalog")
+  @RequirePermission("quote.create")
+  @HttpCode(200)
+  async fromCatalog(@Param("ref") ref: string, @Body(zbody(z.object({ fareId: z.uuid() }))) body: { fareId: string }, @CurrentActor() actor: Actor) {
+    await this.requests.byRef(ref)
+    return this.flightBuilder.quoteOption(body.fareId, actor.permissions.has("pricing.read.internal"))
   }
 
   @Post("flight-requests/:ref/quotes")

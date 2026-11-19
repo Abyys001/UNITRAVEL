@@ -2,7 +2,7 @@
 
 import { ArrowRight, Hourglass, Info, Plane, SearchX } from "lucide-react"
 import Link from "next/link"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import type { CatalogDateGroup, CatalogSearchResponse, PublicItinerary, PublicItineraryDetail, RiskFlag } from "@unitravel/contracts"
 import { EmptyState } from "@unitravel/ui/product/states"
@@ -12,6 +12,7 @@ import { ago } from "@/lib/relative-time"
 import { useSession } from "@/lib/session"
 
 import { Ltr, Tag } from "./badges"
+import { FarePicker } from "./fare-picker"
 import { FlightTrack } from "./flight-track"
 import { type SearchParamsShape } from "./search-form"
 
@@ -200,8 +201,19 @@ export function CatalogSearchView({ data, shape }: { data: CatalogSearchResponse
   )
 }
 
+/** ADR-0037: with staff-captured fares the CTA carries the chosen fare into the request; without any it is today's manual request. */
+function FareCta({ d, fareId }: { d: PublicItineraryDetail; fareId: string | null }) {
+  const { t, href } = useI18n()
+  const { me } = useSession()
+  if (!fareId) return <button type="button" disabled className="btn-orange !px-4 !py-2 text-sm opacity-60" data-testid="request-fare">{t("fare.choose")}</button>
+  const next = href(`/request/new?catalog=${encodeURIComponent(d.id)}&fare=${encodeURIComponent(fareId)}`)
+  return <Link href={me ? next : href(`/sign-in?next=${encodeURIComponent(next)}`)} className="btn-orange !px-4 !py-2 text-sm" data-testid="request-fare">{t("catalog.requestFlight")}</Link>
+}
+
 export function CatalogDetailView({ d, shape }: { d: PublicItineraryDetail; shape: SearchParamsShape }) {
   const { t, clock, duration, date, href, locale, sep } = useI18n()
+  const fares = d.basis === "SCHEDULE" ? [] : (d.fares ?? [])
+  const [fareId, setFareId] = useState<string | null>(fares.length === 1 ? fares[0]!.id : null)
   const gaps = d.legs.slice(1).map((leg, i) => ({ at: leg.from.iata, min: d.layovers[i]?.minutes, flags: d.layovers[i]?.flags ?? [] }))
   return (
     <article data-testid="catalog-detail">
@@ -231,10 +243,11 @@ export function CatalogDetailView({ d, shape }: { d: PublicItineraryDetail; shap
           ))}
         </ol>
         <Notices it={d} />
+        {fares.length > 0 && <FarePicker fares={fares} value={fareId} onChange={setFareId} />}
         {d.selfTransfer && <p className="mt-3 text-xs text-steel">{t("catalog.selfTransferNote")}</p>}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-dashed border-haze pt-4">
           <div><Freshness iso={d.fetchedAt} /><p className="text-xs font-semibold text-navy-950">{t("catalog.confirmed")}</p></div>
-          <AskTeamLink shape={shape} label={t("catalog.requestFlight")} />
+          {fares.length > 0 ? <FareCta d={d} fareId={fareId} /> : <AskTeamLink shape={shape} label={t("catalog.requestFlight")} />}
         </div>
       </div>
     </article>

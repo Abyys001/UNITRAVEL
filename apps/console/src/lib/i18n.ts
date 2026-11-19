@@ -1,5 +1,7 @@
 "use client"
 
+import { fbEn, fbFa } from "./i18n-fb"
+import { tdEn, tdFa } from "./i18n-td"
 import { type Locale, useLocale } from "./prefs"
 
 /**
@@ -2186,6 +2188,8 @@ const en = {
   "res.note": "Note",
   "res.noPnr": "no PNR, external reference only",
   "comp.iran.counsel": "Counsel has not yet advised on selling itineraries from Iran (STAGE-0 item 1 is open). Clearing this hold is a business decision taken by staff; record why in the reason field. Online payment stays off.",
+  ...fbEn,
+  ...tdEn,
 } as const
 
 export type MsgKey = keyof typeof en
@@ -4370,6 +4374,8 @@ const fa: Record<MsgKey, string> = {
   "res.note": "یادداشت",
   "res.noPnr": "بدون PNR، فقط شناسه بیرونی",
   "comp.iran.counsel": "مشاور حقوقی هنوز درباره فروش سفرهای مبدأ ایران نظر نداده است (مورد ۱ در STAGE-0 باز است). آزاد کردن این درخواست یک تصمیم تجاری کارکنان است؛ دلیل آن را در بخش دلیل ثبت کنید. پرداخت آنلاین خاموش می‌ماند.",
+  ...fbFa,
+  ...tdFa,
 }
 
 const DICT: Record<Locale, Record<MsgKey, string>> = { en, fa }

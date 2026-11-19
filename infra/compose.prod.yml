@@ -101,7 +101,7 @@ services:
     cap_drop: [ALL]
     build: { context: .., dockerfile: infra/docker/node.Dockerfile, target: console }
     # The host split between the Admin Panel and the Developer Panel reads these.
-    environment: { API_INTERNAL_URL: "http://api:4100", PUBLIC_CONSOLE_ADMIN_URL: "https://${ADMIN_HOST}", PUBLIC_CONSOLE_DEV_URL: "https://${DEV_HOST}" }
+    environment: { API_INTERNAL_URL: "http://api:4100", PUBLIC_CONSOLE_ADMIN_URL: "https://${ADMIN_HOST}", PUBLIC_CONSOLE_DEV_URL: "https://${DEV_HOST}", OBJECT_STORAGE_PUBLIC_ENDPOINT: "${OBJECT_STORAGE_PUBLIC_ENDPOINT:-https://${STORAGE_HOST}}" }
     restart: unless-stopped
 
   mobile:

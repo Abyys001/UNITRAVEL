@@ -11,7 +11,7 @@ export const NOTIFICATION_EVENTS = [
   "quote.sent", "quotation.sent", "invoice.issued", "invoice.cancelled", "invoice.expired", "invoice.paid",
   "payment.requested", "payment.failed", "payment.refunded", "quote.expiring", "quote.accepted", "quote.expired",
   "reservation.recorded", "reservation.deadline_approaching",
-  "ticket.issued",
+  "ticket.issued", "ticket.resent",
   "identity.verification_verified", "identity.verification_rejected", "identity.verification_correction",
   "sla.unassigned", "sla.first_contact_due", "sla.awaiting_customer_reminder",
   "cargo.submitted", "cargo.status_changed",

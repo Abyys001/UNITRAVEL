@@ -23,6 +23,11 @@ const TITLES: Partial<Record<ErrorCode, string>> = {
   OTP_LOCKED: "Too many attempts",
   RATE_LIMITED: "Too many requests",
   CHALLENGE_REQUIRED: "Please complete the check",
+  POLICY_BLOCKED: "Blocked by policy",
+  ROUTE_NOT_TRACKED: "This route is not tracked",
+  AUTHORISATION_REQUIRED: "A recorded source authorisation is required",
+  SOURCE_NOT_AUTHORISED: "This source is not authorised",
+  NO_ADAPTER: "No adapter is available for this source",
   INTERNAL: "Something went wrong",
 }
 
@@ -37,6 +42,11 @@ const FA_TITLES: Partial<Record<ErrorCode, string>> = {
   OTP_EXPIRED: "کد نامعتبر یا منقضی است",
   OTP_LOCKED: "تلاش‌های بیش از حد",
   RATE_LIMITED: "درخواست‌های بیش از حد",
+  POLICY_BLOCKED: "به دلیل سیاست‌ها مسدود شده است",
+  ROUTE_NOT_TRACKED: "این مسیر پیگیری نمی‌شود",
+  AUTHORISATION_REQUIRED: "ثبت مجوز منبع لازم است",
+  SOURCE_NOT_AUTHORISED: "این منبع مجاز نیست",
+  NO_ADAPTER: "برای این منبع آداپتوری وجود ندارد",
   INTERNAL: "خطایی رخ داد",
 }
 

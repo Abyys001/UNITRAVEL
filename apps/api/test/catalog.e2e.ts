@@ -275,7 +275,7 @@ describe("customer endpoints: stored snapshots only, never a provider", () => {
   })
 
   it("no body, snapshot row or cached blob carries an amount, currency, fare, booking token, Google link or provider field", async () => {
-    const FARE = /amount|price|currency|\bUSD\b|\bGBP\b|fare|baggage|bookingToken|googleFlights|providerData|"provider"|"total"|23100/i
+    const FARE = /amount|price|currency|\bUSD\b|\bGBP\b|fare(?!s":\[\])|baggage|bookingToken|googleFlights|providerData|"provider"|"total"|23100/i
     expect(bodies.length).toBeGreaterThan(10)
     expect(JSON.stringify(bodies)).not.toMatch(FARE)
     const rows = await dbQuery<{ payload: unknown }>("select payload from catalog_public_snapshots where slot_id in (select id from catalog_slots where route_id = any($1))", [Object.values(routeIds)])

@@ -1,6 +1,6 @@
 "use client"
 
-import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Tags, Users } from "lucide-react"
+import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Tags, Ticket, Users } from "lucide-react"
 
 import { normaliseReference } from "@unitravel/domain"
 
@@ -39,6 +39,11 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       tabs: [{ href: "/compliance", label: t("nav.cases") }, { href: "/compliance/policies", label: t("nav.policies") }, { href: "/compliance/lists", label: t("nav.lists") }],
     }] : []),
     ...(can("identity.verify") ? [{ href: "/verifications", label: t("nav.identityChecks"), short: t("nav.identity"), mobile: true, group: "work", icon: <IdCard className="size-[18px]" /> }] : []),
+    // ADR-0038: issuing is its own tab so staff with ticket.document.issue reach the wizard in one click.
+    ...(can("ticket.record", "ticket.document.issue") ? [{
+      href: can("ticket.document.issue") ? "/tickets/issue" : "/tickets", label: t("td.nav"), group: "records", icon: <Ticket className="size-[18px]" />,
+      tabs: [...(can("ticket.document.issue") ? [{ href: "/tickets/issue", label: t("td.issue.title") }] : []), ...(can("ticket.record") ? [{ href: "/tickets", label: t("td.nav.list") }] : [])],
+    }] : []),
     ...(can("commercial_document.issue", "flight_request.read.any", "cargo_request.read.any") ? [{ href: "/invoices", label: t("nav.invoices"), group: "records", icon: <Receipt className="size-[18px]" /> }] : []),
     ...(can("loyalty.read") && clubOn ? [{
       href: "/club", label: t("nav.club"), group: "records", icon: <Gem className="size-[18px]" />,
@@ -59,7 +64,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       tabs: [{ href: "/content", label: t("nav.contentEntries") }, { href: "/content/glossary", label: t("nav.contentGlossary") }],
     }] : []),
     ...(can("flight_search.run") ? [{ href: "/search", label: t("nav.flightSearch"), group: "tools", icon: <Search className="size-[18px]" /> }] : []),
-    ...(can("catalog.read") ? [{ href: "/catalog", label: t("nav.catalog"), group: "tools", icon: <CalendarRange className="size-[18px]" /> }] : []),
+    ...(can("catalog.read") ? [{
+      href: "/catalog", label: t("nav.catalog"), group: "tools", icon: <CalendarRange className="size-[18px]" />,
+      tabs: [{ href: "/catalog", label: t("nav.catalogOverview") }, { href: "/catalog/flight-builder", label: t("nav.flightBuilder") }],
+    }] : []),
   ]
   const alerts: ShellAlert[] = s ? [
     ...(flights ? [{ id: "sla", label: t("bell.sla", { n: s.slaBreaches }), count: s.slaBreaches, href: "/queues?tab=new", tone: "danger" as const }] : []),

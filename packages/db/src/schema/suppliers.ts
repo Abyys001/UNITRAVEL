@@ -130,5 +130,28 @@ export const offerSnapshots = pgTable("offer_snapshots", {
   ruleVersion: integer().notNull(),
   engineVersion: varchar({ length: 40 }).notNull(),
   contentHash: varchar({ length: 64 }).notNull(),
+  /** ADR-0037: set for a CATALOG request: the staff-captured result it was made from. */
+  catalogResultId: uuid(),
+  /** ADR-0037: the staff copy of the chosen fare (with price). Staff with `pricing.read.internal` only. */
+  fare: jsonb().$type<Record<string, unknown>>(),
+  /** ADR-0037: exactly what the customer saw (the PublicFare), frozen at submission. */
+  customerView: jsonb().$type<Record<string, unknown>>(),
   createdAt: createdAt(),
 })
+
+/** ADR-0037 D9: the written permission to automate a source. Append-only except for a single revocation (trigger in migration 0027). */
+export const providerAuthorisations = pgTable("provider_authorisations", {
+  id: id(),
+  providerId: varchar({ length: 40 }).notNull().references(() => providers.id),
+  documentRef: text().notNull(),
+  grantedByName: text().notNull(),
+  grantedAt: tstz().notNull(),
+  scope: text().notNull(),
+  maxSearchesPerDay: integer(),
+  expiresAt: tstz(),
+  recordedBy: uuid().notNull().references(() => users.id),
+  recordedAt: tstz().notNull().defaultNow(),
+  revokedAt: tstz(),
+  revokedBy: uuid().references(() => users.id),
+  revokedReason: text(),
+}, (t) => [index("provider_authorisations_provider_idx").on(t.providerId, t.recordedAt)])

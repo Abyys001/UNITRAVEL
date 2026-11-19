@@ -70,6 +70,7 @@ function Builder() {
   const d = detail.data
   const set = (p: Partial<Working>) => { setW({ ...w, ...p }); setBlockedBy(null) }
   const addSnapshot = async () => { try { const o = await api<QuoteOptionInput>(`/v1/admin/flight-requests/${ref}/quotes/from-snapshot`); set({ options: [...w.options, fromInput(o)] }) } catch (e) { toast.error(errText(e)) } }
+  const addCatalog = async () => { try { const o = await api<QuoteOptionInput>(`/v1/admin/flight-requests/${ref}/quotes/from-catalog`, { body: { fareId: d.snapshot?.staffFare?.id } }); set({ options: [...w.options, fromInput(o)] }) } catch (e) { toast.error(errText(e)) } }
   const addManual = () => set({ options: [...w.options, fromInput({ label: "Manual option", source: "MANUAL", slices: [], components: [], priceBreakdown: { fare: { amountMinor: 0, currency: w.currency }, taxes: { amountMinor: 0, currency: w.currency }, serviceFee: { amountMinor: 0, currency: w.currency }, total: { amountMinor: 0, currency: w.currency } }, baggage: [], conditions: { change: { status: "UNKNOWN" }, refund: { status: "UNKNOWN" } }, ticketingModel: "SINGLE_TICKET" })] })
   const totalUnknown = w.options.reduce((n, o) => n + unknowns(o).length, 0)
   const badPrice = w.options.some((o) => badAmounts(o).length > 0)
@@ -109,6 +110,7 @@ function Builder() {
     <div>
       <PageHead kicker={<><Link href={`/requests/${ref}`} className="ref hover:underline">{ref}</Link> · <RouteText>{d.routeLabel}</RouteText> · {d.customer.preferredLocale === "fa" ? "customer reads Persian" : "customer reads English"}</>} title={w.quoteId ? "Quote draft" : "New quote"}>
         <Button size="sm" variant="outline" onClick={() => void addSnapshot()} disabled={!d.snapshot || w.options.length >= 5 || !can("pricing.read.internal")}>+ From snapshot</Button>
+        {d.snapshot?.staffFare && <Button size="sm" variant="outline" onClick={() => void addCatalog()} disabled={w.options.length >= 5 || !can("pricing.read.internal")} data-testid="quote-from-catalog">{t("fb.quote.fromCatalog")}</Button>}
         <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`/search?ref=${ref}`} />} disabled={w.options.length >= 5}>+ From staff search</Button>
         <Button size="sm" variant="outline" onClick={addManual} disabled={w.options.length >= 5}>+ Manual entry</Button>
       </PageHead>

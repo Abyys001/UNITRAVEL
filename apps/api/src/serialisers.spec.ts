@@ -1,7 +1,7 @@
 import fc from "fast-check"
 import { describe, expect, it } from "vitest"
 
-import { BillingDocuments, CargoCustomerView, CustomerInvoice, CustomerServiceRequestView, PublicTrackView, StaffServiceRequestView, ServiceQuoteView, StaffInvoice, CustomerSearchState, CustomerSeatMap, FlightListingsView, FlightRequestCustomerView, FlightRequestListItem, Itinerary, MyDetails, NormalisedOffer, SeatMap, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
+import { BillingDocuments, CargoCustomerView, CustomerInvoice, CustomerServiceRequestView, PublicTrackView, StaffServiceRequestView, ServiceQuoteView, StaffInvoice, CustomerSearchState, CustomerSeatMap, FlightListingsView, FlightRequestCustomerView, FlightRequestListItem, Itinerary, PublicFare, MyDetails, NormalisedOffer, SeatMap, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
 
 import { encryptField } from "./core/crypto"
 import { CustomersService } from "./modules/customers/customers.service"
@@ -13,7 +13,7 @@ import { customerItinerary, customerSeatMaps } from "./modules/search/customer-p
 import { findForbiddenKeys } from "./testing/leak"
 
 /** Field names that exist on staff/internal records and must never reach a customer (ch. 25.6, 32.2). */
-const INTERNAL = ["internalCostMinor", "internalNotes", "notes", "assigneeId", "assigneeName", "screening", "screeningScore", "riskScore", "complianceCase", "passportNumber", "documentNumberEnc", "supplierRaw", "createdBy", "customerUserId", "contactIdentityId", "costMinor", "supplierPrice", "supplierFetchedAt", "supplierExpiresAt", "priceAtSubmit", "priceRevalidated", "bookingToken", "googleFlightsUrl", "priceLevel", "typicalPriceLow", "typicalPriceHigh", "providerData"]
+const INTERNAL = ["internalCostMinor", "internalNotes", "notes", "assigneeId", "assigneeName", "screening", "screeningScore", "riskScore", "complianceCase", "passportNumber", "documentNumberEnc", "supplierRaw", "createdBy", "customerUserId", "contactIdentityId", "costMinor", "supplierPrice", "supplierFetchedAt", "supplierExpiresAt", "priceAtSubmit", "priceRevalidated", "bookingToken", "googleFlightsUrl", "priceLevel", "typicalPriceLow", "typicalPriceHigh", "providerData", "staffFare", "baseMinor", "taxesMinor", "rulesText", "sourceRecordId", "panelUrl", "username", "password"]
 /** Amount carriers that must not appear anywhere outside a sent quote; contaminated separately so a quote's real amounts stay valid. */
 const AMOUNT_FIELDS = ["amountMinor", "price", "priceBreakdown", "penalty", "totalMinor", "score", "explain", "supplierPrice"]
 
@@ -75,9 +75,15 @@ function contaminate(o: unknown, picks: { key: string; depthSeed: number }[]): u
 
 /** Paths of any amount-shaped field: `amountMinor`, a `*Minor` key, or the price/penalty/score carriers (ADR-0004). */
 const AMOUNT_KEY = /(^amountMinor$|Minor$|^(price|priceBreakdown|supplierPrice|penalty|score|explain|fare|taxes|serviceFee)$)/
+/** The one customer `fare` carrier is the strict, amount-free PublicFare (ADR-0037) at `$.snapshot.fare`; anything else named `fare` still counts. */
 function amountPaths(v: unknown, path = "$"): string[] {
   if (Array.isArray(v)) return v.flatMap((x, i) => amountPaths(x, `${path}[${i}]`))
-  if (v && typeof v === "object") return Object.entries(v).flatMap(([k, x]) => (AMOUNT_KEY.test(k) ? [`${path}.${k}`] : amountPaths(x, `${path}.${k}`)))
+  if (v && typeof v === "object") {
+    return Object.entries(v).flatMap(([k, x]) => {
+      if (path === "$.snapshot" && k === "fare" && (x == null || PublicFare.strict().safeParse(x).success)) return []
+      return AMOUNT_KEY.test(k) ? [`${path}.${k}`] : amountPaths(x, `${path}.${k}`)
+    })
+  }
   return []
 }
 

@@ -10,6 +10,13 @@ export interface PdfSection { heading?: string; rows?: [string, string][]; parag
 export interface PdfOptions {
   /** Small label at the right of the header band, e.g. "INVOICE". */ kind?: string
   /** "fa" embeds Vazirmatn and lays the page out right to left (rows, paragraphs, footer); tables stay left to right. Default "en". */ locale?: "en" | "fa"
+  /** ADR-0038 D7: header band and accent colours (#RRGGBB) and a PNG logo drawn in the band. Default: the built-in tokens, no logo. */
+  brand?: { primary?: string; accent?: string; logoPng?: Buffer }
+}
+
+const hex = (h: string | undefined, fallback: ReturnType<typeof rgb>) => {
+  const m = h ? /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h) : null
+  return m ? rgb(parseInt(m[1]!, 16) / 255, parseInt(m[2]!, 16) / 255, parseInt(m[3]!, 16) / 255) : fallback
 }
 
 // Brand tokens from packages/ui/src/styles.css ("Night flight"): navy-950, orange, steel.
@@ -99,8 +106,18 @@ export async function renderPdf(title: string, subtitle: string, sections: PdfSe
     else page.drawText(latin(text).slice(0, 110), { x: opts.x ?? 50, y, size: opts.size ?? 10, font: opts.f ?? font, color: opts.color ?? NAVY })
     y -= (opts.size ?? 10) + 6
   }
-  page.drawRectangle({ x: 0, y: 812, width: 595, height: 30, color: NAVY })
-  page.drawText("UNI TRAVEL", { x: 50, y: 822, size: 10, font: brand, color: COPPER })
+  const band = hex(options.brand?.primary, NAVY)
+  const accent = hex(options.brand?.accent, COPPER)
+  page.drawRectangle({ x: 0, y: 812, width: 595, height: 30, color: band })
+  let brandX = 50
+  if (options.brand?.logoPng) {
+    const logo = await doc.embedPng(options.brand.logoPng)
+    const h = 24
+    const w = Math.min(120, (logo.width / logo.height) * h)
+    page.drawImage(logo, { x: 50, y: 815, width: w, height: w === 120 ? (logo.height / logo.width) * w : h })
+    brandX = 50 + w + 8
+  }
+  page.drawText("UNI TRAVEL", { x: brandX, y: 822, size: 10, font: brand, color: accent })
   if (options.kind) {
     const kind = fa ? persian(options.kind) : latin(options.kind).toUpperCase()
     if (fa) drawRtl(page, kind, 545, 822, 9, bold, rgb(1, 1, 1))
@@ -110,7 +127,7 @@ export async function renderPdf(title: string, subtitle: string, sections: PdfSe
   line(subtitle, { size: 10, color: GREY })
   y -= 8
   for (const s of sections) {
-    if (s.heading) { y -= 4; line(fa ? s.heading : s.heading.toUpperCase(), { size: 9, f: bold, color: COPPER }) }
+    if (s.heading) { y -= 4; line(fa ? s.heading : s.heading.toUpperCase(), { size: 9, f: bold, color: accent }) }
     for (const [k, v] of s.rows ?? []) {
       if (y < 80) { page = doc.addPage([595, 842]); y = 790 }
       if (fa) {

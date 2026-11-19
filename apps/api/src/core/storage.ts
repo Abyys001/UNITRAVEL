@@ -6,6 +6,16 @@ import { Injectable, Logger, type OnModuleInit } from "@nestjs/common"
 
 import { env } from "./env"
 
+/** ADR-0038 D2: provider ticket PDFs. Keys under this prefix are written once; the store refuses a second write. */
+export const WRITE_ONCE_PREFIX = "tickets/original/"
+export const isWriteOnceKey = (key: string) => key.startsWith(WRITE_ONCE_PREFIX)
+
+export class WriteOnceViolation extends Error {
+  constructor(readonly key: string) {
+    super(`Object ${key} already exists and is write-once`)
+  }
+}
+
 /** S3-compatible object storage (RustFS locally, an EU bucket in production); access only via short-lived URLs. */
 @Injectable()
 export class ObjectStorage implements OnModuleInit {
@@ -38,9 +48,10 @@ export class ObjectStorage implements OnModuleInit {
       await this.client.send(new CreateBucketCommand({ Bucket: this.identityBucket })).catch((err) => this.log.warn({ err: String(err), bucket: this.identityBucket }, "bucket create failed"))
     }
     // Browsers PUT straight to the store with pre-signed URLs, so the store must allow our origins and the SSE header cross-origin.
-    const origins = [env().PUBLIC_WEB_URL, env().PUBLIC_MOBILE_WEB_URL, env().PUBLIC_CONSOLE_ADMIN_URL].map((u) => new URL(u).origin)
+    // The consoles also GET signed files for the ticket preview, and the Developer Panel uploads the cover logo (ADR-0038).
+    const origins = [env().PUBLIC_WEB_URL, env().PUBLIC_MOBILE_WEB_URL, env().PUBLIC_CONSOLE_ADMIN_URL, env().PUBLIC_CONSOLE_DEV_URL].map((u) => new URL(u).origin)
     for (const b of [this.bucket, this.identityBucket]) {
-      await this.client.send(new PutBucketCorsCommand({ Bucket: b, CORSConfiguration: { CORSRules: [{ AllowedOrigins: origins, AllowedMethods: ["PUT"], AllowedHeaders: ["content-type", "x-amz-server-side-encryption"], MaxAgeSeconds: 600 }] } }))
+      await this.client.send(new PutBucketCorsCommand({ Bucket: b, CORSConfiguration: { CORSRules: [{ AllowedOrigins: origins, AllowedMethods: ["PUT", "GET"], AllowedHeaders: ["content-type", "x-amz-server-side-encryption", "if-none-match"], MaxAgeSeconds: 600 }] } }))
         .catch((err) => this.log.warn({ err: String(err), bucket: b }, "bucket CORS not set; browser uploads will fail"))
     }
     // Default encryption as a second line behind the per-request header; a store that cannot do it fails writes loudly, never silently.
@@ -62,7 +73,11 @@ export class ObjectStorage implements OnModuleInit {
    * or a larger body (the 10 MB limit is enforced by the signature, not by the client's honesty).
    */
   presignPut(key: string, contentType: string, size: number, expiresIn = 300, bucket = this.bucket) {
-    return getSignedUrl(this.publicClient, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size, ...this.sse(bucket) }), { expiresIn, signableHeaders: new Set(["content-type", "content-length"]) }).then((url) => ({ url, size }))
+    // Write-once keys also sign `If-None-Match: *`: the uploader must send it, and the store then refuses an overwrite (412).
+    const once = isWriteOnceKey(key)
+    const signable = once ? ["content-type", "content-length", "if-none-match"] : ["content-type", "content-length"]
+    return getSignedUrl(this.publicClient, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size, ...(once ? { IfNoneMatch: "*" } : {}), ...this.sse(bucket) }), { expiresIn, signableHeaders: new Set(signable) })
+      .then((url) => ({ url, size, headers: { "content-type": contentType, ...(once ? { "if-none-match": "*" } : {}) } as Record<string, string> }))
   }
 
   /** Stored size in bytes, or undefined when the object does not exist. */
@@ -75,8 +90,8 @@ export class ObjectStorage implements OnModuleInit {
   }
 
   /** 5-minute download URLs with Content-Disposition: attachment (ch. 28.3, 28.1 malicious uploads). */
-  presignGet(key: string, filename: string, expiresIn = 300, bucket = this.bucket) {
-    return getSignedUrl(this.publicClient, new GetObjectCommand({ Bucket: bucket, Key: key, ResponseContentDisposition: `attachment; filename="${filename.replace(/[^A-Za-z0-9._-]/g, "_")}"` }), { expiresIn })
+  presignGet(key: string, filename: string, expiresIn = 300, bucket = this.bucket, disposition: "attachment" | "inline" = "attachment") {
+    return getSignedUrl(this.publicClient, new GetObjectCommand({ Bucket: bucket, Key: key, ResponseContentDisposition: `${disposition}; filename="${filename.replace(/[^A-Za-z0-9._-]/g, "_")}"` }), { expiresIn })
   }
 
   async get(key: string, bucket = this.bucket): Promise<Buffer> {
@@ -85,7 +100,22 @@ export class ObjectStorage implements OnModuleInit {
   }
 
   async put(key: string, body: Buffer, contentType: string, bucket = this.bucket) {
+    if (isWriteOnceKey(key)) return this.putOnce(key, body, contentType, bucket)
     await this.client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType, ...this.sse(bucket) }))
+  }
+
+  /**
+   * Writes only when the key is free (D2). The existence check gives a clear error; `If-None-Match: *` makes the store
+   * itself refuse the write if another writer got there between the check and the PUT.
+   */
+  async putOnce(key: string, body: Buffer, contentType: string, bucket = this.bucket) {
+    if ((await this.sizeOf(key, bucket)) !== undefined) throw new WriteOnceViolation(key)
+    try {
+      await this.client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType, IfNoneMatch: "*", ...this.sse(bucket) }))
+    } catch (err) {
+      if ((err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 412 || (err as Error).name === "PreconditionFailed") throw new WriteOnceViolation(key)
+      throw err
+    }
   }
 
   async delete(key: string, bucket = this.bucket) {

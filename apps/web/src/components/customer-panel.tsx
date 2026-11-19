@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, ClipboardList, LifeBuoy, ReceiptText, UserRound } from "lucide-react"
+import { Bell, ClipboardList, LifeBuoy, ReceiptText, Ticket, UserRound } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
@@ -14,16 +14,19 @@ export function PanelFrame({ children, enabled = true }: { children: ReactNode; 
   if (!enabled) return <>{children}</>
   const nav = [
     { to: "/requests", label: t("nav.requests"), icon: ClipboardList },
+    { to: "/account/tickets", label: t("nav.tickets"), icon: Ticket },
     { to: "/billing", label: t("nav.billing"), icon: ReceiptText },
     { to: "/inbox", label: t("nav.inbox"), icon: Bell },
     { to: "/support", label: t("nav.support"), icon: LifeBuoy },
     { to: "/account", label: t("nav.account"), icon: UserRound },
   ]
+  // Longest match wins, so /account/tickets does not also light up /account.
+  const current = nav.filter((n) => path.includes(n.to)).sort((a, b) => b.to.length - a.to.length)[0]?.to
   return (
     <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 md:grid-cols-[13rem_1fr] md:py-10">
       <nav aria-label={t("panel.nav")} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:sticky md:top-24 md:mx-0 md:flex-col md:self-start md:overflow-visible md:px-0">
         {nav.map((n) => {
-          const active = path.includes(n.to)
+          const active = n.to === current
           return (
             <Link key={n.to} href={href(n.to)} aria-current={active ? "page" : undefined} className={`inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold transition-colors pointer-coarse:min-h-11 md:rounded-xl ${active ? "bg-navy-950 text-white shadow-md" : "bg-white/70 text-navy-900 ring-1 ring-line hover:bg-cloud"}`}>
               <n.icon className="size-4" aria-hidden />{n.label}

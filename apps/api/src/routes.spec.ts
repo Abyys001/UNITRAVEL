@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 import { API_CONTROLLERS } from "./app.module"
 import { enumerateRoutes } from "./core/http/route-table"
 import { BUSINESS_CONTROLLERS } from "./modules/business.module"
+import { NotificationsController } from "./modules/notifications/notifications.controller"
 
 const pick = (r?: { permissions: string[]; staff: boolean; stepUp: boolean }) => ({ permissions: r?.permissions, staff: r?.staff, stepUp: r?.stepUp })
 
@@ -213,5 +214,58 @@ describe("fail-closed route declarations", () => {
     for (const role of ["customer", "cargo_admin", "compliance_officer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => p.startsWith("catalog."))).toEqual([])
     expect(PERMISSION_CATALOGUE["catalog.manage"].privileged).toBe(true)
     expect(PERMISSION_CATALOGUE["catalog.read"].privileged).toBe(false)
+  })
+  it("Flight Builder routes pin their permissions and step-ups (ADR-0037)", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    const fb: [string, string, string, boolean, boolean][] = [
+      ["POST", "/v1/admin/flight-builder/options", "catalog.capture", false, false], ["GET", "/v1/admin/flight-builder/options", "catalog.read", false, false],
+      ["GET", "/v1/admin/flight-builder/options/:id", "catalog.read", false, false], ["POST", "/v1/admin/flight-builder/options/:id/retire", "catalog.capture", false, false],
+      ["GET", "/v1/admin/flight-builder/usage", "catalog.read", false, false], ["POST", "/v1/admin/flight-builder/usage", "catalog.capture", false, false],
+      ["POST", "/v1/admin/flight-requests/:ref/quotes/from-catalog", "quote.create", false, false],
+      ["GET", "/v1/dev/providers/flight-builder/state", "provider.config.read", true, false], ["PATCH", "/v1/dev/providers/flight-builder/settings", "provider.config.write", true, false],
+      ["POST", "/v1/dev/providers/flight-builder/authorisations", "provider.authorisation.record", true, true],
+      ["POST", "/v1/dev/providers/flight-builder/authorisations/:id/revoke", "provider.authorisation.record", true, true],
+      ["GET", "/v1/dev/providers/flight-builder/sync-runs", "provider.config.read", true, false], ["POST", "/v1/dev/providers/flight-builder/refresh", "provider.config.write", true, true],
+    ]
+    for (const [m, p, perm, dev, stepUp] of fb) expect({ m, p, ...pick(find(m, p)), dev: find(m, p)?.dev }).toEqual({ m, p, permissions: [perm], staff: true, stepUp, dev })
+  })
+
+  it("the public flight surface is read-only: no non-GET route under /v1/flights (ADR-0037)", () => {
+    expect(routes.filter((r) => r.path.startsWith("/v1/flights") && r.method !== "GET").map((r) => `${r.method} ${r.path}`)).toEqual([])
+  })
+
+  it("ticket document routes pin their permissions (ADR-0038 D8)", () => {
+    const find = (method: string, path: string) => routes.find((r) => r.method === method && r.path === path)
+    const staff: [string, string, string][] = [
+      ["POST", "/v1/admin/ticket-documents/uploads", "ticket.document.issue"], ["POST", "/v1/admin/ticket-documents/uploads/:id/complete", "ticket.document.issue"],
+      ["GET", "/v1/admin/ticket-documents/uploads/:id", "ticket.document.issue"], ["POST", "/v1/admin/ticket-documents", "ticket.document.issue"],
+      ["GET", "/v1/admin/ticket-documents", "ticket.record"], ["GET", "/v1/admin/flight-requests/:ref/ticket-documents", "ticket.record"],
+      ["GET", "/v1/admin/ticket-documents/:id", "ticket.record"], ["GET", "/v1/admin/ticket-documents/:id/preview", "ticket.document.issue"],
+      ["GET", "/v1/admin/ticket-documents/:id/files/:which", "ticket.record"], ["POST", "/v1/admin/ticket-documents/:id/issue", "ticket.document.issue"],
+      ["POST", "/v1/admin/ticket-documents/:id/resend", "ticket.document.resend"], ["POST", "/v1/admin/ticket-documents/:id/replace", "ticket.document.issue"],
+      ["POST", "/v1/admin/ticket-documents/:id/reissue", "ticket.document.issue"], ["POST", "/v1/admin/ticket-documents/:id/revoke", "ticket.document.issue"],
+    ]
+    for (const [m, p, perm] of staff) expect({ m, p, ...pick(find(m, p)), dev: find(m, p)?.dev }).toEqual({ m, p, permissions: [perm], staff: true, stepUp: false, dev: false })
+    expect(routes.filter((r) => r.path.startsWith("/v1/admin/ticket-documents")).map((r) => `${r.method} ${r.path}`).sort()).toEqual(staff.filter(([, p]) => p.startsWith("/v1/admin/ticket-documents")).map(([m, p]) => `${m} ${p}`).sort())
+    for (const [m, p] of [["GET", "/v1/ticket-documents"], ["GET", "/v1/ticket-documents/:id"], ["GET", "/v1/ticket-documents/:id/files/:which"], ["GET", "/v1/ticket-documents/:id/codes/:index"]] as const) {
+      expect({ m, p, ...pick(find(m, p)), pub: find(m, p)?.isPublic }).toEqual({ m, p, permissions: ["flight_request.read.own"], staff: false, stepUp: false, pub: false })
+    }
+    expect(routes.filter((r) => r.path.startsWith("/v1/ticket-documents") && r.method !== "GET")).toEqual([])
+    for (const p of ["/v1/dev/branding/logo-uploads", "/v1/dev/branding/logo-uploads/:id/complete"]) expect({ p, ...pick(find("POST", p)), dev: find("POST", p)?.dev }).toEqual({ p, permissions: ["settings.write"], staff: true, stepUp: false, dev: true })
+    // The Brevo delivery webhook is public and verifies its shared secret in the handler.
+    expect(enumerateRoutes([NotificationsController]).find((r) => r.method === "POST" && r.path === "/v1/webhooks/email/brevo")?.isPublic).toBe(true)
+  })
+
+  it("ticket document permissions: admin and owner only; reading stays on ticket.record (ADR-0038 D8)", () => {
+    for (const role of ["admin", "owner"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role]).toEqual(expect.arrayContaining(["ticket.document.issue", "ticket.document.resend", "ticket.record"]))
+    for (const role of ["customer", "cargo_admin", "compliance_officer", "developer"] as BuiltInRole[]) expect(DEFAULT_ROLE_PERMISSIONS[role].filter((p) => p.startsWith("ticket."))).toEqual([])
+  })
+
+  it("capture and authorisation permissions never reach customers or cargo staff (ADR-0037)", () => {
+    for (const role of ["customer", "cargo_admin"] as BuiltInRole[]) {
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("catalog.capture")
+      expect(DEFAULT_ROLE_PERMISSIONS[role]).not.toContain("provider.authorisation.record")
+    }
+    expect(DEFAULT_ROLE_PERMISSIONS.compliance_officer).not.toContain("provider.authorisation.record")
   })
 })

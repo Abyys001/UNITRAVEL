@@ -57,6 +57,21 @@ export class NotificationsController {
     return { ok: true }
   }
 
+  /**
+   * Brevo transactional email events (ADR-0038 D6): `delivered` moves the delivery to DELIVERED, a bounce or block to
+   * BOUNCED. Verified by the shared secret stored with the `email:brevo` credential (constant-time); none stored = refused.
+   */
+  @Post("webhooks/email/brevo")
+  @Public()
+  @HttpCode(200)
+  @RateLimit({ name: "webhook-email", limit: 6000, windowSeconds: 60, key: "ip" })
+  async brevoWebhook(@Req() req: Request, @Body() body: Record<string, unknown> | Record<string, unknown>[]) {
+    const c = await this.creds.get("email:brevo")
+    if (!c?.webhookSecret || !constantTimeEqual(req.header("x-webhook-secret") ?? "", c.webhookSecret)) throw new AppError("FORBIDDEN", "Invalid webhook signature")
+    for (const r of brevoEvents(body)) await this.n.deliveryReport("brevo", r.messageId, r.status)
+    return { ok: true }
+  }
+
   @Get("s/:code")
   @Public()
   @RateLimit({ name: "shortlink", limit: 120, windowSeconds: 600, key: "ip" })
@@ -95,4 +110,17 @@ function normaliseReports(provider: string, body: Record<string, unknown>): { me
   if (provider === "sinch") return [{ messageId: String(body.batch_id ?? ""), status: map(String(body.status ?? "")) }]
   if (provider === "kavenegar") return [{ messageId: String(body.messageid ?? ""), status: String(body.status) === "10" ? "DELIVERED" : map(String(body.status ?? "")) }]
   return [{ messageId: String(body.messageId ?? body.MessageId ?? ""), status: map(String(body.status ?? body.DeliveryState ?? "")) }]
+}
+
+/** Brevo posts one event per call (or a batch array); `message-id` is the SMTP Message-ID nodemailer returned when sending. */
+export function brevoEvents(body: Record<string, unknown> | Record<string, unknown>[]): { messageId: string; status: "DELIVERED" | "BOUNCED" }[] {
+  const out: { messageId: string; status: "DELIVERED" | "BOUNCED" }[] = []
+  for (const e of Array.isArray(body) ? body : [body]) {
+    const messageId = String(e["message-id"] ?? e.messageId ?? "")
+    const ev = String(e.event ?? "")
+    if (!messageId) continue
+    if (ev === "delivered") out.push({ messageId, status: "DELIVERED" })
+    else if (["hard_bounce", "soft_bounce", "blocked", "invalid_email", "error"].includes(ev)) out.push({ messageId, status: "BOUNCED" })
+  }
+  return out
 }

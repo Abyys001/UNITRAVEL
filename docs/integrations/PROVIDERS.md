@@ -116,3 +116,10 @@ Already modelled in apps/api/src/modules/notifications/vendor-schemas.ts and cha
 3. Hotels: apply to Expedia Rapid first (clearest onboarding), then Hotelbeds; only after counsel on Iran exposure.
 4. Rail, bus, CIP, insurance: stay staff-fulfilled with flags off.
 5. Cargo: manual primary; pilot 17TRACK.
+
+## Flight Builder (staff capture, ADR-0037)
+- **What it is.** The Amadeus airQuest panel Uni Travel's agency account uses. It has no data API and no automated access is authorised (BLOCKED, Q7-Q9). Staff search the panel by hand and record the chosen options in the Admin Panel (`POST /v1/admin/flight-builder/options`, permission `catalog.capture`).
+- **No client.** There is no HTTP client for the panel in the repository and the stored panel URL is never fetched. Provider row `flight-builder` is disabled with every capability false; it only carries the write-only credentials (`PUT /v1/dev/providers/flight-builder/credentials`, values `username`, `password`; nothing ever decrypts them).
+- **Developer Panel API** (`/v1/dev/providers/flight-builder/`): `GET state`, `PATCH settings` (409 `AUTHORISATION_REQUIRED` while the gate is unmet), `POST authorisations` and `.../:id/revoke` (`provider.authorisation.record`, step-up), `GET sync-runs`, `POST refresh` (always 409 `SOURCE_NOT_AUTHORISED` or `NO_ADAPTER`, and a BLOCKED run is recorded).
+- **Quota.** Scan Hits readings are an append-only log entered by staff (`POST /v1/admin/flight-builder/usage`); headroom is an ESTIMATE and nothing is decremented automatically.
+- **Normaliser.** `apps/api/src/modules/suppliers/adapters/flight-builder/normalise.ts`; any future adapter must reuse it and needs its own ADR plus a recorded authorisation.

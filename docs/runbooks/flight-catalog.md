@@ -69,3 +69,10 @@ Aviation Edge data may not be kept or used after the subscription ends.
    update catalog_schedule_slots set payload = '[]', status = 'NEVER', version = version + 1 where provider = 'aviation-edge';
    ```
 3. Flush the schedule cache: `valkey-cli --scan --pattern 'cat:sched:*' | xargs valkey-cli del`. Also clear `aviation-edge:coverage:last` and `catalog:schedule:state`.
+
+## Flight Builder captures (ADR-0037)
+- **Record an option.** Admin Panel, catalog, Flight Builder. The route (origin and destination) must already be a tracked DIRECT watchlist route, otherwise the API answers 422 `ROUTE_NOT_TRACKED`; a blocked carrier, airport or lane answers 422 `POLICY_BLOCKED`. The catalog slot row is created if missing; feed polling still follows the route's own horizon.
+- **Feed refreshes never remove captures.** `writeSlot` retires only `capture='FEED'` rows. The slot snapshot is rebuilt from all current rows; when a STAFF and a FEED row have the same flights and local departure, the STAFF row is shown. STAFF rows never feed self-transfer combinations.
+- **Freshness.** Job `flight-builder.freshness` (catalog queue, every 15 minutes) marks fares STALE (older than `staleHours`) or EXPIRED (ticketing date reached, 00:00 UTC), takes results with no LIVE fare out of the catalog and rebuilds the snapshots. No provider is called. Stale results are hidden from customers.
+- **Retire.** `POST /v1/admin/flight-builder/options/:id/retire`; history stays.
+- **Rollback.** Migration 0027 only adds. Set `flight_builder.enabled=false` and retire the STAFF rows.

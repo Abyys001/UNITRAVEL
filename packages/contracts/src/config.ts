@@ -207,8 +207,19 @@ export const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
   "loyalty.enabled": true,
 }
 
+const HexColour = z.string().regex(/^#[0-9A-Fa-f]{6}$/)
+/** ADR-0038 D7: header band and accent of branded documents. */
+export const BrandColours = z.object({ primary: HexColour, accent: HexColour })
+export type BrandColours = z.infer<typeof BrandColours>
+export const DEFAULT_BRAND_COLOURS: BrandColours = { primary: "#061F4C", accent: "#FF8617" }
+
 export const AppSettings = z.object({
-  company: z.object({ name: z.string(), address: z.string(), phone: z.string(), email: z.string(), registration: z.string() }),
+  company: z.object({
+    name: z.string(), address: z.string(), phone: z.string(), email: z.string(), registration: z.string(),
+    /** ADR-0038 D7: a BRAND_LOGO document (PNG, JPEG or SVG) for the ticket cover; null = the bundled brand mark. */
+    logoDocumentId: z.uuid().nullable().default(null),
+    brandColours: BrandColours.default(DEFAULT_BRAND_COLOURS),
+  }),
   supportedLanguages: z.array(z.enum(["en", "fa"])),
   displayCurrencies: z.array(z.string().regex(/^[A-Z]{3}$/)),
   legal: z.object({ termsVersion: z.string(), privacyVersion: z.string() }),

@@ -33,6 +33,10 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "flight_request.amended": ["notify.route"],
   "reservation.recorded": ["notify.route", "timers.sla"],
   "ticket.recorded": ["notify.route", "timers.sla"],
+  // ADR-0038: issued ticket documents. Drafts and revocations are audit and staff-stream signals only.
+  "ticket_document.issued": ["notify.route"],
+  "ticket_document.resent": ["notify.route"],
+  "ticket_document.revoked": [],
   "payment.recorded": ["compliance.screen"],
   // Recorded for the audit trail and the staff stream; nothing consumes it yet. An empty list is deliberate and keeps it off events.misc.
   "payment.verified": [],

@@ -2,11 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { CheckCircle2, Download, Send } from "lucide-react"
+import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import type { FlightRequestCustomerView, QuoteView, TravellerView } from "@unitravel/contracts"
+import type { CustomerTicketDocumentList, FlightRequestCustomerView, QuoteView, TravellerView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { Textarea } from "@unitravel/ui/components/textarea"
 import { DocumentCard } from "@unitravel/ui/product/document-card"
@@ -14,11 +15,13 @@ import { ErrorState, LoadingState } from "@unitravel/ui/product/states"
 import { Stepper } from "@unitravel/ui/product/stepper"
 
 import { Auto, Ltr, RouteLabel } from "@/components/badges"
+import { FareSummary } from "@/components/fare-picker"
 import { ConfirmAccept } from "@/components/confirm-accept"
 import { InvoiceDue } from "@/components/invoice-due"
 import { BagText, ItineraryView } from "@/components/itinerary-view"
 import { RequestedInterests } from "@/components/service-interests"
 import { StatusTimeline } from "@/components/status-timeline"
+import { KindBadge } from "@/components/ticket-documents"
 import { TravellerForm } from "@/components/traveller-form"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { download } from "@/lib/documents"
@@ -65,7 +68,7 @@ function QuoteCard({ q, ref, canAccept, onDone }: { q: QuoteView; ref: string; c
 
 export default function RequestDetail() {
   const { ref } = useParams<{ ref: string }>()
-  const { t, date, sep } = useI18n()
+  const { t, date, sep, href } = useI18n()
   const { me } = useRequireSignIn()
   const qc = useQueryClient()
   const [msg, setMsg] = useState("")
@@ -77,6 +80,7 @@ export default function RequestDetail() {
   }, [ref])
   const q = useQuery({ queryKey: ["request", ref], queryFn: async () => { const r = await api<FlightRequestCustomerView>(`/v1/flight-requests/${ref}`); cacheSet(`request:${ref}`, r); return r }, enabled: !!me, refetchInterval: 20_000 })
   const travellers = useQuery({ queryKey: ["travellers"], queryFn: () => api<TravellerView[]>("/v1/me/travellers"), enabled: !!me })
+  const ticketDocs = useQuery({ queryKey: ["ticket-documents", ref], queryFn: () => api<CustomerTicketDocumentList>(`/v1/ticket-documents?requestRef=${encodeURIComponent(ref)}`), enabled: !!me })
   const send = useMutation({ mutationFn: () => api(`/v1/flight-requests/${ref}/messages`, { body: { body: msg } }), onSuccess: () => { setMsg(""); void q.refetch() } })
   const cancel = useMutation({ mutationFn: () => api(`/v1/flight-requests/${ref}/cancel`, { body: {} }), onSuccess: () => void q.refetch() })
   const cached = !q.data && q.isError ? cacheGet<FlightRequestCustomerView>(`request:${ref}`) : null
@@ -84,9 +88,13 @@ export default function RequestDetail() {
   if (!r) return <div className="mx-auto max-w-4xl px-4 py-8">{q.isError ? <ErrorState title={t("requests.loadFailed")} body={(q.error as ApiError).message} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} /> : <LoadingState label={t("common.loading")} rows={4} />}</div>
   const missing = r.travellers.filter((x) => !x.documentComplete)
   const openQuote = r.quotes.find((x) => x.status === "SENT") ?? r.quotes[0]
+  // An issued ticket document (ADR-0038) replaces the per-ticket receipt download for the travellers it covers.
+  const docs = ticketDocs.data?.items ?? []
+  const covered = new Set(docs.flatMap((d) => d.passengers.map((p) => p.ticketNumber).filter(Boolean)))
+  const receipts = r.tickets.filter((tk) => !covered.has(tk.ticketNumber))
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 md:py-10">
-      {justSent && <div role="status" data-testid="request-sent" className="mb-4 rounded-xl border-s-4 border-success bg-success-subtle px-4 py-3 text-sm"><p className="font-semibold">{t("request.sentTitle")}</p><p>{t("request.sentBody", { ref: r.ref })}</p></div>}
+      {justSent && <div role="status" data-testid="request-sent" className="mb-4 rounded-xl border-s-4 border-success bg-success-subtle px-4 py-3 text-sm"><p className="font-semibold">{t("request.sentTitle")}</p><p>{t("request.sentBody", { ref: r.ref })}</p>{r.snapshot?.fare && <p className="mt-1">{t("fare.submitted")}</p>}</div>}
       {cached && <p className="mb-4 rounded-xl bg-warning-subtle px-4 py-2.5 text-sm text-warning-subtle-fg">{t("requests.offline")} {t("requests.lastUpdated", { time: date(cached.at, { withTime: true }) })}</p>}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="font-mono text-sm font-medium text-steel" dir="ltr">{r.ref}</p><h1 className="font-display text-3xl md:text-4xl"><RouteLabel label={r.routeLabel} /></h1></div>
@@ -99,6 +107,7 @@ export default function RequestDetail() {
       {r.reservation && <p className="mt-3 text-sm font-semibold text-success">{t("requests.reservedUntil", { time: date(r.reservation.ticketingDeadline, { withTime: true }) })}</p>}
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_300px]">
         <div className="space-y-8">
+          {r.snapshot?.fare && <section data-testid="snapshot-fare"><h2 className="font-display mb-3 text-xl">{t("fare.yourChoice")}</h2><FareSummary fare={r.snapshot.fare} /><p className="mt-2 text-xs text-steel">{t("fare.notBooking")}</p></section>}
           {r.actions.includes("PROVIDE_PASSPORT") && missing.length > 0 && (
             <section className="rounded-2xl border border-orange bg-warning-subtle p-5">
               <p className="font-medium">{t("requests.passportNeeded")}</p>
@@ -108,9 +117,16 @@ export default function RequestDetail() {
           )}
           {r.status === "ACCEPTED" && <InvoiceDue requestRef={r.ref} />}
           {openQuote && <section><h2 className="font-display mb-3 text-xl">{t("requests.quotes")}</h2><QuoteCard q={openQuote} ref={r.ref} canAccept={!missing.length} onDone={() => void qc.invalidateQueries({ queryKey: ["request", ref] })} /></section>}
-          {r.tickets.length > 0 && (
+          {(docs.length > 0 || receipts.length > 0) && (
             <section><h2 className="font-display mb-3 text-xl">{t("requests.tickets")}</h2>
-              <ul className="space-y-2">{r.tickets.map((tk) => (
+              {docs.length > 0 && <ul className="mb-2 space-y-2" data-testid="request-ticket-documents">{docs.map((d) => (
+                <li key={d.id}>
+                  <DocumentCard tone="success" title={<>{d.passengers.map((p) => p.name).join(sep)}{d.pnr && <>{sep}<Ltr className="font-mono">{d.pnr}</Ltr></>}</>}
+                    meta={<Ltr>{d.segments.map((s) => `${s.carrier}${s.flightNumber} ${s.origin}–${s.destination}`).join(" · ")}</Ltr>} status={<KindBadge kind={d.kind} />}
+                    actions={<Link href={href(`/account/tickets/${d.id}`)} className="font-semibold underline underline-offset-4">{t("ticketDocuments.portal.view")}</Link>} />
+                </li>
+              ))}</ul>}
+              <ul className="space-y-2">{receipts.map((tk) => (
                 <li key={tk.ticketNumber}>
                   <DocumentCard tone="success" title={<>{tk.travellerName}{sep}<Ltr className="font-mono">{tk.ticketNumber}</Ltr></>} meta={tk.validatingCarrier}
                     actions={tk.documentId ? <button onClick={() => void download(tk.documentId!)} className="flex items-center gap-1 font-semibold underline"><Download className="size-3.5" />{t("requests.download")}</button> : undefined} />

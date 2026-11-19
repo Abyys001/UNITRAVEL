@@ -9,7 +9,8 @@ import { type Actor, Authenticated, Ctx, CurrentActor, RateLimit, type RequestCo
 import { zbody } from "../../core/http/zod"
 import { DocumentsService } from "./documents.service"
 
-const UploadBody = z.object({ filename: z.string().min(1).max(200), mime: z.string(), size: z.number().int().positive(), type: DocumentType })
+// Ticket originals, branded tickets and the cover logo have their own staff upload paths (ADR-0038); nobody can mint them here.
+const UploadBody = z.object({ filename: z.string().min(1).max(200), mime: z.string(), size: z.number().int().positive(), type: DocumentType.exclude(["TICKET_ORIGINAL", "TICKET_BRANDED", "BRAND_LOGO"]) })
 
 @ApiTags("documents")
 @Controller("v1")
@@ -48,7 +49,8 @@ export class DocumentsController {
   @Authenticated()
   async download(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     const d = await this.docs.get(id)
-    if (!d) throw new AppError("NOT_FOUND")
+    // Ticket files are served only by /v1/ticket-documents and /v1/admin/ticket-documents, which re-check the sha256 (ADR-0038 D2).
+    if (!d || d.type === "TICKET_ORIGINAL" || d.type === "TICKET_BRANDED" || d.type === "BRAND_LOGO") throw new AppError("NOT_FOUND")
     const owner = d.ownerUserId === actor.userId && (d.visibility === "CUSTOMER" || d.createdBy === actor.userId)
     const identity = (IDENTITY_DOCUMENT_TYPES as readonly string[]).includes(d.type)
     // Quotation and invoice PDFs carry amounts: staff need `pricing.read.internal` like in the API views (ADR-0006 C9).
