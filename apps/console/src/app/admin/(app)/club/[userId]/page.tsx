@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 
-import type { LoyaltyBenefitView, LoyaltyLedgerEntry, LoyaltyMemberView, StaffInvoiceListItem } from "@unitravel/contracts"
+import type { LoyaltyBenefitView, LoyaltyLedgerEntry, LoyaltyMemberView, LoyaltyPointsView, StaffInvoiceListItem } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { cn } from "@unitravel/ui/lib/utils"
@@ -25,13 +25,14 @@ export default function ClubMember() {
   const L = useClubLabels()
   const { t } = L
   const { can } = useSession()
-  const dlg = useDialogs<"member" | "ledger" | "benefit">()
+  const dlg = useDialogs<"member" | "ledger" | "benefit" | "points">()
   const tiers = useTiers()
   const q = useQuery({ queryKey: ["club", "members", "one", userId], queryFn: () => api<LoyaltyMemberView>(`/v1/admin/club/members/${userId}`) })
   const own = useQuery({ queryKey: ["club", "benefits", "user", userId], queryFn: () => api<LoyaltyBenefitView[]>(`/v1/admin/club/benefits?userId=${userId}&limit=200`) })
   const tierId = q.data?.tier.id
   const ofTier = useQuery({ queryKey: ["club", "benefits", "tier", tierId], queryFn: () => api<LoyaltyBenefitView[]>(`/v1/admin/club/benefits?tierId=${tierId}&limit=200`), enabled: !!tierId })
   const ledger = useQuery({ queryKey: ["club", "ledger", userId], queryFn: () => api<LoyaltyLedgerEntry[]>(`/v1/admin/club/ledger?userId=${userId}&limit=200`) })
+  const points = useQuery({ queryKey: ["club", "points", userId], queryFn: () => api<LoyaltyPointsView>(`/v1/admin/club/members/${userId}/points`) })
   useCrumbLabel(q.data?.name)
   const manage = can("loyalty.manage")
   const invalidate = [["club", "benefits"], ["club", "members"], ["club", "ledger", userId]]
@@ -50,11 +51,33 @@ export default function ClubMember() {
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-rule bg-surface-raised px-5 py-3 md:px-6" data-testid="case-summary">
         <SummaryItem label={t("pg.c.status")}><Chip value={m.status} label={L.memberStatus(m.status)} /></SummaryItem>
         <SummaryItem label={t("club.c.tier")}><span className="font-medium">{L.tierName(m.tier)}</span><span className="ref text-meta text-steel">{m.tier.code}</span></SummaryItem>
+        <SummaryItem label={t("club.c.points")}><span className="num font-semibold" data-testid="member-points-balance">{t("club.points.n", { n: points.data?.balance ?? m.pointsBalance })}</span></SummaryItem>
         <SummaryItem label={t("club.c.credit")}><span className="num font-semibold" data-testid="member-credit">{credit(m.creditBalance, t("club.m.noCredit"))}</span></SummaryItem>
         <SummaryItem label={t("club.c.joined")}><span className="num">{fmtDate(m.joinedAt)}</span><span className="text-meta text-steel">{t("club.c.addedBy")} <span dir="auto">{m.addedBy}</span></span></SummaryItem>
       </div>
       {m.note && <p className="px-5 pt-3 text-steel md:px-6" dir="auto">“{m.note}”</p>}
       <div className="px-5 pt-2 md:px-6">
+        <Panel title={t("club.points")} aside={manage && <Button size="xs" variant="outline" onClick={() => dlg.open("points")} disabled={m.status === "REMOVED"} data-testid="points-adjust">{t("club.points.adjust")}</Button>}>
+          <p className="mb-2 text-meta text-steel">{t("club.points.hint")}</p>
+          {points.error ? <TileError error={points.error} onRetry={() => void points.refetch()} /> : !points.data ? <ListSkeleton rows={2} className="p-0" /> : !points.data.entries.length ? <Empty>{t("club.points.none")}</Empty> : (
+            <TableScroll label={t("club.points")}>
+              <table className="data-table" data-testid="points">
+                <thead><tr><th>{t("club.c.date")}</th><th className="cell-num">{t("club.c.points")}</th><th>{t("club.c.reason")}</th><th>{t("club.points.note")}</th><th>{t("club.c.actor")}</th></tr></thead>
+                <tbody>
+                  {points.data.entries.map((e) => (
+                    <tr key={e.id}>
+                      <td className="num whitespace-nowrap text-steel">{fmtDateTime(e.createdAt)}</td>
+                      <td className={cn("cell-num whitespace-nowrap font-semibold", e.delta > 0 ? "text-success" : "text-steel")}>{e.delta > 0 ? "+" : "−"}{Math.abs(e.delta)}</td>
+                      <td dir="auto">{e.reason}</td>
+                      <td className="text-steel" dir="auto">{e.customerNote ?? "—"}</td>
+                      <td className="text-steel" dir="auto">{e.actor}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableScroll>
+          )}
+        </Panel>
         <Panel title={t("club.b.memberBenefits")}>
           <ClubExplain className="mb-3 text-meta text-steel" />
           {own.error ? <TileError error={own.error} onRetry={() => void own.refetch()} /> : !own.data ? <ListSkeleton rows={2} className="p-0" /> : !own.data.length ? <Empty>{t("club.b.none")}</Empty> : <TableScroll><BenefitList benefits={own.data} tiers={tiers.data ?? []} members={[m]} invalidate={invalidate} testId="member-benefits" /></TableScroll>}
@@ -88,6 +111,7 @@ export default function ClubMember() {
       {manage && <>
         <MemberDialog {...dlg.bind("member")} member={m} />
         <LedgerDialog {...dlg.bind("ledger")} member={m} />
+        <PointsDialog {...dlg.bind("points")} member={m} balance={points.data?.balance ?? m.pointsBalance} />
         {tiers.data && <BenefitDialog {...dlg.bind("benefit")} tiers={tiers.data} fixedUserId={m.userId} invalidate={invalidate} />}
       </>}
     </div>
@@ -173,6 +197,35 @@ function LedgerDialog({ open, onOpenChange, member }: { open: boolean; onOpenCha
         <Field label={t("club.ledger.invoice.id")}><input className="field-input font-mono" value={f.invoiceId} onChange={(e) => setF({ ...f, invoiceId: e.target.value })} required pattern="[0-9a-fA-F-]{36}" dir="ltr" /></Field>
       ))}
       <Field label={t("club.c.reason")} hint={t("club.m.reason.hint")}><textarea className="field-input min-h-16" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} required minLength={5} maxLength={500} dir="auto" /></Field>
+    </FormDialog>
+  )
+}
+
+/** ADR-0039 D3: POST /v1/admin/club/members/:userId/points. The reason is internal; the note is what the customer sees. */
+function PointsDialog({ open, onOpenChange, member, balance }: { open: boolean; onOpenChange: (o: boolean) => void; member: LoyaltyMemberView; balance: number }) {
+  const { t } = useClubLabels()
+  const refresh = useRefresh([["club", "points", member.userId], ["club", "members"]])
+  const blank = { kind: (member.status === "ACTIVE" ? "GRANTED" : "DEDUCTED") as "GRANTED" | "DEDUCTED", points: "", reason: "", note: "" }
+  const [f, setF] = useState(blank)
+  useEffect(() => { if (open) setF(blank) }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  const submit = async () => {
+    const body = { kind: f.kind, points: Number(f.points), reason: f.reason.trim(), customerNote: f.note.trim() || undefined }
+    try { await api<LoyaltyPointsView>(`/v1/admin/club/members/${member.userId}/points`, { body }) } catch (e) { throw clubError(e, t) }
+    await refresh()
+  }
+  return (
+    <FormDialog open={open} onOpenChange={onOpenChange} title={t("club.points.adjust")} description={t("club.points.balanceNow", { n: balance })} submitLabel={t("club.save")} onSubmit={submit} testId="dlg-points">
+      <Field label={t("club.points.kind")} hint={member.status !== "ACTIVE" ? t("club.points.grantActiveOnly") : undefined}>
+        <NativeSelect className="field-input" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as typeof f.kind })} data-testid="points-kind">
+          <option value="GRANTED" disabled={member.status !== "ACTIVE"}>{t("club.points.grant")}</option>
+          <option value="DEDUCTED">{t("club.points.deduct")}</option>
+        </NativeSelect>
+      </Field>
+      <Field label={t("club.c.points")} hint={f.kind === "DEDUCTED" ? t("club.points.max", { n: balance }) : undefined}>
+        <input className="field-input num" type="number" inputMode="numeric" min={1} max={f.kind === "DEDUCTED" ? Math.max(balance, 1) : 1000000} step={1} value={f.points} onChange={(e) => setF({ ...f, points: e.target.value })} required dir="ltr" data-testid="points-amount" />
+      </Field>
+      <Field label={t("club.c.reason")} hint={t("club.points.reason.hint")}><textarea className="field-input min-h-16" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} required minLength={5} maxLength={500} dir="auto" data-testid="points-reason" /></Field>
+      <Field label={t("club.points.note")} hint={t("club.points.note.hint")}><input className="field-input" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} maxLength={200} dir="auto" /></Field>
     </FormDialog>
   )
 }

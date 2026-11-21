@@ -15,6 +15,7 @@ import { api } from "@/lib/api"
 import { fmtDateTime, rel } from "@/lib/format"
 import { type MsgKey, useT } from "@/lib/i18n"
 import type { CaseView } from "@/lib/types"
+import { PageGuide } from "@/components/page-guide"
 
 const STATUSES = ["OPEN", "ESCALATED", "RELEASED", "DECLINED"] as const
 const STATUS_LABEL: Record<string, MsgKey> = { OPEN: "cstatus.OPEN", ESCALATED: "cstatus.ESCALATED", RELEASED: "cstatus.RELEASED", DECLINED: "cstatus.DECLINED" }
@@ -46,6 +47,7 @@ function Cases() {
   return (
     <ListPage>
       <PageHead title={t("nav.cases")} />
+      <PageGuide id="compliance" title="guide.compliance.title" points={["guide.compliance.1", "guide.compliance.2", "guide.compliance.3", "guide.compliance.4"]} />
       <Toolbar query={search} onQuery={setSearch} placeholder={t("pg.cases.search")} count={q.data ? filtered.length : undefined}>
         <Chips label={t("cstatus.label")} value={status as (typeof STATUSES)[number] | ""} options={[...STATUSES.map((x) => ({ value: x, label: t(STATUS_LABEL[x]!) })), { value: "", label: t("nav.all") }]} onChange={(v) => router.replace(`/compliance?status=${v}`)} />
       </Toolbar>

@@ -52,7 +52,8 @@ test("capture the case screens in both themes and sizes", async ({ browser }) =>
       await expect(page.getByTestId("truth-note")).toBeVisible()
       await snap("request")
       if (v.mobile) {
-        await page.getByRole("tab", { name: "Customer" }).click()
+        // ADR-0039: sections replaced the mobile tabs; the jump-nav anchors to the customer section.
+        await page.locator('a[href="#sec-customer"]').first().click()
         await snap("request-customer")
       }
 

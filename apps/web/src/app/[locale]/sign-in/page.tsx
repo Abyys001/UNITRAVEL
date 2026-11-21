@@ -20,7 +20,7 @@ type Step = "identity" | "code" | "profile"
 function SignIn() {
   const { t, href, locale } = useI18n()
   const router = useRouter()
-  const next = useSearchParams().get("next") || href("/requests")
+  const next = useSearchParams().get("next") || href("/dashboard")
   const qc = useQueryClient()
   const [value, setValue] = useState("")
   const [step, setStep] = useState<Step>("identity")

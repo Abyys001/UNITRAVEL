@@ -113,6 +113,18 @@ export const partnerBookings = pgTable("partner_bookings", {
   recordedBy: uuid().notNull().references(() => users.id),
 })
 
+/** ADR-0040 D5: state of live carrier tracking (TrackingMore) per shipment. No row = never registered. */
+export const cargoCarrierTracking = pgTable("cargo_carrier_tracking", {
+  cargoRequestId: uuid().primaryKey().references(() => cargoRequests.id),
+  provider: text({ enum: ["TRACKINGMORE"] }).notNull().default("TRACKINGMORE"),
+  awbNumber: varchar({ length: 12 }).notNull(),
+  state: text({ enum: ["PENDING", "ACTIVE", "UNAVAILABLE"] }).notNull().default("PENDING"),
+  airline: varchar({ length: 120 }),
+  lastSyncedAt: tstz(),
+  lastError: text(),
+  ...timestamps,
+}, (t) => [index("cargo_carrier_tracking_state_idx").on(t.state, t.lastSyncedAt)])
+
 export const trackingEvents = pgTable("tracking_events", {
   id: id(),
   cargoRequestId: uuid().notNull().references(() => cargoRequests.id),

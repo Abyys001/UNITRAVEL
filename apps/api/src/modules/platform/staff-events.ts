@@ -11,6 +11,8 @@ export interface StaffSignal {
   type: string
   aggregateType: string
   aggregateId: string
+  /** Set on `staff.notification` (ADR-0039): only these staff members' streams react. */
+  userIds?: string[]
 }
 
 /** One Redis subscription per API process, fanned out to every open console stream. */

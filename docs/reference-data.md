@@ -55,3 +55,15 @@ The booklet's licensing note (ch. 23.5) requires reference data to be sourced un
 | Bus, all cities | Mixed: terminals named by a seller are DOCUMENTED; the remaining provincial capitals are INFERRED (all 31 are included) | [Alibaba bus terminals](https://www.alibaba.ir/bus/payaneha); Baneh, Birjand, Ramsar and Mehran from seller route lists |
 
 Left out of the train list on purpose: Sanandaj, Ardabil and Khash (line built or reported, passenger service not confirmed); Ankara and Van (outside Iran; trains here are Iran only); small junctions and stops in the station finder (Abyek, Azadur, Badrud, Pishva, Razi, Zavareh, Qom-Mohammadiye). Persian names were written for this project and need a native check by staff.
+
+## Villa destinations
+
+`STAY_DESTINATIONS` in `apps/web/src/lib/iran-destinations.ts` feeds the location search on `/stays` (owner brief, 21 Nov 2026, ADR-0041 D7). It is a list of places a customer can ask about, not stock: no property, host, availability or price is implied, and offers are only the staff-curated listings (ADR-0021).
+
+| Part | Evidence | Source |
+|---|---|---|
+| Featured cities (14, with photos and blurbs) | DOCUMENTED earlier | `STAY_CITIES`; photo credits in `apps/web/public/media/CREDITS.md` |
+| Cities from the train and bus lists | As in "Train and bus cities" above | `ground-places.ts` |
+| Holiday places without a rail or bus entry (Caspian coast towns, Hormuz, Chabahar, Bandar Lengeh, Lavasan, Damavand, Shemshak, Dizin, Sarein, Kandovan, Abyaneh, Naein) | INFERRED: well-known resort, ski and heritage towns, named with the provinces' Persian spellings; not checked against a register in this session | Wikipedia articles for each place (English and Persian); no Wikidata IDs recorded yet |
+
+Open: a reviewer should check the Persian spellings and decide whether villages (Kandovan, Abyaneh) and ski areas (Dizin, Shemshak) belong in the list.

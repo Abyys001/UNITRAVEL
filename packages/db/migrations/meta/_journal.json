@@ -204,6 +204,20 @@
       "when": 1793182700000,
       "tag": "0028_ticket_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793183100000,
+      "tag": "0031_customer_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793183300000,
+      "tag": "0029_admin_notifications_points_stripe_invoices",
+      "breakpoints": true
     }
   ]
 }

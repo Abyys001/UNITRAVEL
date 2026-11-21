@@ -16,11 +16,17 @@ export const NOTIFICATION_EVENTS = [
   "sla.unassigned", "sla.first_contact_due", "sla.awaiting_customer_reminder",
   "cargo.submitted", "cargo.status_changed",
   "service_request.submitted", "service_request.quoted", "service_request.confirmed", "service_request.cancelled",
+  // ADR-0041 D5: staff wording and a console link for a new service request (email included); never sent to customers.
+  "service_request.new",
   "loyalty.member_added",
+  "support.reply",
   "compliance.hold_created", "compliance.case_decided",
   "security.new_sign_in", "security.role_changed",
   "provider.degraded", "notification.route_degraded",
   "staff.digest",
+  // ADR-0039 D1: the Admin Panel feed (see STAFF_FEED_EVENTS).
+  "staff.request_submitted", "staff.cargo_submitted", "staff.customer_message", "staff.quote_accepted", "staff.service_submitted", "staff.service_message",
+  "staff.support_ticket", "staff.support_reply", "staff.invoice_paid", "staff.identity_submitted",
 ] as const
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number]
 

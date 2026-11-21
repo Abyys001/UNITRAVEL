@@ -5,8 +5,8 @@ import { useState } from "react"
 
 import { Button } from "@unitravel/ui/components/button"
 import { Input } from "@unitravel/ui/components/input"
-import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { SelectField } from "@/components/form"
 import { api, ApiError } from "@/lib/api"
 import { deviceId } from "@/lib/device"
 import { useI18n } from "@/lib/i18n"
@@ -65,7 +65,7 @@ export function AddIdentity({ channels = ["PHONE", "EMAIL"], onDone }: { channel
   }
   return (
     <form onSubmit={send} className="flex flex-wrap items-end gap-2" aria-label={t("identity.addContact")}>
-      {channels.length > 1 && <label className="text-sm">{t("identity.addContact")}<NativeSelect className="field mt-1 h-10 w-full" value={channel} onChange={(e) => setChannel(e.target.value as Channel)}>{channels.map((c) => <option key={c} value={c}>{t(c === "PHONE" ? "identity.phone" : "identity.email")}</option>)}</NativeSelect></label>}
+      {channels.length > 1 && <SelectField id="ai-channel" label={t("identity.addContact")} className="min-w-40 text-sm" value={channel} onChange={(c) => setChannel(c as Channel)} options={channels.map((c) => ({ value: c, label: t(c === "PHONE" ? "identity.phone" : "identity.email") }))} />}
       <label className="text-sm">{channels.length === 1 ? t(channel === "PHONE" ? "identity.phone" : "identity.email") : " "}<Input className="mt-1 h-10 w-64" dir="ltr" type={channel === "EMAIL" ? "email" : "tel"} required value={value} onChange={(e) => setValue(e.target.value)} placeholder={t(channel === "PHONE" ? "identity.valuePlaceholderPhone" : "identity.valuePlaceholderEmail")} /></label>
       <Button type="submit" disabled={busy}>{t("identity.sendCode")}</Button>
       {err && <p role="alert" className="w-full text-sm text-danger">{err}</p>}

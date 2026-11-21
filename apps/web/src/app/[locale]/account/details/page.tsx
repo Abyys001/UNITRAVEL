@@ -8,7 +8,6 @@ import { toast } from "sonner"
 import type { AddressInput, MyDetails } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { Input } from "@unitravel/ui/components/input"
-import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { Country, CountrySelect } from "@unitravel/ui/product/country"
 import { AddIdentity } from "@/components/add-identity"
@@ -17,7 +16,6 @@ import { TravellerForm } from "@/components/traveller-form"
 import { Tag } from "@/components/badges"
 import { api, ApiError } from "@/lib/api"
 import { COUNTRIES, countryName } from "@/lib/countries"
-import { PanelFrame } from "@/components/customer-panel"
 import { useI18n } from "@/lib/i18n"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
@@ -45,7 +43,7 @@ export default function MyDetailsPage() {
   const a = address ?? d.address ?? EMPTY
   const self = d.self
   return (
-    <PanelFrame>
+    <>
     <div className="space-y-8">
       <div><Link href={href("/account")} className="text-sm text-royal underline">← {t("account.title")}</Link><h1 className="font-display mt-2 text-3xl md:text-4xl">{t("identity.title")}</h1><p className="mt-2 text-sm text-steel">{t("identity.intro")}</p></div>
 
@@ -92,6 +90,6 @@ export default function MyDetailsPage() {
         </div>
       </section>
     </div>
-    </PanelFrame>
+    </>
   )
 }

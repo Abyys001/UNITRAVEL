@@ -1,4 +1,7 @@
+import { flowEn } from "./flow.en"
+
 export const en = {
+  guide: flowEn,
   brand: { name: "Uni Travel", tagline: "Flights and cargo between Iran, the UK and Europe — found honestly, arranged by people." },
   faq: { search: "Search questions", expandAll: "Expand all", collapseAll: "Collapse all", noMatch: "No question matches your search. Ask our team on the support page." },
   panel: { nav: "Your account", all: "All", open: "In progress", unread: "New messages", filter: "Filter requests", lead: "Everything you asked us for, in one place." },
@@ -173,6 +176,49 @@ export const en = {
     notVerifiedTickets: "Tickets cannot be issued until every traveller's passport is verified.",
   },
   inbox: { title: "Inbox", empty: "Nothing here yet.", markAll: "Mark all as read" },
+  portal: {
+    sectionNav: "Account sections", dashboard: "Overview", barTitle: "Your account", unreadCount: "{n} unread", unreadNone: "No unread", more: "99+",
+    greeting: "Hello, {name}", greetingAnon: "Hello", memberSince: "Customer since {date}", viewAll: "View all", open: "Open", updated: "Updated {date}",
+    stepOf: "Step {n} of {total}", stepsLabel: "Progress of {title}", stepState: { DONE: "done", CURRENT: "current", UPCOMING: "to do" }, nextStep: "Next step", status: "Status",
+    account: {
+      title: "Your account", complete: "Your profile is complete.", missingTitle: "Still to add", manage: "Manage account",
+      missing: { NAME: "Your name", EMAIL: "Your email address", PHONE: "Your phone number", PASSPORT: "Passport details for travel" },
+    },
+    pending: { title: "Needs you now", none: "Nothing is waiting for you.", noneBody: "When we need an answer, a payment or a document, it appears here first.", due: "Due {date}", noDue: "No deadline" },
+    active: { title: "In progress", none: "You have no active requests.", noneBody: "Start with a flight search or send a cargo request.", cta: "Search flights", track: "Track" },
+    purchases: { title: "Purchased", none: "No purchases yet.", INVOICE_PAID: "Invoice paid", TICKET_ISSUED: "Ticket issued", SERVICE_CONFIRMED: "Service confirmed", CARGO_BOOKED: "Cargo booked" },
+    notifications: { title: "Latest messages", none: "No messages yet.", openInbox: "Open inbox" },
+    support: { title: "Support", none: "You have no open support requests.", open: "{n} open", unreadReplies: "{n} new replies", cta: "Open a support request", unread: "New reply", all: "All support requests" },
+    club: { title: "Customer club", member: "Member", level: "Level", credit: "Club credit", points: "Points", view: "Open club", notMember: "You are not a club member. Our team invites customers; benefits are applied by our team to your quote.", off: "The customer club is not available yet." },
+    card: { title: "Travel Card", soon: "Coming soon", body: "The UniTravel Travel Card is not available yet. There is nothing to apply for today, and we will tell you here and by message when it opens.", active: "Your Travel Card" },
+    previous: { title: "Previous requests", none: "No closed requests yet." },
+    inbox: {
+      lead: "Every message we send you, kept here.", filterLabel: "Filter messages", filters: { all: "All", unread: "Unread", important: "Important" }, listLabel: "Messages",
+      unread: "Unread", important: "Important", loadMore: "Show older messages", loading: "Loading messages…", back: "Back to messages", select: "Select a message to read it.",
+      related: "Open the related request", markUnreadNote: "Opening a message marks it as read.", newItems: "{n} new messages arrived.", newItem: "1 new message arrived.",
+      emptyAll: "Nothing here yet.", emptyUnread: "You have read everything.", emptyImportant: "No important messages.", notFound: "This message is no longer available.", received: "Received {date}",
+    },
+    track: {
+      searchTitle: "Find a purchase", searchLabel: "Reference or air waybill number", searchHint: "For example UT-F-AB12CD or an AWB such as 176-12345675", search: "Find", searching: "Searching…",
+      notFound: "We found no purchase of yours with that reference. Check the characters, or pick one from the list below.", tooShort: "Type at least 3 characters.",
+      back: "All purchases", history: "What happened so far", historyEmpty: "No updates yet. The first one appears here when our team records it.", latest: "Latest",
+      sourceUNITRAVEL: "UniTravel", sourceCARRIER: "Airline via TrackingMore", corrected: "Corrected by our team", next: "Next step", nextNone: "No further step is expected right now.",
+      documents: "Documents", documentsNone: "No documents yet.", openDocument: "Open", fullPage: "Open the full request", closed: "This request is closed.",
+    },
+    cargo: {
+      title: "Shipment", awb: "Air waybill (AWB)", awbNone: "Not issued yet", route: "Route", service: "Service", pieces: "Pieces", weight: "Chargeable weight",
+      carrier: "Airline tracking", lastSynced: "Last airline update {date}",
+      NOT_CONFIGURED: "Live airline tracking is not connected. Updates come from the UniTravel cargo team, who record each step by hand.",
+      PENDING: "Live airline tracking is being connected for this shipment. Until it is, updates come from the UniTravel cargo team.",
+      ACTIVE: "Live airline tracking is on. Airline updates are labelled \"Airline via TrackingMore\".",
+      UNAVAILABLE: "Live airline tracking is not available right now. Updates come from the UniTravel cargo team.",
+    },
+    club2: {
+      status: "Membership", active: "Active", SUSPENDED: "Paused", statusActive: "Active", pointsTitle: "Points", pointsBalance: "Points balance", history: "Points history", historyNone: "No points movements yet.",
+      GRANTED: "Points added", DEDUCTED: "Points deducted", note: "Note", nonMemberTitle: "Not a member yet", nonMemberBody: "The customer club is by invitation. You cannot join from here; our team adds customers and tells you when it happens.", contact: "Ask our team about the club",
+    },
+    support2: { listTitle: "Your support requests", openForm: "Open a support request", newReply: "New reply", conversation: "Conversation", fromYou: "You", fromTeam: "UniTravel team", waiting: "Waiting for you" },
+  },
   ssrCodes: { WCHR: "Wheelchair: can walk stairs", WCHS: "Wheelchair: cannot climb stairs", WCHC: "Wheelchair: carried to seat", VGML: "Vegetarian meal", MOML: "Muslim meal", CHML: "Child meal", DBML: "Diabetic meal", PETC: "Pet in the cabin", EXST: "Extra seat", UMNR: "Unaccompanied minor" },
   paxType: { ADT: "Adult", CHD: "Child", INF: "Infant", INS: "Infant with seat", YTH: "Youth", STU: "Student" },
   honorifics: { MR: "Mr", MRS: "Mrs", MS: "Ms", MISS: "Miss", MSTR: "Master", DR: "Dr" },
@@ -271,7 +317,7 @@ export const en = {
     pointCurated: "Places are listed by our team", pointQuote: "Prices are confirmed in your quote", pointNotBooking: "Sending a request is not a booking",
     destinationsTitle: "Where would you like to stay?", destinationsLead: "These are places you can ask about, not confirmed availability. Choosing one fills in your request.",
     filterLabel: "Search cities and listings", regionsLabel: "Filter destinations by region",
-    regions: { all: "All", heritage: "Historic cities", city: "Major cities", north: "Caspian and north", gulf: "Gulf islands" },
+    regions: { all: "All", heritage: "Historic cities", city: "Major cities", north: "Caspian and north", gulf: "Southern coast and islands", mountain: "Mountains and nature", other: "Other cities and towns" },
     cities: {
       tehran: { name: "Tehran", blurb: "The capital, below the Alborz mountains" }, isfahan: { name: "Isfahan", blurb: "Safavid squares, bridges and gardens" },
       shiraz: { name: "Shiraz", blurb: "Gardens, poets and nearby Persepolis" }, yazd: { name: "Yazd", blurb: "Adobe old town and windcatchers" },

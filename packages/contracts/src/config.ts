@@ -124,7 +124,8 @@ export type WorkflowConfig = z.infer<typeof WorkflowConfig>
 // Chapter 17.2 — event × channel matrix.
 export const NotificationRule = z.object({
   event: z.string(),
-  audience: z.enum(["CUSTOMER", "ASSIGNEE", "ON_DUTY_ADMINS", "COMPLIANCE", "OWNERS", "DEVELOPERS"]),
+  /** STAFF (ADR-0039): every active staff member holding the item's read permission, on duty or not. */
+  audience: z.enum(["CUSTOMER", "ASSIGNEE", "ON_DUTY_ADMINS", "COMPLIANCE", "OWNERS", "DEVELOPERS", "STAFF"]),
   channels: z.array(Channel),
   sms: z.enum(["NONE", "IMMEDIATE", "ESCALATING"]),
   escalateAfterMinutes: z.number().int().min(0).optional(),

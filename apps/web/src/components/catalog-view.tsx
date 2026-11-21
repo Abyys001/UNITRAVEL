@@ -2,7 +2,8 @@
 
 import { ArrowRight, Hourglass, Info, Plane, SearchX } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
 
 import type { CatalogDateGroup, CatalogSearchResponse, PublicItinerary, PublicItineraryDetail, RiskFlag } from "@unitravel/contracts"
 import { EmptyState } from "@unitravel/ui/product/states"
@@ -14,6 +15,9 @@ import { useSession } from "@/lib/session"
 import { Ltr, Tag } from "./badges"
 import { FarePicker } from "./fare-picker"
 import { FlightTrack } from "./flight-track"
+import { FilterBar } from "./flight-results/filter-bar"
+import { airlineOptions, applyFilters, DEFAULT_FILTERS, filtersFromParams, paginate, type ResultFilters, sortResults } from "./flight-results/filters"
+import { Pagination } from "./flight-results/pagination"
 import { type SearchParamsShape } from "./search-form"
 
 /** Same encoding the search form and the request page use for `?q=` and `?manual=`. */
@@ -113,27 +117,32 @@ function Summary({ it }: { it: PublicItinerary }) {
   )
 }
 
+/** The whole card is clickable through the stretched "Details" link (one link, so no nested interactive elements). */
 function ResultCard({ it, stale }: { it: PublicItinerary; stale: boolean }) {
-  const { href, sep, date, t } = useI18n()
+  const { href, sep, date, t, clock } = useI18n()
   return (
-    <li>
-      <Link href={href(`/flights/results/${it.id}`)} className="card-brand card-lift block rounded-2xl p-4 focus-visible:outline-2 focus-visible:outline-orange sm:p-5" data-testid="catalog-result">
-        <p className="mb-3 flex flex-wrap items-center gap-x-2 text-xs font-semibold text-steel">
-          <Ltr className="font-mono text-navy-950">{[it.origin, ...it.layovers.map((l) => l.at), it.destination].join(" → ")}</Ltr>
-          <span>{date(it.departureDate, { dateOnly: true, weekday: true })}</span>
-        </p>
-        {it.basis === "SCHEDULE" && <div className="mb-3"><ScheduleBadge id={`sched-${it.id}`} /></div>}
-        <Summary it={it} />
-        <Layovers it={it} />
-        <Notices it={it} />
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-dashed border-haze pt-3">
-          <span className="text-xs text-steel"><Ltr>{it.flightNumbers.join(sep)}</Ltr></span>
-          <span className="flex flex-col items-end gap-0.5 text-end">
-            <Freshness iso={it.fetchedAt} stale={stale} />
-            <span className="text-xs font-semibold text-navy-950">{t("catalog.confirmed")}</span>
-          </span>
+    <li className="card-brand card-lift relative rounded-2xl p-4 focus-within:outline-2 focus-within:outline-orange sm:p-5" data-testid="catalog-result">
+      <p className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs font-semibold text-steel">
+        {it.carriers.map((c) => <Ltr key={c} className="rounded-md border border-navy-950/30 px-1.5 py-0.5 font-mono text-navy-950"><span className="sr-only">{t("guide.flights.airlineCode", { code: c })}</span><span aria-hidden>{c}</span></Ltr>)}
+        <Ltr className="font-mono text-navy-950">{[it.origin, ...it.layovers.map((l) => l.at), it.destination].join(" → ")}</Ltr>
+        <span>{date(it.departureDate, { dateOnly: true, weekday: true })}</span>
+      </p>
+      {it.basis === "SCHEDULE" && <div className="mb-3"><ScheduleBadge id={`sched-${it.id}`} /></div>}
+      <Summary it={it} />
+      <Layovers it={it} />
+      <Notices it={it} />
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-t border-dashed border-haze pt-3">
+        <div className="min-w-0">
+          <span className="block text-xs text-steel"><Ltr>{it.flightNumbers.join(sep)}</Ltr></span>
+          <Freshness iso={it.fetchedAt} stale={stale} />
+          <span className="text-xs font-semibold text-navy-950">{t("catalog.confirmed")}</span>
         </div>
-      </Link>
+        <Link
+          href={href(`/flights/results/${it.id}`)} data-testid="catalog-result-details"
+          aria-label={t("guide.flights.detailsFor", { from: it.origin, to: it.destination, time: clock(it.departLocal) })}
+          className="btn-orange !px-4 !py-2 text-sm after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-900"
+        >{t("guide.flights.details")}</Link>
+      </div>
     </li>
   )
 }
@@ -167,17 +176,100 @@ function NoFlights({ data, shape }: { data: CatalogSearchResponse; shape: Search
   )
 }
 
-function DateGroup({ g, shape }: { g: CatalogDateGroup; shape: SearchParamsShape }) {
+/**
+ * With flex > 1 the dates are tabs and the list paginates within the chosen date (`?d=`), rather than across date groups:
+ * one page size, one count line, and filters that mean the same thing on every tab.
+ */
+function DateTabs({ dates, active, onPick }: { dates: CatalogDateGroup[]; active: string; onPick: (d: string) => void }) {
   const { t, date } = useI18n()
-  const listed = g.results.length > 0
   return (
-    <section aria-label={date(g.date, { dateOnly: true, weekday: true })} data-testid="catalog-date-group">
-      <h2 className="mb-3 font-display text-xl">{date(g.date, { dateOnly: true, weekday: true })}</h2>
-      {g.state === "STALE" && listed && <NoticeLine tone="warn">{t("catalog.stale")}</NoticeLine>}
-      {listed
-        ? <ResultList results={g.results} stale={g.state === "STALE"} />
-        : <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-haze px-4 py-3"><p className="text-sm text-steel">{t("catalog.noFlights")}</p><AskTeamLink shape={shape} date={g.date} label={t("catalog.askTeam")} /></div>}
-    </section>
+    <div role="group" aria-label={t("guide.flights.dateTabsLabel")} className="mb-4 flex gap-2 overflow-x-auto pb-1" data-testid="flight-date-tabs">
+      {dates.map((g) => {
+        const label = date(g.date, { dateOnly: true, weekday: true })
+        return (
+          <button
+            key={g.date} type="button" aria-pressed={g.date === active} onClick={() => onPick(g.date)}
+            aria-label={g.results.length ? undefined : t("guide.flights.dateTabEmpty", { date: label })}
+            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange ${g.date === active ? "border-navy-900 bg-navy-900 text-white" : "border-line bg-white text-navy-950 hover:border-navy-900/40"} ${g.results.length ? "" : "opacity-60"}`}
+          >{label}</button>
+        )
+      })}
+    </div>
+  )
+}
+
+function FilteredEmpty({ onClear }: { onClear: () => void }) {
+  const { t } = useI18n()
+  return <div data-testid="catalog-filtered-empty"><EmptyState icon={<SearchX />} title={t("guide.flights.filteredEmptyTitle")} body={t("guide.flights.filteredEmptyBody")} action={<button type="button" onClick={onClear} className="btn-orange !px-4 !py-2 text-sm">{t("guide.flights.clear")}</button>} /></div>
+}
+
+/** Filters, sort, date tab and page live in the URL (`stops`, `airline`, `dep`, `sort`, `d`, `p`) next to `q`; any filter or tab change drops `p`. */
+function FlightResults({ data, shape, grouped }: { data: CatalogSearchResponse; shape: SearchParamsShape; grouped: boolean }) {
+  const { t, locale, date } = useI18n()
+  const router = useRouter()
+  const pathname = usePathname()
+  const sp = useSearchParams()
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const pageMoved = useRef(false)
+
+  const filters = filtersFromParams((k) => sp.get(k))
+  const group = grouped
+    ? data.dates.find((g) => g.date === sp.get("d")) ?? data.dates.find((g) => g.date === shape.date && g.results.length) ?? data.dates.find((g) => g.results.length) ?? data.dates[0]!
+    : null
+  const source = group ? group.results : data.results
+  const stale = (group ? group.state : data.state) === "STALE"
+  const view = paginate(sortResults(applyFilters(source, filters), filters.sort), Number(sp.get("p")))
+  const nf = new Intl.NumberFormat(locale === "fa" ? "fa-IR" : "en-GB")
+
+  useEffect(() => {
+    if (!pageMoved.current) return
+    pageMoved.current = false
+    headingRef.current?.focus({ preventScroll: true })
+    headingRef.current?.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })
+  }, [view.page])
+
+  const replace = (mutate: (p: URLSearchParams) => void) => {
+    const p = new URLSearchParams(sp.toString())
+    mutate(p)
+    const qs = p.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
+  const setFilters = (patch: Partial<ResultFilters>) => replace((p) => {
+    const next = { ...filters, ...patch }
+    for (const k of ["stops", "airline", "dep", "sort"] as const) next[k] === DEFAULT_FILTERS[k] ? p.delete(k) : p.set(k, next[k])
+    p.delete("p")
+  })
+  const clear = () => replace((p) => { for (const k of ["stops", "airline", "dep", "p"]) p.delete(k) })
+  const setPage = (n: number) => replace((p) => { pageMoved.current = true; n <= 1 ? p.delete("p") : p.set("p", String(n)) })
+  const pickDate = (d: string) => replace((p) => { p.set("d", d); p.delete("p") })
+
+  const tabbed = group && (
+    <DateTabs dates={data.dates} active={group.date} onPick={pickDate} />
+  )
+  if (group && group.results.length === 0) {
+    return (
+      <>
+        {tabbed}
+        <section aria-label={date(group.date, { dateOnly: true, weekday: true })} data-testid="catalog-date-group">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-haze px-4 py-3"><p className="text-sm text-steel">{t("catalog.noFlights")}</p><AskTeamLink shape={shape} date={group.date} label={t("catalog.askTeam")} /></div>
+        </section>
+      </>
+    )
+  }
+  return (
+    <>
+      {tabbed}
+      <FilterBar filters={filters} airlines={airlineOptions(source)} onChange={setFilters} onClear={clear} />
+      <section aria-labelledby="flight-results-heading" data-testid={group ? "catalog-date-group" : undefined}>
+        <h2 id="flight-results-heading" ref={headingRef} tabIndex={-1} className="font-display text-xl outline-none">{t("guide.flights.resultsHeading")}</h2>
+        <p role="status" className="mb-3 mt-1 text-sm text-steel" data-testid="flight-count">
+          {view.total === 1 ? t("guide.flights.showingOne") : view.total > 0 ? t("guide.flights.showing", { from: nf.format(view.from), to: nf.format(view.to), total: nf.format(view.total) }) : ""}
+        </p>
+        {stale && <NoticeLine tone="warn">{t("catalog.stale")}</NoticeLine>}
+        {view.total === 0 ? <FilteredEmpty onClear={clear} /> : <ResultList results={view.items} stale={stale} />}
+        <Pagination page={view.page} pages={view.pages} onPage={setPage} />
+      </section>
+    </>
   )
 }
 
@@ -187,16 +279,9 @@ export function CatalogSearchView({ data, shape }: { data: CatalogSearchResponse
   const anyListed = grouped ? data.dates.some((g) => g.results.length > 0) : data.results.length > 0
   const showing = (data.state === "RESULTS" || data.state === "STALE" || grouped) && anyListed
   return (
-    <div aria-live="polite">
+    <div>
       {data.partyNote && <NoticeLine>{t("catalog.partyNote")}</NoticeLine>}
-      {showing ? (
-        <>
-          {data.state === "STALE" && !grouped && <NoticeLine tone="warn">{t("catalog.stale")}</NoticeLine>}
-          {grouped
-            ? <div className="space-y-8">{data.dates.map((g) => <DateGroup key={g.date} g={g} shape={shape} />)}</div>
-            : <ResultList results={data.results} stale={data.state === "STALE"} />}
-        </>
-      ) : <NoFlights data={data} shape={shape} />}
+      {showing ? <FlightResults data={data} shape={shape} grouped={grouped} /> : <NoFlights data={data} shape={shape} />}
     </div>
   )
 }

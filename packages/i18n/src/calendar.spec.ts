@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { addDays, firstOfMonth, monthDays, monthWeeks, nightsBetween, shiftMonth, weekdaySample } from "./calendar"
+import { formatDate } from "./index"
 
 describe("stay calendar", () => {
   it("counts nights across a month end", () => {
@@ -39,5 +40,14 @@ describe("stay calendar", () => {
   it("starts header weeks on Saturday (Jalali) and Monday (Gregorian)", () => {
     expect(new Date(`${weekdaySample("JALALI")[0]}T12:00:00Z`).getUTCDay()).toBe(6)
     expect(new Date(`${weekdaySample("GREGORIAN")[0]}T12:00:00Z`).getUTCDay()).toBe(1)
+  })
+})
+
+describe("Persian dates with weekday and year (ADR-0041)", () => {
+  it("read weekday, day, month, year without a Latin comma", () => {
+    const s = formatDate("2026-12-05", { locale: "fa", dateOnly: true, year: true, weekday: true })
+    expect(s).not.toContain(",")
+    expect(s.startsWith("شنبه")).toBe(true)
+    expect(s.endsWith("۱۴۰۵")).toBe(true)
   })
 })

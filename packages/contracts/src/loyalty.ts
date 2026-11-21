@@ -30,6 +30,8 @@ export const LoyaltyMemberView = z.object({
   addedBy: z.string(),
   note: z.string().nullable(),
   creditBalance: z.array(Money),
+  /** ADR-0039 D3: club points balance (staff-managed). */
+  pointsBalance: z.number().int(),
 })
 export type LoyaltyMemberView = z.infer<typeof LoyaltyMemberView>
 export const AddMemberBody = z.object({ userId: Uuid, tierId: Uuid, note: z.string().trim().max(500).optional() })
@@ -92,11 +94,38 @@ export const LedgerEntryBody = z.object({ userId: Uuid, kind: z.enum(["GRANTED",
  * Customer view of their own membership; non-members get `member: null` and see the explanation. `enabled: false` while
  * loyalty.enabled is off (a feature state, not a permission refusal, so the route stays 200 for holders of loyalty.read.own).
  */
+// ---- ADR-0039 D3: club points. Staff grant or deduct with an internal reason; customers see the balance, kind, amount and an optional note. ----
+export const LoyaltyPointsKind = z.enum(["GRANTED", "DEDUCTED"])
+export const PointsAdjustBody = z.object({
+  kind: LoyaltyPointsKind,
+  /** Always positive; the kind gives the sign. */
+  points: z.number().int().min(1).max(1_000_000),
+  reason: z.string().trim().min(5).max(500),
+  customerNote: z.string().trim().min(1).max(200).optional(),
+})
+export type PointsAdjustBody = z.infer<typeof PointsAdjustBody>
+export const LoyaltyPointsEntry = z.object({
+  id: Uuid,
+  kind: LoyaltyPointsKind,
+  /** Signed: positive for GRANTED, negative for DEDUCTED. */
+  delta: z.number().int(),
+  reason: z.string(),
+  customerNote: z.string().nullable(),
+  actor: z.string(),
+  createdAt: IsoDateTime,
+})
+export type LoyaltyPointsEntry = z.infer<typeof LoyaltyPointsEntry>
+export const LoyaltyPointsView = z.object({ balance: z.number().int(), entries: z.array(LoyaltyPointsEntry) })
+export type LoyaltyPointsView = z.infer<typeof LoyaltyPointsView>
+export const CustomerPointsEntry = z.object({ id: Uuid, kind: LoyaltyPointsKind, delta: z.number().int(), note: z.string().nullable(), createdAt: IsoDateTime })
+
 export const CustomerClubView = z.object({
   enabled: z.boolean(),
   member: z.object({ tier: z.object({ code: z.string(), nameEn: z.string(), nameFa: z.string() }), status: LoyaltyMemberStatus, joinedAt: IsoDateTime }).nullable(),
   benefits: z.array(LoyaltyBenefitView.pick({ id: true, kind: true, value: true, currency: true, appliesTo: true, description: true, validFrom: true, validTo: true })),
   creditBalance: z.array(Money),
+  /** ADR-0039 D3: null for non-members. History is newest first, the last 50; the staff reason is never included. */
+  points: z.object({ balance: z.number().int(), history: z.array(CustomerPointsEntry) }).nullable(),
 })
 export type CustomerClubView = z.infer<typeof CustomerClubView>
 

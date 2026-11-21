@@ -35,7 +35,7 @@ export default function Glossary() {
   const paged = usePaged(rows)
   const write = can("cms.write")
   const move = async (r: GlossaryRow, to: GlossaryRow["status"]) => {
-    try { await api(`/v1/admin/cms/glossary/${r.id}/transition`, { body: { to } }); toast.success(t("cms.moved", { s: L.status(to) })); await refresh() } catch (e) { toast.error(errText(e)) }
+    try { await api(`/v1/admin/cms/glossary/${encodeURIComponent(r.slug)}/transition`, { body: { to } }); toast.success(t("cms.moved", { s: L.status(to) })); await refresh() } catch (e) { toast.error(errText(e)) }
   }
   const actions = (r: GlossaryRow) => (
     <span className="flex flex-wrap gap-1.5">
@@ -55,7 +55,7 @@ export default function Glossary() {
         <>
           <ul className="space-y-2 px-4 md:hidden" data-testid="gl-cards">
             {paged.rows.map((r) => (
-              <li key={r.id} className="rounded-[var(--radius-card)] border border-rule bg-surface-raised p-3.5 shadow-[var(--tile-shadow)]">
+              <li key={r.slug} className="rounded-[var(--radius-card)] border border-rule bg-surface-raised p-3.5 shadow-[var(--tile-shadow)]">
                 <span className="flex items-center justify-between gap-2"><span className="font-medium font-fa" dir="rtl" lang="fa">{r.termFa}</span><StatusPill status={r.status} label={L.status(r.status)} /></span>
                 <span className="block text-steel" dir="ltr" lang="en">{r.termEn} · {L.category(r.category)}</span>
                 <span className="mt-2 block">{actions(r)}</span>
@@ -68,7 +68,7 @@ export default function Glossary() {
                 <thead><tr><th>{t("cms.gl.termFa")}</th><th>{t("cms.gl.termEn")}</th><th>{t("cms.gl.category")}</th><th>{t("pg.c.status")}</th><th><span className="sr-only">{t("club.c.actions")}</span></th></tr></thead>
                 <tbody>
                   {paged.rows.map((r) => (
-                    <tr key={r.id}>
+                    <tr key={r.slug}>
                       <td className="font-fa font-medium" dir="rtl" lang="fa">{r.termFa}</td>
                       <td dir="ltr" lang="en">{r.termEn}</td>
                       <td>{L.category(r.category)}</td>
@@ -101,7 +101,7 @@ function TermDialog({ term, onClose }: { term: GlossaryRow | "new" | null; onClo
   const isNew = term === "new"
   const submit = async () => {
     const body = { termFa: f.termFa.trim(), termEn: f.termEn.trim(), explanationFa: f.explanationFa.trim(), explanationEn: f.explanationEn.trim(), category: f.category, related: csv(f.related), service: f.service || undefined }
-    try { await api(isNew ? "/v1/admin/cms/glossary" : `/v1/admin/cms/glossary/${term.id}`, { method: isNew ? "POST" : "PATCH", body }) } catch (e) { throw contentError(e, t) }
+    try { await api(isNew ? "/v1/admin/cms/glossary" : `/v1/admin/cms/glossary/${encodeURIComponent(term.slug)}`, { method: isNew ? "POST" : "PATCH", body }) } catch (e) { throw contentError(e, t) }
     await refresh()
   }
   const input = "field-input"

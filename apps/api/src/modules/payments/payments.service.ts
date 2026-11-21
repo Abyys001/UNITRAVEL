@@ -4,7 +4,7 @@ import type { Redis } from "ioredis"
 import type Stripe from "stripe"
 
 import type { CheckoutSessionView, CustomerPaymentState, OnlinePaymentEligibility, PaymentPageView, PaymentProviderId } from "@unitravel/contracts"
-import { type Db, invoices, paymentConfig, paymentRecords, paymentSessions, refundRequests, stripeEvents, type Tx, users } from "@unitravel/db"
+import { type Db, invoices, paymentConfig, paymentRecords, paymentSessions, refundRequests, stripeEvents, stripeInvoices, type Tx, users } from "@unitravel/db"
 import { canEnterStripeMode, checkoutExpiry, onlinePaymentEligibility, sessionNext, type SessionCommand, settlementCheck } from "@unitravel/domain"
 
 import { AppError, notFound } from "../../core/errors"
@@ -31,8 +31,8 @@ import { productOf } from "../invoices/product"
 
 type Inv = typeof invoices.$inferSelect
 type SessionRow = typeof paymentSessions.$inferSelect
-type Outcome = "PROCESSED" | "IGNORED" | "MISMATCH"
-interface Paid { amountMinor: number; currency: string; paymentIntentId: string; payerName: string | null }
+export type Outcome = "PROCESSED" | "IGNORED" | "MISMATCH"
+export interface Paid { amountMinor: number; currency: string; paymentIntentId: string; payerName: string | null }
 
 export const STRIPE_VENDOR = "stripe:test"
 const TIMER = "payment.reconcile"
@@ -84,6 +84,10 @@ export class PaymentsService implements OnModuleInit {
   // ---------------- provider ----------------
 
   invalidateProvider() { this.cached = undefined }
+
+  /** ADR-0039 D4: Stripe Invoice events are handled by StripeInvoicesService, which sits above this service. */
+  private invoiceEvents?: (tx: Tx, event: Stripe.Event) => Promise<Outcome>
+  onInvoiceEvents(handler: (tx: Tx, event: Stripe.Event) => Promise<Outcome>) { this.invoiceEvents = handler }
 
   async configRow() {
     const [row] = await this.db.select().from(paymentConfig).where(eq(paymentConfig.key, "stripe"))
@@ -171,19 +175,28 @@ export class PaymentsService implements OnModuleInit {
     const cfg = this.config.settings()
     const [customerName] = await this.invoices.billTo(this.db, actor.userId)
     const offered = online.offered && inv.status === "ISSUED"
+    // ADR-0039 D4: an open Stripe invoice is the one way to pay online, so Pay opens Stripe's hosted page for it.
+    const hosted = offered ? await this.openStripeInvoiceUrl(row.id) : null
     return {
       invoiceNumber: inv.number, status: inv.status, requestRef: inv.requestRef, productType: inv.productType,
       issuer: { ...cfg.company, vatNumber: cfg.commercialDocuments.vatNumber, registeredAddress: cfg.commercialDocuments.registeredAddress },
       customerName: customerName ?? "", issuedAt: inv.issuedAt, dueAt: inv.expiresAt, currency: inv.total.currency, lines: inv.lines, total: inv.total, paidAt: inv.paidAt,
       pdfDocumentId: inv.documentId, pdfUrl: inv.documentId ? `/v1/documents/${inv.documentId}/download` : null,
-      online, payUrl: offered ? `${env().PUBLIC_WEB_URL}/${actor.locale}/billing/${inv.number}/pay` : null,
+      online, payUrl: offered ? hosted ?? `${env().PUBLIC_WEB_URL}/${actor.locale}/billing/${inv.number}/pay` : null,
       offlineInstructions: inv.status === "ISSUED" && !offered ? cfg.payment.offlineInstructions?.[actor.locale] ?? null : null,
     }
+  }
+
+  private async openStripeInvoiceUrl(invoiceId: string): Promise<string | null> {
+    const [r] = await this.db.select({ url: stripeInvoices.hostedInvoiceUrl }).from(stripeInvoices).where(and(eq(stripeInvoices.invoiceId, invoiceId), eq(stripeInvoices.status, "OPEN")))
+    return r?.url ?? null
   }
 
   /** One reusable open session per invoice (P4). Amount and currency are the invoice's; the body of the request carries nothing. */
   async checkout(number: string, actor: Actor): Promise<CheckoutSessionView> {
     const inv0 = await this.ownInvoice(number, actor.userId)
+    // Two live payment instruments for one invoice could take the money twice (ADR-0039 D4).
+    if (await this.openStripeInvoiceUrl(inv0.id)) throw new AppError("ONLINE_PAYMENT_NOT_OFFERED", "This invoice is paid through its Stripe invoice; use the Pay button on the invoice page")
     const elig = await this.eligibility(inv0)
     if (!elig.offered) throw new AppError("ONLINE_PAYMENT_NOT_OFFERED", `Online payment is not offered for this invoice (${elig.reasons.join(", ")})`, undefined, { reasons: elig.reasons })
     const { adapter } = await this.provider()
@@ -281,6 +294,8 @@ export class PaymentsService implements OnModuleInit {
         return this.onChargeRefunded(tx, event.data.object as Stripe.Charge)
       case "charge.dispute.created": case "charge.dispute.updated": case "charge.dispute.closed": case "charge.dispute.funds_withdrawn": case "charge.dispute.funds_reinstated":
         return this.onDispute(tx, event.data.object as Stripe.Dispute, event.type)
+      case "invoice.finalized": case "invoice.paid": case "invoice.payment_failed": case "invoice.voided": case "invoice.marked_uncollectible": case "invoice.updated":
+        return this.invoiceEvents ? this.invoiceEvents(tx, event) : "IGNORED"
       default:
         return "IGNORED"
     }
@@ -316,21 +331,32 @@ export class PaymentsService implements OnModuleInit {
     return "PROCESSED"
   }
 
-  /** The one place a verified card payment becomes a payment record and a PAID invoice (webhook and reconciliation alike). */
+  /** Checkout sessions: closes the session and hands the money to the shared settlement below. */
   private async settle(tx: Tx, s: SessionRow, paid: Paid, source: "webhook" | "reconciliation"): Promise<Outcome> {
-    const [inv] = await tx.select().from(invoices).where(eq(invoices.id, s.invoiceId)).for("update")
+    return this.recordOnlinePayment(tx, s.invoiceId, paid, s.provider, source, {
+      complete: async () => { await this.closeSession(tx, s, "complete", { paymentIntentId: paid.paymentIntentId }) },
+      mismatch: async () => { await this.closeSession(tx, s, "mismatch", { paymentIntentId: paid.paymentIntentId }) },
+    })
+  }
+
+  /**
+   * The one place a verified card payment becomes a payment record and a PAID invoice: Checkout sessions (webhook and
+   * reconciliation) and Stripe invoices (ADR-0039 D4) alike. A replay of the same PaymentIntent is a no-op.
+   */
+  async recordOnlinePayment(tx: Tx, invoiceId: string, paid: Paid, provider: PaymentProviderId, source: string, hooks: { complete?: () => Promise<void>; mismatch?: () => Promise<void> } = {}): Promise<Outcome> {
+    const [inv] = await tx.select().from(invoices).where(eq(invoices.id, invoiceId)).for("update")
     if (!inv) throw notFound("Invoice")
     const [existing] = await tx.select({ id: paymentRecords.id }).from(paymentRecords).where(eq(paymentRecords.providerRef, paid.paymentIntentId))
-    if (existing) { await this.closeSession(tx, s, "complete", { paymentIntentId: paid.paymentIntentId }); return "PROCESSED" }
+    if (existing) { await hooks.complete?.(); return "PROCESSED" }
 
     const mismatch = settlementCheck(inv, paid) === "MISMATCH"
     if (mismatch || inv.status !== "ISSUED") {
-      await this.closeSession(tx, s, "mismatch", { paymentIntentId: paid.paymentIntentId })
+      await hooks.mismatch?.()
       const why = mismatch ? `Paid ${fmt(paid.amountMinor, paid.currency)} but the invoice is ${fmt(inv.totalMinor, inv.currency)}` : `Payment arrived for an invoice that is ${inv.status}`
       const c = await this.compliance.openCase(tx, {
         requestType: productOf(inv.requestType), requestId: inv.requestId, requestRef: inv.requestRef, trigger: "POLICY",
         summary: "Card payment does not match its invoice; ops decision needed (usually a refund)",
-        evidence: [{ kind: "PAYMENT_MISMATCH", label: `Invoice ${inv.number}`, detail: `${why}. PaymentIntent ${paid.paymentIntentId}, provider ${s.provider}, ${source}.` }],
+        evidence: [{ kind: "PAYMENT_MISMATCH", label: `Invoice ${inv.number}`, detail: `${why}. PaymentIntent ${paid.paymentIntentId}, provider ${provider}, ${source}.` }],
       })
       await this.audit.record(tx, { actorKind: "SYSTEM", action: "payment.mismatch", entityType: "invoice", entityId: inv.id, contextRef: inv.requestRef, after: { number: inv.number, expectedMinor: inv.totalMinor, paidMinor: paid.amountMinor, paidCurrency: paid.currency, invoiceStatus: inv.status, caseId: c.id, source } })
       return "MISMATCH"
@@ -346,12 +372,12 @@ export class PaymentsService implements OnModuleInit {
     const now = new Date()
     const [rec] = await tx.insert(paymentRecords).values({
       requestType: inv.requestType, requestId: inv.requestId, amountMinor: paid.amountMinor, currency: paid.currency, method: "CARD_ONLINE", receivedAt: now, externalReference: paid.paymentIntentId.slice(0, 80),
-      payerName: payer, payerScreeningId: scr.screeningId, status: "VERIFIED", recordedBy: null, verifiedBy: null, verifiedAt: now, invoiceId: inv.id, provider: s.provider, providerRef: paid.paymentIntentId,
+      payerName: payer, payerScreeningId: scr.screeningId, status: "VERIFIED", recordedBy: null, verifiedBy: null, verifiedAt: now, invoiceId: inv.id, provider, providerRef: paid.paymentIntentId,
     }).returning()
-    await this.closeSession(tx, s, "complete", { paymentIntentId: paid.paymentIntentId })
+    await hooks.complete?.()
     if (inv.requestType === "FLIGHT") await this.bookings.afterOnlinePayment(tx, inv.requestId)
-    await this.audit.record(tx, { actorKind: "SYSTEM", action: "payment.online_received", entityType: "payment_record", entityId: rec!.id, contextRef: inv.requestRef, after: { invoice: inv.number, amountMinor: paid.amountMinor, currency: paid.currency, provider: s.provider, source } })
-    await this.invoices.markPaid(tx, inv.id, `Card payment (${s.provider}, ${source})`)
+    await this.audit.record(tx, { actorKind: "SYSTEM", action: "payment.online_received", entityType: "payment_record", entityId: rec!.id, contextRef: inv.requestRef, after: { invoice: inv.number, amountMinor: paid.amountMinor, currency: paid.currency, provider, source } })
+    await this.invoices.markPaid(tx, inv.id, `Card payment (${provider}, ${source})`)
     return "PROCESSED"
   }
 

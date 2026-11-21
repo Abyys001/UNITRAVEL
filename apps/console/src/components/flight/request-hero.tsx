@@ -7,6 +7,7 @@ import { buttonVariants } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 
 import { StatusChip } from "@/components/bento"
+import { FactGrid } from "@/components/case-section"
 import { SlaGauge, StateChip, StatusStepper, statusTone, type Tally, TruthTally } from "@/components/case"
 import { Arrow, RouteText } from "@/components/ui"
 import { fmtDate, fmtDateTime } from "@/lib/format"
@@ -15,10 +16,6 @@ import type { FlightDetail } from "@/lib/types"
 
 type Place = SearchQuery["slices"][number]["from"]
 const codeOf = (p: Place) => ("city" in p ? p.city : p.airport)
-
-const HeroChip = ({ icon, children, className }: { icon?: React.ReactNode; children: React.ReactNode; className?: string }) => (
-  <span className={cn("inline-flex h-7 items-center gap-1.5 rounded-full border border-rule-strong bg-surface-sunk px-3 text-meta font-medium whitespace-nowrap text-ink [&_svg]:size-3.5 [&_svg]:text-steel", className)}>{icon}{children}</span>
-)
 
 function Endpoint({ code, name, label, end }: { code: string; name: string; label: string; end?: boolean }) {
   return (
@@ -49,7 +46,7 @@ export function RequestHero({ d, mobile, mineCase, tally, quoteVersion }: { d: F
   const paxLabel = (type: string, n: number) => `${t(key("pax", type))} × ${n}`
 
   return (
-    <section className="border-b border-rule bg-surface-raised px-5 pt-5 pb-5 md:px-6" aria-label={t("case.panel.request")}>
+    <section className="rounded-[var(--radius-card)] border border-rule bg-surface-raised px-4 pt-4 pb-4 shadow-[var(--shadow-xs)] md:px-6 md:pt-5 md:pb-5" aria-label={t("case.panel.request")}>
       <h1 className="sr-only"><RouteText>{d.routeLabel}</RouteText></h1>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="ref text-lead font-semibold" data-testid="ref">{d.ref}</span>
@@ -75,13 +72,13 @@ export function RequestHero({ d, mobile, mineCase, tally, quoteVersion }: { d: F
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-1.5">
-        <HeroChip icon={<CalendarDays aria-hidden />}>{dateText}</HeroChip>
-        <HeroChip icon={<UsersRound aria-hidden />}>{pax.map(([type, n]) => paxLabel(type, n)).join(" · ")}</HeroChip>
-        <HeroChip>{t(key("trip", d.tripType))}{slices.length > 2 || d.tripType === "MULTI_CITY" ? ` · ${t("case.hero.flights", { n: slices.length })}` : ""}</HeroChip>
-        <HeroChip>{t(key("cabin", d.query.cabin))}</HeroChip>
-        {d.kind === "MANUAL" && <HeroChip className="border-warning-border bg-warning-subtle text-warning-subtle-fg">{t("case.kind.manual")}</HeroChip>}
-      </div>
+      <FactGrid className="mt-4" items={[
+        { label: t("rq2.fact.trip"), value: <>{t(key("trip", d.tripType))}{slices.length > 2 || d.tripType === "MULTI_CITY" ? ` · ${t("case.hero.flights", { n: slices.length })}` : ""}</> },
+        { label: t("rq2.fact.dates"), value: <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-3.5 text-steel" aria-hidden />{dateText}</span> },
+        { label: t("rq2.fact.pax"), value: <span className="inline-flex items-center gap-1.5"><UsersRound className="size-3.5 text-steel" aria-hidden />{pax.map(([type, n]) => paxLabel(type, n)).join(" · ")}</span> },
+        { label: t("rq2.fact.cabin"), value: t(key("cabin", d.query.cabin)) },
+        ...(d.kind === "MANUAL" ? [{ label: t("rq2.fact.kind"), value: <StatusChip tone="warn">{t("case.kind.manual")}</StatusChip> }] : []),
+      ]} />
       <p className="mt-2 text-meta text-steel">{t("case.submitted", { at: fmtDateTime(d.submittedAt), via: d.submittedVia.toLowerCase() })} ({d.submittedLocale})</p>
 
       <StatusStepper status={d.status} className="mt-5" />

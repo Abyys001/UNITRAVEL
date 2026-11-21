@@ -28,9 +28,10 @@ import { DocumentNumbersService } from "./invoices/document-numbers.service"
 import { AdminInvoicesController, CustomerBillingController } from "./invoices/invoices.controller"
 import { InvoicesService } from "./invoices/invoices.service"
 import { PaymentConfigService } from "./payments/payment-config.service"
-import { AdminPaymentsController, CustomerPaymentsController, DevPaymentSinkController, DevPaymentsController, StripeWebhookController } from "./payments/payments.controller"
+import { AdminPaymentsController, CustomerPaymentsController, DevPaymentSinkController, DevPaymentsController, DevStripeInvoiceSinkController, StripeWebhookController } from "./payments/payments.controller"
 import { PaymentsService } from "./payments/payments.service"
 import { RefundsService } from "./payments/refunds.service"
+import { StripeInvoicesService } from "./payments/stripe-invoices.service"
 import { AdminClubController, CustomerClubController } from "./loyalty/loyalty.controller"
 import { LoyaltyService } from "./loyalty/loyalty.service"
 import { AdminCmsController, PublicCmsController } from "./cms/cms.controller"
@@ -51,6 +52,10 @@ import { SiteController } from "./site/site.controller"
 import { SiteService } from "./site/site.service"
 import { AdminTicketDocumentsController, CustomerTicketDocumentsController, DevBrandingController } from "./ticket-documents/ticket-documents.controller"
 import { TicketDocumentsService } from "./ticket-documents/ticket-documents.service"
+import { AdminCarrierTrackingController, DevCargoTrackingController } from "./cargo-tracking/cargo-tracking.controller"
+import { CarrierTrackingService } from "./cargo-tracking/carrier-tracking.service"
+import { PortalController } from "./portal/portal.controller"
+import { PortalService } from "./portal/portal.service"
 import { TrackController } from "./track/track.controller"
 import { TrackService } from "./track/track.service"
 import { StaffEvents } from "./platform/staff-events"
@@ -71,16 +76,17 @@ import { VisaService } from "./visa/visa.service"
 export const BUSINESS_CONTROLLERS: Type[] = [
   DocumentsController, TravellersController, MyDetailsController, AdminCustomersController, AdminVerificationsController, ComplianceController, CustomerFlightRequestsController, AdminFlightRequestsController, SearchController, StaffSearchController,
   CustomerCargoController, AdminCargoController, DevCargoController, CustomerBillingController, AdminInvoicesController,
-  CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController,
+  CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController, DevStripeInvoiceSinkController,
   CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
   MeActivityController, AdminCustomerListController, SupportTicketsController, AdminSupportController, AdminCallsController, BonlineWebhookController, AdminAssignmentsController, PublicListingsController, AdminListingsController,
   PublicVisaController, AdminVisaController, DevVisaResearchController,
   CatalogReadController, CatalogAdminController, ApifyIntegrationController, FlightBuilderAdminController, FlightBuilderDevController,
   PublicServicesCatalogController, AdminServicesCatalogController,
   AdminTicketDocumentsController, CustomerTicketDocumentsController, DevBrandingController,
+  PortalController, DevCargoTrackingController, AdminCarrierTrackingController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, ScheduleWriteService, ScheduleRefreshService, CatalogRefreshService, CatalogReadService, CatalogAdminService, FlightBuilderService, FlightBuilderJobsService, TicketDocumentsService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, StripeInvoicesService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, ScheduleWriteService, ScheduleRefreshService, CatalogRefreshService, CatalogReadService, CatalogAdminService, FlightBuilderService, FlightBuilderJobsService, TicketDocumentsService, PortalService, CarrierTrackingService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

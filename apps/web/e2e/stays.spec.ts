@@ -12,7 +12,7 @@ test.describe("villas and stays", () => {
   test("choosing a destination fills in the request and the region filter narrows the list", async ({ page }) => {
     await page.getByTestId("city-isfahan").click()
     await expect(page.locator("#s-loc")).toHaveValue("Isfahan")
-    await page.getByRole("button", { name: "Gulf islands" }).click()
+    await page.getByRole("button", { name: "Southern coast and islands" }).click()
     await expect(page.getByTestId("city-kish")).toBeVisible()
     await expect(page.getByTestId("city-isfahan")).toHaveCount(0)
   })

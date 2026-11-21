@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { ArrowRight, CircleCheck, FileText, Gavel, IdCard, Radio, Receipt } from "lucide-react"
+import { ArrowRight, BellRing, CircleCheck, FileText, Gavel, IdCard, Radio, Receipt } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -9,17 +9,18 @@ import type { DashboardMetrics, VerificationQueueItem } from "@unitravel/contrac
 import { formatMoney } from "@unitravel/domain"
 import { cn } from "@unitravel/ui/lib/utils"
 
-import { BentoGrid, EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
+import { EmptyState, Skeleton, StatusChip, TileError } from "@/components/bento"
 import { BarChart, Donut, Legend, SplitBar } from "@/components/charts"
 import { Segmented, Switch } from "@/components/controls"
-import { ApifyUsageTile } from "@/components/apify"
 import { AppHealth } from "@/components/app-health"
+import { NotificationRow } from "@/components/notifications"
 import { Kpi } from "@/components/kpi"
 import { Arrow, RouteText, Tag, useAct } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDateTime, rel } from "@/lib/format"
 import { type MsgKey, type T, useT } from "@/lib/i18n"
 import { type ActivityEntry, useActivity, useLive, useQueueSummary, useSupportOverview } from "@/lib/live"
+import { useMarkStaffRead, useStaffNotifications } from "@/lib/notifications"
 import { useLocale } from "@/lib/prefs"
 import { useSession } from "@/lib/session"
 import { STAGES } from "@/lib/stages"
@@ -58,6 +59,21 @@ function CaseRows({ items, t, empty }: { items: FlightListItem[]; t: T; empty: s
         </li>
       ))}
     </ul>
+  )
+}
+
+/** ADR-0039 D1: this person's unread feed items; opening one marks it read, as in the bell. */
+function NotificationsTile() {
+  const t = useT()
+  const list = useStaffNotifications({ unread: true, limit: 5 })
+  const mark = useMarkStaffRead()
+  const items = list.data?.items ?? []
+  return (
+    <Card title={t("notif.title")} testId="tile-notifications" aside={<>{items.length > 0 && <button type="button" className="font-medium text-link hover:underline" onClick={() => mark.mutate({ all: true })}>{t("notif.readAll")}</button>}<More href="/notifications">{t("home.viewAll")}</More></>}>
+      {list.isError ? <TileError error={list.error} onRetry={() => void list.refetch()} /> : !list.data ? <SkeletonRows n={3} /> : !items.length ? <EmptyState icon={<BellRing />} title={t("notif.emptyUnread")} className="py-5" /> : (
+        <ul className="-mx-2.5 space-y-0.5">{items.map((n) => <li key={n.id}><NotificationRow n={n} /></li>)}</ul>
+      )}
+    </Card>
   )
 }
 
@@ -142,10 +158,13 @@ export default function Home() {
           <p className="text-meta text-steel">{new Intl.DateTimeFormat(locale === "fa" ? "fa-IR" : "en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(now)}</p>
           <h1 className="mt-1 font-display text-display font-bold tracking-[-0.01em]" dir="auto">{greeting}</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Fixed label, state on the switch: the old checkbox's label changed width on click and moved the box. */}
-          <div className="w-full rounded-[var(--radius-card)] border border-rule bg-surface-raised px-3.5 py-1.5 shadow-[var(--shadow-xs)] sm:w-[19.5rem]">
-            <Switch checked={!!me?.onDuty} onChange={(v) => duty.mutate(v)} disabled={duty.isPending} label={t("home.duty.label")} description={me?.onDuty ? t("home.duty.on") : t("home.duty.off")} testId="duty-switch" />
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+          {/* Same height as the queue button and one line: the state reads from the dot and the switch, the hint from the tooltip. */}
+          <div data-testid="duty" data-on={!!me?.onDuty} title={me?.onDuty ? t("home.duty.on") : t("home.duty.off")}
+            className="flex h-10 flex-1 items-center gap-2.5 rounded-lg border border-rule bg-surface-raised ps-3 pe-2 shadow-[var(--shadow-xs)] sm:w-44 sm:flex-none">
+            <span aria-hidden className={cn("size-2 shrink-0 rounded-full", me?.onDuty ? "bg-success" : "bg-rule-strong")} />
+            <Switch className="min-h-0 flex-1 justify-between gap-3 [&>span]:order-first" checked={!!me?.onDuty} onChange={(v) => duty.mutate(v)} disabled={duty.isPending}
+              label={me?.onDuty ? t("home.duty.label") : t("home.duty.offLabel")} description={me?.onDuty ? t("home.duty.on") : t("home.duty.off")} quietDescription testId="duty-switch" />
           </div>
           {flights && <Link href="/queues?tab=new" className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 font-semibold text-primary-foreground transition-colors hover:bg-primary/90">{t("home.openQueue")}<ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden /></Link>}
         </div>
@@ -192,8 +211,6 @@ export default function Home() {
 
       {(flights || cargoRead) && <AppHealth metrics={m} loading={!m && metrics.isPending} error={metrics.isError ? metrics.error : undefined} onRetry={() => void metrics.refetch()} flights={flights} />}
 
-      {can("catalog.read") && <BentoGrid><ApifyUsageTile devDetails={false} /></BentoGrid>}
-
       <div className="grid items-start gap-4 xl:grid-cols-12">
         <div className="space-y-4 xl:col-span-8">
           {flights && (
@@ -209,6 +226,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-4 xl:col-span-4">
+          <NotificationsTile />
           {can("support.read") && <SupportTile />}
           {flights && (
             <Card title={t("home.sla")} sub={m ? t("home.sla.sub", { n: m.range.days }) : undefined} testId="tile-sla">

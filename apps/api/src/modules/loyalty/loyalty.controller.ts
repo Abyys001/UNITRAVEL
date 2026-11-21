@@ -4,7 +4,7 @@ import { z } from "zod"
 
 import {
   AddMemberBody, BenefitListQuery, ClubCandidate, ClubCandidateQuery, CustomerClubView, LedgerEntryBody, LedgerQuery, LoyaltyBenefitBody, LoyaltyBenefitView, LoyaltyLedgerEntry,
-  LoyaltyMemberView, LoyaltyTierBody, LoyaltyTierView, MemberListQuery, RevokeBenefitBody, UpdateMemberBody,
+  LoyaltyMemberView, LoyaltyPointsView, LoyaltyTierBody, LoyaltyTierView, MemberListQuery, PointsAdjustBody, RevokeBenefitBody, UpdateMemberBody,
 } from "@unitravel/contracts"
 
 import { type Actor, Ctx, CurrentActor, type RequestContext, RequirePermission, StaffOnly } from "../../core/http/decorators"
@@ -95,6 +95,22 @@ export class AdminClubController {
   @ApiZodResponse(200, LoyaltyMemberView)
   updateMember(@Param("userId", zbody(z.uuid())) userId: string, @Body(zbody(UpdateMemberBody)) body: z.infer<typeof UpdateMemberBody>, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
     return this.loyalty.updateMember(userId, body, actor, { requestId: ctx.id })
+  }
+
+  @Get("members/:userId/points")
+  @RequirePermission("loyalty.read")
+  @ApiZodResponse(200, LoyaltyPointsView)
+  points(@Param("userId", zbody(z.uuid())) userId: string) {
+    return this.loyalty.points(userId)
+  }
+
+  /** ADR-0039 D3: staff grant or deduct points with an internal reason; audited, never below zero. */
+  @Post("members/:userId/points")
+  @RequirePermission("loyalty.manage")
+  @ApiZodBody(PointsAdjustBody)
+  @ApiZodResponse(201, LoyaltyPointsView)
+  adjustPoints(@Param("userId", zbody(z.uuid())) userId: string, @Body(zbody(PointsAdjustBody)) body: z.infer<typeof PointsAdjustBody>, @CurrentActor() actor: Actor, @Ctx() ctx: RequestContext) {
+    return this.loyalty.adjustPoints(userId, body, actor, { requestId: ctx.id })
   }
 
   @Get("benefits")

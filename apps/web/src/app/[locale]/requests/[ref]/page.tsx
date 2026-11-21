@@ -85,7 +85,7 @@ export default function RequestDetail() {
   const cancel = useMutation({ mutationFn: () => api(`/v1/flight-requests/${ref}/cancel`, { body: {} }), onSuccess: () => void q.refetch() })
   const cached = !q.data && q.isError ? cacheGet<FlightRequestCustomerView>(`request:${ref}`) : null
   const r = q.data ?? cached?.data
-  if (!r) return <div className="mx-auto max-w-4xl px-4 py-8">{q.isError ? <ErrorState title={t("requests.loadFailed")} body={(q.error as ApiError).message} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} /> : <LoadingState label={t("common.loading")} rows={4} />}</div>
+  if (!r) return <div className="min-w-0">{q.isError ? <ErrorState title={t("requests.loadFailed")} body={(q.error as ApiError).message} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} /> : <LoadingState label={t("common.loading")} rows={4} />}</div>
   const missing = r.travellers.filter((x) => !x.documentComplete)
   const openQuote = r.quotes.find((x) => x.status === "SENT") ?? r.quotes[0]
   // An issued ticket document (ADR-0038) replaces the per-ticket receipt download for the travellers it covers.
@@ -93,7 +93,7 @@ export default function RequestDetail() {
   const covered = new Set(docs.flatMap((d) => d.passengers.map((p) => p.ticketNumber).filter(Boolean)))
   const receipts = r.tickets.filter((tk) => !covered.has(tk.ticketNumber))
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 md:py-10">
+    <div className="min-w-0">
       {justSent && <div role="status" data-testid="request-sent" className="mb-4 rounded-xl border-s-4 border-success bg-success-subtle px-4 py-3 text-sm"><p className="font-semibold">{t("request.sentTitle")}</p><p>{t("request.sentBody", { ref: r.ref })}</p>{r.snapshot?.fare && <p className="mt-1">{t("fare.submitted")}</p>}</div>}
       {cached && <p className="mb-4 rounded-xl bg-warning-subtle px-4 py-2.5 text-sm text-warning-subtle-fg">{t("requests.offline")} {t("requests.lastUpdated", { time: date(cached.at, { withTime: true }) })}</p>}
       <div className="flex flex-wrap items-end justify-between gap-3">

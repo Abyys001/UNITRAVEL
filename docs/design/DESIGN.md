@@ -50,6 +50,8 @@ blur drops to 14 px under 640 px. Form fields and booking totals stay on solid f
 
 **Update 2026-11-02 (owner request, web service pages):** every service page now opens with one shared night hero, `ServiceHero` (`apps/web/src/components/service-hero.tsx`): eyebrow, display title with an orange accent, lead, service scene, glass perks and the ribbon, optionally over a darkened place photo (a city, never a product). It is used by trains and buses (route card in its slot), visa, tours, CIP and insurance (default hero of `ServiceFormFrame`, copy in its `HERO` map), cargo, shipments and the travel card; stays keeps its own. Request forms sit beside a sticky "What happens next" card; the cargo form is six numbered steps (`StepHeading`) with a sticky summary (route, service, chargeable weight estimate, declared value). Loading and closed states draw the shell band (`HeroBand`) because the shell skips it on these routes. Perks only restate what the page lead already says. Nav: Cargo joins the main bar; Villas & stays moves into Services.
 
+**Update 2026-11-21 (owner brief, ADR-0041, STAGE-32):** one form kit for every customer form (table below). Cargo, Visa and CIP are guided wizards: progress bar, "Step n of N", one question group per step, Back and Edit keep values, fade between steps behind `motion-safe`, review step, then `ConfirmationPanel`. Service pages carry a `ServiceIntro` block (what it offers, how it works, what you need, what happens next). Flight results page 10 at a time with a filter bar; filters collapse into a disclosure below `md`. Popups of selects, combos and calendars stay solid white like the fields.
+
 ## Tokens pipeline (Phase F, 2026-10-24)
 One source: `packages/ui/tokens/tokens.json` (palette, status tints, radii, shadows, light and dark semantic variables, Flutter night
 surfaces). `node packages/ui/scripts/gen-tokens.mjs` (`pnpm --filter @unitravel/ui tokens`) writes `packages/ui/src/tokens.css`
@@ -66,7 +68,8 @@ package stays vendored; the app overrides its colours from `BrandTokens`, so the
 | Verification badge | `VerificationBadge` | `VerificationBadge` | state always written out |
 | Payment state | `PaymentState` | `PaymentStateBanner` | processing never reads as success; success only when the server says PAID |
 | Loading / empty / error | `LoadingState`, `EmptyState`, `ErrorState` | kit `SkeletonBox`, `EmptyState`, `ErrorState` | `role=status` / `role=alert`, retry on errors |
-| Select | `NativeSelect` | n/a | native on purpose (OS picker, RTL, selectOption); chevron mirrors, 44 px on coarse pointers |
+| Select | customer site: `SelectField` (Base UI `Select`); console: `NativeSelect` | n/a | customer site custom since 2026-11-21 (ADR-0041); console stays native (OS picker, selectOption); chevron mirrors, 44 px on coarse pointers |
+| Form kit (customer site) | `apps/web/src/components/form/`: FieldShell, DateField, DateRangeField, CounterField, SelectField, ComboField, Wizard, ReviewList, ConfirmationPanel | n/a | no native date, number or select on customer pages; every date goes through `Calendar` so Jalali works; errors sit under their field |
 | Console kit | `product/ledger` (Tag, Panel, PageHead, LedgerField, Bidi) | n/a | `apps/console/src/components/ui.tsx` keeps only API-bound helpers |
 
 Orange-700 text colour is now `#a84d00` (was `#b85500`, 4.36:1 on the warning tint; now 5.1:1 on it and 5.6:1 on white).
@@ -210,3 +213,30 @@ ADR-0011. Supersedes "Type" and the console colours above for the Admin and Deve
   on `--viz-*` tokens with tooltips, keyboard focus, a screen-reader table and an empty state.
 - **Feedback.** Toasts bottom-end, above every layer, with close buttons; the bell is a notification centre over the live
   queue counts (no persistent staff inbox exists in the API yet).
+
+## Customer portal (2026-11-21, ADR-0040)
+Owner complaint: customer pages are hard to read (translucent cards on a pale page) and there is no overview. Supersedes the
+glass-on-content look of the 2026-10-29 customer-site update; the console decks above are untouched.
+
+- **Direction: "the departures board for your own trips".** One calm page that leads with what the customer must do now, then what
+  is moving, then history. Plain status words ("Waiting for you", "Quote ready"), never a number without its meaning. Persian-first:
+  logical properties only, references and codes in LTR isolates, Persian digits via `@unitravel/i18n`. No sidebar+KPI-tile+table
+  admin look: the dashboard is a vertical story (greeting, needs-you, in progress, bought, messages), not a grid of counters.
+- **Surface rule change.** Customer content (cards, inbox panes, lists, forms) is solid `--surface-raised` with a `--rule-strong`
+  border and `--shadow-card` on the `--surface` page (`.portal-card`, and `[data-portal]` re-solidifies `.card-brand` /
+  `[data-slot=card]` for pages not yet rebuilt). Glass stays on the dark brand band and site header only. Text is `--ink` /
+  `--ink-muted` (>= 6:1 on both surfaces). `--ink` appears twice in `tokens.json` on purpose: the second is the `console` scope
+  (`html[data-surface]`), so the customer site was never affected; the real contrast cause was the `.card-brand` override in `styles.css`.
+- **Shell.** `PortalShell`: sticky bar under the site header (inbox and support badges as text counts, polled 30 s, paused when the
+  tab is hidden) + side rail from 1024 px, scrolling tab bar below. Current section has `aria-current` and a filled style plus a
+  start-edge bar, never colour alone.
+- **Kit patterns compared.** (1) `components/web/workflow` RequestProgress/Timeline + Stepper: adapted into `StepProgress` (segmented
+  bar with "Step 2 of 5" text) for lists and the existing `Stepper` for the detail page; the kit timeline assumes oldest-first with
+  the latest last, so the track history is a newest-first list instead. (2) `NotificationCenter` + customer-portal preset (kit
+  `starters/web-saas` inbox): adapted into a master-detail inbox (list with unread dot, weight and the word "Unread"; detail pane
+  from 1024 px, detail page on phones via `?m=`); not taken: preference matrix. (3) `EmptyState` / `ErrorState` / `OfflineBanner`:
+  reused as is. Not taken: `KpiCard`, `DataTable`, `AccountSwitcher`.
+- **Travel Card tile (D7).** `TravelCardTile status`: `COMING_SOON` shows a "Coming soon" badge and a short explanation with no
+  action; `ACTIVE` is wired but unused until the card ships.
+- **Honesty.** Only API fields are shown; absent points, ETA or carrier data render an empty state, not a placeholder. Carrier
+  state other than `ACTIVE` is stated plainly (live airline tracking is not connected; updates come from the UniTravel cargo team).

@@ -17,12 +17,14 @@ import { codeLabel, CURRENCIES, localInput } from "@/components/club"
 import { DirectInvoiceDialog } from "@/components/direct-invoice-form"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
 import { PaymentPanel } from "@/components/payment-panel"
+import { StripeInvoicePanel } from "@/components/stripe-invoice"
 import { Arrow, Field, Panel, useAct } from "@/components/ui"
 import { api, errText, newIdempotencyKey } from "@/lib/api"
 import { useCrumbLabel } from "@/lib/crumb"
 import { fmtDateTime, money, toMinor } from "@/lib/format"
 import { statusText, useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
+import { useReadOnOpen } from "@/lib/notifications"
 
 const OFFLINE_METHODS = ["BANK_TRANSFER", "CASH", "CARD_TERMINAL", "OTHER"] as const
 const blankPay = (currency: string) => ({ amount: "", currency, method: "BANK_TRANSFER" as string, ref: "", payer: "", received: localInput(new Date()) })
@@ -35,6 +37,7 @@ export default function InvoicePage() {
   const { can } = useSession()
   const key = ["invoice", id]
   const q = useQuery({ queryKey: key, queryFn: () => api<StaffInvoice>(`/v1/admin/invoices/${id}`), refetchInterval: 30_000 })
+  useReadOnOpen(q.data?.number)
   const inv = q.data
   useCrumbLabel(inv?.number ?? inv?.requestRef)
   const dlg = useDialogs<"cancel" | "pay">()
@@ -119,6 +122,7 @@ export default function InvoicePage() {
               ))}</ul>
             </Panel>
           )}
+          <StripeInvoicePanel invoice={inv} />
           {inv.status !== "DRAFT" && <div className="mt-4 border-t border-rule pt-2"><PaymentPanel invoice={inv} /></div>}
         </div>
       </div>

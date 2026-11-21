@@ -19,6 +19,7 @@ import { api } from "@/lib/api"
 import { fmtDateTime, rel } from "@/lib/format"
 import { useT } from "@/lib/i18n"
 import { useFallbackInterval } from "@/lib/live"
+import { PageGuide } from "@/components/page-guide"
 
 /**
  * Service requests queue (ADR-0015): visa, tour callback, CIP, insurance and the listing verticals in one list, filtered
@@ -61,6 +62,7 @@ function Services() {
   return (
     <ListPage>
       <PageHead title={t("nav.services")} />
+      <PageGuide id="services" title="guide.services.title" points={["guide.services.1", "guide.services.2", "guide.services.3", "guide.services.4"]} />
       <Toolbar query={search} onQuery={setSearch} placeholder={t("svc.search")} count={list.data ? rows.length : undefined}
         trailing={<Switch checked={mine} onChange={(v) => apply({ mine: v ? "1" : "" })} label={t("svc.mine")} testId="svc-mine" />}>
         <Chips label={t("svc.type")} value={type} options={[{ value: "" as const, label: t("pg.all") }, ...SERVICE_REQUEST_TYPES.map((x) => ({ value: x, label: L.type(x) }))]} onChange={(v) => apply({ type: v })} />

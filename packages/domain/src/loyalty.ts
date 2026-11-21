@@ -92,3 +92,15 @@ export function ledgerBalance(entries: readonly { kind: LedgerKind; amountMinor:
 export function canDebit(balance: Record<string, number>, currency: string, amountMinor: number): boolean {
   return amountMinor > 0 && (balance[currency] ?? 0) >= amountMinor
 }
+
+/**
+ * ADR-0039 D3: club points. A grant needs an ACTIVE member; a deduction never takes the balance below zero (a SUSPENDED
+ * member's points can still be corrected down). Returns the signed delta to store, or the reason it is refused.
+ */
+export function pointsDelta(p: { balance: number; memberStatus: "ACTIVE" | "SUSPENDED" | "REMOVED"; kind: "GRANTED" | "DEDUCTED"; points: number }):
+  { ok: true; delta: number } | { ok: false; code: "NOT_A_MEMBER" | "INVALID" | "INSUFFICIENT_POINTS" } {
+  if (!Number.isInteger(p.points) || p.points <= 0) return { ok: false, code: "INVALID" }
+  if (p.memberStatus === "REMOVED") return { ok: false, code: "NOT_A_MEMBER" }
+  if (p.kind === "GRANTED") return p.memberStatus === "ACTIVE" ? { ok: true, delta: p.points } : { ok: false, code: "NOT_A_MEMBER" }
+  return p.balance >= p.points ? { ok: true, delta: -p.points } : { ok: false, code: "INSUFFICIENT_POINTS" }
+}

@@ -366,8 +366,10 @@ export class NotificationsService {
 
   // ---------------- inbox ----------------
 
-  async inbox(userId: string, limit: number, cursor?: string, locale?: "en" | "fa") {
-    const rows = await this.db.select().from(notifications).where(and(eq(notifications.userId, userId), cursor ? lt(notifications.createdAt, new Date(cursor)) : undefined)).orderBy(desc(notifications.createdAt)).limit(limit + 1)
+  async inbox(userId: string, q: { limit: number; before?: string; filter?: "all" | "unread" | "important"; locale?: "en" | "fa" }) {
+    const { limit, locale } = q
+    const where = and(eq(notifications.userId, userId), q.before ? lt(notifications.createdAt, new Date(q.before)) : undefined, q.filter === "unread" ? isNull(notifications.readAt) : q.filter === "important" ? eq(notifications.critical, true) : undefined)
+    const rows = await this.db.select().from(notifications).where(where).orderBy(desc(notifications.createdAt)).limit(limit + 1)
     const unread = await this.db.select({ n: sql<number>`count(*)::int` }).from(notifications).where(and(eq(notifications.userId, userId), isNull(notifications.readAt)))
     const r = locale ? await this.recipient(userId) : null
     const templates = new Map<string, Awaited<ReturnType<NotificationsService["template"]>>>()
@@ -384,10 +386,11 @@ export class NotificationsService {
     }
     const page = rows.slice(0, limit)
     const texts = await Promise.all(page.map(render))
+    const next = rows.length > limit ? rows[limit - 1]!.createdAt.toISOString() : null
     return {
-      items: page.map((n, i) => ({ id: n.id, eventType: n.eventType, title: texts[i]!.title, body: texts[i]!.body, data: { linkPath: (n.data as { linkPath?: string }).linkPath }, critical: n.critical, readAt: n.readAt?.toISOString() ?? null, createdAt: n.createdAt.toISOString() })),
-      nextCursor: rows.length > limit ? rows[limit - 1]!.createdAt.toISOString() : null,
-      unread: unread[0]?.n ?? 0,
+      // `ref` (ADR-0040 D2) lets the portal link a message to its request; it is the customer's own reference, never staff data.
+      items: page.map((n, i) => { const d = n.data as { linkPath?: string; ref?: string }; return { id: n.id, eventType: n.eventType, title: texts[i]!.title, body: texts[i]!.body, data: { linkPath: d.linkPath, ref: d.ref }, critical: n.critical, readAt: n.readAt?.toISOString() ?? null, createdAt: n.createdAt.toISOString() } }),
+      nextBefore: next, nextCursor: next, unread: unread[0]?.n ?? 0,
     }
   }
 

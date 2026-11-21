@@ -259,6 +259,8 @@ export class CustomersService {
       const now = new Date()
       await tx.update(travellerDocuments).set({ verificationStatus: ev.to, customerConfirmedAt: now, confirmedValuesHash: hash, submittedAt: now, verifiedAt: null }).where(eq(travellerDocuments.id, d.id))
       await this.audit.record(tx, { actorUserId: userId, actorKind: "CUSTOMER", action: "identity.submitted", entityType: "traveller_document", entityId: d.id, before: { status: ev.from }, after: { status: ev.to }, ip: ctx.ip, requestId: ctx.requestId })
+      // ADR-0039 D1: a passport waiting for a check is staff-feed news (Identity checks badge).
+      if (ev.to === "SUBMITTED" && ev.from !== "SUBMITTED") await this.outbox.add(tx, { aggregateType: "traveller_document", aggregateId: d.id, eventType: "identity.submitted", payload: { documentId: d.id, travellerName: `${t.givenNames} ${t.surname}`, customerUserId: userId }, dedupeKey: `identity-submitted:${d.id}:${now.getTime()}` })
       return (await this.byIds([travellerId], tx))[0]!
     })
   }

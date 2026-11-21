@@ -1,6 +1,6 @@
 "use client"
 
-import { Armchair, BedDouble, BookA, BookOpen, Bus, ChevronDown, ClipboardList, CreditCard, Globe, House, Inbox, LifeBuoy, Menu, Package, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, Ticket, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
+import { Armchair, BedDouble, BookA, BookOpen, Bus, ChevronDown, ClipboardList, CreditCard, Globe, House, Inbox, LayoutDashboard, LifeBuoy, Menu, Package, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, Ticket, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useRef, useState } from "react"
@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query"
 
 import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
+import { useUnread } from "@/lib/portal-api"
 import { useSession } from "@/lib/session"
 import { useSite } from "@/lib/site"
 
@@ -63,6 +64,8 @@ export function Header() {
   }, [open])
   const other = locale === "en" ? "fa" : "en"
   const { on } = useSite()
+  const unread = useUnread()
+  const nf = (n: number) => (n > 99 ? "99+" : n.toLocaleString(locale === "fa" ? "fa-IR" : "en"))
   // Spec §4.1: items come from GET /v1/site, so a service whose flag is off never appears. Safar card is not built (O14).
   const book: NavLink[] = [
     { href: href("/flights"), label: t("nav.flights"), icon: Plane },
@@ -111,8 +114,8 @@ export function Header() {
             <Suspense fallback={<LanguageLink other={other} path={path} label={t("nav.language")} />}><LanguageLinkWithQuery other={other} path={path} label={t("nav.language")} /></Suspense>
             {me ? (
               <>
-                <Link href={href("/inbox")} aria-label={t("nav.inbox")} className="inline-flex size-9 items-center justify-center rounded-full transition-colors hover:bg-white/10 pointer-coarse:min-h-11 pointer-coarse:min-w-11"><Inbox className="size-4" /></Link>
-                <Link href={href("/account")} className="btn-glass ms-1 hidden h-9 max-w-36 items-center gap-2 !px-3 !py-0 sm:inline-flex"><UserRound aria-hidden className="size-4 shrink-0" /><span className="truncate">{me.displayName}</span></Link>
+                <Link href={href("/inbox")} aria-label={unread.inbox > 0 ? `${t("nav.inbox")} (${t("portal.unreadCount", { n: nf(unread.inbox) })})` : t("nav.inbox")} className="relative inline-flex size-9 items-center justify-center rounded-full transition-colors hover:bg-white/10 pointer-coarse:min-h-11 pointer-coarse:min-w-11"><Inbox className="size-4" />{unread.inbox > 0 && <span aria-hidden className="absolute -end-0.5 -top-0.5 min-w-4 rounded-full bg-orange px-1 text-center text-[10px] font-bold leading-4 text-navy-950">{nf(unread.inbox)}</span>}</Link>
+                <Link href={href("/dashboard")} className="btn-glass ms-1 hidden h-9 max-w-36 items-center gap-2 !px-3 !py-0 sm:inline-flex"><UserRound aria-hidden className="size-4 shrink-0" /><span className="truncate">{me.displayName}</span></Link>
               </>
             ) : (
               <Link href={href(`/sign-in?next=${encodeURIComponent(path)}`)} className="btn-orange ms-1 inline-flex h-9 items-center whitespace-nowrap !rounded-full !px-4 !py-0 pointer-coarse:min-h-11">{t("nav.signIn")}</Link>
@@ -122,7 +125,7 @@ export function Header() {
         </div>
         {open && (
           <nav ref={menuRef} className="relative max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 lg:hidden" aria-label="Mobile">
-            {([[t("nav.groupBook"), book], [t("nav.groupServices"), services], [t("nav.groupHelp"), [...help, ...(me ? [{ href: href("/inbox"), label: t("nav.inbox"), icon: Inbox }, { href: href("/account"), label: t("nav.account"), icon: UserRound }] : [])]]] as [string, NavLink[]][]).filter(([, items]) => items.length > 0).map(([title, items]) => (
+            {([[t("nav.groupBook"), book], [t("nav.groupServices"), services], [t("nav.groupHelp"), [...help, ...(me ? [{ href: href("/inbox"), label: t("nav.inbox"), icon: Inbox }, { href: href("/dashboard"), label: t("portal.dashboard"), icon: LayoutDashboard }, { href: href("/account"), label: t("nav.account"), icon: UserRound }] : [])]]] as [string, NavLink[]][]).filter(([, items]) => items.length > 0).map(([title, items]) => (
               <div key={title} className="pt-2">
                 <p className="px-2 pb-1 pt-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-300">{title}</p>
                 {items.map((l) => (

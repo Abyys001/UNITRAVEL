@@ -620,6 +620,33 @@ export class CargoService implements OnModuleInit {
     return v
   }
 
+  /**
+   * Customer-owned facts for the portal's purchase tracking (ADR-0040 D4). Carrier state is joined by the caller. A shipment carries
+   * a chargeable weight only once every piece was weighed by us: before that it is a declared-size estimate and is left out.
+   */
+  async portalFacts(ref: string, userId: string, locale: "en" | "fa") {
+    const r = await this.owned(ref, userId)
+    const [{ lane, pieces }, hist, track, [booking], docs] = await Promise.all([
+      this.weights(r),
+      this.db.select().from(requestStatusHistory).where(and(eq(requestStatusHistory.requestType, "CARGO"), eq(requestStatusHistory.requestId, r.id))).orderBy(asc(requestStatusHistory.createdAt)),
+      this.db.select().from(trackingEvents).where(eq(trackingEvents.cargoRequestId, r.id)),
+      this.db.select({ awb: partnerBookings.awbNumber }).from(partnerBookings).where(eq(partnerBookings.cargoRequestId, r.id)).orderBy(desc(partnerBookings.bookedAt)).limit(1),
+      this.docs.forRequest("CARGO", r.id, true),
+    ])
+    const weighed = pieces.length > 0 && pieces.every((p) => p.verifiedWeightKg != null)
+    const records = track.map((t) => this.record(t))
+    const sourceOf = new Map(track.map((t) => [t.id, t.source]))
+    return {
+      r, awbNumber: booking?.awb ?? null, statusLabel: this.label(r.status, locale), laneLabel: this.laneLabel(lane, locale),
+      origin: this.reference.countryName(lane.originCountry, locale), destination: this.reference.countryName(lane.destinationCountry, locale),
+      pieces: pieces.length, chargeableWeightKg: weighed ? cargoWeights(pieces, lane.volumetricDivisor).chargeableKg : null,
+      history: hist.map((h) => ({ id: h.id, at: h.createdAt.toISOString(), label: this.label(h.toStatus as CargoStatus, locale) })),
+      /** Corrections applied; `carrier` is true only for an event nobody on our side has corrected and the airline reported. */
+      tracking: effectiveTimeline(records).map((e) => ({ ...e, label: TRACKING_EVENT_LABELS[e.eventCode][locale], carrier: !e.corrected && sourceOf.get(e.id) === "PARTNER_API" })),
+      documents: docs.filter((d) => d.visibility === "CUSTOMER").map((d) => ({ id: d.id, type: d.type, filename: d.filename })),
+    }
+  }
+
   async shipmentSummary(userId: string, locale: "en" | "fa") {
     const all = await this.shipmentViews(userId, locale)
     const moving = all.filter((s) => MOVING.includes(s.status))

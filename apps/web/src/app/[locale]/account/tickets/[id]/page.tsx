@@ -9,7 +9,6 @@ import type { CustomerTicketDocument } from "@unitravel/contracts"
 import { ErrorState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Auto, Ltr } from "@/components/badges"
-import { PanelFrame } from "@/components/customer-panel"
 import { KindBadge, PnrCopy, SegmentList, TicketActions } from "@/components/ticket-documents"
 import { api, type ApiError } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
@@ -24,16 +23,16 @@ export default function TicketDetailPage() {
   const d = q.data
   const back = <Link href={href("/account/tickets")} className="inline-flex items-center gap-1.5 text-sm font-medium text-royal underline underline-offset-4"><ArrowLeft className="size-4 rtl:rotate-180" aria-hidden />{t("ticketDocuments.portal.back")}</Link>
   if (!d) return (
-    <PanelFrame>
+    <>
       {back}
       <div className="mt-4">{q.isError
         ? <ErrorState title={(q.error as ApiError).problem?.status === 404 ? t("ticketDocuments.portal.notFound") : t("ticketDocuments.portal.loadFailed")} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} />
         : <LoadingState label={t("common.loading")} rows={3} />}</div>
-    </PanelFrame>
+    </>
   )
   const airlines = d.airlines.map((a) => a.name ?? a.code).join(sep)
   return (
-    <PanelFrame>
+    <>
       {back}
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
@@ -63,6 +62,6 @@ export default function TicketDetailPage() {
           </section>
         </aside>
       </div>
-    </PanelFrame>
+    </>
   )
 }

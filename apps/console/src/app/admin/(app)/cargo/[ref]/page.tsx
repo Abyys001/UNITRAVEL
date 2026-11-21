@@ -26,6 +26,7 @@ import { statusText, useT } from "@/lib/i18n"
 import { useFallbackInterval } from "@/lib/live"
 import { useSession } from "@/lib/session"
 import type { CargoDetail, CargoPartyView } from "@/lib/types"
+import { useReadOnOpen } from "@/lib/notifications"
 
 function Party({ title, p }: { title: string; p: CargoPartyView }) {
   return (
@@ -39,6 +40,7 @@ function Party({ title, p }: { title: string; p: CargoPartyView }) {
 
 export default function CargoPage() {
   const { ref } = useParams<{ ref: string }>()
+  useReadOnOpen(ref)
   const qc = useQueryClient()
   const { can } = useSession()
   const mobile = useIsMobile()

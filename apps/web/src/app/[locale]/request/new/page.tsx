@@ -10,13 +10,13 @@ import type { CustomerItinerary, PublicFare, PublicItineraryDetail, SearchQuery,
 import { IconBadge } from "@unitravel/ui/brand/art"
 import { Button } from "@unitravel/ui/components/button"
 import { Textarea } from "@unitravel/ui/components/textarea"
-import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 import { Auto, Ltr } from "@/components/badges"
 import { FareSummary } from "@/components/fare-picker"
 import { ItineraryView } from "@/components/itinerary-view"
 import { type SearchParamsShape, toQuery } from "@/components/search-form"
 import { AddIdentity } from "@/components/add-identity"
+import { CounterField, SelectField } from "@/components/form"
 import { ComplianceReviewNote } from "@/components/compliance-review-note"
 import { ServiceInterests } from "@/components/service-interests"
 import { TravellerForm } from "@/components/traveller-form"
@@ -149,8 +149,8 @@ function RequestForm() {
                 <span dir="ltr">{t(`honorifics.${tr.title}` as never)} {tr.givenNames} {tr.surname}</span>{tr.nameFa && <span className="text-steel">{sep}<Auto>{tr.nameFa}</Auto></span>}</label>
               {chosen[tr.id] && (
                 <span className="flex gap-2">
-                  <NativeSelect aria-label={t("flow.ticketType")} value={chosen[tr.id]} onChange={(e) => setChosen((c) => ({ ...c, [tr.id]: e.target.value }))} className="field py-1 text-sm">{(["ADT", "CHD", "INF"] as const).map((k) => <option key={k} value={k}>{t(`paxType.${k}`)}</option>)}</NativeSelect>
-                  <NativeSelect aria-label={t("request.ssr")} value={ssr[tr.id] ?? ""} onChange={(e) => setSsr((s) => ({ ...s, [tr.id]: e.target.value }))} className="field py-1 text-sm"><option value="">{t("request.ssr")}</option>{SSR_CODES.map((c) => <option key={c} value={c}>{t(`ssrCodes.${c}` as never)}</option>)}</NativeSelect>
+                  <SelectField id={`tt-${tr.id}`} label={t("flow.ticketType")} hideLabel className="min-w-28" value={chosen[tr.id]!} onChange={(v) => setChosen((c) => ({ ...c, [tr.id]: v }))} options={(["ADT", "CHD", "INF"] as const).map((k) => ({ value: k, label: t(`paxType.${k}`) }))} triggerClassName="h-9 text-sm" />
+                  <SelectField id={`ssr-${tr.id}`} label={t("request.ssr")} hideLabel className="min-w-28" value={ssr[tr.id] ?? ""} placeholder={t("request.ssr")} onChange={(v) => setSsr((x) => ({ ...x, [tr.id]: v === "__none" ? "" : v }))} options={[{ value: "__none", label: t("request.ssr") }, ...SSR_CODES.map((c) => ({ value: c, label: t(`ssrCodes.${c}` as never) }))]} triggerClassName="h-9 text-sm" />
                 </span>
               )}
             </li>
@@ -163,18 +163,14 @@ function RequestForm() {
         {adding ? <div className="mt-3"><TravellerForm onSaved={(tr) => { setAdding(false); if (!full) setChosen((c) => ({ ...c, [tr.id]: nextType() })); void travellers.refetch() }} /></div> : <Button variant="outline" className="rounded-xl border-navy-900 text-navy-900 mt-3" onClick={() => setAdding(true)}>{t("request.addTraveller")}</Button>}
       </section>
       <section className="card-brand mt-6 grid gap-4 p-5 sm:grid-cols-2">
-        <label className="text-sm font-medium">{t("request.contact")}
-          <NativeSelect value={contact} onChange={(e) => setContact(e.target.value)} className="mt-1 h-10 w-full field" dir="ltr">{phones.map((p) => <option key={p.id} value={p.id}>{p.value} {p.verifiedAt ? "✓" : ""}</option>)}</NativeSelect>
+        <div>
+          <SelectField id="rq-contact" label={t("request.contact")} labelClassName="font-medium" value={contact} onChange={setContact} triggerClassName="[&_[data-slot=select-value]]:[direction:ltr]" options={phones.map((p) => ({ value: p.id, label: `${p.value}${p.verifiedAt ? " ✓" : ""}` }))} />
           {!contactVerified && <span className="mt-1 block text-xs text-danger">{t("request.verifyFirst")}</span>}
-        </label>
+        </div>
         {!contactVerified && <div className="sm:col-span-2" data-testid="inline-verify-phone"><p className="mb-2 text-sm font-medium">{t("identity.verifyInline")}</p><AddIdentity channels={["PHONE"]} onDone={() => setContact("")} /></div>}
-        <label className="text-sm font-medium">{t("request.seat")}
-          <NativeSelect value={form.seat} onChange={(e) => setForm({ ...form, seat: e.target.value })} className="mt-1 h-10 w-full field">
-            {(["NONE", "WINDOW", "AISLE", "TOGETHER", "EXTRA_LEGROOM"] as const).map((k) => <option key={k} value={k}>{t(`request.${({ NONE: "seatNone", WINDOW: "seatWindow", AISLE: "seatAisle", TOGETHER: "seatTogether", EXTRA_LEGROOM: "seatLegroom" } as const)[k]}`)}</option>)}
-          </NativeSelect>
-        </label>
+        <SelectField id="rq-seat" label={t("request.seat")} labelClassName="font-medium" value={form.seat} onChange={(seat) => setForm({ ...form, seat })} options={(["NONE", "WINDOW", "AISLE", "TOGETHER", "EXTRA_LEGROOM"] as const).map((k) => ({ value: k, label: t(`request.${({ NONE: "seatNone", WINDOW: "seatWindow", AISLE: "seatAisle", TOGETHER: "seatTogether", EXTRA_LEGROOM: "seatLegroom" } as const)[k]}`) }))} />
         <label className="text-sm font-medium">{t("request.bestTime")}<input className="mt-1 h-10 w-full field" value={form.bestTime} onChange={(e) => setForm({ ...form, bestTime: e.target.value })} placeholder="10:00–14:00" /></label>
-        {kind === "MANUAL" && <label className="text-sm font-medium">{t("request.budget")}<input type="number" min={0} className="mt-1 h-10 w-full field" value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })} placeholder="GBP" /></label>}
+        {kind === "MANUAL" && <CounterField variant="field" id="rq-budget" label={`${t("request.budget")} (GBP)`} min={0} max={1_000_000} value={Number(form.budget) || 0} onChange={(n) => setForm({ ...form, budget: n > 0 ? String(n) : "" })} optional className="font-medium" />}
         {kind === "MANUAL" && <label className="text-sm font-medium sm:col-span-2">{t("request.flexibility")}<input className="mt-1 h-10 w-full field" value={form.flexibility} onChange={(e) => setForm({ ...form, flexibility: e.target.value })} /></label>}
         {kind === "MANUAL" && <label className="text-sm font-medium">{t("request.avoid")}<input dir="ltr" className="mt-1 h-10 w-full field" value={form.avoid} onChange={(e) => setForm({ ...form, avoid: e.target.value.toUpperCase() })} placeholder="XQ, W6" /></label>}
         {kind === "MANUAL" && <label className="text-sm font-medium">{t("request.prefer")}<input dir="ltr" className="mt-1 h-10 w-full field" value={form.prefer} onChange={(e) => setForm({ ...form, prefer: e.target.value.toUpperCase() })} placeholder="TK, BA" /></label>}

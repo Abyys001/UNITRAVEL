@@ -29,6 +29,47 @@ export interface ProviderSession {
 
 export interface RefundInput { paymentIntentId: string; amountMinor: number; idempotencyKey: string; refundId: string }
 
+/** ADR-0039 D4: a Stripe Invoice as our code sees it (amounts in minor units, currency upper case). */
+export interface ProviderInvoice {
+  id: string
+  status: "draft" | "open" | "paid" | "uncollectible" | "void"
+  amountDue: number
+  amountPaid: number
+  currency: string
+  hostedInvoiceUrl: string | null
+  invoicePdf: string | null
+  /** From the invoice's payments; null until paid (or on a retrieve without the payments list). */
+  paymentIntentId: string | null
+  customerId: string | null
+  /** `metadata.invoiceId`: our invoice. */
+  invoiceId: string | null
+}
+
+export interface CreateInvoiceInput {
+  customerId: string
+  currency: string
+  dueDate: Date
+  invoiceId: string
+  invoiceNumber: string
+  /** Number printed by Stripe; our own on the first attempt so customer and staff see one number. */
+  stripeNumber: string | null
+  description: string
+  idempotencyKey: string
+}
+
+export interface InvoiceItemInput { customerId: string; providerInvoiceId: string; amountMinor: number; currency: string; description: string; lineId: string; idempotencyKey: string }
+
+/** ADR-0039 D4: Stripe Invoicing. Optional on the port: only adapters that implement it can issue Stripe invoices. */
+export interface ProviderInvoicing {
+  ensureCustomer(i: { userId: string; email: string | null; name: string; idempotencyKey: string }): Promise<{ id: string }>
+  createInvoice(i: CreateInvoiceInput): Promise<ProviderInvoice>
+  addItem(i: InvoiceItemInput): Promise<void>
+  finalize(providerInvoiceId: string, idempotencyKey: string): Promise<ProviderInvoice>
+  retrieve(providerInvoiceId: string): Promise<ProviderInvoice | null>
+  /** Voids an open invoice or deletes a draft; a paid or already void invoice is returned unchanged. */
+  discard(providerInvoiceId: string): Promise<ProviderInvoice | null>
+}
+
 export interface PaymentProvider {
   readonly id: PaymentProviderId
   readonly publishableKey: string | null
@@ -40,4 +81,5 @@ export interface PaymentProvider {
   /** Verifies the signature on the raw body (never on re-serialised JSON) and returns the event; throws SIGNATURE_INVALID. */
   verifyWebhook(rawBody: Buffer, signature: string | undefined): Stripe.Event
   health(): Promise<{ ok: boolean; latencyMs: number; detail: string }>
+  readonly invoicing?: ProviderInvoicing
 }

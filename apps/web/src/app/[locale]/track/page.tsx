@@ -1,10 +1,10 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { ConciergeBell, Lock, type LucideIcon, Package, Plane, ReceiptText, SearchCheck } from "lucide-react"
+import { ArrowLeft, ConciergeBell, Lock, type LucideIcon, Package, Plane, ReceiptText, SearchCheck } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useState } from "react"
 
 import type { PublicTrackView, TrackItem } from "@unitravel/contracts"
 import type { MessageKey } from "@unitravel/i18n"
@@ -13,10 +13,13 @@ import { EmptyState, ErrorState, LoadingState } from "@unitravel/ui/product/stat
 import { Timeline } from "@unitravel/ui/product/timeline"
 
 import { Auto, Ltr } from "@/components/badges"
+import { linkClass } from "@/components/portal/parts"
+import { TrackDetailView } from "@/components/portal/track-detail"
 import { api, ApiError } from "@/lib/api"
 import { deviceId } from "@/lib/device"
 import { useI18n } from "@/lib/i18n"
 import { type PowChallenge, solvePow } from "@/lib/pow"
+import { searchTrack, trackPath } from "@/lib/portal-api"
 import { useSession } from "@/lib/session"
 
 const KINDS = ["ALL", "FLIGHT", "CARGO", "SERVICE", "INVOICE"] as const
@@ -58,7 +61,7 @@ function Mine() {
   const [kind, setKind] = useState<(typeof KINDS)[number]>("ALL")
   const q = useQuery({ queryKey: ["track"], queryFn: () => api<TrackItem[]>("/v1/track"), refetchInterval: 30_000 })
   const items = (q.data ?? []).filter((i) => kind === "ALL" || i.kind === kind)
-  const link = (i: TrackItem) => href(i.kind === "FLIGHT" ? `/requests/${i.ref}` : i.kind === "CARGO" ? `/cargo/${i.ref}` : i.kind === "SERVICE" ? `/services/${i.ref}` : `/billing/${i.ref}`)
+  const link = (i: TrackItem) => href(trackPath(i.ref))
   const label = (i: TrackItem) => (i.kind === "SERVICE" ? t(`services.status.${i.status}` as MessageKey) : i.kind === "INVOICE" ? t(`billing.status.${i.status}` as MessageKey) : i.statusLabel)
   return (
     <section aria-labelledby="mine-h">
@@ -86,6 +89,37 @@ function Mine() {
           })}
         </ul>
       )}
+    </section>
+  )
+}
+
+/** Find one of the customer's own purchases by reference or air waybill number (GET /v1/track/search). A miss never says whether someone else's exists. */
+function Search() {
+  const { t, href } = useI18n()
+  const router = useRouter()
+  const [q, setQ] = useState("")
+  const [state, setState] = useState<"idle" | "busy" | "miss" | "error" | "limited">("idle")
+  const go = async () => {
+    const v = q.trim()
+    if (v.length < 3) { setState("miss"); return }
+    setState("busy")
+    try {
+      const r = await searchTrack(v)
+      if (r.ref) router.push(href(trackPath(r.ref)))
+      else setState("miss")
+    } catch (e) { setState(e instanceof ApiError && e.code === "RATE_LIMITED" ? "limited" : "error") }
+  }
+  return (
+    <section aria-labelledby="search-h" className="portal-card p-5 md:p-6">
+      <h2 id="search-h" className="font-display text-2xl">{t("portal.track.searchTitle")}</h2>
+      <form className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={(e) => { e.preventDefault(); void go() }}>
+        <label className="min-w-0 flex-1 text-sm font-medium">{t("portal.track.searchLabel")}
+          <input className="field mt-1 h-11 w-full font-mono" dir="ltr" value={q} onChange={(e) => { setQ(e.target.value); setState("idle") }} aria-describedby="search-hint search-msg" autoComplete="off" maxLength={40} />
+        </label>
+        <button type="submit" className="btn-orange h-11" disabled={state === "busy"}>{state === "busy" ? t("portal.track.searching") : t("portal.track.search")}</button>
+      </form>
+      <p id="search-hint" className="mt-2 text-xs text-(color:--ink-muted)">{t("portal.track.searchHint")}</p>
+      <p id="search-msg" role="status" className="mt-2 text-sm font-semibold" data-testid="track-search-msg">{state === "miss" ? (q.trim().length < 3 ? t("portal.track.tooShort") : t("portal.track.notFound")) : state === "limited" ? t("track.rateLimited") : state === "error" ? t("common.error") : ""}</p>
     </section>
   )
 }
@@ -156,22 +190,30 @@ function Lookup() {
   )
 }
 
-export default function TrackPage() {
-  const { t } = useI18n()
+function TrackView() {
+  const { t, href } = useI18n()
   const { me, loading } = useSession()
+  const ref = useSearchParams().get("ref")
+  if (me && ref) {
+    return <TrackDetailView ref={ref} back={<Link href={href("/track")} className={`${linkClass} inline-flex items-center gap-2 text-sm`}><ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />{t("portal.track.back")}</Link>} />
+  }
   return (
-    <div className="mx-auto max-w-4xl space-y-10 px-4 py-8 md:py-10">
+    <div className={me ? "space-y-8" : "mx-auto max-w-4xl space-y-10 px-4 py-8 md:py-10"}>
       <header className="flex items-center gap-5">
-        <IconBadge className="hidden sm:grid"><SearchCheck /></IconBadge>
+        {!me && <IconBadge className="hidden sm:grid"><SearchCheck /></IconBadge>}
         <div>
           <h1 className="font-display text-3xl md:text-4xl">{t("track.title")}</h1>
-          <p className="mt-2 max-w-2xl leading-7 text-steel">{t("track.lead")}</p>
+          <p className="mt-2 max-w-2xl leading-7 text-(color:--ink-muted)">{t("track.lead")}</p>
         </div>
       </header>
       {loading && <LoadingState label={t("common.loading")} rows={3} />}
       {!loading && !me && <SignInGate />}
-      {!loading && me && <><Mine /><Lookup /></>}
+      {!loading && me && <><Search /><Mine /><Lookup /></>}
       {!loading && <p className="border-s-2 border-orange ps-4 text-sm leading-6 text-steel" data-testid="track-note">{t("track.statusNote")}</p>}
     </div>
   )
+}
+
+export default function TrackPage() {
+  return <Suspense><TrackView /></Suspense>
 }

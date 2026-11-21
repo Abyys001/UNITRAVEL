@@ -21,6 +21,7 @@ import { fmtDate, fmtDateTime, money, toMajor, toMinor } from "@/lib/format"
 import { useDebounced } from "@/lib/hooks"
 import { useT } from "@/lib/i18n"
 import { useLocale } from "@/lib/prefs"
+import { PageGuide } from "@/components/page-guide"
 
 /**
  * Curated listings (ADR-0021): bus, train and stay rows that staff write and publish. Every public item is labelled
@@ -143,6 +144,7 @@ function Listings() {
       {dialog}
       <PageHead title={t("ls.title.page")}><Button size="sm" onClick={() => setEditing("new")} data-testid="new-listing"><Plus aria-hidden />{t("ls.new")}</Button></PageHead>
       <p className="px-4 pb-3 text-meta text-steel md:px-6">{t("ls.note")}</p>
+      <PageGuide id="listings" title="guide.listings.title" points={["guide.listings.1", "guide.listings.2", "guide.listings.3", "guide.listings.4"]} />
       <Toolbar query={search} onQuery={setSearch} placeholder={t("ls.search")} count={list.data && !list.hasNextPage ? rows.length : undefined}>
         <Chips label={t("ls.vertical")} value={vertical} options={[{ value: "", label: t("pg.all") }, ...LISTING_VERTICALS.map((v) => ({ value: v as string, label: codeLabel(t, "ls.v", v) }))]} onChange={setVertical} />
         <Chips label={t("pg.c.status")} value={status} options={[{ value: "", label: t("pg.all") }, ...LISTING_STATUSES.map((s) => ({ value: s as string, label: codeLabel(t, "ls.s", s) }))]} onChange={setStatus} />

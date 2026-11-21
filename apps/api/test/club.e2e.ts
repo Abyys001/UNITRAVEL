@@ -56,9 +56,9 @@ describe("Customer club (ADR-0016)", () => {
     u = await customer("Parisa")
     const off = await u.c.get("/v1/me/club")
     expect(off.status).toBe(200)
-    expect(off.body).toEqual({ enabled: false, member: null, benefits: [], creditBalance: [] })
+    expect(off.body).toEqual({ enabled: false, member: null, benefits: [], creditBalance: [], points: null })
     await setFlag("loyalty.enabled", true)
-    expect((await u.c.get("/v1/me/club")).body).toEqual({ enabled: true, member: null, benefits: [], creditBalance: [] })
+    expect((await u.c.get("/v1/me/club")).body).toEqual({ enabled: true, member: null, benefits: [], creditBalance: [], points: null })
     // Staff routes are not customer routes.
     expect((await u.c.get("/v1/admin/club/members")).status).toBe(403)
   })

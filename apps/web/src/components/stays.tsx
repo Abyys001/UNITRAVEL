@@ -1,20 +1,21 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { ArrowRight, BedDouble, Check, MapPin, Minus, Plus, ReceiptText, Search, ShieldCheck, Users, X } from "lucide-react"
+import { ArrowRight, BedDouble, Check, MapPin, ReceiptText, Search, ShieldCheck, Users, X } from "lucide-react"
 import Link from "next/link"
-import { useId, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 
 import type { CuratedListingView, PublicListingsView } from "@unitravel/contracts"
 import { Ribbon } from "@unitravel/ui/brand/art"
-import { EmptyState, LoadingState } from "@unitravel/ui/product/states"
+import { EmptyState, ErrorState, LoadingState } from "@unitravel/ui/product/states"
 
 import { Auto } from "@/components/badges"
-import { DateRangeField } from "@/components/date-range-field"
+import { type ComboItem, ComboField, CounterField, DateRangeField } from "@/components/form"
+import { ServiceIntro } from "@/components/service-intro"
 import { Field, inDays, ServiceFormFrame, today, Unavailable } from "@/components/service-form"
 import { api } from "@/lib/api"
 import { useI18n } from "@/lib/i18n"
-import { cityKey, cityMatches, cityOfPlace, fold, STAY_CITIES, STAY_REGIONS, type StayCity, type StayRegion } from "@/lib/iran-destinations"
+import { cityKey, cityMatches, cityOfPlace, fold, STAY_CITIES, STAY_DESTINATIONS, STAY_GROUPS, STAY_REGIONS, type StayCity, type StayGroup, type StayRegion } from "@/lib/iran-destinations"
 import { useSite } from "@/lib/site"
 
 const NOTE_MAX = 1000
@@ -107,56 +108,38 @@ function ListingCard({ item, onRequest }: { item: CuratedListingView; onRequest:
   )
 }
 
-function CityInput({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
-  const { t } = useI18n()
-  const listId = useId()
-  const [open, setOpen] = useState(false)
-  const [active, setActive] = useState(-1)
-  const options = STAY_CITIES.filter((c) => cityMatches(c, value))
-  const exact = options.some((c) => fold(t(cityKey(c, "name"))) === fold(value))
-  const shown = exact ? [] : options
-  const pick = (c: StayCity) => { onChange(t(cityKey(c, "name"))); setOpen(false); setActive(-1) }
+/** Search over the whole destination list (both languages); the picked name goes into the request in the visitor's language. */
+function DestinationCombo({ id, value, onChange }: { id: string; value: string; onChange: (name: string) => void }) {
+  const { t, locale } = useI18n()
+  const items = useMemo<ComboItem[]>(() => {
+    const collate = new Intl.Collator(locale)
+    const order = (g: StayGroup) => STAY_GROUPS.indexOf(g)
+    return [...STAY_DESTINATIONS]
+      .sort((a, b) => order(a.group) - order(b.group) || collate.compare(a[locale], b[locale]))
+      .map((d) => ({ value: d.id, label: d[locale], keywords: [d.en, d.fa, d.id], group: d.group, sublabel: d.featured ? t("guide.services.form.featured") : undefined }))
+  }, [locale, t])
+  const known = new Set(STAY_DESTINATIONS.map((d) => d.id))
+  const current = STAY_DESTINATIONS.find((d) => [d.en, d.fa].includes(value))?.id ?? ""
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2 rounded-xl border border-line bg-cloud px-3 transition-colors focus-within:border-orange focus-within:bg-white focus-within:ring-[3px] focus-within:ring-orange/35">
-        <MapPin className="size-5 shrink-0 text-orange-700" aria-hidden />
-        <input
-          id={id} role="combobox" aria-expanded={open && shown.length > 0} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={open && shown[active] ? `${listId}-${shown[active]!.slug}` : undefined}
-          aria-describedby={`${id}-hint`} autoComplete="off" dir="auto" maxLength={120} required placeholder={t("stays.locationPlaceholder")}
-          className="h-12 w-full bg-transparent text-base font-medium outline-none placeholder:font-normal placeholder:text-steel/80" value={value}
-          onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(-1) }} onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => Math.min(a + 1, shown.length - 1)) }
-            if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)) }
-            if (e.key === "Escape") setOpen(false)
-            if (e.key === "Enter") { e.preventDefault(); if (open && shown[active]) pick(shown[active]!) }
-          }}
-        />
-        {value && <button type="button" aria-label={t("stays.clearLocation")} className="flex size-8 shrink-0 items-center justify-center rounded-full text-steel hover:bg-line/60 pointer-coarse:size-11" onClick={() => onChange("")}><X className="size-4" aria-hidden /></button>}
-      </div>
-      <p id={`${id}-hint`} className="mt-1 text-xs text-steel">{value.trim() && !options.length ? t("stays.noCityMatch") : t("stays.locationHint")}</p>
-      {open && shown.length > 0 && (
-        <ul id={listId} role="listbox" aria-label={t("services.location")} className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-line bg-white p-1 shadow-[var(--shadow-lift)]" style={{ top: "3.1rem" }}>
-          {shown.map((c, i) => (
-            <li key={c.slug} id={`${listId}-${c.slug}`} role="option" aria-selected={i === active} onMouseDown={(e) => { e.preventDefault(); pick(c) }} className={`flex cursor-pointer items-center gap-3 rounded-lg p-2 text-sm ${i === active ? "bg-accent" : "hover:bg-cloud"}`}>
-              <span className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-navy-900"><CityPhoto city={c} sizes="44px" className="size-full object-cover" /></span>
-              <span className="min-w-0"><span className="block font-semibold text-navy-950">{t(cityKey(c, "name"))}</span><span className="block truncate text-xs text-steel">{t(cityKey(c, "blurb"))}</span></span>
-            </li>
-          ))}
-        </ul>
+    <div className="min-w-0">
+      <input id={id} hidden value={value} onChange={(e) => { if (STAY_DESTINATIONS.some((d) => [d.en, d.fa].includes(e.target.value))) onChange(e.target.value) }} />
+    <ComboField
+      id={id} label={t("services.location")} items={items} value={current} required placeholder={t("guide.services.form.destinationSearch")} hint={t("guide.services.form.destinationHint")} emptyText={t("guide.services.form.destinationNoMatch")} testId="stay-location"
+      groupLabel={(g) => t(`stays.regions.${g as StayGroup}`)}
+      onChange={(v) => onChange(STAY_DESTINATIONS.find((d) => d.id === v && known.has(v))?.[locale] ?? "")}
+      renderValue={(item, valueId) => (
+        <>
+          <MapPin className="size-5 shrink-0 text-orange-700" aria-hidden />
+          <span id={valueId} dir="auto" className={`min-w-0 flex-1 truncate ${item || value ? "font-semibold text-navy-950" : "text-steel"}`}>{item?.label ?? (value || t("guide.common.selectPlaceholder"))}</span>
+        </>
       )}
-    </div>
-  )
-}
-
-function Stepper({ id, label, value, min, max, onChange }: { id: string; label: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
-  const { t } = useI18n()
-  const btn = "flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-navy-950 transition-colors hover:bg-cloud disabled:opacity-40 pointer-coarse:size-11"
-  return (
-    <div className="flex h-12 items-center justify-between gap-1 rounded-xl border border-line bg-cloud px-1 focus-within:border-orange focus-within:ring-[3px] focus-within:ring-orange/35">
-      <button type="button" className={btn} disabled={value <= min} aria-label={t("stays.decrease", { label })} onClick={() => onChange(Math.max(min, value - 1))}><Minus className="size-4" aria-hidden /></button>
-      <input id={id} type="number" inputMode="numeric" min={min} max={max} className="w-full min-w-0 bg-transparent text-center text-base font-semibold tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" value={value} onChange={(e) => onChange(Number(e.target.value))} />
-      <button type="button" className={btn} disabled={value >= max} aria-label={t("stays.increase", { label })} onClick={() => onChange(Math.min(max, value + 1))}><Plus className="size-4" aria-hidden /></button>
+      renderItem={(item) => (
+        <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+          <span className="block min-w-0 truncate text-sm text-navy-950">{item.label}</span>
+          {item.sublabel ? <span className="shrink-0 rounded-full bg-orange/15 px-2 py-0.5 text-[11px] font-semibold text-orange-700">{item.sublabel}</span> : null}
+        </span>
+      )}
+    />
     </div>
   )
 }
@@ -208,6 +191,7 @@ export function StayListing() {
     <>
       <Hero />
       <div className="mx-auto max-w-6xl px-4 pb-14 md:px-6">
+        <ServiceIntro service="stays" className="mt-6 md:mt-8" />
         <section id="destinations" className="scroll-mt-24 pt-6 md:pt-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -220,7 +204,7 @@ export function StayListing() {
             </label>
           </div>
           <div role="group" aria-label={t("stays.regionsLabel")} className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
-            {(["all", ...STAY_REGIONS] as const).map((r) => <button key={r} type="button" aria-pressed={region === r} className={tab(region === r)} onClick={() => setRegion(r)}>{t(`stays.regions.${r}`)}</button>)}
+            {(["all", ...STAY_REGIONS.filter((r) => STAY_CITIES.some((c) => c.region === r))] as const).map((r) => <button key={r} type="button" aria-pressed={region === r} className={tab(region === r)} onClick={() => setRegion(r)}>{t(`stays.regions.${r}`)}</button>)}
           </div>
           <ul className="mt-5 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4" data-testid="city-grid">
             {cities.map((c, i) => <CityCard key={c.slug} city={c} count={counts.get(c.slug) ?? 0} selected={city?.slug === c.slug} feature={featured && i === 0} onSelect={() => selectCity(c)} />)}
@@ -244,6 +228,7 @@ export function StayListing() {
             {city && <button type="button" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-royal underline underline-offset-2" onClick={() => setCity(null)}><X className="size-4" aria-hidden />{t("stays.clearCity")}</button>}
           </div>
           {q.isLoading && <LoadingState className="mt-5" label={t("common.loading")} rows={2} />}
+          {q.isError && <ErrorState compact className="mt-5" title={t("guide.services.form.listingsErrorTitle")} body={t("guide.services.form.listingsErrorBody")} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} />}
           {q.data && listed.length === 0 && (
             <div className="mt-5" data-testid="stay-listings-empty">
               <EmptyState compact icon={<BedDouble />} title={t("stays.noneTitle")} body={items.length ? t("stays.noneBody") : t("stays.noneAll")} action={<button type="button" className="btn-orange mt-2 inline-flex" onClick={toRequest}>{city ? t("stays.askInCity", { city: t(cityKey(city, "name")) }) : t("stays.ctaRequest")}</button>} />
@@ -263,13 +248,13 @@ export function StayListing() {
 
         <div id={REQUEST_ID} ref={requestRef} className="mt-14 scroll-mt-24">
           <ServiceFormFrame type="STAY" menuKey="stays" title={t("listings.requestForm")} lead={t("stays.requestLead")} details={details} valid={valid} embedded>
-            <div className="sm:col-span-2"><Field id="s-loc" label={t("services.location")}><CityInput id="s-loc" value={f.location} onChange={(location) => patch({ location })} /></Field></div>
+            <div className="sm:col-span-2"><DestinationCombo id="s-loc" value={f.location} onChange={(location) => patch({ location })} /></div>
             <div className="text-sm sm:col-span-2">
               <p className="font-medium">{t("stays.dates")}</p>
               <div className="mt-1"><DateRangeField idIn="s-in" idOut="s-out" checkIn={f.checkIn} checkOut={f.checkOut} min={today()} onChange={patch} /></div>
             </div>
-            <Field id="s-guests" label={t("services.guests")}><Stepper id="s-guests" label={t("services.guests")} value={f.guests} min={1} max={20} onChange={(guests) => patch({ guests })} /></Field>
-            <Field id="s-rooms" label={t("services.rooms")}><Stepper id="s-rooms" label={t("services.rooms")} value={f.rooms} min={1} max={10} onChange={(rooms) => patch({ rooms })} /></Field>
+            <CounterField variant="field" id="s-guests" label={t("services.guests")} value={f.guests} min={1} max={20} onChange={(guests) => patch({ guests })} />
+            <CounterField variant="field" id="s-rooms" label={t("services.rooms")} value={f.rooms} min={1} max={10} onChange={(rooms) => patch({ rooms })} />
             <div className="sm:col-span-2">
               <Field id="s-note" label={t("services.note")} optional>
                 <textarea id="s-note" className="field block h-32 w-full resize-none overflow-y-auto py-2.5 leading-6" dir="auto" maxLength={NOTE_MAX} placeholder={t("stays.notePlaceholder")} aria-describedby="s-note-count" value={f.note} onChange={(e) => patch({ note: e.target.value })} />

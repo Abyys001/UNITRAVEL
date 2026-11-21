@@ -1,7 +1,7 @@
 import fc from "fast-check"
 import { describe, expect, it } from "vitest"
 
-import { benefitNeedsApproval, type BenefitFacts, canDebit, checkClubDiscountLine, effectiveBenefitStatus, ledgerBalance, type MemberFacts } from "./loyalty"
+import { benefitNeedsApproval, type BenefitFacts, canDebit, checkClubDiscountLine, effectiveBenefitStatus, ledgerBalance, type MemberFacts, pointsDelta } from "./loyalty"
 
 const now = new Date("2026-11-01T12:00:00Z")
 const member: MemberFacts = { userId: "u1", tierId: "t1", status: "ACTIVE" }
@@ -86,5 +86,21 @@ describe("club credit ledger", () => {
         expect(ledgerBalance(entries).GBP ?? 0).toBeGreaterThanOrEqual(0)
       }
     }))
+  })
+})
+
+describe("club points (ADR-0039 D3)", () => {
+  it("grants only to an active member and stores a positive delta", () => {
+    expect(pointsDelta({ balance: 0, memberStatus: "ACTIVE", kind: "GRANTED", points: 50 })).toEqual({ ok: true, delta: 50 })
+    expect(pointsDelta({ balance: 0, memberStatus: "SUSPENDED", kind: "GRANTED", points: 50 })).toEqual({ ok: false, code: "NOT_A_MEMBER" })
+    expect(pointsDelta({ balance: 0, memberStatus: "REMOVED", kind: "GRANTED", points: 50 })).toEqual({ ok: false, code: "NOT_A_MEMBER" })
+  })
+  it("never deducts below zero, and allows correcting a suspended member down", () => {
+    expect(pointsDelta({ balance: 30, memberStatus: "ACTIVE", kind: "DEDUCTED", points: 30 })).toEqual({ ok: true, delta: -30 })
+    expect(pointsDelta({ balance: 30, memberStatus: "ACTIVE", kind: "DEDUCTED", points: 31 })).toEqual({ ok: false, code: "INSUFFICIENT_POINTS" })
+    expect(pointsDelta({ balance: 30, memberStatus: "SUSPENDED", kind: "DEDUCTED", points: 10 })).toEqual({ ok: true, delta: -10 })
+  })
+  it("refuses zero, negative and fractional amounts", () => {
+    for (const points of [0, -5, 1.5]) expect(pointsDelta({ balance: 100, memberStatus: "ACTIVE", kind: "GRANTED", points })).toEqual({ ok: false, code: "INVALID" })
   })
 })

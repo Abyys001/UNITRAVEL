@@ -17,7 +17,8 @@ export const GLOSSARY_CATEGORIES = ["FLIGHT", "BAGGAGE", "CLASS", "HOTEL", "ROOM
 
 /** List rows carry what the table needs; the full entry (body, claims) comes from the detail call. */
 export type EntryRow = Pick<CmsStaffEntry, "id" | "kind" | "locale" | "slug" | "title" | "status" | "updatedAt" | "claimsToVerify" | "version">
-export type GlossaryRow = GlossaryTermView & { id: string }
+/** The API keys terms by slug (cms.controller `glossary/:slug`); there is no id. */
+export type GlossaryRow = GlossaryTermView
 export interface Paged<R> { items: R[]; total: number; page: number; pageSize: number }
 
 /** Accepts both `{ items }` and a bare array so the screen survives either list shape. */

@@ -4,11 +4,13 @@ import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, 
 
 import { normaliseReference } from "@unitravel/domain"
 
-import { useQueueSummary, useStaffStream, useSupportOverview } from "@/lib/live"
+import { useQueueSummary, useStaffStream } from "@/lib/live"
+import { useStaffNotificationSummary } from "@/lib/notifications"
 import { useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 import { useClubOn } from "@/lib/site"
 
+import { BellFeed, NotificationToaster } from "./notifications"
 import { Gate, type NavItem, Shell, type ShellAlert } from "./shell"
 
 function AdminShell({ children }: { children: React.ReactNode }) {
@@ -18,7 +20,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const queues = can("flight_request.read.any", "cargo_request.read.any")
   useStaffStream(queues)
   const summary = useQueueSummary(queues)
-  const support = useSupportOverview(can("support.read"))
+  // ADR-0039 D1: sidebar badges count this person's unread notifications per area, not queue sizes (those stay on the queue tabs).
+  const notif = useStaffNotificationSummary()
+  const unread = notif.data?.unread
+  const badge = (n: number | undefined) => (n ? n : undefined)
   const s = summary.data
   const flights = can("flight_request.read.any")
   const cargo = can("cargo_request.read.any")
@@ -27,24 +32,24 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   // A short flat list; each queue is a tab on the Requests page and policies/lists are tabs under Compliance.
   const items: NavItem[] = [
     { href: "/", label: t("nav.home"), mobile: true, group: "work", icon: <Home className="size-[18px]" /> },
-    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests", "/cargo"], group: "work", count: flights ? s?.new : undefined, alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
-    ...(can("service_request.read.any") ? [{ href: "/services", label: t("nav.services"), group: "work", icon: <ConciergeBell className="size-[18px]" /> }] : []),
+    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests", "/cargo"], group: "work", count: badge(unread?.REQUEST), alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
+    ...(can("service_request.read.any") ? [{ href: "/services", label: t("nav.services"), group: "work", count: badge(unread?.SERVICE), icon: <ConciergeBell className="size-[18px]" /> }] : []),
     ...(can("customer.read") ? [{ href: "/customers", label: t("nav.customers"), group: "work", icon: <Users className="size-[18px]" /> }] : []),
     ...(can("support.read", "call.log") ? [{
-      href: can("support.read") ? "/support" : "/support/calls", label: t("nav.support"), group: "work", count: support.data?.open, alert: (support.data?.overdue ?? 0) > 0, icon: <Headset className="size-[18px]" />,
+      href: can("support.read") ? "/support" : "/support/calls", label: t("nav.support"), group: "work", count: badge(unread?.SUPPORT), icon: <Headset className="size-[18px]" />,
       tabs: [...(can("support.read") ? [{ href: "/support", label: t("nav.supportInbox") }] : []), ...(can("call.log") ? [{ href: "/support/calls", label: t("nav.supportCalls") }] : [])],
     }] : []),
     ...(can("compliance.case.read") ? [{
       href: "/compliance", label: t("nav.compliance"), count: s?.complianceHolds, alert: true, mobile: true, group: "work", icon: <ShieldAlert className="size-[18px]" />,
       tabs: [{ href: "/compliance", label: t("nav.cases") }, { href: "/compliance/policies", label: t("nav.policies") }, { href: "/compliance/lists", label: t("nav.lists") }],
     }] : []),
-    ...(can("identity.verify") ? [{ href: "/verifications", label: t("nav.identityChecks"), short: t("nav.identity"), mobile: true, group: "work", icon: <IdCard className="size-[18px]" /> }] : []),
+    ...(can("identity.verify") ? [{ href: "/verifications", label: t("nav.identityChecks"), short: t("nav.identity"), mobile: true, group: "work", count: badge(unread?.IDENTITY), icon: <IdCard className="size-[18px]" /> }] : []),
     // ADR-0038: issuing is its own tab so staff with ticket.document.issue reach the wizard in one click.
     ...(can("ticket.record", "ticket.document.issue") ? [{
       href: can("ticket.document.issue") ? "/tickets/issue" : "/tickets", label: t("td.nav"), group: "records", icon: <Ticket className="size-[18px]" />,
       tabs: [...(can("ticket.document.issue") ? [{ href: "/tickets/issue", label: t("td.issue.title") }] : []), ...(can("ticket.record") ? [{ href: "/tickets", label: t("td.nav.list") }] : [])],
     }] : []),
-    ...(can("commercial_document.issue", "flight_request.read.any", "cargo_request.read.any") ? [{ href: "/invoices", label: t("nav.invoices"), group: "records", icon: <Receipt className="size-[18px]" /> }] : []),
+    ...(can("commercial_document.issue", "flight_request.read.any", "cargo_request.read.any") ? [{ href: "/invoices", label: t("nav.invoices"), group: "records", count: badge(unread?.PAYMENT), icon: <Receipt className="size-[18px]" /> }] : []),
     ...(can("loyalty.read") && clubOn ? [{
       href: "/club", label: t("nav.club"), group: "records", icon: <Gem className="size-[18px]" />,
       tabs: [{ href: "/club", label: t("nav.clubMembers") }, { href: "/club/benefits", label: t("nav.clubBenefits") }, { href: "/club/tiers", label: t("nav.clubTiers") }],
@@ -83,7 +88,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     if (ref?.startsWith("UT-S-") && can("service_request.read.any")) return `/services/${ref}`
     return `/queues?tab=all&q=${encodeURIComponent(q)}`
   }
-  return <Shell surface="admin" items={items} onGoTo={goTo} goToHint="Reference or phone — UT-F-8K4Q7M" alerts={alerts}>{children}</Shell>
+  return (
+    <Shell surface="admin" items={items} onGoTo={goTo} goToHint="Reference or phone — UT-F-8K4Q7M" alerts={alerts} bellFeed={(close) => <BellFeed close={close} />} bellUnread={unread?.total ?? 0}>
+      <NotificationToaster />
+      {children}
+    </Shell>
+  )
 }
 
 export function AdminFrame({ children }: { children: React.ReactNode }) {

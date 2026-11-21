@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useId, useMemo, useState } from "react"
 
-import type { ClubCandidate, LoyaltyMemberView } from "@unitravel/contracts"
+import type { ClubCandidate, LoyaltyMemberView, LoyaltyTierView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { cn } from "@unitravel/ui/lib/utils"
@@ -39,10 +39,12 @@ export default function ClubMembers() {
   return (
     <ListPage>
       <PageHead title={t("nav.club")}>
-        {can("loyalty.manage") && <Button size="sm" onClick={() => setAdding(true)} disabled={!tiers.data?.some((x) => x.active)} data-testid="club-add-member"><UserPlus aria-hidden />{t("club.add")}</Button>}
+        {/* ADR-0039: always enabled; with no active tier the dialog creates the first one, so an empty club is never a dead end. */}
+        {can("loyalty.manage") && <Button size="sm" onClick={() => setAdding(true)} disabled={!tiers.data} data-testid="club-add-member"><UserPlus aria-hidden />{t("club.add")}</Button>}
       </PageHead>
       <ClubOffNotice />
-      {tiers.data && !tiers.data.length && <p className="mx-4 mb-3 text-meta text-steel md:mx-6">{t("club.tiers.none")} <Link href="/club/tiers" className="font-medium text-link hover:underline">{t("nav.clubTiers")} <Arrow /></Link></p>}
+      <p className="mx-4 mb-3 max-w-3xl text-meta text-steel md:mx-6" data-testid="club-help">{t("club.help")}</p>
+      {tiers.data && !tiers.data.some((x) => x.active) && <p className="mx-4 mb-3 text-meta text-steel md:mx-6">{t("club.tiers.noneActive")} <Link href="/club/tiers" className="font-medium text-link hover:underline">{t("nav.clubTiers")} <Arrow /></Link></p>}
       <Toolbar query={search} onQuery={setSearch} placeholder={t("club.members.search")} count={q.data ? rows.length : undefined}>
         <Chips label={t("pg.c.status")} value={status} options={[...MEMBER_STATUSES.map((s) => ({ value: s, label: L.memberStatus(s) })), { value: "" as const, label: t("pg.all") }]} onChange={setStatus} />
         <label className="w-full sm:w-48">
@@ -60,7 +62,7 @@ export default function ClubMembers() {
               <li key={m.userId}>
                 <Link href={href(m)} className="block min-h-11 rounded-[var(--radius-card)] border border-rule bg-surface-raised p-3.5 shadow-[var(--tile-shadow)] active:bg-hover">
                   <span className="flex items-center justify-between gap-2"><span className="font-medium" dir="auto">{m.name}</span><Chip value={m.status} label={L.memberStatus(m.status)} /></span>
-                  <span className="mt-1 block text-steel">{L.tierName(m.tier)} · <span className="num">{credit(m.creditBalance, t("club.m.noCredit"))}</span></span>
+                  <span className="mt-1 block text-steel">{L.tierName(m.tier)} · <span className="num">{t("club.points.n", { n: m.pointsBalance })}</span> · <span className="num">{credit(m.creditBalance, t("club.m.noCredit"))}</span></span>
                   <span className="num mt-1 block text-meta text-steel">{t("club.c.joined")} {fmtDate(m.joinedAt)}</span>
                 </Link>
               </li>
@@ -69,13 +71,14 @@ export default function ClubMembers() {
           <ListCard fill className="hidden md:flex">
             <TableScroll>
               <table className={tableClass} data-testid="members">
-                <thead><tr><th>{t("club.c.name")}</th><th>{t("club.c.tier")}</th><th>{t("pg.c.status")}</th><th className="cell-num">{t("club.c.credit")}</th><th>{t("club.c.joined")}</th><th>{t("club.c.addedBy")}</th></tr></thead>
+                <thead><tr><th>{t("club.c.name")}</th><th>{t("club.c.tier")}</th><th>{t("pg.c.status")}</th><th className="cell-num">{t("club.c.points")}</th><th className="cell-num">{t("club.c.credit")}</th><th>{t("club.c.joined")}</th><th>{t("club.c.addedBy")}</th></tr></thead>
                 <tbody>
                   {paged.rows.map((m) => (
                     <tr key={m.userId} className="cursor-pointer" onClick={(e) => { if (!(e.target as HTMLElement).closest("a")) router.push(href(m)) }}>
                       <td><Link href={href(m)} className="inline-block py-1 font-medium hover:underline" dir="auto">{m.name}</Link></td>
                       <td>{L.tierName(m.tier)} <span className="ref text-meta text-steel">{m.tier.code}</span></td>
                       <td><Chip value={m.status} label={L.memberStatus(m.status)} /></td>
+                      <td className="cell-num" data-testid="member-points">{m.pointsBalance}</td>
                       <td className="cell-num">{credit(m.creditBalance, "—")}</td>
                       <td className="num whitespace-nowrap text-steel">{fmtDate(m.joinedAt)}</td>
                       <td className="text-steel" dir="auto">{m.addedBy}</td>
@@ -109,9 +112,21 @@ function AddMemberDialog({ open, onOpenChange, onAdded }: { open: boolean; onOpe
   useEffect(() => { if (open) { setText(""); setTerm(""); setPicked(null); setNote(""); setTierId(tiers.data?.find((x) => x.active)?.id ?? "") } }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const h = setTimeout(() => setTerm(text.trim()), 300); return () => clearTimeout(h) }, [text])
   const found = useQuery({ queryKey: ["club", "candidates", term], queryFn: () => api<ClubCandidate[]>(`/v1/admin/club/candidates?q=${encodeURIComponent(term)}`), enabled: open && term.length >= 2, retry: false })
+  const active = (tiers.data ?? []).filter((x) => x.active)
+  const needTier = !!tiers.data && !active.length
+  const [newTier, setNewTier] = useState({ code: "MEMBER", nameEn: "Member", nameFa: "عضو" })
+  const refreshTiers = useRefresh([["club", "tiers"]])
   const submit = async () => {
     if (!picked) throw new Error(t("club.add.pick"))
-    try { await api<LoyaltyMemberView>("/v1/admin/club/members", { body: { userId: picked.userId, tierId, note: note.trim() || undefined } }) } catch (e) { throw clubError(e, t) }
+    let tier = tierId
+    try {
+      if (needTier) {
+        const created = await api<LoyaltyTierView>("/v1/admin/club/tiers", { body: { code: newTier.code.trim().toUpperCase(), nameEn: newTier.nameEn.trim(), nameFa: newTier.nameFa.trim(), active: true } })
+        tier = created.id
+        await refreshTiers()
+      }
+      await api<LoyaltyMemberView>("/v1/admin/club/members", { body: { userId: picked.userId, tierId: tier, note: note.trim() || undefined } })
+    } catch (e) { throw clubError(e, t) }
     await refresh()
     onAdded(picked.userId)
   }
@@ -140,13 +155,26 @@ function AddMemberDialog({ open, onOpenChange, onAdded }: { open: boolean; onOpe
           </fieldset>
         ))}
       </div>
+      {needTier && (
+        <fieldset className="rounded-lg border border-rule bg-surface-sunk p-3" data-testid="first-tier">
+          <legend className="px-1 text-meta font-medium text-ink">{t("club.firstTier")}</legend>
+          <p className="mb-2 text-caption text-steel">{t("club.firstTier.hint")}</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label={t("club.tier.code")}><input className="field-input" value={newTier.code} onChange={(e) => setNewTier({ ...newTier, code: e.target.value.toUpperCase() })} pattern="[A-Z][A-Z0-9_]{1,23}" required dir="ltr" data-testid="first-tier-code" /></Field>
+            <Field label={t("club.tier.nameEn")}><input className="field-input" value={newTier.nameEn} onChange={(e) => setNewTier({ ...newTier, nameEn: e.target.value })} maxLength={60} required dir="ltr" /></Field>
+            <Field label={t("club.tier.nameFa")}><input className="field-input" value={newTier.nameFa} onChange={(e) => setNewTier({ ...newTier, nameFa: e.target.value })} maxLength={60} required dir="rtl" /></Field>
+          </div>
+        </fieldset>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label={t("club.c.tier")}>
-          <NativeSelect className="field-input" value={tierId} onChange={(e) => setTierId(e.target.value)} required>
-            <option value="" disabled>{t("club.b.tier.choose")}</option>
-            {(tiers.data ?? []).filter((x) => x.active).map((x) => <option key={x.id} value={x.id}>{L.tierName(x)} ({x.code})</option>)}
-          </NativeSelect>
-        </Field>
+        {!needTier && (
+          <Field label={t("club.c.tier")}>
+            <NativeSelect className="field-input" value={tierId} onChange={(e) => setTierId(e.target.value)} required>
+              <option value="" disabled>{t("club.b.tier.choose")}</option>
+              {active.map((x) => <option key={x.id} value={x.id}>{L.tierName(x)} ({x.code})</option>)}
+            </NativeSelect>
+          </Field>
+        )}
         <Field label={t("club.add.note")}><input className="field-input" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} dir="auto" /></Field>
       </div>
     </FormDialog>

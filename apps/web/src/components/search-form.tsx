@@ -1,10 +1,9 @@
 "use client"
 
-import { ArrowLeftRight, ArrowRight, Baby, CalendarDays, CalendarPlus, ChevronDown, Clock, Luggage, MapPinned, Minus, Moon, PersonStanding, Plus, Route, Search, Shuffle, User, Users, X } from "lucide-react"
+import { ArrowLeftRight, ArrowRight, Baby, CalendarDays, CalendarPlus, ChevronDown, Clock, Luggage, MapPinned, Moon, PersonStanding, Route, Search, Shuffle, User, Users, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useId, useRef, useState } from "react"
 
-import { NativeSelect } from "@unitravel/ui/components/native-select"
 import { Popover, PopoverContent, PopoverTrigger } from "@unitravel/ui/components/popover"
 import { Switch } from "@unitravel/ui/components/switch"
 
@@ -12,6 +11,7 @@ import { useI18n } from "@/lib/i18n"
 
 import { Calendar, useDateParts } from "./calendar"
 import { DestinationPicker, type PlaceValue } from "./destination-picker"
+import { CounterField, SelectField } from "./form"
 
 export interface SearchParamsShape { trip: "ONE_WAY" | "RETURN"; from: PlaceValue; to: PlaceValue; date: string; ret?: string; adt: number; chd: number[]; inf: number; cabin: string; flex: boolean; st: boolean; ac: boolean; on: boolean; gw: boolean; stops: number; lay: [number, number] }
 
@@ -94,26 +94,6 @@ function TripDatesField({ p, setP }: { p: SearchParamsShape; setP: React.Dispatc
   )
 }
 
-function Stepper({ label, hint, icon: Icon, value, onChange, min = 0, max }: { label: string; hint: string; icon: React.ComponentType<{ className?: string }>; value: number; onChange: (n: number) => void; min?: number; max: number }) {
-  const { locale } = useI18n()
-  const id = useId()
-  const btn = "grid size-8 place-items-center rounded-full text-navy-900 outline-none transition-colors enabled:hover:bg-white enabled:hover:shadow-sm focus-visible:ring-[3px] focus-visible:ring-royal/50 disabled:text-steel/40 pointer-coarse:size-11"
-  return (
-    <div className="flex items-center gap-3 py-2.5">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-navy-900/5 text-navy-900"><Icon className="size-5" /></span>
-      <span className="min-w-0 flex-1">
-        <span id={id} className="block text-sm font-semibold text-navy-950">{label}</span>
-        <span className="block text-xs text-steel">{hint}</span>
-      </span>
-      <span role="group" aria-labelledby={id} className="flex items-center gap-1 rounded-full border border-line bg-cloud p-0.5">
-        <button type="button" className={btn} aria-label={`− ${label}`} disabled={value <= min} onClick={() => onChange(value - 1)}><Minus className="size-4" /></button>
-        <output aria-live="polite" className="w-6 text-center text-sm font-bold tabular-nums text-navy-950">{new Intl.NumberFormat(locale === "fa" ? "fa-IR" : "en-GB").format(value)}</output>
-        <button type="button" className={btn} aria-label={`+ ${label}`} disabled={value >= max} onClick={() => onChange(value + 1)}><Plus className="size-4" /></button>
-      </span>
-    </div>
-  )
-}
-
 function ToggleRow({ icon: Icon, label, hint, checked, onChange }: { icon: React.ComponentType<{ className?: string }>; label: string; hint: string; checked: boolean; onChange: (v: boolean) => void }) {
   const id = useId()
   return (
@@ -136,6 +116,8 @@ function TravellersPanel({ p, set }: { p: SearchParamsShape; set: <K extends key
   const total = p.adt + p.chd.length + p.inf
   const room = MAX_PASSENGERS - total
   const stopsText = p.stops === 0 ? t("search.direct") : p.stops === 1 ? t("search.stopsUpToOne") : t("search.stopsUpTo", { n: num(p.stops) })
+  const ageId = useId()
+  const ages = Array.from({ length: 10 }, (_, k) => k + 2).map((a) => ({ value: String(a), label: num(a) }))
   const card = "rounded-2xl border border-line bg-white p-4 shadow-[0_1px_2px_rgb(10_27_61/0.04)]"
   const heading = (Icon: React.ComponentType<{ className?: string }>, title: string, badge?: string) => (
     <div className="mb-1 flex items-center gap-2 border-b border-line pb-3">
@@ -150,16 +132,9 @@ function TravellersPanel({ p, set }: { p: SearchParamsShape; set: <K extends key
     if (next[0] > next[1]) next[i === 0 ? 1 : 0] = h * 60
     set("lay", next)
   }
-  const hourStepper = (i: 0 | 1, lo: number, hi: number) => {
-    const h = p.lay[i] / 60
-    return (
-      <span className="flex items-center gap-1 rounded-full border border-line bg-cloud p-0.5">
-        <button type="button" aria-label={`− ${t("search.layoverWindow")}`} disabled={h <= lo} onClick={() => setLay(i, h - 1)} className="grid size-7 place-items-center rounded-full outline-none enabled:hover:bg-white focus-visible:ring-[3px] focus-visible:ring-royal/50 disabled:text-steel/40 pointer-coarse:size-11"><Minus className="size-3.5" /></button>
-        <span className="min-w-12 text-center text-sm font-semibold tabular-nums text-navy-950">{t("search.hours", { n: num(h) })}</span>
-        <button type="button" aria-label={`+ ${t("search.layoverWindow")}`} disabled={h >= hi} onClick={() => setLay(i, h + 1)} className="grid size-7 place-items-center rounded-full outline-none enabled:hover:bg-white focus-visible:ring-[3px] focus-visible:ring-royal/50 disabled:text-steel/40 pointer-coarse:size-11"><Plus className="size-3.5" /></button>
-      </span>
-    )
-  }
+  const hourStepper = (i: 0 | 1, lo: number, hi: number) => (
+    <CounterField variant="inline" label={t("search.layoverWindow")} value={p.lay[i] / 60} min={lo} max={hi} onChange={(h) => setLay(i, h)} format={(h) => t("search.hours", { n: num(h) })} />
+  )
   return (
     <div className="@container mt-3 rounded-2xl border border-line bg-cloud/40">
       <button
@@ -179,24 +154,26 @@ function TravellersPanel({ p, set }: { p: SearchParamsShape; set: <K extends key
           <section className={card} aria-label={t("search.travellers")}>
             {heading(Users, t("search.travellers"), num(total))}
             <div className="divide-y divide-line/70">
-              <Stepper icon={User} label={t("search.adults")} hint={t("search.adultsHint")} value={p.adt} min={1} max={p.adt + room} onChange={(n) => { set("adt", n); if (p.inf > n) set("inf", n) }} />
-              <Stepper icon={PersonStanding} label={t("search.children")} hint={t("search.childrenHint")} value={p.chd.length} max={p.chd.length + room} onChange={(n) => set("chd", n > p.chd.length ? [...p.chd, 8] : p.chd.slice(0, n))} />
+              <CounterField icon={User} label={t("search.adults")} hint={t("search.adultsHint")} value={p.adt} min={1} max={p.adt + room} onChange={(n) => { set("adt", n); if (p.inf > n) set("inf", n) }} />
+              <CounterField icon={PersonStanding} label={t("search.children")} hint={t("search.childrenHint")} value={p.chd.length} max={p.chd.length + room} onChange={(n) => set("chd", n > p.chd.length ? [...p.chd, 8] : p.chd.slice(0, n))} />
               {p.chd.length > 0 && (
                 <fieldset className="py-2.5">
                   <legend className="mb-2 text-xs font-medium text-steel">{t("search.agesLabel")}</legend>
                   <div className="flex flex-wrap gap-2">
                     {p.chd.map((age, i) => (
-                      <label key={i} className="flex items-center gap-1.5 rounded-full border border-line bg-cloud ps-3 text-xs text-steel">
-                        <span className="sr-only">{t("search.childAge", { n: i + 1 })}</span><span aria-hidden>{num(i + 1)}</span>
-                        <NativeSelect value={age} onChange={(e) => set("chd", p.chd.map((a, j) => (j === i ? Number(e.target.value) : a)))} className="h-8 rounded-full border-0 bg-white py-0 ps-2 pe-7 text-sm font-semibold text-navy-950 pointer-coarse:h-11">
-                          {Array.from({ length: 10 }, (_, k) => k + 2).map((a) => <option key={a} value={a}>{num(a)}</option>)}
-                        </NativeSelect>
-                      </label>
+                      <div key={i} className="flex items-center gap-1.5 rounded-full border border-line bg-cloud ps-3 text-xs text-steel">
+                        <span aria-hidden>{num(i + 1)}</span>
+                        <SelectField
+                          id={`${ageId}-${i}`} label={t("search.childAge", { n: i + 1 })} hideLabel className="w-20"
+                          value={String(age)} options={ages} onChange={(v) => set("chd", p.chd.map((a, j) => (j === i ? Number(v) : a)))}
+                          triggerClassName="h-8 rounded-full border-0 bg-white ps-2 pe-2 text-sm font-semibold pointer-coarse:h-11"
+                        />
+                      </div>
                     ))}
                   </div>
                 </fieldset>
               )}
-              <Stepper icon={Baby} label={t("search.infants")} hint={p.inf >= p.adt ? t("search.infantsLimit") : t("search.infantsHint")} value={p.inf} max={Math.min(p.adt, p.inf + room)} onChange={(n) => set("inf", n)} />
+              <CounterField icon={Baby} label={t("search.infants")} hint={p.inf >= p.adt ? t("search.infantsLimit") : t("search.infantsHint")} value={p.inf} max={Math.min(p.adt, p.inf + room)} onChange={(n) => set("inf", n)} />
             </div>
           </section>
           <section className={card} aria-label={t("search.connections")}>
@@ -260,12 +237,11 @@ export function SearchForm({ initial }: { initial?: Partial<SearchParamsShape> }
             <button key={k} type="button" role="radio" aria-checked={p.trip === k} onClick={() => setTrip(k)} className={`rounded-full px-4 py-1.5 transition-colors pointer-coarse:min-h-11 ${p.trip === k ? "bg-navy-900 text-white shadow-sm" : "text-steel hover:text-navy-950"}`}>{t(k === "ONE_WAY" ? "search.oneWay" : "search.return")}</button>
           ))}
         </div>
-        <label className="text-xs font-medium uppercase tracking-wide text-steel">
-          <span className="sr-only">{t("search.cabin")}</span>
-          <NativeSelect value={p.cabin} onChange={(e) => set("cabin", e.target.value)} aria-label={t("search.cabin")} className="h-9 rounded-full border border-line bg-cloud ps-4 pe-8 text-sm font-semibold normal-case tracking-normal text-navy-950 pointer-coarse:h-11">
-            <option value="ECONOMY">{t("search.economy")}</option><option value="PREMIUM_ECONOMY">{t("search.premium")}</option><option value="BUSINESS">{t("search.business")}</option><option value="FIRST">{t("search.first")}</option>
-          </NativeSelect>
-        </label>
+        <SelectField
+          id="search-cabin" label={t("search.cabin")} hideLabel className="w-44" value={p.cabin} onChange={(v) => set("cabin", v)}
+          options={[{ value: "ECONOMY", label: t("search.economy") }, { value: "PREMIUM_ECONOMY", label: t("search.premium") }, { value: "BUSINESS", label: t("search.business") }, { value: "FIRST", label: t("search.first") }]}
+          triggerClassName="h-9 rounded-full ps-4 pe-3 text-sm font-semibold pointer-coarse:h-11"
+        />
       </div>
       <div className="relative grid gap-3 md:grid-cols-2">
         <DestinationPicker direction="from" label={t("search.from")} value={p.from} onChange={(v) => set("from", v)} />

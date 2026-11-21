@@ -36,10 +36,16 @@ export function formatDate(iso: string | Date, opts: { locale: Locale; calendar?
   const d = typeof iso === "string" ? new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso) : iso
   const cal = opts.calendar ?? (opts.locale === "fa" ? "JALALI" : "GREGORIAN")
   const loc = calendarLocale(opts.locale, cal)
-  return new Intl.DateTimeFormat(loc, {
+  const fmt = new Intl.DateTimeFormat(loc, {
     timeZone: opts.timeZone ?? (iso.toString().length === 10 ? "UTC" : undefined), day: "numeric", month: "short", ...(opts.year ? { year: "numeric" } : {}),
     ...(opts.weekday ? { weekday: "short" } : {}), ...(opts.dateOnly ? {} : opts.withTime ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" } : {}),
-  }).format(d)
+  })
+  // ICU's Persian pattern with weekday and year is "y MMM d, EEE" (a Latin comma, weekday last); Persian reads "EEE d MMM y".
+  if (opts.locale === "fa" && opts.weekday && opts.year && opts.dateOnly) {
+    const p = Object.fromEntries(fmt.formatToParts(d).map((x) => [x.type, x.value])) as Partial<Record<Intl.DateTimeFormatPartTypes, string>>
+    return [p.weekday, p.day, p.month, p.year].filter(Boolean).join(" ")
+  }
+  return fmt.format(d)
 }
 
 /** Flight times are always airport-local (local strings carry no offset). */

@@ -5,6 +5,7 @@ import type { Redis } from "ioredis"
 import { DEFAULT_WORKFLOW, CARGO_SMS_STATUSES } from "@unitravel/contracts"
 import { type Db, ticketDocuments } from "@unitravel/db"
 
+import { env } from "../../core/env"
 import { DB, REDIS } from "../../core/infra.module"
 import { AccessService } from "../access/access.service"
 import { ConfigService } from "../config/config.service"
@@ -78,6 +79,12 @@ export class NotificationRouter {
         const c = e.payload as { customerUserId: string; tier: string; tier_fa: string }
         return this.n.notify({ eventId: e.id, requestKey: `club:${c.customerUserId}`, data: {}, eventType: "loyalty.member_added", audience: "CUSTOMER", userIds: [c.customerUserId], vars: { tier: c.tier, tier_fa: c.tier_fa }, linkPath: "/club" })
       }
+      case "support.reply": {
+        // ADR-0040 D3: tell a signed-in customer; guests have no inbox and get the email only.
+        const c = e.payload as { ref: string; customerUserId?: string | null }
+        if (!c.customerUserId) return
+        return this.n.notify({ eventId: e.id, requestKey: `support:${c.ref}`, data: { ref: c.ref }, eventType: "support.reply", audience: "CUSTOMER", userIds: [c.customerUserId], vars: { ref: c.ref }, linkPath: `/support/${c.ref}` })
+      }
       case "cargo_request.submitted":
         await this.n.notify({ ...base, eventType: "cargo.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, route: p.routeLabel }, linkPath: this.requestPath(p.ref) })
         return this.alertAdmins(e, { ...p, productType: "CARGO" }, "cargo.submitted")
@@ -85,7 +92,9 @@ export class NotificationRouter {
         const vars = { ref: p.ref, route: p.routeLabel, service_en: p.service_en, service_fa: p.service_fa }
         await this.n.notify({ ...base, eventType: "service_request.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars, linkPath: this.requestPath(p.ref) })
         const onDuty = await this.access.usersWithPermission("service_request.read.any", { onDutyOnly: true })
-        return this.n.notify({ ...base, eventType: "service_request.submitted", audience: "ON_DUTY_ADMINS", userIds: onDuty, vars, linkPath: this.requestPath(p.ref) })
+        // Staff get their own wording and the Admin Panel address; the customer-site short link would open the wrong app.
+        const consoleUrl = `${env().PUBLIC_CONSOLE_ADMIN_URL}/services/${encodeURIComponent(p.ref)}`
+        return this.n.notify({ ...base, eventType: "service_request.new", audience: "ON_DUTY_ADMINS", userIds: onDuty, vars: { ...vars, console_url: consoleUrl } })
       }
       case "service_request.transitioned":
         return this.serviceTransition(e, p)

@@ -3148,6 +3148,352 @@
     "nextCursor": null,
     "unread": 10
    }
+  },
+  "en GET /v1/notifications?filter=all&limit=30&locale=en": {
+   "status": 200,
+   "body": {
+    "items": [
+     {
+      "id": "01a197bb-3796-7308-95c3-bec0d6f48f70",
+      "eventType": "quotation.sent",
+      "title": "Quotation QT-2026-000036 · UT-F-AP1YSE",
+      "body": "Your quotation QT-2026-000036 for UT-F-AP1YSE is ready. It is valid until 2 Nov, 18:59 GMT+3:30.",
+      "data": {
+       "linkPath": "/requests/UT-F-AP1YSE"
+      },
+      "critical": true,
+      "readAt": "2026-11-01T15:29:59.192Z",
+      "createdAt": "2026-11-01T15:29:51.510Z"
+     },
+     {
+      "id": "01a197bb-3786-77ea-b268-5d3efcc512d1",
+      "eventType": "request.status_changed",
+      "title": "UT-F-AP1YSE · Being reviewed",
+      "body": "Your request UT-F-AP1YSE is now: Being reviewed.",
+      "data": {
+       "linkPath": "/requests/UT-F-AP1YSE"
+      },
+      "critical": false,
+      "readAt": "2026-11-01T15:29:59.192Z",
+      "createdAt": "2026-11-01T15:29:51.495Z"
+     },
+     {
+      "id": "01a197bb-3521-7612-9d6d-38597cbe0a4c",
+      "eventType": "request.submitted",
+      "title": "Request received · UT-F-AP1YSE",
+      "body": "We received your request UT-F-AP1YSE (Tehran → London). Our team will call you. Requesting does not book a seat.",
+      "data": {
+       "linkPath": "/requests/UT-F-AP1YSE"
+      },
+      "critical": true,
+      "readAt": "2026-11-01T15:29:59.192Z",
+      "createdAt": "2026-11-01T15:29:50.882Z"
+     },
+     {
+      "id": "01a197bb-339b-7310-8474-a417f7ab867c",
+      "eventType": "invoice.issued",
+      "title": "Invoice INV-2026-000018 · UT-C-M3BHXB",
+      "body": "Invoice INV-2026-000018 for UT-C-M3BHXB has been issued. If it is still unpaid it expires on 15 Nov, 18:59 GMT+3:30.",
+      "data": {
+       "linkPath": "/billing/INV-2026-000018"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.492Z"
+     },
+     {
+      "id": "01a197bb-3388-73be-bb95-e167811c5ed1",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · Departed · LHR",
+      "body": "Your request UT-C-M3BHXB is now: Departed · LHR.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.473Z"
+     },
+     {
+      "id": "01a197bb-3378-71f0-b65b-3fb5d62f4208",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · Received by us",
+      "body": "Your request UT-C-M3BHXB is now: Received by us.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.456Z"
+     },
+     {
+      "id": "01a197bb-336f-7519-b152-2d1c5667fc99",
+      "eventType": "cargo.status_changed",
+      "title": "UT-C-M3BHXB · Awaiting pickup / drop-off",
+      "body": "Your shipment UT-C-M3BHXB is now: Awaiting pickup / drop-off.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.447Z"
+     },
+     {
+      "id": "01a197bb-3362-7635-aafc-9b976aced38d",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · Booked",
+      "body": "Your request UT-C-M3BHXB is now: Booked.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.435Z"
+     },
+     {
+      "id": "01a197bb-3356-74fc-83ca-85391c20f50b",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · Booking with carrier",
+      "body": "Your request UT-C-M3BHXB is now: Booking with carrier.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.422Z"
+     },
+     {
+      "id": "01a197bb-3349-75af-908e-146cbd9954ed",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · Quote sent",
+      "body": "Your request UT-C-M3BHXB is now: Quote sent.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.410Z"
+     },
+     {
+      "id": "01a197bb-3347-7379-8c7d-17fb8162f9d8",
+      "eventType": "quotation.sent",
+      "title": "Quotation QT-2026-000035 · UT-C-M3BHXB",
+      "body": "Your quotation QT-2026-000035 for UT-C-M3BHXB is ready. It is valid until 2 Nov, 18:59 GMT+3:30.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.407Z"
+     },
+     {
+      "id": "01a197bb-332f-70af-a819-906380a8871d",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · Received",
+      "body": "Your request UT-C-M3BHXB is now: Received.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.385Z"
+     },
+     {
+      "id": "01a197bb-313f-7157-ba92-c60d664eaf03",
+      "eventType": "cargo.submitted",
+      "title": "Cargo request received · UT-C-M3BHXB",
+      "body": "We received your cargo request UT-C-M3BHXB (United Kingdom → Türkiye). Nothing is booked until we send a quote and you accept it.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:49.888Z"
+     }
+    ],
+    "nextCursor": null,
+    "unread": 10,
+    "nextBefore": null
+   }
+  },
+  "en GET /v1/me/unread": {
+   "status": 200,
+   "body": {
+    "inbox": 10,
+    "support": 0
+   }
+  },
+  "fa GET /v1/notifications?filter=all&limit=30&locale=fa": {
+   "status": 200,
+   "body": {
+    "items": [
+     {
+      "id": "01a197bb-3796-7308-95c3-bec0d6f48f70",
+      "eventType": "quotation.sent",
+      "title": "پیش‌فاکتور QT-2026-000036 · UT-F-AP1YSE",
+      "body": "پیش‌فاکتور QT-2026-000036 برای UT-F-AP1YSE آماده است و تا ۲ نوامبر، ۱۸:۵۹ (‎+۳:۳۰ گرینویچ) اعتبار دارد.",
+      "data": {
+       "linkPath": "/requests/UT-F-AP1YSE"
+      },
+      "critical": true,
+      "readAt": "2026-11-01T15:29:59.192Z",
+      "createdAt": "2026-11-01T15:29:51.510Z"
+     },
+     {
+      "id": "01a197bb-3786-77ea-b268-5d3efcc512d1",
+      "eventType": "request.status_changed",
+      "title": "UT-F-AP1YSE · در حال بررسی",
+      "body": "وضعیت درخواست UT-F-AP1YSE: در حال بررسی",
+      "data": {
+       "linkPath": "/requests/UT-F-AP1YSE"
+      },
+      "critical": false,
+      "readAt": "2026-11-01T15:29:59.192Z",
+      "createdAt": "2026-11-01T15:29:51.495Z"
+     },
+     {
+      "id": "01a197bb-3521-7612-9d6d-38597cbe0a4c",
+      "eventType": "request.submitted",
+      "title": "درخواست دریافت شد · UT-F-AP1YSE",
+      "body": "درخواست UT-F-AP1YSE (تهران → لندن) دریافت شد. تیم ما با شما تماس می‌گیرد. ثبت درخواست به معنای رزرو صندلی نیست.",
+      "data": {
+       "linkPath": "/requests/UT-F-AP1YSE"
+      },
+      "critical": true,
+      "readAt": "2026-11-01T15:29:59.192Z",
+      "createdAt": "2026-11-01T15:29:50.882Z"
+     },
+     {
+      "id": "01a197bb-339b-7310-8474-a417f7ab867c",
+      "eventType": "invoice.issued",
+      "title": "فاکتور INV-2026-000018 · UT-C-M3BHXB",
+      "body": "فاکتور INV-2026-000018 برای UT-C-M3BHXB صادر شد. اگر پرداخت نشده باشد در ۱۵ نوامبر، ۱۸:۵۹ (‎+۳:۳۰ گرینویچ) منقضی می‌شود.",
+      "data": {
+       "linkPath": "/billing/INV-2026-000018"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.492Z"
+     },
+     {
+      "id": "01a197bb-3388-73be-bb95-e167811c5ed1",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · حرکت کرد · LHR",
+      "body": "وضعیت درخواست UT-C-M3BHXB: حرکت کرد · LHR",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.473Z"
+     },
+     {
+      "id": "01a197bb-3378-71f0-b65b-3fb5d62f4208",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · توسط ما دریافت شد",
+      "body": "وضعیت درخواست UT-C-M3BHXB: توسط ما دریافت شد",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.456Z"
+     },
+     {
+      "id": "01a197bb-336f-7519-b152-2d1c5667fc99",
+      "eventType": "cargo.status_changed",
+      "title": "UT-C-M3BHXB · در انتظار تحویل محموله",
+      "body": "وضعیت محمولهٔ UT-C-M3BHXB: در انتظار تحویل محموله",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.447Z"
+     },
+     {
+      "id": "01a197bb-3362-7635-aafc-9b976aced38d",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · رزرو شد",
+      "body": "وضعیت درخواست UT-C-M3BHXB: رزرو شد",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.435Z"
+     },
+     {
+      "id": "01a197bb-3356-74fc-83ca-85391c20f50b",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · در حال رزرو با حمل‌کننده",
+      "body": "وضعیت درخواست UT-C-M3BHXB: در حال رزرو با حمل‌کننده",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.422Z"
+     },
+     {
+      "id": "01a197bb-3349-75af-908e-146cbd9954ed",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · پیشنهاد قیمت ارسال شد",
+      "body": "وضعیت درخواست UT-C-M3BHXB: پیشنهاد قیمت ارسال شد",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.410Z"
+     },
+     {
+      "id": "01a197bb-3347-7379-8c7d-17fb8162f9d8",
+      "eventType": "quotation.sent",
+      "title": "پیش‌فاکتور QT-2026-000035 · UT-C-M3BHXB",
+      "body": "پیش‌فاکتور QT-2026-000035 برای UT-C-M3BHXB آماده است و تا ۲ نوامبر، ۱۸:۵۹ (‎+۳:۳۰ گرینویچ) اعتبار دارد.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.407Z"
+     },
+     {
+      "id": "01a197bb-332f-70af-a819-906380a8871d",
+      "eventType": "request.status_changed",
+      "title": "UT-C-M3BHXB · دریافت شد",
+      "body": "وضعیت درخواست UT-C-M3BHXB: دریافت شد",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": false,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:50.385Z"
+     },
+     {
+      "id": "01a197bb-313f-7157-ba92-c60d664eaf03",
+      "eventType": "cargo.submitted",
+      "title": "درخواست بار دریافت شد · UT-C-M3BHXB",
+      "body": "درخواست ارسال بار UT-C-M3BHXB (بریتانیا → ترکیه) دریافت شد. تا ارسال پیشنهاد قیمت و تأیید شما چیزی رزرو نمی‌شود.",
+      "data": {
+       "linkPath": "/cargo/UT-C-M3BHXB"
+      },
+      "critical": true,
+      "readAt": null,
+      "createdAt": "2026-11-01T15:29:49.888Z"
+     }
+    ],
+    "nextCursor": null,
+    "unread": 10,
+    "nextBefore": null
+   }
+  },
+  "fa GET /v1/me/unread": {
+   "status": 200,
+   "body": {
+    "inbox": 10,
+    "support": 0
+   }
   }
  }
 }

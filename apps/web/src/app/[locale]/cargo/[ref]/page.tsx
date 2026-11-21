@@ -30,12 +30,12 @@ export default function CargoDetail() {
   const accept = useMutation({ mutationFn: (id: string) => api(`/v1/cargo-requests/${ref}/quotes/${id}/accept`, { body: {} }), onSuccess: () => void q.refetch() })
   const send = useMutation({ mutationFn: () => api(`/v1/cargo-requests/${ref}/messages`, { body: { body: msg } }), onSuccess: () => { setMsg(""); void q.refetch() } })
   const r = q.data
-  if (!r) return <div className="mx-auto max-w-4xl px-4 py-8">{q.isError ? <ErrorState title={t("common.error")} body={(q.error as ApiError).message} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} /> : <LoadingState label={t("common.loading")} rows={4} />}</div>
+  if (!r) return <div className="min-w-0">{q.isError ? <ErrorState title={t("common.error")} body={(q.error as ApiError).message} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} /> : <LoadingState label={t("common.loading")} rows={4} />}</div>
   const quote = r.quotes.find((x) => x.status === "SENT") ?? r.quotes.find((x) => x.status === "ACCEPTED")
   const accepted = quote?.status === "ACCEPTED"
   const L = (k: string) => (t as (k: string) => string)(`cargo.quoteLines.${k}`)
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 md:py-10">
+    <div className="min-w-0">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="font-mono text-sm text-steel" dir="ltr">{r.ref}</p><h1 className="font-display text-3xl md:text-4xl"><Auto>{r.lane.label}</Auto></h1><p className="text-steel">{t(`cargo.${r.service}` as never)}{sep}{t("cargo.weights", { actual: r.weights.actualKg, vol: r.weights.volumetricKg, charge: r.weights.chargeableKg })}</p></div>
         <span className="rounded-full bg-navy-950 px-4 py-1.5 text-sm font-semibold text-white">{r.statusLabel}</span>

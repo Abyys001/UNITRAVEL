@@ -10,8 +10,11 @@ import { Button } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { ClipboardList, CreditCard, FileText, History, MessagesSquare, Paperclip, ReceiptText, ShieldCheck, StickyNote, Ticket, UserRound, Plane } from "lucide-react"
+
 import { TileError } from "@/components/bento"
-import { ActionBar, ActionMenu, CaseTabs, CommandBar, commandLabelOf, DESTRUCTIVE, ListSkeleton, PanelTabs, paneClass, paneProps, pickPrimary, StateChip, tallyOptions, Timeline } from "@/components/case"
+import { CaseSection, FactGrid, SectionNav, SubHead } from "@/components/case-section"
+import { ActionBar, ActionMenu, CommandBar, commandLabelOf, DESTRUCTIVE, ListSkeleton, pickPrimary, StateChip, tallyOptions, Timeline } from "@/components/case"
 import { codeLabel } from "@/components/club"
 import { CommandDialog, DIALOG_COMMANDS } from "@/components/flight/commands"
 import { RecordPaymentTrigger } from "@/components/payment-panel"
@@ -26,7 +29,7 @@ import { StaffFarePanel } from "@/components/flight-builder/staff-fare-panel"
 import { TicketDocumentsPanel } from "@/components/tickets/request-panel"
 import { FormDialog, useDialogs } from "@/components/form-dialog"
 import { Composer, MessagesList, NotesList } from "@/components/thread"
-import { Arrow, Empty, ErrorLine, Field, Loading, Panel, RouteText, Tag, useAct } from "@/components/ui"
+import { Arrow, Empty, ErrorLine, Field, Loading, RouteText, Tag, useAct } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { fmtDate, fmtDateTime, ltrIsolate, money } from "@/lib/format"
 import { useIsMobile, useKeys } from "@/lib/hooks"
@@ -35,6 +38,7 @@ import { useLocale } from "@/lib/prefs"
 import { useFallbackInterval } from "@/lib/live"
 import { useSession } from "@/lib/session"
 import type { FlightDetail } from "@/lib/types"
+import { useReadOnOpen } from "@/lib/notifications"
 
 // Mobile admin mode (ch. 15.8) leaves quote sending and recording dialogs to the desktop.
 const DESKTOP_ONLY = new Set(["send_quote", "record_acceptance", "record_reservation", "record_tickets"])
@@ -44,6 +48,7 @@ type Dlg = "contact" | "sms" | "reservation" | "tickets" | "payment" | "override
 
 export default function FlightRequestPage() {
   const { ref } = useParams<{ ref: string }>()
+  useReadOnOpen(ref)
   const qc = useQueryClient()
   const { me, can } = useSession()
   const mobile = useIsMobile()
@@ -61,8 +66,6 @@ export default function FlightRequestPage() {
   const [revealed, setRevealed] = useState<Record<string, string>>({})
   const [contact, setContact] = useState({ outcome: "REACHED", note: "", callBackAt: "" })
   const [sms, setSms] = useState("tried_to_call")
-  const [tab, setTab] = useState<"case" | "customer" | "records">("case")
-  const [thread, setThread] = useState<"messages" | "notes" | "timeline">("messages")
   const t = useT()
   const [locale] = useLocale()
   const tt = t // the travellers map below shadows `t`
@@ -77,9 +80,9 @@ export default function FlightRequestPage() {
     try { await api(`/v1/admin/flight-requests/${ref}/commands/${command}`, { body: {}, headers: { "if-match": String(d!.version) } }); toast.success(t("rq.done", { what: commandLabelOf(command, locale).replace("…", "") })); await refresh() } catch (e) { toast.error(errText(e)) }
   }
   const claim = d?.actions.find((a) => a.command === "claim")
-  // The composers stay mounted under their tab, so the shortcut first shows the tab, then focuses after the DOM update.
-  const focusThread = (to: "messages" | "notes", ref: React.RefObject<HTMLTextAreaElement | null>) => { setTab("case"); setThread(to); requestAnimationFrame(() => ref.current?.focus()) }
-  useKeys({ c: () => { if (claim?.allowed) void claimOrSimple("claim") }, n: () => focusThread("notes", noteRef), m: () => focusThread("messages", msgRef) }, !!d)
+  // Both composers are always mounted in their own section, so the shortcut only scrolls to the field and focuses it.
+  const focusThread = (ref: React.RefObject<HTMLTextAreaElement | null>) => { ref.current?.scrollIntoView({ block: "center" }); ref.current?.focus() }
+  useKeys({ c: () => { if (claim?.allowed) void claimOrSimple("claim") }, n: () => focusThread(noteRef), m: () => focusThread(msgRef) }, !!d)
 
   const reveal = useAct(async (travellerId: string) => api<{ number: string; type: string; issuingCountry: string; expiryDate: string }>(`/v1/admin/customers/travellers/${travellerId}/reveal-document`, { body: { ref } }).then((r) => ({ travellerId, r })), {
     onDone: ({ travellerId, r }) => { setRevealed((x) => ({ ...x, [travellerId]: r.number })); setTimeout(() => setRevealed((x) => { const { [travellerId]: _, ...rest } = x; return rest }), 60_000) },
@@ -128,7 +131,7 @@ export default function FlightRequestPage() {
       {desktopNote}
     </ActionBar>
   ) : (
-    <ActionBar aria-label={t("case.actions")}>
+    <ActionBar aria-label={t("case.actions")} className="static rounded-[var(--radius-card)] border border-rule px-4 py-2.5 shadow-[var(--shadow-xs)] md:px-4">
       <div className="flex items-start gap-2">
         <div data-testid="actions" className="min-w-0 flex-1">
           <CommandBar actions={mainRow} onRun={run} none={t("case.actions.none", { status: d.status })} hint={<><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
@@ -138,152 +141,192 @@ export default function FlightRequestPage() {
     </ActionBar>
   )
 
+  const canAct = can("flight_request.transition")
+  const showQuotes = !mobile && (can("quote.create") || can("pricing.write"))
+  const navItems = [
+    { id: "sec-overview", label: t("rq2.overview"), icon: ClipboardList },
+    { id: "sec-customer", label: t("case.panel.customer"), icon: UserRound },
+    { id: "sec-trip", label: t("rq2.trip"), icon: Plane },
+    ...(showQuotes ? [{ id: "sec-quotes", label: t("case.panel.quotes"), icon: ReceiptText, count: d.quotes.length }] : []),
+    { id: "sec-payment", label: t("rq2.payment"), icon: CreditCard },
+    { id: "sec-tickets", label: t("rq2.tickets"), icon: Ticket },
+    { id: "sec-documents", label: t("case.panel.documents"), icon: Paperclip, count: d.documents.length },
+    { id: "sec-notes", label: t("rq2.notes"), icon: StickyNote, count: d.notes.length },
+    { id: "sec-messages", label: t("case.conversation"), icon: MessagesSquare, count: d.messages.length },
+    { id: "sec-timeline", label: t("rq2.timeline"), icon: History },
+    ...(d.compliance.length > 0 ? [{ id: "sec-compliance", label: t("case.panel.compliance"), icon: ShieldCheck, count: d.compliance.length }] : []),
+  ]
+  const textLink = "font-medium text-link hover:underline"
+
   return (
-    <div className={cn(mobile ? "pb-2" : "pb-8")}>
+    <div className={cn("min-h-full bg-surface-sunk", mobile ? "pb-2" : "pb-8")}>
       {changed && (
         <div role="status" className="flex items-center justify-between gap-3 bg-warning-subtle px-5 py-2 text-warning-subtle-fg">
           <span>{t("case.changed", { from: d.version, to: poll.data ?? "" })}</span>
           <Button size="xs" variant="outline" onClick={() => void refresh()}>{t("case.reload")}</Button>
         </div>
       )}
-      <RequestHero d={d} mobile={mobile} mineCase={mineCase} tally={tally} quoteVersion={latestQuote?.version ?? null} />
-      {!mobile && bar}
-      <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "case", label: t("case.tab.case") }, { key: "customer", label: t("case.tab.customer") }, { key: "records", label: t("case.tab.records"), count: d.reservations.length + d.tickets.length + d.payments.length }]} />
+      <div className="space-y-3 px-3 pt-3 md:px-6 md:pt-4">
+        <div id="sec-overview" className="scroll-mt-32"><RequestHero d={d} mobile={mobile} mineCase={mineCase} tally={tally} quoteVersion={latestQuote?.version ?? null} /></div>
+      </div>
+      <div className="sticky top-0 z-sticky mt-3 bg-surface-sunk/95 backdrop-blur-sm">
+        {!mobile && <div className="px-6 pt-1 pb-2">{bar}</div>}
+        <SectionNav label={t("rq2.nav")} items={navItems} className={cn(mobile ? "border-y border-rule bg-surface-raised" : "px-6 pb-2")} />
+      </div>
 
-      <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-[minmax(250px,300px)_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
-        {/* LEFT — customer */}
-        <div {...paneProps("customer")} className={paneClass(tab, "customer")}>
-          <Panel title={t("case.panel.customer")} aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className="font-medium text-link hover:underline">{t("case.context")} <Arrow /></Link>}>
-            <CustomerCard d={d} mobile={mobile} canAct={can("flight_request.transition")} onCopy={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success(t("rq.copied")) }} onCall={() => dlg.open("contact")} onSms={() => dlg.open("sms")} />
-          </Panel>
-          <Panel title={<>{t("case.panel.travellers")} <span className="num text-steel">{d.travellers.length}</span></>}>
-            <ul className="space-y-2">
-              {d.travellers.map((t, i) => <TravellerCard key={t.travellerId} t={t} index={i} revealed={revealed[t.travellerId]} canReveal={can("customer.read.documents")} onReveal={() => reveal.mutate(t.travellerId)} verificationLabel={tt(`vstatus.${t.verificationStatus}` as MsgKey)} />)}
-            </ul>
-            {Object.keys(revealed).length > 0 && <p className="text-caption text-steel">{t("case.reveal.note")}</p>}
-          </Panel>
-          <Panel title={t("case.panel.contacts")}>
-            {!d.contacts.length ? <Empty>{t("case.contacts.none")}</Empty> : (
-              <ul className="ledger-rows" data-testid="contacts">{d.contacts.map((c) => <li key={c.id} className="py-1"><span className="num text-meta">{fmtDateTime(c.createdAt)}</span> · <StateChip value={c.outcome} />{c.channel === "SMS_TEMPLATE" && <span className="ms-1 text-steel">{t("rp.sms")}</span>}{c.note && <p className="text-steel" dir="auto">“{c.note}”</p>}{c.callBackAt && <p className="text-caption text-orange-700">{t("rq.callBack", { t: fmtDateTime(c.callBackAt) })}</p>}</li>)}</ul>
-            )}
-          </Panel>
-          <Panel title={t("case.panel.history")}>
-            {!d.customer.history.length ? <Empty>{t("case.history.first")}</Empty> : <ul className="ledger-rows">{d.customer.history.map((h) => <li key={h.ref} className="flex justify-between py-1"><Link className="ref text-meta hover:underline" href={h.productType === "CARGO" ? `/cargo/${h.ref}` : `/requests/${h.ref}`}>{h.ref}</Link><StateChip value={h.status} /></li>)}</ul>}
-          </Panel>
-        </div>
-
-        {/* CENTRE — request, conversation, activity */}
-        <div {...paneProps("case")} className={cn("min-w-0", paneClass(tab, "case"))}>
-          <Panel title={t("case.panel.request")} aside={can("flight_request.transition") && !mobile ? (d.amendment?.allowed
-            ? <Button size="xs" variant="outline" onClick={() => dlg.open("amend")} data-testid="amend-open">{t("rq.amend")}</Button>
-            : <span className="text-caption text-steel" title={d.amendment?.reason}>{t("rq.amendWhy", { why: d.amendment?.reason ?? t("rq.notAvailable") })}</span>) : undefined}>
+      <div className="mt-3 flex flex-col gap-4 px-3 md:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start xl:grid-cols-[minmax(0,1fr)_400px]">
+        {/* Main column on lg+; on phones the order-* classes interleave both columns in reading order. */}
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
+          <CaseSection id="sec-trip" icon={Plane} title={t("rq2.trip")} description={t("rq2.trip.desc")} className="order-[30] lg:order-none"
+            aside={canAct && !mobile ? (d.amendment?.allowed
+              ? <Button size="xs" variant="outline" onClick={() => dlg.open("amend")} data-testid="amend-open">{t("rq.amend")}</Button>
+              : <span className="text-caption text-steel" title={d.amendment?.reason}>{t("rq.amendWhy", { why: d.amendment?.reason ?? t("rq.notAvailable") })}</span>) : undefined}>
             <TripSummary d={d} />
-          </Panel>
-          {d.snapshot && (
-            <Panel title={t("case.panel.snapshot")} aside={can("pricing.read.internal") && <Button size="xs" variant="outline" onClick={() => recheck.mutate()} loading={recheck.isPending}>{t("rq.recheck")}</Button>}>
-              <div className="rounded-md border border-rule bg-surface-raised p-3">
-                <ItineraryView it={d.snapshot.itinerary} />
-                <p className="mt-2 flex flex-wrap gap-x-4 text-meta text-steel">{d.snapshot.priceAtSubmit && <span>{t("rq.atSubmission")} <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>{t("rq.revalidated")} <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>{t("rq.rules", { v: d.snapshot.ruleVersion })} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
-                {recheck.error && <ErrorLine error={recheck.error} />}
-                <IndicativeSource d={d} />
-                {d.snapshot.staffFare && <StaffFarePanel fare={d.snapshot.staffFare} />}
+            {d.snapshot && (
+              <div className="rounded-md border border-rule bg-surface-sunk p-3">
+                <SubHead className="mb-2" aside={can("pricing.read.internal") && <Button size="xs" variant="outline" onClick={() => recheck.mutate()} loading={recheck.isPending}>{t("rq.recheck")}</Button>}>{t("case.panel.snapshot")}</SubHead>
+                <div className="rounded-md border border-rule bg-surface-raised p-3">
+                  <ItineraryView it={d.snapshot.itinerary} />
+                  <p className="mt-2 flex flex-wrap gap-x-4 text-meta text-steel">{d.snapshot.priceAtSubmit && <span>{t("rq.atSubmission")} <b className="num text-ink">{money(d.snapshot.priceAtSubmit)}</b></span>}{d.snapshot.priceRevalidated && <span>{t("rq.revalidated")} <b className="num text-ink">{money(d.snapshot.priceRevalidated)}</b> {fmtDateTime(d.snapshot.revalidatedAt)}</span>}<span>{t("rq.rules", { v: d.snapshot.ruleVersion })} · {d.snapshot.engineVersion}</span><span className="font-mono">#{d.snapshot.contentHash.slice(0, 10)}</span></p>
+                  {recheck.error && <ErrorLine error={recheck.error} />}
+                  <IndicativeSource d={d} />
+                  {d.snapshot.staffFare && <StaffFarePanel fare={d.snapshot.staffFare} />}
+                </div>
               </div>
-            </Panel>
-          )}
-          {d.serviceInterests.length > 0 && (
-            <Panel title={t("rq.interests")}>
-              <ul className="flex flex-wrap gap-1.5" data-testid="service-interests">{d.serviceInterests.map((i) => <li key={i.code} className="rounded-sm border border-rule bg-surface-sunk px-1.5 py-0.5 text-meta"><span dir="auto">{locale === "fa" ? i.nameFa : i.nameEn}</span> <span className="num text-steel">{i.code}</span></li>)}</ul>
-              <p className="mt-1.5 text-caption text-steel">{t("rq.interests.hint")}</p>
-            </Panel>
-          )}
+            )}
+            {d.serviceInterests.length > 0 && (
+              <div>
+                <SubHead className="mb-2">{t("rq.interests")}</SubHead>
+                <ul className="flex flex-wrap gap-1.5" data-testid="service-interests">{d.serviceInterests.map((i) => <li key={i.code} className="rounded-sm border border-rule bg-surface-sunk px-1.5 py-0.5 text-meta"><span dir="auto">{locale === "fa" ? i.nameFa : i.nameEn}</span> <span className="num text-steel">{i.code}</span></li>)}</ul>
+                <p className="mt-1.5 text-caption text-steel">{t("rq.interests.hint")}</p>
+              </div>
+            )}
+          </CaseSection>
+
           {d.compliance.length > 0 && (
-            <Panel title={t("case.panel.compliance")}>
-              <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><StateChip value={c.status} />{can("compliance.case.read") && <Link className="font-medium text-link hover:underline" href={`/compliance/${c.id}`}>{t("case.open")} <Arrow /></Link>}</span></li>)}</ul>
-            </Panel>
+            <CaseSection id="sec-compliance" icon={ShieldCheck} title={t("case.panel.compliance")} description={t("rq2.compliance.desc")} count={d.compliance.length} className="order-[35] border-warning-border lg:order-none">
+              <ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex items-center justify-between gap-2 py-1.5"><span dir="auto">{c.summary}</span><span className="flex items-center gap-2"><StateChip value={c.status} />{can("compliance.case.read") && <Link className={textLink} href={`/compliance/${c.id}`}>{t("case.open")} <Arrow /></Link>}</span></li>)}</ul>
+            </CaseSection>
           )}
-          <Panel title={t("case.activity")}>
-            <PanelTabs id="thread" label={t("case.thread.tabs")} value={thread} onChange={setThread} tabs={[{ key: "messages", label: t("case.tab.messages"), count: d.messages.length }, { key: "notes", label: t("case.tab.notes"), count: d.notes.length }, { key: "timeline", label: t("case.tab.timeline"), count: d.timeline.length }]} />
-            <div id="thread-pane-messages" role="tabpanel" aria-labelledby="thread-tab-messages" hidden={thread !== "messages"} className="pt-3">
-              <MessagesList messages={d.messages} />
-              {can("flight_request.transition") && <Composer ref={msgRef} hint={t("case.composer.message")} label={t("rq.sendMessage")} placeholder={t("rq.messagePlaceholder")} testId="message-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/messages`, { body: { body } }); toast.success(t("rq.messageSent")); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
-            </div>
-            <div id="thread-pane-notes" role="tabpanel" aria-labelledby="thread-tab-notes" hidden={thread !== "notes"} className="pt-3">
-              <NotesList notes={d.notes} />
-              {can("flight_request.note.internal") && <Composer ref={noteRef} tone="note" label={t("rq.addNote")} hint={t("case.composer.note")} placeholder={t("rq.notePlaceholder")} testId="note-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/notes`, { body: { body } }); toast.success(t("rq.noteAdded")); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
-            </div>
-            <div id="thread-pane-timeline" role="tabpanel" aria-labelledby="thread-tab-timeline" hidden={thread !== "timeline"} className="pt-3">
-              <Timeline data-testid="timeline" items={d.timeline.map((x, i) => ({ id: i, at: x.at, title: x.label, detail: x.detail, meta: x.actor?.toLowerCase(), tone: x.kind === "STATUS" ? "strong" : x.kind === "CONTACT" ? "accent" : "muted" }))} />
-            </div>
-          </Panel>
+
+          <CaseSection id="sec-messages" icon={MessagesSquare} title={t("case.conversation")} description={t("rq2.messages.desc")} count={d.messages.length} className="order-[90] lg:order-none">
+            <MessagesList messages={d.messages} />
+            {canAct && <Composer ref={msgRef} hint={t("case.composer.message")} label={t("rq.sendMessage")} placeholder={t("rq.messagePlaceholder")} testId="message-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/messages`, { body: { body } }); toast.success(t("rq.messageSent")); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
+          </CaseSection>
+
+          <CaseSection id="sec-notes" icon={StickyNote} title={t("rq2.notes")} description={t("rq2.notes.desc")} count={d.notes.length} className="order-[80] lg:order-none">
+            <NotesList notes={d.notes} />
+            {can("flight_request.note.internal") && <Composer ref={noteRef} tone="note" label={t("rq.addNote")} hint={t("case.composer.note")} placeholder={t("rq.notePlaceholder")} testId="note-composer" onSend={async (body) => { try { await api(`/v1/admin/flight-requests/${ref}/notes`, { body: { body } }); toast.success(t("rq.noteAdded")); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
+          </CaseSection>
+
+          <CaseSection id="sec-timeline" icon={History} title={t("rq2.timeline")} description={t("rq2.timeline.desc")} count={d.timeline.length} className="order-[100] lg:order-none">
+            <Timeline data-testid="timeline" items={d.timeline.map((x, i) => ({ id: i, at: x.at, title: x.label, detail: x.detail, meta: x.actor?.toLowerCase(), tone: x.kind === "STATUS" ? "strong" : x.kind === "CONTACT" ? "accent" : "muted" }))} />
+          </CaseSection>
         </div>
 
-        {/* RIGHT — quotes, invoices, records, documents */}
-        <div {...paneProps("records")} className={cn(paneClass(tab, "records"), "lg:col-span-2 xl:col-span-1")}>
-          {!mobile && (can("quote.create") || can("pricing.write")) && (
-            <Panel title={t("case.panel.quotes")} aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className="font-medium text-link hover:underline" data-testid="open-quote-builder">{draft ? t("case.quote.edit") : t("case.quote.new")} <Arrow /></Link>}>
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
+          <CaseSection id="sec-customer" icon={UserRound} title={t("case.panel.customer")} description={t("rq2.customer.desc")} className="order-[20] lg:order-none"
+            aside={can("customer.read.pii") && <Link href={`/customers/${d.customer.id}?ref=${d.ref}`} className={textLink}>{t("case.context")} <Arrow /></Link>}>
+            <CustomerCard d={d} mobile={mobile} canAct={canAct} onCopy={() => { void navigator.clipboard.writeText(d.customer.phone); toast.success(t("rq.copied")) }} onCall={() => dlg.open("contact")} onSms={() => dlg.open("sms")} />
+            <div>
+              <SubHead className="mb-2">{t("case.panel.travellers")} <span className="num text-steel">{d.travellers.length}</span></SubHead>
+              <ul className="space-y-2">
+                {d.travellers.map((t, i) => <TravellerCard key={t.travellerId} t={t} index={i} revealed={revealed[t.travellerId]} canReveal={can("customer.read.documents")} onReveal={() => reveal.mutate(t.travellerId)} verificationLabel={tt(`vstatus.${t.verificationStatus}` as MsgKey)} />)}
+              </ul>
+              {Object.keys(revealed).length > 0 && <p className="mt-2 text-caption text-steel">{t("case.reveal.note")}</p>}
+            </div>
+            <div>
+              <SubHead className="mb-2">{t("case.panel.contacts")}</SubHead>
+              {!d.contacts.length ? <Empty>{t("case.contacts.none")}</Empty> : (
+                <ul className="ledger-rows" data-testid="contacts">{d.contacts.map((c) => <li key={c.id} className="py-1"><span className="num text-meta">{fmtDateTime(c.createdAt)}</span> · <StateChip value={c.outcome} />{c.channel === "SMS_TEMPLATE" && <span className="ms-1 text-steel">{t("rp.sms")}</span>}{c.note && <p className="text-steel" dir="auto">“{c.note}”</p>}{c.callBackAt && <p className="text-caption text-orange-700">{t("rq.callBack", { t: fmtDateTime(c.callBackAt) })}</p>}</li>)}</ul>
+              )}
+            </div>
+            <div>
+              <SubHead className="mb-2">{t("case.panel.history")}</SubHead>
+              {!d.customer.history.length ? <Empty>{t("case.history.first")}</Empty> : <ul className="ledger-rows">{d.customer.history.map((h) => <li key={h.ref} className="flex items-center justify-between py-1"><Link className="ref text-meta hover:underline" href={h.productType === "CARGO" ? `/cargo/${h.ref}` : `/requests/${h.ref}`}>{h.ref}</Link><StateChip value={h.status} /></li>)}</ul>}
+            </div>
+          </CaseSection>
+
+          {showQuotes && (
+            <CaseSection id="sec-quotes" icon={ReceiptText} title={t("case.panel.quotes")} description={t("rq2.quotes.desc")} count={d.quotes.length} className="order-[50] lg:order-none"
+              aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className={textLink} data-testid="open-quote-builder">{draft ? t("case.quote.edit") : t("case.quote.new")} <Arrow /></Link>}>
               {!d.quotes.length ? <Empty>{t("case.quotes.none")}</Empty> : (
-                <ul className="ledger-rows" data-testid="quotes">
+                <ul className="space-y-2" data-testid="quotes">
                   {d.quotes.map((qv) => (
-                    <li key={qv.id} className="py-1.5">
-                      <p className="flex items-center justify-between"><span>v{qv.version} · {t(qv.options.length === 1 ? "rq.option.one" : "rq.options", { n: qv.options.length })}{qv.validUntil && <span className="text-steel"> · {t("rq.validUntil", { t: fmtDateTime(qv.validUntil) })}</span>}</span><StateChip value={qv.status} /></p>
-                      <ul className="text-meta">{qv.options.map((o) => <li key={o.id} className="flex justify-between gap-2"><span className="truncate">{o.id === qv.acceptedOptionId && "✓ "}<RouteText>{o.label}</RouteText>{o.source === "MANUAL" && <span className="ms-1 font-mono text-2xs text-orange-700">{statusText(t, "MANUAL")}</span>}{o.unknownFields.length > 0 && <span className="ms-1 text-danger">· {t("rq.toConfirm", { n: o.unknownFields.length })}</span>}</span><span className="num">{money(o.priceBreakdown.total)}</span></li>)}</ul>
+                    <li key={qv.id} className="rounded-md border border-rule bg-surface-sunk p-2.5">
+                      <p className="flex items-center justify-between gap-2"><span className="font-medium">v{qv.version} · {t(qv.options.length === 1 ? "rq.option.one" : "rq.options", { n: qv.options.length })}{qv.validUntil && <span className="font-normal text-steel"> · {t("rq.validUntil", { t: fmtDateTime(qv.validUntil) })}</span>}</span><StateChip value={qv.status} /></p>
+                      <ul className="mt-1 text-meta">{qv.options.map((o) => <li key={o.id} className="flex justify-between gap-2 py-0.5"><span className="truncate">{o.id === qv.acceptedOptionId && "✓ "}<RouteText>{o.label}</RouteText>{o.source === "MANUAL" && <span className="ms-1 font-mono text-2xs text-orange-700">{statusText(t, "MANUAL")}</span>}{o.unknownFields.length > 0 && <span className="ms-1 text-danger">· {t("rq.toConfirm", { n: o.unknownFields.length })}</span>}</span><span className="num font-medium">{money(o.priceBreakdown.total)}</span></li>)}</ul>
                     </li>
                   ))}
                 </ul>
               )}
-            </Panel>
+            </CaseSection>
           )}
-          {!mobile && ["ACCEPTED", "RESERVED", "TICKETED", "COMPLETED"].includes(d.status) && <InvoicesPanel requestRef={d.ref} />}
-          <Panel title={t("case.panel.records")}>
-            <dl className="ledger-rows">
-              <div className="py-1.5">
-                <dt className="flex justify-between"><span className="text-steel">{t("case.rec.reservation")}</span></dt>
-                {d.reservations.length ? d.reservations.map((r) => <dd key={r.id} className="flex flex-wrap items-center justify-between gap-1"><span><span className="num font-medium">{r.recordLocator ?? r.externalReference}</span>{!r.recordLocator && <span className="text-caption text-steel"> ({t("res.noPnr")})</span>}{r.note && <span className="block text-caption text-steel" dir="auto">{r.note}</span>} <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-caption">{t("rq.ttl", { t: fmtDateTime(r.ticketingDeadline) })}</span><StateChip value={r.status} /></span></dd>) : <dd>—</dd>}
-              </div>
-              <div className="py-1.5">
-                <dt className="text-steel">{t("case.rec.tickets")}</dt>
-                {d.tickets.length ? d.tickets.map((tk) => <dd key={tk.id} className="flex justify-between"><span><span className="num">{tk.ticketNumber}</span> {tk.travellerName}</span><StateChip value={tk.status} /></dd>) : <dd>—</dd>}
-              </div>
-              <div className="py-1.5">
-                <dt className="flex items-center justify-between"><span className="text-steel">{t("case.rec.payments")} · {statusText(t, d.paymentStatus)}</span>{!mobile && can("payment.record") && <RecordPaymentTrigger state={d.paymentRecording} onOpen={() => dlg.open("payment")} />}</dt>
-                {d.payments.length ? d.payments.map((p) => (
-                  <dd key={p.id} className="mt-1">
-                    <p className="flex justify-between"><span className="num">{money(p.amount)}</span><StateChip value={p.status} /></p>
-                    <p className="text-caption text-steel">{codeLabel(t, "pay.method", p.method)} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · {t("rq.recordedBy", { n: p.recordedBy })}{p.verifiedBy && ` · ${t("rq.verifiedBy", { n: p.verifiedBy })}`}</p>
-                    {p.status === "RECORDED" && can("payment.record") && <div className="mt-1 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>{t("rq.verifySecond")}</Button>{p.needsSecondVerifier && <span className="text-caption text-orange-700">{t("rq.fourEyes")}</span>}</div>}
-                  </dd>
-                )) : <dd>—</dd>}
-              </div>
-              {(canOverride || d.creditOverrides.length > 0) && (
-                <div className="py-1.5" data-testid="credit-overrides">
-                  <dt className="flex justify-between"><span className="text-steel">{t("case.rec.override")}</span>{canOverride && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("override")}>{t("case.rec.requestOverride")}</button>}</dt>
+
+          <CaseSection id="sec-payment" icon={CreditCard} title={t("rq2.payment")} description={t("rq2.payment.desc")} className="order-[40] lg:order-none">
+            <FactGrid className="md:grid-cols-2" items={[{ label: t("rq2.payment.status"), value: <StateChip value={d.paymentStatus} /> }, { label: t("case.rec.payments"), value: <span className="num">{d.payments.length}</span> }]} />
+            {!mobile && ["ACCEPTED", "RESERVED", "TICKETED", "COMPLETED"].includes(d.status) && <InvoicesPanel requestRef={d.ref} />}
+            <div>
+              <SubHead className="mb-2" aside={!mobile && can("payment.record") && <RecordPaymentTrigger state={d.paymentRecording} onOpen={() => dlg.open("payment")} />}>{t("case.rec.payments")}</SubHead>
+              {d.payments.length ? (
+                <ul className="space-y-2">
+                  {d.payments.map((p) => (
+                    <li key={p.id} className="rounded-md border border-rule bg-surface-sunk p-2.5">
+                      <p className="flex items-center justify-between gap-2"><span className="num font-semibold">{money(p.amount)}</span><StateChip value={p.status} /></p>
+                      <p className="mt-0.5 text-caption text-steel">{codeLabel(t, "pay.method", p.method)} · {p.externalReference} · <span dir="auto">{p.payerName}</span> · {t("rq.recordedBy", { n: p.recordedBy })}{p.verifiedBy && ` · ${t("rq.verifiedBy", { n: p.verifiedBy })}`}</p>
+                      {p.status === "RECORDED" && can("payment.record") && <div className="mt-1.5 flex items-center gap-2"><Button size="xs" variant="outline" onClick={() => verifyPayment.mutate(p.id)} loading={verifyPayment.isPending}>{t("rq.verifySecond")}</Button>{p.needsSecondVerifier && <span className="text-caption text-orange-700">{t("rq.fourEyes")}</span>}</div>}
+                    </li>
+                  ))}
+                </ul>
+              ) : <Empty>—</Empty>}
+            </div>
+            {(canOverride || d.creditOverrides.length > 0) && (
+              <div data-testid="credit-overrides">
+                <SubHead className="mb-2" aside={canOverride && <button type="button" className={cn(textLink, "underline-offset-4")} onClick={() => dlg.open("override")}>{t("case.rec.requestOverride")}</button>}>{t("case.rec.override")}</SubHead>
+                <ul className="space-y-2">
                   {d.creditOverrides.map((o) => (
-                    <dd key={o.id} className="mt-1">
+                    <li key={o.id} className="rounded-md border border-rule bg-surface-sunk p-2.5">
                       <p className="flex flex-wrap items-center justify-between gap-2"><span dir="auto">“{o.reason}”</span>{o.approvedAt ? <StateChip value="APPROVED" /> : <StateChip value="PENDING" />}</p>
                       <p className="text-caption text-steel">{t("rq.requestedBy", { n: o.requestedBy })} · {fmtDateTime(o.createdAt)}{o.approvedBy && ` · ${t("rq.approvedBy", { n: o.approvedBy })} ${fmtDateTime(o.approvedAt)}`}</p>
                       {!o.approvedAt && !o.requestedByMe && can("user.role.assign.privileged") && <Button size="xs" variant="outline" className="mt-1" onClick={() => approveOverride.mutate(o.id)} loading={approveOverride.isPending}>{t("rq.approveOwner")}</Button>}
-                    </dd>
+                    </li>
                   ))}
-                </div>
-              )}
-              {(d.afterSales.length > 0 || (["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition"))) && (
-                <div className="py-1.5" data-testid="after-sales">
-                  <dt className="flex justify-between"><span className="text-steel">{t("case.rec.afterSales")}</span>{["TICKETED", "COMPLETED"].includes(d.status) && can("flight_request.transition") && <button type="button" className="font-medium text-link underline-offset-4 hover:underline" onClick={() => dlg.open("aftersales")}>{t("case.rec.openCase")}</button>}</dt>
+                </ul>
+              </div>
+            )}
+          </CaseSection>
+
+          <CaseSection id="sec-tickets" icon={Ticket} title={t("rq2.tickets")} description={t("rq2.tickets.desc")} className="order-[60] lg:order-none">
+            <div>
+              <SubHead className="mb-2">{t("case.rec.reservation")}</SubHead>
+              {d.reservations.length ? (
+                <ul className="space-y-2">{d.reservations.map((r) => <li key={r.id} className="flex flex-wrap items-center justify-between gap-1 rounded-md border border-rule bg-surface-sunk p-2.5"><span><span className="num font-semibold">{r.recordLocator ?? r.externalReference}</span>{!r.recordLocator && <span className="text-caption text-steel"> ({t("res.noPnr")})</span>}{r.note && <span className="block text-caption text-steel" dir="auto">{r.note}</span>} <span className="text-steel">{r.system} · {Object.entries(r.airlineLocators).map(([k, v]) => `${k}:${v}`).join(" ")}</span></span><span className="flex items-center gap-2"><span className="num text-caption">{t("rq.ttl", { t: fmtDateTime(r.ticketingDeadline) })}</span><StateChip value={r.status} /></span></li>)}</ul>
+              ) : <Empty>—</Empty>}
+            </div>
+            <div>
+              <SubHead className="mb-2">{t("case.rec.tickets")}</SubHead>
+              {d.tickets.length ? <ul className="ledger-rows">{d.tickets.map((tk) => <li key={tk.id} className="flex items-center justify-between py-1"><span><span className="num">{tk.ticketNumber}</span> {tk.travellerName}</span><StateChip value={tk.status} /></li>)}</ul> : <Empty>—</Empty>}
+            </div>
+            {(d.afterSales.length > 0 || (["TICKETED", "COMPLETED"].includes(d.status) && canAct)) && (
+              <div data-testid="after-sales">
+                <SubHead className="mb-2" aside={["TICKETED", "COMPLETED"].includes(d.status) && canAct && <button type="button" className={cn(textLink, "underline-offset-4")} onClick={() => dlg.open("aftersales")}>{t("case.rec.openCase")}</button>}>{t("case.rec.afterSales")}</SubHead>
+                <ul className="space-y-2">
                   {d.afterSales.map((a) => (
-                    <dd key={a.ref} className="mt-1">
+                    <li key={a.ref} className="rounded-md border border-rule bg-surface-sunk p-2.5">
                       <p className="flex flex-wrap items-center gap-1.5"><span className="ref">{a.ref}</span><span className="text-steel">{a.type}</span><StateChip value={a.status} /><span className="num text-caption text-steel">{fmtDate(a.createdAt)}</span></p>
                       {a.note && <p className="text-meta text-steel" dir="auto">“{a.note}”</p>}
-                      {can("flight_request.transition") && !["RESOLVED", "REJECTED"].includes(a.status) && <p className="flex flex-wrap gap-1">{["start", "request_info", "resolve", "reject"].map((c) => <Button key={c} size="xs" variant="ghost" onClick={() => void asCommand(a.ref, c)}>{codeLabel(t, "rq.as", c)}</Button>)}</p>}
-                    </dd>
+                      {canAct && !["RESOLVED", "REJECTED"].includes(a.status) && <p className="flex flex-wrap gap-1">{["start", "request_info", "resolve", "reject"].map((c) => <Button key={c} size="xs" variant="ghost" onClick={() => void asCommand(a.ref, c)}>{codeLabel(t, "rq.as", c)}</Button>)}</p>}
+                    </li>
                   ))}
-                </div>
-              )}
-            </dl>
-          </Panel>
-          <TicketDocumentsPanel requestRef={d.ref} status={d.status} />
-          <Panel title={t("case.panel.documents")}>
-            {!d.documents.length ? <Empty>{t("case.docs.none")}</Empty> : <ul className="ledger-rows">{d.documents.map((doc) => <li key={doc.id} className="flex items-center justify-between gap-2 py-1"><button type="button" className="truncate text-start underline-offset-2 hover:underline" onClick={() => void download(doc.id)}>{doc.filename}</button><span className="flex gap-1"><Tag value={doc.type} /><Tag value={doc.visibility} /></span></li>)}</ul>}
-          </Panel>
+                </ul>
+              </div>
+            )}
+            <TicketDocumentsPanel requestRef={d.ref} status={d.status} />
+          </CaseSection>
+
+          <CaseSection id="sec-documents" icon={Paperclip} title={t("case.panel.documents")} description={t("rq2.docs.desc")} count={d.documents.length} className="order-[70] lg:order-none">
+            {!d.documents.length ? <Empty>{t("case.docs.none")}</Empty> : <ul className="ledger-rows">{d.documents.map((doc) => <li key={doc.id} className="flex items-center justify-between gap-2 py-1.5"><button type="button" className="inline-flex min-w-0 items-center gap-2 text-start underline-offset-2 hover:underline" onClick={() => void download(doc.id)}><FileText className="size-4 shrink-0 text-steel" aria-hidden /><span className="truncate">{doc.filename}</span></button><span className="flex gap-1"><Tag value={doc.type} /><Tag value={doc.visibility} /></span></li>)}</ul>}
+          </CaseSection>
         </div>
       </div>
 

@@ -40,7 +40,7 @@ const detail = (internal: boolean) => ({
     ...(internal ? { priceAtSubmit: GBP(21000), priceRevalidated: null, revalidatedAt: null } : {}),
     sources: [{ provider: "apify-google-flights", fetchedAt: FETCHED, confidence: "INDICATIVE", ...(internal ? { price: GBP(21000), priceLevel: "low", googleFlightsUrl: "https://www.google.com/travel/flights?tfs=abc" } : {}) }],
   },
-  timeline: [], messages: [], notes: [], contacts: [], quotes: [], reservations: [], tickets: [], payments: [], documents: [], afterSales: [], creditOverrides: [], compliance: [], actions: [],
+  timeline: [], messages: [], notes: [], contacts: [], quotes: [], reservations: [], tickets: [], payments: [], documents: [], afterSales: [], creditOverrides: [], compliance: [], serviceInterests: [], actions: [],
   paymentRecording: { allowed: false, suggestedAmount: null }, amendment: { allowed: false, needsAcknowledge: false }, atolMode: "OFF",
 })
 
@@ -113,56 +113,18 @@ test.describe("ADR-0032 console (mocked API)", () => {
     await expect(page.getByTestId("revalidate-error")).toContainText("staff revalidation budget for this month is used up")
   })
 
-  test("dev dashboard shows the Apify usage card", async ({ page }) => {
-    await mockApi(page, DEV, FULL)
-    await page.route("**/api/v1/dev/health", (r) => json(r, { version: "1.0.0", commit: "local", env: "local", uptimeSeconds: 3600, database: { ok: true, latencyMs: 1, migrations: { applied: 1, latest: "0001" } }, redis: { ok: true, latencyMs: 1 }, queues: [], workers: [], configVersions: {}, flags: {}, dependencies: [], outbox: { pending: 0, oldestSeconds: null } }))
-    await page.route("**/api/v1/admin/catalog/usage", (r) => json(r, usage()))
-    const run = (createdAt: string) => ({ id: crypto.randomUUID(), provider: "apify-google-flights", externalRunId: null, pool: "CUSTOMER", purpose: "SEARCH", searchId: null, routes: [], status: "SUCCEEDED", rows: 10, estimatedUsd: 0.01, notices: [], errors: [], startedAt: null, finishedAt: null, createdAt })
-    const now = new Date().toISOString()
-    await page.route("**/api/v1/dev/providers/apify-google-flights/runs**", (r) => json(r, [run(now), run(now), run(now), run("2020-01-15T00:00:00Z")]))
-    await page.route("**/api/v1/dev/providers/apify-google-flights", (r) => json(r, provider()))
-    await page.goto(`${DEV}/`)
-    const card = page.getByTestId("apify-usage")
-    await expect(card).toContainText("Apify usage")
-    await expect(card.getByTestId("catalog-over")).toContainText("Projected spend is over the budget")
-    await expect(card).toContainText("Spent this cycle")
-    await expect(card).toContainText("$4.80")
-    await expect(card).toContainText("Projected at cycle end")
-    await expect(card).toContainText("Refreshing on schedule")
-    await expect(card).toContainText("Runs this month")
-    await expect(card).toContainText("3")
-    await expect(card).toContainText("Last connection test")
-  })
-
-  test("admin dashboard shows the Apify usage card from the admin route, without any /v1/dev call", async ({ page }) => {
-    await mockApi(page, ADMIN, FULL)
-    const devCalls: string[] = []
-    page.on("request", (req) => { if (req.url().includes("/api/v1/dev/")) devCalls.push(req.url()) })
-    await page.route("**/api/v1/admin/catalog/usage", (r) => json(r, usage()))
-    await page.goto(`${ADMIN}/`)
-    const card = page.getByTestId("apify-usage")
-    await expect(card).toContainText("Apify usage")
-    await expect(card.getByTestId("catalog-over")).toContainText("Projected spend is over the budget")
-    await expect(card).toContainText("Spent this cycle")
-    await expect(card).toContainText("$4.80")
-    await expect(card).toContainText("Projected at cycle end")
-    await expect(card).toContainText("Refreshing on schedule")
-    // Run count, connection test and the provider link need the Developer Panel routes, which the admin host refuses.
-    await expect(card).not.toContainText("Runs this month")
-    await expect(card).not.toContainText("Last connection test")
-    await expect(card.getByRole("link")).toHaveCount(0)
-    expect(devCalls).toEqual([])
-  })
-
-  test("admin dashboard has no Apify usage card without catalog.read", async ({ page }) => {
-    await mockApi(page, ADMIN, BASIC)
-    let asked = false
-    await page.route("**/api/v1/admin/catalog/usage", (r) => { asked = true; return json(r, usage()) })
-    await page.goto(`${ADMIN}/`)
-    await expect(page.getByTestId("tile-now")).toBeVisible()
-    await expect(page.getByTestId("apify-usage")).toHaveCount(0)
-    expect(asked).toBe(false)
-  })
+  // ADR-0039: the owner removed the Apify usage card from both panels; spend stays on the catalog page ("Spend and pacer").
+  for (const [host, perms] of [[DEV, FULL], [ADMIN, FULL], [ADMIN, BASIC]] as const) {
+    test(`no Apify usage card on the ${host === DEV ? "Developer" : "Admin"} Panel home (${perms === FULL ? "catalog.read" : "basic"})`, async ({ page }) => {
+      await mockApi(page, host, perms)
+      if (host === DEV) await page.route("**/api/v1/dev/health", (r) => json(r, { version: "1.0.0", commit: "local", env: "local", uptimeSeconds: 3600, database: { ok: true, latencyMs: 1, migrations: { applied: 1, latest: "0001" } }, redis: { ok: true, latencyMs: 1 }, queues: [], workers: [], configVersions: {}, flags: {}, dependencies: [], outbox: { pending: 0, oldestSeconds: null } }))
+      await page.route("**/api/v1/admin/catalog/usage", (r) => json(r, usage()))
+      await page.goto(`${host}/`)
+      await expect(page.getByRole("main")).toBeVisible()
+      await expect(page.getByTestId("apify-usage")).toHaveCount(0)
+      await expect(page.getByText("Apify usage")).toHaveCount(0)
+    })
+  }
 
   for (const locale of ["en", "fa"] as const) {
     test(`Apify Developer Panel page: key last4, test connection, help box (${locale})`, async ({ page }) => {

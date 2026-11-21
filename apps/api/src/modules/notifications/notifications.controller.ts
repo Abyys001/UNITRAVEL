@@ -3,14 +3,14 @@ import { ApiTags } from "@nestjs/swagger"
 import type { Request } from "express"
 import type { Redis } from "ioredis"
 
-import { InboxQuery, MarkReadBody } from "@unitravel/contracts"
+import { InboxListQuery, InboxPage, MarkReadBody } from "@unitravel/contracts"
 
 import { constantTimeEqual } from "../../core/crypto"
 import { isLocal } from "../../core/env"
 import { AppError } from "../../core/errors"
 import { REDIS } from "../../core/infra.module"
 import { type Actor, Authenticated, CurrentActor, Public, RateLimit } from "../../core/http/decorators"
-import { zbody } from "../../core/http/zod"
+import { ApiZodResponse, zbody } from "../../core/http/zod"
 import { NotificationsService } from "./notifications.service"
 import { VendorCredentialsService } from "./vendor-credentials.service"
 
@@ -21,8 +21,9 @@ export class NotificationsController {
 
   @Get("notifications")
   @Authenticated()
-  inbox(@Query(zbody(InboxQuery)) q: { limit: number; cursor?: string; locale?: "en" | "fa" }, @CurrentActor() actor: Actor) {
-    return this.n.inbox(actor.userId, q.limit, q.cursor, q.locale)
+  @ApiZodResponse(200, InboxPage)
+  inbox(@Query(zbody(InboxListQuery)) q: InboxListQuery, @CurrentActor() actor: Actor) {
+    return this.n.inbox(actor.userId, { limit: q.limit, before: q.before ?? q.cursor, filter: q.filter, locale: q.locale })
   }
 
   @Post("notifications/read")

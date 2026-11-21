@@ -6,6 +6,7 @@ import { useState } from "react"
 import { SUPPORT_TOPICS, type SupportTopic, type TicketCreated } from "@unitravel/contracts"
 
 import { Ltr } from "@/components/badges"
+import { SelectField } from "@/components/form"
 import { Field, inputCls } from "@/components/service-form"
 import { api, ApiError, newIdempotencyKey } from "@/lib/api"
 import { deviceId } from "@/lib/device"
@@ -60,11 +61,7 @@ export function SupportForm({ onSent }: { onSent?: () => void }) {
       <div><h2 className="font-display text-2xl">{t("support.formTitle")}</h2><p className="mt-1 text-sm text-steel">{t("support.formLead")}</p></div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="sp-name" label={t("support.name")}><input id="sp-name" className={inputCls} dir="auto" maxLength={80} value={name} onChange={(e) => setF({ ...f, name: e.target.value })} autoComplete="name" required /></Field>
-        <Field id="sp-topic" label={t("support.topic")}>
-          <select id="sp-topic" data-slot="native-select" className={inputCls} value={f.topic} onChange={(e) => setF({ ...f, topic: e.target.value as SupportTopic })}>
-            {SUPPORT_TOPICS.map((k) => <option key={k} value={k}>{t(`support.topics.${k}`)}</option>)}
-          </select>
-        </Field>
+        <SelectField id="sp-topic" label={t("support.topic")} value={f.topic} onChange={(topic) => setF({ ...f, topic: topic as SupportTopic })} options={SUPPORT_TOPICS.map((k) => ({ value: k, label: t(`support.topics.${k}`) }))} />
         <Field id="sp-email" label={t("support.emailField")} optional><input id="sp-email" type="email" className={inputCls} dir="ltr" maxLength={254} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} autoComplete="email" /></Field>
         <Field id="sp-phone" label={t("support.phoneField")} optional><input id="sp-phone" type="tel" inputMode="tel" className={inputCls} dir="ltr" maxLength={24} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} autoComplete="tel" /></Field>
         <div className="sm:col-span-2"><Field id="sp-ref" label={t("support.requestRef")} optional><input id="sp-ref" className={`${inputCls} font-mono uppercase`} dir="ltr" placeholder="UT-…" maxLength={20} value={f.requestRef} onChange={(e) => setF({ ...f, requestRef: e.target.value })} /></Field></div>

@@ -24,6 +24,8 @@ export const supportTickets = pgTable("support_tickets", {
   slaDueAt: tstz(),
   version: rowVersion(),
   lastMessageAt: tstz().notNull().defaultNow(),
+  /** ADR-0040 D3: when the customer last opened the ticket; a staff message after it is unread for them. */
+  customerReadAt: tstz(),
   resolvedAt: tstz(),
   closedAt: tstz(),
   ...timestamps,

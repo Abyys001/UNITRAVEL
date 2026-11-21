@@ -14,6 +14,7 @@ import { ErrorState, LoadingState } from "@unitravel/ui/product/states"
 import { Country } from "@unitravel/ui/product/country"
 import { Auto, Ltr } from "@/components/badges"
 import { StatusTimeline } from "@/components/status-timeline"
+import { AttachmentLink, UploadList, useDocumentUploads } from "@/components/visa/document-uploads"
 import { api, ApiError } from "@/lib/api"
 import { countryName } from "@/lib/countries"
 import { useI18n } from "@/lib/i18n"
@@ -41,6 +42,9 @@ function DetailRows({ r }: { r: CustomerServiceRequestView }) {
   add("services.flightNumber", s("flightNumber") && <Ltr className="font-mono">{s("flightNumber")}</Ltr>)
   add("services.date", day("date"))
   add("services.passengersCount", s("passengersCount"))
+  add("guide.cip.wizard.companions", typeof d.companions === "number" && d.companions > 0 && String(d.companions))
+  const cip = Array.isArray(d.services) ? (d.services as string[]) : []
+  add("guide.cip.wizard.reviewOptions", cip.length > 0 && cip.map((x) => t(`guide.cip.options.${x}.name` as MessageKey)).join(locale === "fa" ? "، " : ", "))
   add("services.region", s("destinationRegion") && t(`services.regions.${s("destinationRegion")}` as MessageKey))
   add("services.startDate", day("startDate"))
   add("services.endDate", day("endDate"))
@@ -74,14 +78,16 @@ export default function ServiceRequestDetail() {
     try { if (sessionStorage.getItem(`sent:${ref}`)) { setJustSent(true); sessionStorage.removeItem(`sent:${ref}`) } } catch { /* storage unavailable */ }
   }, [ref])
   const q = useQuery({ queryKey: ["service-request", ref], queryFn: () => api<CustomerServiceRequestView>(`/v1/service-requests/${ref}`), enabled: !!me, refetchInterval: 20_000 })
-  const send = useMutation({ mutationFn: () => api(`/v1/service-requests/${ref}/messages`, { body: { body: msg, documentIds: [] } }), onSuccess: () => { setMsg(""); void q.refetch() } })
+  // MessageBody allows 5 documents per message; only scanned, clean files are sent.
+  const uploads = useDocumentUploads(5)
+  const send = useMutation({ mutationFn: () => api(`/v1/service-requests/${ref}/messages`, { body: { body: msg, documentIds: uploads.ready } }), onSuccess: () => { setMsg(""); uploads.clear(); void q.refetch() } })
   const cancel = useMutation({ mutationFn: () => api(`/v1/service-requests/${ref}/cancel`, { body: {} }), onSuccess: () => { setConfirmCancel(false); void q.refetch() } })
   const accept = useMutation({ mutationFn: () => api(`/v1/service-requests/${ref}/quote/accept`, { body: {} }), onSuccess: () => void q.refetch() })
   const r = q.data
-  if (!r) return <div className="mx-auto max-w-4xl px-4 py-8">{q.isError ? <ErrorState title={t("requests.loadFailed")} body={(q.error as ApiError).message} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} /> : <LoadingState label={t("common.loading")} rows={4} />}</div>
+  if (!r) return <div className="min-w-0">{q.isError ? <ErrorState title={t("requests.loadFailed")} body={(q.error as ApiError).message} retryLabel={t("common.retry")} onRetry={() => void q.refetch()} /> : <LoadingState label={t("common.loading")} rows={4} />}</div>
   const quote = r.quote
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 md:py-10">
+    <div className="min-w-0">
       {justSent && <div role="status" data-testid="request-sent" className="mb-4 rounded-xl border-s-4 border-success bg-success-subtle px-4 py-3 text-sm"><p className="font-semibold">{t("services.sentTitle")}</p><p>{t("services.sentBody", { ref: r.ref })}</p></div>}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="font-mono text-sm font-medium text-steel" dir="ltr">{r.ref}</p><h1 className="font-display text-3xl md:text-4xl">{t(`services.types.${r.type}`)}</h1></div>
@@ -121,14 +127,25 @@ export default function ServiceRequestDetail() {
             <ul className="space-y-3">
               {r.messages.map((m) => (
                 <li key={m.id} className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${m.direction === "TO_CUSTOMER" ? "card-brand !rounded-2xl" : "ms-auto bg-navy-950 text-white"}`}>
-                  <p className="whitespace-pre-wrap" dir="auto">{m.body}</p><p className="mt-1 text-xs opacity-70"><Auto>{m.authorName}</Auto>{sep}{date(m.createdAt, { withTime: true })}</p>
+                  <p className="whitespace-pre-wrap" dir="auto">{m.body}</p>
+                  {m.documentIds.length > 0 && (
+                    <ul className="mt-2 flex flex-wrap gap-2" aria-label={t("guide.visa.attachments.attached")}>
+                      {m.documentIds.map((id, i) => <li key={id} className="min-w-0 max-w-full"><AttachmentLink id={id} n={i + 1} own={m.direction === "FROM_CUSTOMER"} /></li>)}
+                    </ul>
+                  )}
+                  <p className="mt-1 text-xs opacity-70"><Auto>{m.authorName}</Auto>{sep}{date(m.createdAt, { withTime: true })}</p>
                 </li>
               ))}
             </ul>
             {!["COMPLETED", "CANCELLED", "CLOSED_NO_RESPONSE", "DECLINED"].includes(r.status) && (
-              <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (msg.trim()) send.mutate() }}>
-                <Textarea value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t("requests.writeMessage")} className="min-h-11 rounded-xl bg-cloud" aria-label={t("requests.writeMessage")} />
-                <button type="submit" className="btn-orange self-end !px-4" disabled={send.isPending || !msg.trim()} aria-label={t("requests.send")}><Send className="size-4 rtl:-scale-x-100" /></button>
+              <form className="mt-3 space-y-2" onSubmit={(e) => { e.preventDefault(); if (msg.trim() && !uploads.pending) send.mutate() }}>
+                <div className="flex gap-2">
+                  <Textarea value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t("requests.writeMessage")} className="min-h-11 rounded-xl bg-cloud" aria-label={t("requests.writeMessage")} />
+                  <button type="submit" className="btn-orange self-end !px-4" disabled={send.isPending || !msg.trim() || uploads.pending} aria-label={uploads.ready.length ? t("guide.visa.attachments.sendWithFiles") : t("requests.send")}><Send className="size-4 rtl:-scale-x-100" /></button>
+                </div>
+                <UploadList uploads={uploads} id="msg-files" compact hint={t("guide.visa.attachments.attachHint", { max: uploads.max })} />
+                {uploads.pending && <p className="text-xs text-steel">{t("guide.visa.docs.waitScan")}</p>}
+                {send.error && <p role="alert" className="text-sm text-danger">{(send.error as ApiError).message}</p>}
               </form>
             )}
           </section>

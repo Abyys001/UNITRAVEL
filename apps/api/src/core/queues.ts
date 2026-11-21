@@ -11,6 +11,10 @@ export const QUEUES = [
   "visa.research",
   // ADR-0034: the flight catalog pacer. Its own queue because a refresh run is polled for up to 10 minutes and must not hold up maintenance jobs.
   "catalog",
+  // ADR-0039 D1: the Admin Panel staff feed; separate from notify.route so a slow fan-out never delays customer messages.
+  "notify.staff",
+  // ADR-0039 D4: Stripe invoices created on issue and voided on cancel/expiry; two attempts, then the 10-minute sync retries.
+  "payments.stripe",
 ] as const
 export type QueueName = (typeof QUEUES)[number]
 
@@ -27,6 +31,8 @@ export const QUEUE_DEFAULTS: Record<QueueName, JobsOptions> = {
   "notify.sms": { attempts: 5, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: 2000, removeOnFail: false },
   "notify.push": { attempts: 5, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: 2000, removeOnFail: false },
   "notify.email": { attempts: 5, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: 2000, removeOnFail: false },
+  "payments.stripe": { attempts: 2, backoff: { type: "exponential", delay: 5000 }, removeOnComplete: 500, removeOnFail: false },
+  "notify.staff": { attempts: 5, backoff: { type: "exponential", delay: 1000 }, removeOnComplete: 2000, removeOnFail: false },
   "notify.escalate": { attempts: 3, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: 2000, removeOnFail: false },
   "timers.sla": { attempts: 3, backoff: { type: "exponential", delay: 2000 }, removeOnComplete: 2000, removeOnFail: false },
   "compliance.screen": { attempts: 3, backoff: { type: "exponential", delay: 1000 }, removeOnComplete: 2000, removeOnFail: false },

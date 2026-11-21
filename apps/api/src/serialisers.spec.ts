@@ -1,7 +1,7 @@
 import fc from "fast-check"
 import { describe, expect, it } from "vitest"
 
-import { BillingDocuments, CargoCustomerView, CustomerInvoice, CustomerServiceRequestView, PublicTrackView, StaffServiceRequestView, ServiceQuoteView, StaffInvoice, CustomerSearchState, CustomerSeatMap, FlightListingsView, FlightRequestCustomerView, FlightRequestListItem, Itinerary, PublicFare, MyDetails, NormalisedOffer, SeatMap, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
+import { PortalOverview, TrackDetail, BillingDocuments, CargoCustomerView, CustomerInvoice, CustomerServiceRequestView, PublicTrackView, StaffServiceRequestView, ServiceQuoteView, StaffInvoice, CustomerSearchState, CustomerSeatMap, FlightListingsView, FlightRequestCustomerView, FlightRequestListItem, Itinerary, PublicFare, MyDetails, NormalisedOffer, SeatMap, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
 
 import { encryptField } from "./core/crypto"
 import { CustomersService } from "./modules/customers/customers.service"
@@ -367,5 +367,31 @@ describe("public tracking view (spec 4.5)", () => {
       expect(findForbiddenKeys(out)).toEqual([])
       expect(amountPaths(out)).toEqual([])
     }), { numRuns: 200 })
+  })
+})
+
+describe("customer portal views (ADR-0040)", () => {
+  const step = { code: "0", label: "Received", state: "CURRENT" }
+  const item = { kind: "FLIGHT", ref: "UT-F-7Q2K9M", title: "London to Tehran", status: "QUOTED", statusLabel: "Quote ready", active: true, steps: [step], nextStep: "Choose an option.", updatedAt: "2026-11-01T10:00:00.000Z" }
+  const overview = () => ({
+    profile: { name: "Neda", email: "n@example.com", phone: null, memberSince: "2026-01-01T00:00:00.000Z", missing: [] },
+    counts: { active: 1, previous: 0, pendingActions: 0, unreadInbox: 0, unreadSupport: 0, openSupport: 0 },
+    active: [item], previous: [], pendingActions: [], purchases: [], notifications: [], support: [], club: null, travelCard: { status: "COMING_SOON" },
+  })
+  const detail = () => ({ kind: "CARGO", ref: "UT-C-7Q2K9M", title: "UK to IR", status: "IN_TRANSIT", statusLabel: "In transit", active: true, steps: [step], nextStep: null, events: [], documents: [], shipment: null, detailHref: "/cargo/UT-C-7Q2K9M" })
+  const LEAKS = ["internalCostMinor", "assignee", "assigneeUserId", "internalNote", "notes", "screeningOutcome", "matchedRule", "partnerReference", "partnerCostMinor", "createdBy", "externalEventId"]
+
+  it("drops staff-only fields placed anywhere in an overview or a track detail (property)", () => {
+    fc.assert(fc.property(fc.array(fc.record({ key: fc.constantFrom(...LEAKS), depthSeed: fc.nat() }), { minLength: 1, maxLength: 12 }), (p) => {
+      for (const out of [PortalOverview.parse(contaminate(structuredClone(overview()), p)), TrackDetail.parse(contaminate(structuredClone(detail()), p))]) {
+        expect(JSON.stringify(out)).not.toContain("SECRET-")
+        expect(findForbiddenKeys(out)).toEqual([])
+      }
+    }), { numRuns: 200 })
+  })
+
+  it("rejects a travel card state other than the two defined and a carrier state outside the four", () => {
+    expect(PortalOverview.safeParse({ ...overview(), travelCard: { status: "LIVE" } }).success).toBe(false)
+    expect(TrackDetail.safeParse({ ...detail(), shipment: { awbNumber: null, origin: "a", destination: "b", service: "PARCEL", pieces: null, chargeableWeightKg: null, estimatedDeliveryAt: null, carrier: { state: "OK", provider: null, airline: null, lastSyncedAt: null } } }).success).toBe(false)
   })
 })

@@ -21,6 +21,7 @@ import { money, toMajor, toMinor } from "@/lib/format"
 import { useT } from "@/lib/i18n"
 import { useLocale } from "@/lib/prefs"
 import { useSession } from "@/lib/session"
+import { PageGuide } from "@/components/page-guide"
 
 /**
  * Add-on service catalogue (STAGE-26). Staff define what can be attached to a quote or ticked by a customer. The default
@@ -115,6 +116,7 @@ function Catalogue() {
       {dialog}
       <PageHead title={t("svcat.title.page")}><Button size="sm" onClick={() => setEditing("new")} data-testid="new-catalog-item"><Plus aria-hidden />{t("svcat.new")}</Button></PageHead>
       <p className="px-4 pb-3 text-meta text-steel md:px-6">{t("svcat.note")}</p>
+      <PageGuide id="catalog" title="guide.catalog.title" points={["guide.catalog.1", "guide.catalog.2", "guide.catalog.3", "guide.catalog.4"]} />
       <Toolbar query={search} onQuery={setSearch} placeholder={t("svcat.search")} count={list.data ? rows.length : undefined} />
       {list.error ? <div className="px-4 py-3 md:px-6"><TileError error={list.error} onRetry={() => void list.refetch()} /></div> : !list.data ? <ListSkeleton rows={5} className="px-4 md:px-6" /> : !rows.length ? <EmptyState title={t("svcat.none")} hint={t("svcat.none.hint")} action={<Button size="sm" onClick={() => setEditing("new")}>{t("svcat.new")}</Button>} /> : (
         <>

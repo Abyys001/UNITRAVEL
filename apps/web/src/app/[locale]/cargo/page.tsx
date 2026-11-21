@@ -1,202 +1,39 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
-import { ArrowDown, Boxes, CheckCircle2, ClipboardCheck, FileText, Package, Plane, Plus, Route, Scale, Trash2, Truck, Upload, Users } from "lucide-react"
+import { ArrowDown, ClipboardList, PackageCheck, Plane, Scale, ShieldCheck, Truck, Workflow } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
 
-import { IconBadge } from "@unitravel/ui/brand/art"
-import { Button } from "@unitravel/ui/components/button"
-import { Input } from "@unitravel/ui/components/input"
-import { NativeSelect } from "@unitravel/ui/components/native-select"
-
-import { CountrySelect } from "@unitravel/ui/product/country"
-import { HeroBand, ServiceHero, StepHeading } from "@/components/service-hero"
-import { api, ApiError, newIdempotencyKey } from "@/lib/api"
+import { CargoWizard } from "@/components/cargo-wizard/cargo-wizard"
+import { ServiceHero } from "@/components/service-hero"
 import { useI18n } from "@/lib/i18n"
-import { COUNTRIES, countryName } from "@/lib/countries"
-import { uploadFile } from "@/lib/upload"
-import { saveDraft, takeDraft } from "@/lib/form-draft"
-import { useSession } from "@/lib/session"
 
-interface Lane { id: string; originCountry: string; destinationCountry: string; label: string; enabled: boolean; services: string[]; volumetricDivisor: number; notice: string | null }
-const CATS = ["DOCUMENTS", "CLOTHING", "PERSONAL_EFFECTS", "BOOKS", "FOOD_NON_PERISHABLE", "COSMETICS", "MEDICINES", "MEDICAL_DEVICES", "ELECTRONICS", "LITHIUM_BATTERIES", "AIRCRAFT_VEHICLE_INDUSTRIAL_PARTS", "JEWELLERY_ART", "OTHER"]
-const PURPOSES = ["PERSONAL_EFFECTS", "GIFT", "DOCUMENTS", "SALE", "SAMPLE", "RETURN"]
-const emptyParty = (country: string) => ({ name: "", company: "", line1: "", city: "", postcode: "", country, phone: "", email: "" })
-
-type Party = ReturnType<typeof emptyParty>
-
-const countryOptions = (cur: string, locale: "en" | "fa") => (COUNTRIES.includes(cur) ? COUNTRIES : [...COUNTRIES, cur]).map((c) => <option key={c} value={c}>{countryName(c, locale)}</option>)
-
-/** Module scope on purpose: declared inside the page it is a new component type every render and the inputs lose focus per keystroke. */
-function PartyFields({ title, v, set, freight }: { title: string; v: Party; set: (x: Party) => void; freight: boolean }) {
-  const { t, locale } = useI18n()
-  return (
-    <fieldset className="grid gap-2 card-brand p-4 sm:grid-cols-2"><legend className="font-display px-1 text-lg">{title}</legend>
-      {(["name", "company", "line1", "city", "postcode", "phone", "email"] as const).map((k) => (
-        <label key={k} className="text-sm">{t(k === "line1" ? "cargo.address" : `cargo.${k}` as never)}{k === "company" && !freight && <span className="text-steel"> ({t("common.optional")})</span>}
-          <Input className="mt-1 h-10" dir={["phone", "email", "postcode"].includes(k) || k === "name" ? "ltr" : "auto"} value={v[k]} onChange={(e) => set({ ...v, [k]: e.target.value })} required={k === "name" || k === "line1" || k === "city" || (k === "company" && freight)} />
-        </label>
-      ))}
-      <label className="text-sm">{t("cargo.country")}<CountrySelect wrapperClassName="mt-1" className="field h-10 w-full" value={v.country} onChange={(e) => set({ ...v, country: e.target.value })}>{countryOptions(v.country, locale)}</CountrySelect></label>
-    </fieldset>
-  )
-}
+const INTRO = [["shipTitle", "ship", PackageCheck], ["howTitle", "how", Workflow], ["needTitle", "need", ClipboardList]] as const
 
 export default function CargoPage() {
-  const { t, href, money, sep, locale } = useI18n()
-  const { me } = useSession()
-  const router = useRouter()
-  const path = usePathname()
-  const lanes = useQuery({ queryKey: ["lanes"], queryFn: () => api<Lane[]>("/v1/cargo/lanes") })
-  const [laneId, setLaneId] = useState("")
-  const [service, setService] = useState("PARCEL")
-  const lane = lanes.data?.find((l) => l.id === laneId)
-  const [shipper, setShipper] = useState(emptyParty("GB"))
-  const [consignee, setConsignee] = useState(emptyParty("TR"))
-  const [pieces, setPieces] = useState([{ lengthCm: 40, widthCm: 30, heightCm: 20, weightKg: 5 }])
-  const [items, setItems] = useState([{ description: "", category: "CLOTHING", quantity: 1, value: 50, originCountry: "GB", hsCode: "", purpose: "PERSONAL_EFFECTS" }])
-  const [decl, setDecl] = useState({ batteries: false, liquids: false, medicines: false, magnets: false, dangerousGoods: false, insuranceRequested: false })
-  const [readyDate, setReadyDate] = useState(new Date(Date.now() + 3 * 86400_000).toISOString().slice(0, 10))
-  const [handover, setHandover] = useState("PICKUP")
-  const [incoterm, setIncoterm] = useState("DAP")
-  const [docs, setDocs] = useState<{ documentId: string; filename: string }[]>([])
-  const [consent, setConsent] = useState({ accuracy: false, prohibitedItems: false, privacy: false })
-  const [err, setErr] = useState<ApiError | null>(null)
-  const [done, setDone] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [key] = useState(newIdempotencyKey)
-  const divisor = lane?.volumetricDivisor ?? 5000
-  // Shown live and labelled an estimate (ch. 14.3): volumetric = L × W × H ÷ divisor; chargeable = the greater.
-  const w = useMemo(() => {
-    const actual = pieces.reduce((s, p) => s + p.weightKg, 0)
-    const vol = pieces.reduce((s, p) => s + (p.lengthCm * p.widthCm * p.heightCm) / divisor, 0)
-    const r = (n: number) => Math.round(n * 100) / 100
-    return { actual: r(actual), vol: r(vol), charge: r(Math.max(actual, vol)) }
-  }, [pieces, divisor])
-  const freight = service === "AIR_FREIGHT"
-  const phone = me?.identities.find((i) => i.type === "PHONE" && i.verifiedAt)
-  const total = items.reduce((s, i) => s + Math.round(i.value * 100) * i.quantity, 0)
-  const party = (p: typeof shipper) => ({ name: p.name, company: p.company || undefined, address: { line1: p.line1, city: p.city, postcode: p.postcode || undefined, country: p.country }, phone: p.phone || phone?.value || "", email: p.email || undefined })
-  // Browsing and preparing a shipment is open; sign-in is asked when it is sent, and the form is kept across it.
-  useEffect(() => {
-    const d = takeDraft<{ laneId: string; service: string; shipper: typeof shipper; consignee: typeof consignee; pieces: typeof pieces; items: typeof items; decl: typeof decl; readyDate: string; handover: string; incoterm: string; consent: typeof consent }>("cargo")
-    if (!d) return
-    setLaneId(d.laneId); setService(d.service); setShipper(d.shipper); setConsignee(d.consignee); setPieces(d.pieces); setItems(d.items)
-    setDecl(d.decl); setReadyDate(d.readyDate); setHandover(d.handover); setIncoterm(d.incoterm); setConsent(d.consent)
-  }, [])
-  const submit = async () => {
-    if (!me) {
-      saveDraft("cargo", { laneId, service, shipper, consignee, pieces, items, decl, readyDate, handover, incoterm, consent })
-      router.push(href(`/sign-in?next=${encodeURIComponent(path)}`))
-      return
-    }
-    setBusy(true); setErr(null)
-    try {
-      const r = await api<{ ref: string }>("/v1/cargo-requests", { headers: { "idempotency-key": key }, body: {
-        service, laneId, shipperIdentityId: phone?.id, shipper: party(shipper), consignee: party(consignee), readyDate, handoverMode: handover, pieces,
-        items: items.map((i) => ({ description: i.description, category: i.category, quantity: i.quantity, unitValue: { amountMinor: Math.round(i.value * 100), currency: "GBP" }, originCountry: i.originCountry, hsCode: i.hsCode || undefined, purpose: i.purpose })),
-        commercial: freight ? { incoterm } : undefined, declarations: decl, declaredTotal: { amountMinor: total, currency: "GBP" }, documentIds: docs.map((d) => d.documentId), consents: consent,
-      } })
-      setDone(r.ref)
-    } catch (e) { setErr(e as ApiError) } finally { setBusy(false) }
-  }
-  // On a phone the form is long: bring the result into view.
-  useEffect(() => { if (done) window.scrollTo({ top: 0, behavior: "smooth" }) }, [done])
-  if (done) return (
-    <><HeroBand /><div className="mx-auto max-w-xl px-4 py-12"><div className="card-brand p-8 text-center"><IconBadge className="mx-auto border-success text-success"><CheckCircle2 /></IconBadge><h1 className="font-display mt-5 text-3xl md:text-4xl">{t("request.sentTitle")}</h1><p className="mt-4 inline-block rounded-xl bg-cloud px-4 py-2 font-mono text-2xl" dir="ltr">{done}</p><div><Link href={href(`/cargo/${done}`)} className="btn-orange mt-6">{t("cargo.tracking")}</Link></div></div></div></>
-  )
+  const { t, href } = useI18n()
   return (
     <>
-    <ServiceHero testId="cargo-hero" photo="cargo" scene="cargo" eyebrow={t("cargo.eyebrow")} title={t("cargo.title")} accent={t("cargo.accent")} lead={t("cargo.heroLead")}
-      perks={[{ icon: Plane, label: t("cargo.perkServices") }, { icon: Scale, label: t("cargo.perkWeight") }, { icon: Truck, label: t("cargo.perkTrack") }]}
-      actions={<><a href="#cargo-form" className="btn-orange">{t("services.startRequest")}<ArrowDown className="size-4" aria-hidden /></a><Link href={href("/shipments")} className="btn-glass">{t("cargo.trackLink")}</Link></>} />
-    <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-16 pt-8 md:px-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-    <div id="cargo-form" className="min-w-0 scroll-mt-24 space-y-6">
-      <p className="card-brand !rounded-xl border-s-4 !border-s-danger px-4 py-3 text-sm">{t("cargo.prohibited")}</p>
-      <section className="card-brand space-y-4 p-5">
-      <StepHeading n={1} icon={Route}>{t("cargo.stepRoute")}</StepHeading>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-medium">{t("cargo.lane")}
-          <NativeSelect className="mt-1 h-11 w-full field" value={laneId} onChange={(e) => { setLaneId(e.target.value); const l = lanes.data?.find((x) => x.id === e.target.value); if (l) { setShipper((s) => ({ ...s, country: l.originCountry })); setConsignee((c) => ({ ...c, country: l.destinationCountry })) } }}>
-            <option value="">—</option>
-            {lanes.data?.map((l) => <option key={l.id} value={l.id} disabled={!l.enabled}>{l.label}{!l.enabled ? `${sep}${t("cargo.laneDisabled")}` : ""}</option>)}
-          </NativeSelect>
-        </label>
-        <label className="text-sm font-medium">{t("cargo.service")}
-          <NativeSelect className="mt-1 h-11 w-full field" value={service} onChange={(e) => setService(e.target.value)}>
-            {(lane?.services ?? ["DOCUMENTS", "PARCEL", "EXCESS_BAGGAGE", "AIR_FREIGHT"]).map((s) => <option key={s} value={s}>{t(`cargo.${s}` as never)}</option>)}
-          </NativeSelect>
-        </label>
-        {lane?.notice && <p className="text-sm text-steel sm:col-span-2">{lane.notice}</p>}
-      </div>
-      </section>
-      <section className="space-y-4">
-        <StepHeading n={2} icon={Users}>{t("cargo.stepParties")}</StepHeading>
-        <div className="grid gap-4 xl:grid-cols-2"><PartyFields title={t("cargo.shipper")} v={shipper} set={setShipper} freight={freight} /><PartyFields title={t("cargo.consignee")} v={consignee} set={setConsignee} freight={freight} /></div>
-      </section>
-      <section className="card-brand p-5">
-        <StepHeading n={3} icon={Package}>{t("cargo.stepPieces")}</StepHeading>
-        {pieces.map((p, i) => (
-          <div key={i} className="mt-2 grid grid-cols-2 items-end gap-2 sm:grid-cols-5">
-            {(["lengthCm", "widthCm", "heightCm", "weightKg"] as const).map((k) => <label key={k} className="text-xs text-steel">{t(`cargo.${k === "lengthCm" ? "length" : k === "widthCm" ? "width" : k === "heightCm" ? "height" : "weight"}`)}<Input type="number" inputMode="decimal" min={0.1} step="0.1" className="mt-1 h-10 text-base text-navy-950 sm:text-sm" value={p[k]} onChange={(e) => setPieces(pieces.map((x, j) => (j === i ? { ...x, [k]: Number(e.target.value) } : x)))} /></label>)}
-            <Button variant="ghost" className="col-span-2 sm:col-span-1" aria-label={t("common.remove")} disabled={pieces.length === 1} onClick={() => setPieces(pieces.filter((_, j) => j !== i))}><Trash2 className="size-4" /></Button>
-          </div>
-        ))}
-        <Button variant="outline" size="sm" className="rounded-xl border-navy-900 text-navy-900 mt-3" onClick={() => setPieces([...pieces, { lengthCm: 30, widthCm: 20, heightCm: 20, weightKg: 3 }])}><Plus className="size-4" />{t("cargo.addPiece")}</Button>
-        <p className="mt-3 rounded-xl bg-cloud px-4 py-2.5 text-sm font-medium" aria-live="polite">{t("cargo.weights", { actual: w.actual, vol: w.vol, charge: w.charge })}</p>
-      </section>
-      <section className="card-brand p-5">
-        <StepHeading n={4} icon={Boxes}>{t("cargo.stepContents")}</StepHeading>
-        {items.map((it, i) => (
-          <div key={i} className="mt-3 grid gap-2 border-t border-line pt-3 first:border-0 sm:grid-cols-6">
-            <label className="text-xs text-steel sm:col-span-2">{t("cargo.description")}<Input className="mt-1 h-10" value={it.description} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, description: e.target.value } : x)))} required /></label>
-            <label className="text-xs text-steel">{t("cargo.category")}<NativeSelect className="mt-1 h-10 w-full field" value={it.category} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, category: e.target.value } : x)))}>{CATS.map((c) => <option key={c} value={c}>{t(`cargo.categories.${c}` as never)}</option>)}</NativeSelect></label>
-            <label className="text-xs text-steel">{t("cargo.quantity")}<Input type="number" min={1} className="mt-1 h-10" value={it.quantity} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, quantity: Number(e.target.value) } : x)))} /></label>
-            <label className="text-xs text-steel">{t("cargo.value")} (GBP)<Input type="number" min={0} className="mt-1 h-10" value={it.value} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, value: Number(e.target.value) } : x)))} /></label>
-            <label className="text-xs text-steel">{t("cargo.purpose")}<NativeSelect className="mt-1 h-10 w-full field" value={it.purpose} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, purpose: e.target.value } : x)))}>{PURPOSES.map((c) => <option key={c} value={c}>{t(`cargo.purposes.${c}` as never)}</option>)}</NativeSelect></label>
-            <label className="text-xs text-steel">{t("cargo.origin")}<CountrySelect wrapperClassName="mt-1" className="field h-10 w-full" value={it.originCountry} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, originCountry: e.target.value } : x)))}>{countryOptions(it.originCountry, locale)}</CountrySelect></label>
-            <label className="text-xs text-steel">{t("cargo.hs")}{!freight && ` (${t("common.optional")})`}<Input className="mt-1 h-10" dir="ltr" value={it.hsCode} onChange={(e) => setItems(items.map((x, j) => (j === i ? { ...x, hsCode: e.target.value.replace(/\D/g, "") } : x)))} required={freight} /></label>
-          </div>
-        ))}
-        <Button variant="outline" size="sm" className="rounded-xl border-navy-900 text-navy-900 mt-3" onClick={() => setItems([...items, { description: "", category: "OTHER", quantity: 1, value: 10, originCountry: "GB", hsCode: "", purpose: "GIFT" }])}><Plus className="size-4" />{t("cargo.addItem")}</Button>
-        <p className="mt-3 text-sm text-steel">{money({ amountMinor: total, currency: "GBP" })}</p>
-      </section>
-      <section className="grid gap-4 card-brand p-5 sm:grid-cols-3">
-        <div className="sm:col-span-3"><StepHeading n={5} icon={FileText}>{t("cargo.stepHandover")}</StepHeading></div>
-        <label className="text-sm">{t("cargo.readyDate")}<Input type="date" className="mt-1 h-10" value={readyDate} onChange={(e) => setReadyDate(e.target.value)} /></label>
-        <label className="text-sm">{t("cargo.handover")}<NativeSelect className="mt-1 h-10 w-full field" value={handover} onChange={(e) => setHandover(e.target.value)}><option value="PICKUP">{t("cargo.pickup")}</option><option value="DROP_OFF">{t("cargo.dropOff")}</option></NativeSelect></label>
-        {freight && <label className="text-sm">{t("cargo.incoterm")}<NativeSelect className="mt-1 h-10 w-full field" value={incoterm} onChange={(e) => setIncoterm(e.target.value)}>{["EXW", "FCA", "CPT", "CIP", "DAP", "DPU", "DDP"].map((x) => <option key={x}>{x}</option>)}</NativeSelect></label>}
-        <fieldset className="grid gap-2 text-sm sm:col-span-3 sm:grid-cols-3"><legend className="mb-1 font-semibold">{t("cargo.declarations")}</legend>
-          {(["batteries", "liquids", "medicines", "magnets", "dangerousGoods", "insuranceRequested"] as const).map((k) => <label key={k} className="flex items-center gap-2 pointer-coarse:min-h-11"><input type="checkbox" className="size-4 accent-orange" checked={decl[k]} onChange={(e) => setDecl({ ...decl, [k]: e.target.checked })} />{t(`cargo.${k === "dangerousGoods" ? "dg" : k === "insuranceRequested" ? "insurance" : k}` as never)}</label>)}
-        </fieldset>
-        {decl.dangerousGoods && <p role="alert" className="rounded-xl border-s-4 border-danger bg-danger-subtle px-4 py-3 text-sm text-danger sm:col-span-3">{t("flow.dgWarn")}</p>}
-        <div className="sm:col-span-3"><p className="text-sm font-semibold">{t("cargo.documents")}</p>
-          <label aria-disabled={!me} className={`mt-2 inline-flex items-center gap-2 field py-2 text-sm ${me ? "cursor-pointer" : "pointer-events-none opacity-60"}`}><Upload className="size-4" />{t("cargo.upload")}
-            <input disabled={!me} type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setDocs([...docs, await uploadFile(f, "OTHER")]) }} /></label>
-          <ul className="mt-2 text-sm text-steel">{docs.map((d) => <li key={d.documentId}>{d.filename}</li>)}</ul>
+      <ServiceHero testId="cargo-hero" photo="cargo" scene="cargo" eyebrow={t("cargo.eyebrow")} title={t("cargo.title")} accent={t("cargo.accent")} lead={t("cargo.heroLead")}
+        perks={[{ icon: Plane, label: t("cargo.perkServices") }, { icon: Scale, label: t("cargo.perkWeight") }, { icon: Truck, label: t("cargo.perkTrack") }]}
+        actions={<><a href="#cargo-form" className="btn-orange">{t("services.startRequest")}<ArrowDown className="size-4" aria-hidden /></a><Link href={href("/shipments")} className="btn-glass">{t("cargo.trackLink")}</Link></>} />
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 pb-16 pt-8 md:px-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-8">
+        <aside aria-labelledby="cargo-intro" className="grid gap-4 self-start lg:sticky lg:top-24">
+          <h2 id="cargo-intro" className="font-display text-lg text-navy-950">{t("guide.cargo.intro.title")}</h2>
+          <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {INTRO.map(([title, body, Icon]) => (
+              <li key={title} className="card-brand p-4">
+                <p className="flex items-center gap-2 text-sm font-semibold text-navy-950"><Icon className="size-4 shrink-0 text-orange" aria-hidden />{t(`guide.cargo.intro.${title}`)}</p>
+                <p className="mt-1 text-sm text-steel">{t(`guide.cargo.intro.${body}`)}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="flex gap-2 rounded-xl bg-cloud px-4 py-3 text-sm text-navy-900"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-navy-900" aria-hidden />{t("guide.cargo.intro.screened")}</p>
+          <p className="card-brand !rounded-xl border-s-4 !border-s-danger px-4 py-3 text-sm">{t("cargo.prohibited")}</p>
+        </aside>
+        <div id="cargo-form" className="card-brand min-w-0 scroll-mt-24 p-4 sm:p-6">
+          <CargoWizard />
         </div>
-      </section>
-      <section className="card-brand space-y-2 p-5 text-sm">
-        <div className="mb-3"><StepHeading n={6} icon={ClipboardCheck}>{t("cargo.stepConfirm")}</StepHeading></div>
-        {(["accuracy", "prohibitedItems", "privacy"] as const).map((k) => <label key={k} className="flex items-start gap-3 pointer-coarse:min-h-11"><input type="checkbox" className="mt-0.5 size-4 accent-orange" checked={consent[k]} onChange={(e) => setConsent({ ...consent, [k]: e.target.checked })} />{t(`cargo.consent${k === "accuracy" ? "Accuracy" : k === "prohibitedItems" ? "Prohibited" : "Privacy"}`)}</label>)}
-      </section>
-      {err && <p role="alert" className="rounded-xl bg-danger-subtle px-4 py-3 text-sm text-danger">{err.problem.detail ?? err.problem.title}{err.problem.errors?.map((x) => <span key={x.path} className="block">{x.path}: {x.message}</span>)}</p>}
-      <button type="button" className="btn-orange h-13 w-full text-base" disabled={busy || !laneId || (!!me && !phone) || !consent.accuracy || !consent.prohibitedItems || !consent.privacy} onClick={() => void submit()}>{me ? t("cargo.submit") : t("cargo.signInToSend")}</button>
-      {!me && <p className="text-sm text-steel" data-testid="cargo-sign-in">{t("cargo.signInNote")}</p>}
-    </div>
-    <aside className="card-brand self-start p-5 lg:sticky lg:top-24" aria-label={t("cargo.summaryTitle")} data-testid="cargo-summary">
-      <h2 className="font-display text-lg">{t("cargo.summaryTitle")}</h2>
-      <dl className="mt-4 space-y-3 text-sm">
-        {([["summaryRoute", lane?.label], ["summaryService", t(`cargo.${service}` as never)], ["summaryWeight", t("cargo.kg", { n: w.charge })], ["summaryValue", money({ amountMinor: total, currency: "GBP" })]] as const).map(([k, v]) => (
-          <div key={k} className="flex items-baseline justify-between gap-3 border-b border-dashed border-line pb-3 last:border-0 last:pb-0">
-            <dt className="text-steel">{t(`cargo.${k}`)}</dt><dd className="text-end font-semibold">{v ?? <span className="font-normal text-steel">{t("cargo.summaryNone")}</span>}</dd>
-          </div>
-        ))}
-      </dl>
-    </aside>
-    </div>
+      </div>
     </>
   )
 }

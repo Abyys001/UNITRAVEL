@@ -10,7 +10,7 @@ import { Ltr } from "@/components/badges"
 import { SupportForm } from "@/components/support-form"
 import { api } from "@/lib/api"
 
-import { PanelFrame } from "@/components/customer-panel"
+import { StatusPill } from "@/components/portal/parts"
 import { useI18n } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
 import { useSite } from "@/lib/site"
@@ -26,11 +26,10 @@ export default function SupportPage() {
   const { phone, email, hours } = site.support
   const tickets = useQuery({ queryKey: ["support-tickets"], queryFn: () => api<CustomerTicketSummary[]>("/v1/support/tickets"), enabled: !!me })
   return (
-    <PanelFrame enabled={!!me}>
     <div className={me ? "" : "mx-auto max-w-5xl px-4 py-8 md:py-10"}>
       <h1 className="font-display text-3xl md:text-4xl">{t("support.title")}</h1>
-      <p className="mt-3 leading-7 text-steel">{t("support.lead")}</p>
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <p className="mt-3 leading-7 text-(color:--ink-muted)">{t("support.lead")}</p>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <SupportForm onSent={() => void tickets.refetch()} />
         <aside className="space-y-4">
           <div className="card-brand space-y-4 p-5" data-testid="support-contacts">
@@ -40,12 +39,12 @@ export default function SupportPage() {
             {hours && <p className="text-sm"><span className="text-steel">{t("support.hours")}: </span>{hours[locale]}</p>}
           </div>
           {me && (
-            <section className="card-brand p-5" aria-labelledby="tk-h" data-testid="support-tickets">
-              <h2 id="tk-h" className="font-display text-xl">{t("support.ticketsTitle")}</h2>
-              {tickets.data && tickets.data.length === 0 && <p className="mt-2 text-sm text-steel">{t("support.noTickets")}</p>}
-              <ul className="mt-2 divide-y divide-line">
+            <section className="portal-card p-5" aria-labelledby="tk-h" data-testid="support-tickets">
+              <h2 id="tk-h" className="font-display text-xl">{t("portal.support2.listTitle")}</h2>
+              {tickets.data && tickets.data.length === 0 && <p className="mt-2 text-sm text-(color:--ink-muted)">{t("support.noTickets")}</p>}
+              <ul className="mt-2 divide-y divide-(--rule)">
                 {tickets.data?.map((k) => (
-                  <li key={k.ref}><Link href={href(`/support/${k.ref}`)} className="flex items-center justify-between gap-3 py-3 text-sm hover:text-royal"><span className="min-w-0"><span className="block truncate font-semibold" dir="auto">{k.subject}</span><Ltr className="font-mono text-xs text-steel">{k.ref}</Ltr></span><span className="shrink-0 rounded-full bg-cloud px-2.5 py-1 text-xs font-semibold">{t(`support.status.${k.status}`)}</span></Link></li>
+                  <li key={k.ref}><Link href={href(`/support/${k.ref}`)} data-unread={k.unread ? "true" : "false"} className="flex items-center justify-between gap-3 py-3 text-sm hover:text-royal"><span className="min-w-0"><span className="flex items-center gap-2">{k.unread && <span aria-hidden className="size-2.5 shrink-0 rounded-full bg-orange-700" />}<span className={`block truncate ${k.unread ? "font-bold" : "font-semibold"}`} dir="auto">{k.subject}</span></span><Ltr className="font-mono text-xs text-(color:--ink-muted)">{k.ref}</Ltr></span><span className="flex shrink-0 flex-col items-end gap-1">{k.unread && <span className="rounded-full border border-orange-700 px-2 py-0.5 text-xs font-bold text-orange-700">{t("portal.support2.newReply")}</span>}<StatusPill>{t(`support.status.${k.status}`)}</StatusPill></span></Link></li>
                 ))}
               </ul>
             </section>
@@ -57,6 +56,5 @@ export default function SupportPage() {
         {me && <li><Link className="font-semibold text-royal underline underline-offset-4" href={href("/requests")}>{t("support.message")}</Link></li>}
       </ul>
     </div>
-    </PanelFrame>
   )
 }

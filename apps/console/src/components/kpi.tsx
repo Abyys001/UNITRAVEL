@@ -17,9 +17,10 @@ export function Kpi({ label, value, href, sub, subTone, spark, sparkLabel, tone,
     <>
       <p className="text-meta font-medium text-steel">{label}</p>
       {loading ? <Skeleton className="mt-3 h-8 w-16" /> : <p className={cn("num leading-none font-semibold tracking-tight", compact ? "mt-1.5 text-title" : "mt-2 text-display", tone === "danger" && value ? "text-danger" : "text-ink")}>{value === undefined ? "—" : fmt(value)}</p>}
-      <div className={cn("flex items-end justify-between gap-3", compact ? "mt-2 min-h-5" : "mt-3 min-h-6")}>
-        <p className={cn("text-meta", subTone === "danger" ? "font-medium text-danger" : subTone === "ok" ? "text-success" : "text-steel")}>{loading ? "" : sub}</p>
-        {spark && spark.length > 1 && <Sparkline values={spark} label={sparkLabel} className="h-6 w-24 shrink-0 text-viz-1" height={24} />}
+      {/* Phones stack the note above the trend line, so a long note never pushes the line out of the card. */}
+      <div className={cn("flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-3", compact ? "mt-2 min-h-5" : "mt-3 min-h-6")}>
+        <p className={cn("min-w-0 text-meta", subTone === "danger" ? "font-medium text-danger" : subTone === "ok" ? "text-success" : "text-steel")}>{loading ? "" : sub}</p>
+        {spark && spark.length > 1 && <Sparkline values={spark} label={sparkLabel} className="h-6 w-full max-w-24 shrink-0 text-viz-1 sm:w-24" height={24} />}
       </div>
     </>
   )

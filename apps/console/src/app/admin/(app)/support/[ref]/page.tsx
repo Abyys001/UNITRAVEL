@@ -23,6 +23,7 @@ import { Empty, Panel } from "@/components/ui"
 import { api, ApiError, errText } from "@/lib/api"
 import { fmtDateTime } from "@/lib/format"
 import { useSession } from "@/lib/session"
+import { useReadOnOpen } from "@/lib/notifications"
 
 function Message({ m }: { m: StaffTicketView["messages"][number] }) {
   const { t } = useSupportLabels()
@@ -42,6 +43,7 @@ function Message({ m }: { m: StaffTicketView["messages"][number] }) {
 /** One ticket (ADR-0019): thread with reply and internal note, state commands, links to the customer and the request, and its calls. */
 export default function TicketPage() {
   const { ref } = useParams<{ ref: string }>()
+  useReadOnOpen(ref)
   const L = useSupportLabels()
   const { t } = L
   const { me, can } = useSession()

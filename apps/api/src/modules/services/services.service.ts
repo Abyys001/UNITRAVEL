@@ -42,6 +42,8 @@ const customerStatus = (s: ServiceRequestStatus): ServiceRequestStatus => (s ===
 const BEFORE_CONFIRMED: ServiceRequestStatus[] = ["SUBMITTED", "COMPLIANCE_HOLD", "IN_PROGRESS", "QUOTED"]
 const STAFF_COMMANDS = ["claim", "assign", "send_quote", "record_acceptance", "complete", "cancel", "decline", "release_hold"] as const satisfies readonly ServiceCommandName[]
 const iso = (d: Date | null) => d?.toISOString() ?? null
+/** Thread note for documents sent with the request itself; the request locale is the customer's. */
+const SUBMITTED_DOCUMENTS_NOTE: Record<Locale, string> = { en: "Documents sent with the request.", fa: "مدارک همراه درخواست ارسال شد." }
 
 /**
  * Service requests (ADR-0015, spec section 4.2): visa, tour call-back, airport CIP, insurance and, later, hotel, stay,
@@ -153,9 +155,10 @@ export class ServicesService implements OnModuleInit {
       const [f] = await this.db.select({ owner: flightRequests.customerUserId }).from(flightRequests).where(eq(flightRequests.ref, linked))
       if (f?.owner !== actor.userId) throw new AppError("VALIDATION_FAILED", "Choose one of your own flight requests", [{ path: "details.linkedFlightRequestRef", code: "INVALID" }])
     }
+    const documentIds = [...new Set(body.documentIds ?? [])]
     return this.uow.run((tx) => this.submit(tx, {
-      type: body.type, details, customerUserId: actor.userId, contact, locale: ctx.locale, via: ctx.via,
-      actor: { userId: actor.userId, kind: "CUSTOMER", ip: actor.ip }, requestId: ctx.requestId, command: "submit", auditAction: "service_request.submitted", auditAfter: { type: body.type, travellers: travellerIds.length },
+      type: body.type, details, customerUserId: actor.userId, contact, locale: ctx.locale, via: ctx.via, documentIds,
+      actor: { userId: actor.userId, kind: "CUSTOMER", ip: actor.ip }, requestId: ctx.requestId, command: "submit", auditAction: "service_request.submitted", auditAfter: { type: body.type, travellers: travellerIds.length, documents: documentIds.length },
     }))
   }
 
@@ -163,6 +166,7 @@ export class ServicesService implements OnModuleInit {
   private async submit(tx: Tx, p: {
     type: ServiceRequestType; details: Record<string, unknown>; customerUserId: string; contact: typeof userIdentities.$inferSelect; locale: Locale; via: "WEB" | "MOBILE" | "CONSOLE"
     actor: { userId: string; kind: "CUSTOMER" | "STAFF"; ip?: string }; requestId: string; command: "submit" | "assign_to_customer"; auditAction: string; auditAfter: Record<string, unknown>
+    documentIds?: string[]
   }) {
     const wf = this.config.get("WORKFLOW")
     const ref = await this.uniqueRef(tx)
@@ -173,6 +177,11 @@ export class ServicesService implements OnModuleInit {
     }).returning()
     await tx.insert(requestStatusHistory).values({ requestType: "SERVICE", requestId: r!.id, fromStatus: null, toStatus: "SUBMITTED", command: p.command, actorUserId: p.actor.userId, actorKind: p.actor.kind })
     await this.audit.record(tx, { actorUserId: p.actor.userId, actorKind: p.actor.kind, action: p.auditAction, entityType: "service_request", entityId: r!.id, contextRef: ref, after: p.auditAfter, ip: p.actor.ip, requestId: p.requestId })
+    if (p.documentIds?.length) {
+      // Same path as a later customer message, so ownership (404 on a foreign id) and staff visibility do not fork.
+      await this.docs.attach(tx, p.documentIds, "SERVICE", r!.id, p.actor.userId)
+      await tx.insert(requestMessages).values({ requestType: "SERVICE", requestId: r!.id, authorId: p.actor.userId, direction: "FROM_CUSTOMER", body: SUBMITTED_DOCUMENTS_NOTE[p.locale], documentIds: p.documentIds })
+    }
     await this.outbox.add(tx, { aggregateType: "service_request", aggregateId: r!.id, eventType: "service_request.submitted", payload: { requestId: r!.id, ref, customerUserId: p.customerUserId, serviceType: p.type, ...this.labelVars(p.type), routeLabel: SERVICE_TYPE_LABELS[p.type][p.locale] }, dedupeKey: `sr-submitted:${r!.id}` })
     return { ref, type: p.type, status: "SUBMITTED" as const }
   }

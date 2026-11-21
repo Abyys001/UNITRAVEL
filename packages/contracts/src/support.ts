@@ -40,6 +40,8 @@ export const CustomerTicketMessage = z.object({ id: Uuid, direction: z.enum(["FR
 
 export const CustomerTicketSummary = z.object({
   ref: SupportTicketRef, topic: SupportTopic, subject: z.string(), status: SupportTicketStatus, requestRef: z.string().nullable(), createdAt: IsoDateTime, updatedAt: IsoDateTime, lastMessageAt: IsoDateTime,
+  /** A staff reply the customer has not opened yet (ADR-0040 D3). */
+  unread: z.boolean(),
 })
 export type CustomerTicketSummary = z.infer<typeof CustomerTicketSummary>
 /** Internal notes never reach this schema, so they cannot leak to the customer. */

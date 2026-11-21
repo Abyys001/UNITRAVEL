@@ -7,14 +7,17 @@ import { EmailSender, PushProviders, SmsProviders } from "./channels"
 import { NotificationRouter } from "./notification-router"
 import { NotificationsController } from "./notifications.controller"
 import { NotificationsService } from "./notifications.service"
+import { StaffFeedService } from "./staff-feed.service"
+import { StaffNotificationsController } from "./staff-notifications.controller"
 import { VendorCredentialsService } from "./vendor-credentials.service"
 
 @Injectable()
 class NotificationWorkers implements OnModuleInit {
-  constructor(private readonly registry: WorkerRegistry, private readonly n: NotificationsService, private readonly router: NotificationRouter, private readonly queues: Queues) {}
+  constructor(private readonly registry: WorkerRegistry, private readonly n: NotificationsService, private readonly router: NotificationRouter, private readonly feed: StaffFeedService, private readonly queues: Queues) {}
 
   async onModuleInit() {
     this.registry.register("notify.route", (job) => this.router.handle(job.data as DispatchedEvent), 10)
+    this.registry.register("notify.staff", (job) => this.feed.handle(job.data as DispatchedEvent), 5)
     this.registry.register("notify.sms", async (job) => {
       // The OTP event arrives straight from the outbox on this queue (high priority, ch. 26.5 "< 3 s").
       if (job.name === "auth.otp_requested") return this.n.sendOtp((job.data as DispatchedEvent).payload as never)
@@ -30,8 +33,8 @@ class NotificationWorkers implements OnModuleInit {
 }
 
 @Module({
-  controllers: [NotificationsController],
-  providers: [NotificationsService, NotificationRouter, SmsProviders, PushProviders, EmailSender, VendorCredentialsService, NotificationWorkers],
+  controllers: [NotificationsController, StaffNotificationsController],
+  providers: [NotificationsService, NotificationRouter, StaffFeedService, SmsProviders, PushProviders, EmailSender, VendorCredentialsService, NotificationWorkers],
   exports: [NotificationsService, VendorCredentialsService, SmsProviders, EmailSender],
 })
 export class NotificationsModule {}

@@ -17,6 +17,7 @@ const MENU: Record<(typeof FLAGS)[number], string> = { "services.visa.enabled": 
 let dev: Session, admin: Session, compliance: Session
 const anon = new Session("WEB")
 const initial: Record<string, boolean> = {}
+let initialClub = false
 
 async function setFlag(key: (typeof FLAGS)[number], enabled: boolean) {
   expect((await dev.put(`/v1/dev/feature-flags/${key}`, { enabled })).status).toBe(200)
@@ -30,10 +31,14 @@ beforeAll(async () => {
   const menu = (await anon.get("/v1/site")).body.menu
   for (const k of FLAGS) initial[k] = menu[MENU[k]]
   for (const k of FLAGS) if (initial[k]) await setFlag(k, false)
+  // The visa lifecycle checks the member rule of a club-discount line, which only runs while the club is on.
+  initialClub = menu.club
+  if (!initialClub) expect((await dev.put("/v1/dev/feature-flags/loyalty.enabled", { enabled: true })).status).toBe(200)
 })
 afterAll(async () => {
   // Every service flag is off by default; leave the local database as found.
   for (const k of FLAGS) await dev.put(`/v1/dev/feature-flags/${k}`, { enabled: initial[k] ?? false })
+  await dev.put("/v1/dev/feature-flags/loyalty.enabled", { enabled: initialClub })
 })
 
 const codesTo = async (phone: string) => ((await (await fetch(`${API}/v1/dev-sink/sms`)).json()) as { to: string; body: string }[]).filter((m) => m.to === phone).flatMap((m) => /code: (\d{6})/.exec(m.body)?.[1] ?? [])
@@ -157,6 +162,35 @@ describe("Service requests (ADR-0015)", () => {
     const r = await u.c.post(`/v1/service-requests/${ref}/cancel`, { reason: "Changed plans" })
     expect(r.status).toBe(200)
     expect(r.body).toMatchObject({ status: "CANCELLED", canCancel: false })
+  })
+
+  it("documents sent with a request must be the customer's own (ADR-0041 D4)", async () => {
+    const pdf = Buffer.from("%PDF-1.4\n%\xe2\xe3\xcf\xd3\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n", "latin1")
+    const upload = async (c: Session) => {
+      const up = await c.post("/v1/uploads", { filename: "invitation.pdf", mime: "application/pdf", size: pdf.length, type: "OTHER" })
+      expect([200, 201]).toContain(up.status)
+      expect((await fetch(up.body.uploadUrl, { method: "PUT", headers: up.body.headers, body: new Uint8Array(pdf) })).status).toBeLessThan(300)
+      expect((await c.post(`/v1/uploads/${up.body.documentId}/complete`)).status).toBe(200)
+      return up.body.documentId as string
+    }
+    const u = await customer()
+    const other = await customer("Sara")
+    const foreign = await upload(other.c)
+    expect((await u.c.post("/v1/service-requests", { ...visaBody(u), documentIds: [foreign] })).status).toBe(404)
+    const own = await upload(u.c)
+    const r = await u.c.post("/v1/service-requests", { ...visaBody(u), documentIds: [own] })
+    expect(r.status).toBe(201)
+    const seen = (await u.c.get(`/v1/service-requests/${r.body.ref}`)).body
+    expect(seen.messages.some((m: { documentIds: string[] }) => m.documentIds.includes(own))).toBe(true)
+  })
+
+  it("CIP options: departure-only choices are refused on an arrival", async () => {
+    await setFlag("services.cip.enabled", true)
+    const u = await customer()
+    const bad = await u.c.post("/v1/service-requests", { ...cipBody(u), details: { ...cipBody(u).details, services: ["BUSINESS_LOUNGE"] } })
+    expect(bad.status).toBe(400)
+    const ok = await u.c.post("/v1/service-requests", { ...cipBody(u), details: { ...cipBody(u).details, companions: 1, services: ["CIP_TERMINAL", "TRANSFER"] } })
+    expect(ok.status).toBe(201)
   })
 
   it("a tour call-back completes from IN_PROGRESS without a quote and can never be quoted", async () => {

@@ -184,6 +184,12 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     fa: { title: "درخواست دریافت شد · {ref}", body: "درخواست {service} با شمارهٔ {ref} دریافت شد. تا ارسال پیشنهاد قیمت و تأیید شما چیزی رزرو یا دریافت نمی‌شود." },
     smsEn: "Uni Travel: request {ref} received. {link}", smsFa: "یونی‌تراول: درخواست {ref} دریافت شد. {link}",
   },
+  "service_request.new": {
+    vars: ["ref", "service", "console_url"],
+    en: { title: "New {service} request · {ref}", body: "A customer sent a new {service} request, {ref}. It is waiting in the service queue. Open it in the Admin Panel: {console_url}" },
+    fa: { title: "درخواست جدید {service} · {ref}", body: "مشتری درخواست جدید {service} با شمارهٔ {ref} فرستاده است. این درخواست در صف خدمات منتظر است. آن را در پنل مدیریت باز کنید: {console_url}" },
+    smsEn: "Uni Travel: new {service} request {ref}.", smsFa: "یونی‌تراول: درخواست جدید {service} با شمارهٔ {ref}.",
+  },
   "service_request.quoted": {
     vars: ["ref", "service", "link"],
     en: { title: "Your quote is ready · {ref}", body: "The quote for your {service} request {ref} is ready. Review it and accept it to go ahead." },
@@ -207,6 +213,53 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     vars: ["tier", "link"],
     en: { title: "Welcome to the Uni Travel customer club", body: "You are now a {tier} member of the Uni Travel customer club. Your benefits are listed on your club page; our team applies them when they prepare your quote." },
     fa: { title: "به باشگاه مشتریان یونی‌تراول خوش آمدید", body: "شما اکنون عضو سطح {tier} باشگاه مشتریان یونی‌تراول هستید. مزایای شما در صفحهٔ باشگاه آمده است و تیم ما هنگام آماده‌کردن پیشنهاد قیمت آن‌ها را اعمال می‌کند." },
+  },
+  // ADR-0040 D3: a staff reply to a support ticket, in the inbox. The text of the reply stays in the ticket (it may be long and private).
+  "support.reply": {
+    vars: ["ref", "link"],
+    en: { title: "Reply to your message · {ref}", body: "Our team replied to your support message {ref}. Open it to read the reply." },
+    fa: { title: "پاسخ به پیام شما · {ref}", body: "تیم ما به پیام پشتیبانی شما با شمارهٔ {ref} پاسخ داد. برای خواندن پاسخ، پیام را باز کنید." },
+  },
+  // ADR-0039 D1: the Admin Panel staff feed. Inbox only; no customer personal data beyond the reference and the route.
+  "staff.request_submitted": {
+    vars: ["ref", "route"],
+    en: { title: "New flight request · {ref}", body: "A customer submitted {ref} ({route})." }, fa: { title: "درخواست پرواز جدید · {ref}", body: "مشتری درخواست {ref} ({route}) را ثبت کرد." },
+  },
+  "staff.cargo_submitted": {
+    vars: ["ref", "route"],
+    en: { title: "New cargo request · {ref}", body: "A customer submitted {ref} ({route})." }, fa: { title: "درخواست بار جدید · {ref}", body: "مشتری درخواست بار {ref} ({route}) را ثبت کرد." },
+  },
+  "staff.customer_message": {
+    vars: ["ref"],
+    en: { title: "Customer message · {ref}", body: "The customer wrote on {ref}." }, fa: { title: "پیام مشتری · {ref}", body: "مشتری در {ref} پیام فرستاد." },
+  },
+  "staff.quote_accepted": {
+    vars: ["ref"],
+    en: { title: "Quote accepted · {ref}", body: "The quote on {ref} was accepted. Next: reserve and invoice." }, fa: { title: "پیشنهاد قیمت پذیرفته شد · {ref}", body: "پیشنهاد قیمت {ref} پذیرفته شد. گام بعد: رزرو و صدور فاکتور." },
+  },
+  "staff.service_submitted": {
+    vars: ["ref", "service"],
+    en: { title: "New service request · {ref}", body: "A customer asked for {service} ({ref})." }, fa: { title: "درخواست خدمت جدید · {ref}", body: "مشتری درخواست {service} ({ref}) را ثبت کرد." },
+  },
+  "staff.service_message": {
+    vars: ["ref"],
+    en: { title: "Customer message · {ref}", body: "The customer wrote on service request {ref}." }, fa: { title: "پیام مشتری · {ref}", body: "مشتری در درخواست خدمت {ref} پیام فرستاد." },
+  },
+  "staff.support_ticket": {
+    vars: ["ref", "topic"],
+    en: { title: "New support message · {ref}", body: "A new support message arrived ({topic})." }, fa: { title: "پیام پشتیبانی جدید · {ref}", body: "پیام پشتیبانی جدیدی رسید ({topic})." },
+  },
+  "staff.support_reply": {
+    vars: ["ref"],
+    en: { title: "Customer replied · {ref}", body: "The customer answered support ticket {ref}." }, fa: { title: "پاسخ مشتری · {ref}", body: "مشتری به تیکت پشتیبانی {ref} پاسخ داد." },
+  },
+  "staff.invoice_paid": {
+    vars: ["number"],
+    en: { title: "Invoice paid · {number}", body: "Invoice {number} was paid in full." }, fa: { title: "فاکتور پرداخت شد · {number}", body: "فاکتور {number} به‌طور کامل پرداخت شد." },
+  },
+  "staff.identity_submitted": {
+    vars: ["name"],
+    en: { title: "Passport to check · {name}", body: "A customer confirmed passport details for {name}. Check them in Identity checks." }, fa: { title: "گذرنامه برای بررسی · {name}", body: "مشتری مشخصات گذرنامهٔ {name} را تأیید کرد. آن را در بررسی هویت بررسی کنید." },
   },
   "compliance.hold_created": {
     vars: ["ref", "trigger"],

@@ -107,7 +107,7 @@ function Popover({ label, trigger, children, testId, className, width = "w-[min(
 const crumbText = (s: string) => { try { return decodeURIComponent(s) } catch { return s } }
 
 /** Segments with no page of their own (only /<seg>/<id> exists), so they are labelled but never linked. */
-const CRUMB_SEG: Record<string, MsgKey> = { requests: "crumb.requests", customers: "crumb.customers", cargo: "crumb.cargo", quote: "crumb.quote", services: "crumb.services" }
+const CRUMB_SEG: Record<string, MsgKey> = { requests: "crumb.requests", customers: "crumb.customers", cargo: "crumb.cargo", quote: "crumb.quote", services: "crumb.services", notifications: "notif.title" }
 const NO_INDEX = new Set(["requests", "customers", "cargo"])
 
 function useCrumbs(pathname: string, items: NavItem[], homeLabel: string, t: T) {
@@ -151,7 +151,7 @@ function RailLink({ item, active, collapsed }: { item: NavItem; active: boolean;
         {count && <span className={cn("rail-dot absolute -end-1 -top-1 size-2 rounded-full ring-2 ring-chrome", item.alert ? "bg-danger" : "bg-orange")} />}
       </span>
       <span className="rail-label min-w-0 flex-1 truncate">{item.label}</span>
-      {count && <span data-testid="nav-count" data-alert={!!item.alert} className={cn("rail-count num min-w-6 rounded-full px-1.5 text-center text-caption leading-5 font-semibold", item.alert ? "bg-danger text-white" : "bg-white/10 text-chrome-ink")}>{count > 999 ? "999+" : count}</span>}
+      {count && <span data-testid="nav-count" data-alert={!!item.alert} className={cn("rail-count num min-w-6 rounded-full px-1.5 text-center text-caption leading-5 font-semibold", item.alert ? "bg-danger text-white" : "bg-orange text-navy-950")}>{count > 999 ? "999+" : count}</span>}
       {item.count === 0 && <span data-testid="nav-count" data-alert="false" className="sr-only">0</span>}
     </Link>
   )
@@ -164,7 +164,7 @@ function RailLink({ item, active, collapsed }: { item: NavItem; active: boolean;
  * under the header. On phones a bottom bar and a "More" sheet replace the rail (mobile admin mode, ch. 15.8). The rail
  * collapses to icons with tooltips (html[data-rail], set before paint; `[` toggles). The dev host carries the workshop strip.
  */
-export function Shell({ surface, items, children, onGoTo, goToHint, alerts }: { surface: Surface; items: NavItem[]; children: React.ReactNode; onGoTo: (q: string) => string | null; goToHint: string; alerts?: ShellAlert[] }) {
+export function Shell({ surface, items, children, onGoTo, goToHint, alerts, bellFeed, bellUnread = 0 }: { surface: Surface; items: NavItem[]; children: React.ReactNode; onGoTo: (q: string) => string | null; goToHint: string; alerts?: ShellAlert[]; /** ADR-0039: the staff feed shown above the queue alerts. */ bellFeed?: (close: () => void) => React.ReactNode; bellUnread?: number }) {
   const { me } = useSession()
   const router = useRouter()
   const qc = useQueryClient()
@@ -295,13 +295,15 @@ export function Shell({ surface, items, children, onGoTo, goToHint, alerts }: { 
               </button>
               <Tip label={t("action.shortcuts")}><button type="button" className={cn(barBtn, "hidden lg:inline-flex")} onClick={() => setHelp(true)} aria-label={t("action.shortcuts")}><Keyboard aria-hidden /></button></Tip>
               {alerts && (
-                <Popover label={t("bell.center")} tip={t("bell.center")} testId="bell" className={barBtn} trigger={<><Bell aria-hidden />{activeAlerts.length > 0 && <span className={cn("num absolute end-1 top-1 grid min-w-[1.05rem] place-items-center rounded-full px-1 text-2xs leading-4 font-bold ring-2 ring-surface-raised", urgent ? "bg-danger text-white" : "bg-orange text-navy-950")} data-testid="bell-count">{activeAlerts.length}</span>}</>}>
+                <Popover label={t("bell.center")} tip={t("bell.center")} testId="bell" className={barBtn} trigger={<><Bell aria-hidden />{activeAlerts.length + bellUnread > 0 && <span className={cn("num absolute end-1 top-1 grid min-w-[1.05rem] place-items-center rounded-full px-1 text-2xs leading-4 font-bold ring-2 ring-surface-raised", urgent ? "bg-danger text-white" : "bg-orange text-navy-950")} data-testid="bell-count">{Math.min(activeAlerts.length + bellUnread, 99)}</span>}</>}>
                   {(close) => (
                     <div>
                       <div className="flex items-start justify-between gap-3 px-2.5 pt-1.5 pb-2">
                         <div><p className="font-semibold">{t("bell.center")}</p><p className="text-caption text-steel">{t("bell.hint")}</p></div>
                         <span className="mt-0.5 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-rule px-2 py-0.5 text-caption text-steel"><span className={cn("size-1.5 rounded-full", live ? "bg-success" : "bg-steel")} aria-hidden />{live ? t("bell.live") : t("bell.polling")}</span>
                       </div>
+                      {bellFeed && <div className="border-t border-rule pt-2 pb-1">{bellFeed(close)}</div>}
+                      {bellFeed && <p className="cap border-t border-rule px-2.5 pt-2.5 pb-1">{t("notif.queues")}</p>}
                       {activeAlerts.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 px-3 py-6 text-center"><span className="grid size-10 place-items-center rounded-full bg-success-subtle text-success" aria-hidden><Bell className="size-[18px]" /></span><p className="text-steel">{t("bell.none")}</p></div>
                       ) : (

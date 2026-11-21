@@ -61,3 +61,19 @@ export const loyaltyLedger = pgTable("loyalty_ledger", {
   invoiceId: uuid().references(() => invoices.id),
   createdAt: createdAt(),
 }, (t) => [index("loyalty_ledger_user_idx").on(t.userId, t.createdAt)])
+
+/**
+ * ADR-0039 D3: club points, granted or deducted by staff only (no earning rule exists yet). Insert-only like the credit
+ * ledger; the balance is the sum of `delta` and never goes below zero (checked under the member row lock).
+ * `reason` is internal; `customerNote` is the only text a customer sees.
+ */
+export const loyaltyPointsLedger = pgTable("loyalty_points_ledger", {
+  id: id(),
+  userId: uuid().notNull().references(() => users.id),
+  kind: text({ enum: ["GRANTED", "DEDUCTED"] }).notNull(),
+  delta: integer().notNull(),
+  reason: text().notNull(),
+  customerNote: text(),
+  actorUserId: uuid().notNull().references(() => users.id),
+  createdAt: createdAt(),
+}, (t) => [index("loyalty_points_ledger_user_idx").on(t.userId, t.createdAt)])

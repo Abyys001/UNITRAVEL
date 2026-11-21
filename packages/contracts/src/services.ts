@@ -55,15 +55,31 @@ export const TourCallbackDetails = z.object({
   note: Note,
 })
 
+/**
+ * Options the IKA CIP operator lists (ikac.ir CIP and Business Lounge pages, its named operator cipikia.co; STAGE-32 evidence).
+ * FAST_TRACK is only in agency sources, so the site offers it as "subject to confirmation". A choice is a wish, not a booking.
+ */
+export const CipService = z.enum(["CIP_TERMINAL", "BUSINESS_LOUNGE", "BUSINESS_LOUNGE_FULL", "HOME_CHECK_IN", "SUITE", "TRANSFER", "FAST_TRACK"])
+export type CipService = z.infer<typeof CipService>
+/** The Business Lounge and home check-in exist for departures only (operator pages). */
+export const CIP_DEPARTURE_ONLY: readonly CipService[] = ["BUSINESS_LOUNGE", "BUSINESS_LOUNGE_FULL", "HOME_CHECK_IN"]
+
 /** CIP is offered at Tehran Imam Khomeini only (owner); sanctions question pending counsel (O9). */
-export const CipDetails = z.object({
-  airport: z.literal("IKA"),
-  direction: z.enum(["ARRIVAL", "DEPARTURE"]),
-  flightNumber: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,3} ?\d{1,4}[A-Z]?$/),
-  date: IsoDate,
-  passengersCount: z.number().int().min(1).max(20),
-  note: Note,
-})
+export const CipDetails = z
+  .object({
+    airport: z.literal("IKA"),
+    direction: z.enum(["ARRIVAL", "DEPARTURE"]),
+    flightNumber: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,3} ?\d{1,4}[A-Z]?$/),
+    date: IsoDate,
+    passengersCount: z.number().int().min(1).max(20),
+    /** Greeters or well-wishers joining in the lounge; the operator charges them separately. */
+    companions: z.number().int().min(0).max(20).optional(),
+    services: z.array(CipService).max(CipService.options.length).optional(),
+    note: Note,
+  })
+  .refine((d) => d.direction === "DEPARTURE" || !d.services?.some((s) => CIP_DEPARTURE_ONLY.includes(s)), {
+    path: ["services"], message: "This option is for departures only",
+  })
 
 export const InsuranceRegion = z.enum(["UK", "SCHENGEN", "EUROPE", "WORLDWIDE_EXCL_AMERICAS", "WORLDWIDE"])
 export const InsuranceDetails = z
@@ -112,6 +128,8 @@ const create = <T extends ServiceRequestType>(type: T) =>
     details: SERVICE_DETAILS[type] as (typeof SERVICE_DETAILS)[T],
     contactIdentityId: Uuid,
     acknowledgements: z.object({ notABooking: z.literal(true), privacy: z.literal(true) }),
+    /** Uploads sent with the request (for example visa documents); each must be the customer's own scanned upload. */
+    documentIds: z.array(Uuid).max(10).optional(),
   })
 
 export const CreateServiceRequestBody = z.discriminatedUnion("type", [

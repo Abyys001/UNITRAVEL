@@ -124,7 +124,7 @@ export class AdminFlightRequestsController {
    */
   @Get("events")
   @Passive()
-  @ApiOperation({ summary: "Staff live events (SSE)", description: "text/event-stream. `queue-counts` carries the queue summary; `request-changed` carries StaffRequestChangedEvent {requestType, ref, version, status, statusLabel}." })
+  @ApiOperation({ summary: "Staff live events (SSE)", description: "text/event-stream. `queue-counts` carries the queue summary; `request-changed` carries StaffRequestChangedEvent {requestType, ref, version, status, statusLabel}; `support-changed` {ticketId} when a support ticket moves; `notifications` {at} when the caller has a new staff-feed item (ADR-0039)." })
   @RequirePermission("flight_request.read.any", "cargo_request.read.any")
   async events(@CurrentActor() actor: Actor, @Req() req: Request, @Res() res: Response) {
     res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache, no-transform", connection: "keep-alive", "x-accel-buffering": "no" })
@@ -139,6 +139,9 @@ export class AdminFlightRequestsController {
     }
     let debounce: NodeJS.Timeout | undefined
     const off = this.staffEvents.listen((s) => {
+      // ADR-0039 D1: a new feed item for this person; the console refetches its badges and shows a toast. Never anyone else's.
+      if (s.type === "staff.notification") { if (s.userIds?.includes(actor.userId)) send("notifications", { at: new Date().toISOString() }); return }
+      if (s.aggregateType === "support_ticket") { send("support-changed", { ticketId: s.aggregateId }); return }
       void this.requests.refVersion(s.aggregateType, s.aggregateId).then((v) => v && send("request-changed", v)).catch(() => undefined)
       debounce ??= setTimeout(() => { debounce = undefined; void counts().catch(() => undefined) }, 250)
     })

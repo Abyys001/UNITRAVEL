@@ -71,6 +71,7 @@ Controller-processor agreements are required with hosting, SMS, push and email p
 | Flight suppliers (Amadeus, Duffel) | Search and, in later stages, booking | Search criteria; passenger data at booking (Stage 7) | Not stated | Contracts BLOCKED/pending (STAGE-0.md) |
 | Sanctions list publishers (UK FCDO, OFAC, EU) | Source of list data | None sent (lists fetched; no personal data transmitted) | | |
 | Cargo partners | Fulfilment | Consignor, consignee, goods details | Varies | Due diligence needed (ch. 14.8) |
+| TrackingMore (ADR-0040) | Air waybill status lookup for cargo shipment tracking | AWB number only (the airline is derived from its prefix). No names, contacts or goods details are sent | UNKNOWN (terms not reviewed) | **BLOCKED on deployed hosts** until counsel or the owner records approval (`dpiaApproved` in the Developer Panel); off until a key is saved. Data processing terms, location and sanctions terms UNKNOWN |
 
 International transfers: phone numbers and message content sent to an Iranian provider, and data held by any non-UK processor, are restricted transfers needing a documented basis and risk assessment; Iran has no UK adequacy decision (INFERRED; counsel to confirm, ch. 28.6). Mechanisms to evaluate: Art. 49 derogations (e.g. necessity for the contract, explicit consent) versus alternatives; transfer risk assessment; data minimisation in SMS bodies.
 

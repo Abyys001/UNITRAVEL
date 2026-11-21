@@ -2,12 +2,13 @@ import { Inject, Injectable } from "@nestjs/common"
 import { and, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm"
 
 import type {
-  ClubCandidate, CustomerClubView, LoyaltyBenefitBody, LoyaltyBenefitView, LoyaltyLedgerEntry, LoyaltyMemberView, LoyaltyTierView, Money,
+  ClubCandidate, CustomerClubView, LoyaltyBenefitBody, LoyaltyBenefitView, LoyaltyLedgerEntry, LoyaltyMemberView, LoyaltyPointsView, LoyaltyTierView, Money,
+  PointsAdjustBody,
 } from "@unitravel/contracts"
 import {
-  type Db, type DbOrTx, invoices, loyaltyBenefits, loyaltyLedger, loyaltyMembers, loyaltyTiers, roles, type Tx, userIdentities, userRoles, users,
+  type Db, type DbOrTx, invoices, loyaltyBenefits, loyaltyLedger, loyaltyMembers, loyaltyPointsLedger, loyaltyTiers, roles, type Tx, userIdentities, userRoles, users,
 } from "@unitravel/db"
-import { benefitNeedsApproval, canDebit, effectiveBenefitStatus, ledgerBalance } from "@unitravel/domain"
+import { benefitNeedsApproval, canDebit, effectiveBenefitStatus, ledgerBalance, pointsDelta } from "@unitravel/domain"
 
 import { AppError, notFound } from "../../core/errors"
 import { DB, UnitOfWork } from "../../core/infra.module"
@@ -54,6 +55,14 @@ export class LoyaltyService {
     return out
   }
 
+  /** ADR-0039 D3: points balance per member, the sum of the insert-only points ledger. */
+  private async pointBalances(userIds: string[], tx: DbOrTx = this.db): Promise<Map<string, number>> {
+    if (!userIds.length) return new Map()
+    const rows = await tx.select({ userId: loyaltyPointsLedger.userId, total: sql<number>`coalesce(sum(${loyaltyPointsLedger.delta}), 0)::int` }).from(loyaltyPointsLedger)
+      .where(inArray(loyaltyPointsLedger.userId, userIds)).groupBy(loyaltyPointsLedger.userId)
+    return new Map(rows.map((r) => [r.userId, r.total]))
+  }
+
   // ---- tiers ----
   async tiers(): Promise<LoyaltyTierView[]> {
     return (await this.db.select().from(loyaltyTiers).orderBy(loyaltyTiers.code)).map(tierView)
@@ -95,7 +104,8 @@ export class LoyaltyService {
     if (!matched.length) return []
     const ids = matched.map((m) => m.id)
     const idents = await this.db.select({ userId: userIdentities.userId, type: userIdentities.type, value: userIdentities.valueNormalised }).from(userIdentities).where(and(inArray(userIdentities.userId, ids), isNull(userIdentities.revokedAt)))
-    const members = new Set((await this.db.select({ id: loyaltyMembers.userId }).from(loyaltyMembers).where(inArray(loyaltyMembers.userId, ids))).map((m) => m.id))
+    // A REMOVED member can be enrolled again (addMember reactivates the row), so only current members are marked.
+    const members = new Set((await this.db.select({ id: loyaltyMembers.userId }).from(loyaltyMembers).where(and(inArray(loyaltyMembers.userId, ids), sql`${loyaltyMembers.status} <> 'REMOVED'`))).map((m) => m.id))
     return matched.map((m) => ({
       userId: m.id, name: m.name,
       email: idents.find((i) => i.userId === m.id && i.type === "EMAIL")?.value ?? null,
@@ -109,9 +119,10 @@ export class LoyaltyService {
     const tiers = new Map((await this.db.select().from(loyaltyTiers).where(inArray(loyaltyTiers.id, [...new Set(rows.map((r) => r.tierId))]))).map((t) => [t.id, t]))
     const names = await this.names(rows.flatMap((r) => [r.userId, r.addedBy]))
     const bal = await this.balances(rows.map((r) => r.userId))
+    const points = await this.pointBalances(rows.map((r) => r.userId))
     return rows.map((r) => ({
       userId: r.userId, name: names.get(r.userId) ?? "", tier: tierView(tiers.get(r.tierId)!), status: r.status, joinedAt: iso(r.joinedAt),
-      addedBy: names.get(r.addedBy) ?? "", note: r.note, creditBalance: toMoney(bal.get(r.userId) ?? {}),
+      addedBy: names.get(r.addedBy) ?? "", note: r.note, creditBalance: toMoney(bal.get(r.userId) ?? {}), pointsBalance: points.get(r.userId) ?? 0,
     }))
   }
 
@@ -298,11 +309,43 @@ export class LoyaltyService {
     return this.ledger(body.userId, 100)
   }
 
+  // ---- points (ADR-0039 D3) ----
+  async points(userId: string, limit = 100): Promise<LoyaltyPointsView> {
+    const [m] = await this.db.select({ userId: loyaltyMembers.userId }).from(loyaltyMembers).where(eq(loyaltyMembers.userId, userId))
+    if (!m) throw notFound("Member")
+    const rows = await this.db.select().from(loyaltyPointsLedger).where(eq(loyaltyPointsLedger.userId, userId)).orderBy(desc(loyaltyPointsLedger.createdAt)).limit(limit)
+    const names = await this.names(rows.map((r) => r.actorUserId))
+    return {
+      balance: (await this.pointBalances([userId])).get(userId) ?? 0,
+      entries: rows.map((r) => ({ id: r.id, kind: r.kind, delta: r.delta, reason: r.reason, customerNote: r.customerNote, actor: names.get(r.actorUserId) ?? "", createdAt: iso(r.createdAt) })),
+    }
+  }
+
+  /** Grant or deduct under the member row lock, so two staff cannot deduct the same points at once. */
+  async adjustPoints(userId: string, body: PointsAdjustBody, actor: Actor, ctx: Ctx): Promise<LoyaltyPointsView> {
+    await this.uow.run(async (tx) => {
+      const [m] = await tx.select().from(loyaltyMembers).where(eq(loyaltyMembers.userId, userId)).for("update")
+      if (!m) throw notFound("Member")
+      const balance = (await this.pointBalances([userId], tx)).get(userId) ?? 0
+      const r = pointsDelta({ balance, memberStatus: m.status, kind: body.kind, points: body.points })
+      if (!r.ok) {
+        const msg = r.code === "INSUFFICIENT_POINTS" ? `Only ${balance} points to deduct from` : r.code === "NOT_A_MEMBER" ? "Points are granted to active members only" : "Enter a whole number of points"
+        throw new AppError("VALIDATION_FAILED", msg, [{ path: "points", code: r.code }])
+      }
+      const [row] = await tx.insert(loyaltyPointsLedger).values({ userId, kind: body.kind, delta: r.delta, reason: body.reason, customerNote: body.customerNote ?? null, actorUserId: actor.userId }).returning()
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "loyalty.points_adjusted", entityType: "loyalty_member", entityId: userId, before: { balance }, after: { entryId: row!.id, kind: body.kind, delta: r.delta, balance: balance + r.delta }, ip: actor.ip, requestId: ctx.requestId })
+    })
+    return this.points(userId)
+  }
+
   // ---- customer ----
   async customerView(userId: string): Promise<CustomerClubView> {
-    if (!this.config.flag("loyalty.enabled")) return { enabled: false, member: null, benefits: [], creditBalance: [] }
+    if (!this.config.flag("loyalty.enabled")) return { enabled: false, member: null, benefits: [], creditBalance: [], points: null }
     const { member, benefits } = await this.usableBenefitRows(this.db, userId)
-    if (!member || member.status === "REMOVED") return { enabled: true, member: null, benefits: [], creditBalance: [] }
+    if (!member || member.status === "REMOVED") return { enabled: true, member: null, benefits: [], creditBalance: [], points: null }
+    // The staff reason stays internal; customers see the kind, the amount and the note written for them.
+    const history = await this.db.select({ id: loyaltyPointsLedger.id, kind: loyaltyPointsLedger.kind, delta: loyaltyPointsLedger.delta, note: loyaltyPointsLedger.customerNote, createdAt: loyaltyPointsLedger.createdAt })
+      .from(loyaltyPointsLedger).where(eq(loyaltyPointsLedger.userId, userId)).orderBy(desc(loyaltyPointsLedger.createdAt)).limit(50)
     const [tier] = await this.db.select().from(loyaltyTiers).where(eq(loyaltyTiers.id, member.tierId))
     const bal = (await this.balances([userId])).get(userId) ?? {}
     return {
@@ -310,6 +353,7 @@ export class LoyaltyService {
       member: { tier: { code: tier!.code, nameEn: tier!.nameEn, nameFa: tier!.nameFa }, status: member.status, joinedAt: iso(member.joinedAt) },
       benefits: benefits.map((b) => ({ id: b.id, kind: b.kind, value: b.value, currency: b.currency, appliesTo: b.appliesTo, description: b.description, validFrom: iso(b.validFrom), validTo: iso(b.validTo) })),
       creditBalance: member.status === "ACTIVE" ? toMoney(bal) : [],
+      points: { balance: (await this.pointBalances([userId])).get(userId) ?? 0, history: history.map((h) => ({ ...h, createdAt: iso(h.createdAt) })) },
     }
   }
 }

@@ -119,6 +119,8 @@ export const StripeModeRequestBody = z.object({ mode: StripeMode, note: z.string
 export const STRIPE_WEBHOOK_EVENTS = [
   "checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.async_payment_failed", "checkout.session.expired", "charge.refunded",
   "charge.dispute.created", "charge.dispute.updated", "charge.dispute.closed", "charge.dispute.funds_withdrawn", "charge.dispute.funds_reinstated",
+  // ADR-0039 D4: Stripe invoices (mirrored in stripe-invoices.ts STRIPE_INVOICE_EVENTS).
+  "invoice.finalized", "invoice.paid", "invoice.payment_failed", "invoice.voided", "invoice.marked_uncollectible", "invoice.updated",
 ] as const
 
 export const PaymentsConfigView = z.object({

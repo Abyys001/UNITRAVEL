@@ -13,11 +13,19 @@ for (const p of PAGES) {
   })
 }
 
-test("visa: the form fills without an account; sending asks to sign in and keeps the draft", async ({ page }) => {
+test("visa: the request fills without an account; sending asks to sign in and keeps the draft", async ({ page }) => {
   await page.goto("/en/visa")
+  // ADR-0041: the request is a guided wizard under the checker.
+  await page.getByTestId("visa-request-start").click()
+  await page.locator("#v-dest-control").click()
+  await page.locator("#v-dest-opt-TR").click()
+  for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Continue" }).click()
+  await expect(page.getByTestId("visa-docs-signed-out")).toBeVisible()
   await page.locator("#v-note").fill("keep me")
-  await page.getByRole("checkbox").nth(0).check()
-  await page.getByRole("checkbox").nth(1).check()
+  await page.getByRole("button", { name: "Continue" }).click()
+  await expect(page.getByTestId("visa-non-guarantee")).toBeVisible()
+  await page.getByRole("checkbox", { name: /does not book or buy anything/ }).check()
+  await page.getByRole("checkbox", { name: /privacy notice/ }).check()
   await page.getByRole("button", { name: "Sign in to send request" }).click()
   await expect(page).toHaveURL(/sign-in\?next=%2Fen%2Fvisa/)
   await expect(page.getByTestId("remember-note")).toBeVisible()
@@ -25,22 +33,31 @@ test("visa: the form fills without an account; sending asks to sign in and keeps
 })
 
 for (const [path, testCity, draftKey] of [["/en/trains", "Mashhad", "TRAIN"], ["/en/buses", "Shiraz", "BUS"]] as const) {
-  test(`${path}: hero with From and To dropdowns, no listing section, route survives sign-in`, async ({ page }) => {
+  test(`${path}: hero with From and To city pickers, no listing section, route survives sign-in`, async ({ page }) => {
     await page.goto(path)
     await expect(page.getByTestId("ground-hero").getByRole("heading", { level: 1 })).toBeVisible()
     await expect(page.getByPlaceholder("Filter by destination")).toHaveCount(0)
     await expect(page.getByTestId("listing-grid")).toHaveCount(0)
 
-    const from = page.getByLabel("From", { exact: true })
-    const to = page.getByLabel("To", { exact: true })
-    const ids = await from.locator("option").evaluateAll((els) => els.map((e) => (e as HTMLOptionElement).value).filter(Boolean))
-    expect(new Set(ids).size).toBe(ids.length)
-    expect(await from.locator("optgroup").first().locator("option").count()).toBe(10)
+    const from = page.getByRole("button", { name: /^From/ })
+    const to = page.getByRole("button", { name: /^To/ })
+    const pick = async (trigger: typeof from, city: string) => {
+      await trigger.click()
+      await page.getByRole("combobox").fill(city)
+      await page.getByRole("option", { name: city, exact: true }).click()
+    }
 
-    await from.selectOption({ label: "Tehran" })
-    await to.selectOption({ label: "Tehran" })
-    await expect(page.getByRole("alert").filter({ hasText: "must be different" })).toBeVisible()
-    await to.selectOption({ label: testCity })
+    await from.click()
+    const groups = page.getByRole("listbox").getByRole("group")
+    expect(await groups.first().getByRole("option").count()).toBe(10)
+    const ids = await page.getByRole("option").evaluateAll((els) => els.map((e) => e.id))
+    expect(new Set(ids).size).toBe(ids.length)
+    await page.keyboard.press("Escape")
+
+    await pick(from, "Tehran")
+    await pick(to, "Tehran")
+    await expect(page.locator("#g-to-error").filter({ hasText: "must be different" })).toBeVisible()
+    await pick(to, testCity)
 
     await page.getByRole("checkbox").nth(0).check()
     await page.getByRole("checkbox").nth(1).check()
@@ -50,7 +67,7 @@ for (const [path, testCity, draftKey] of [["/en/trains", "Mashhad", "TRAIN"], ["
     expect(draft).toContain(testCity.toLowerCase())
 
     await page.goto(path)
-    await expect(page.getByLabel("From", { exact: true })).toHaveValue("tehran")
-    await expect(page.getByLabel("To", { exact: true })).toHaveValue(testCity.toLowerCase())
+    await expect(page.locator("#g-from")).toHaveValue("tehran")
+    await expect(page.locator("#g-to")).toHaveValue(testCity.toLowerCase())
   })
 }

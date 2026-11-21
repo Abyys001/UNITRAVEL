@@ -51,8 +51,8 @@ export function useQueueSummary(enabled = true) {
 }
 
 /**
- * Open support tickets for the nav badge and the home tile. Ticket changes do not travel on the staff stream (the API
- * sends no event the console can read for the `support_ticket` aggregate), so this polls on its own, stream or not.
+ * Open support tickets for the home tile. The stream's `support-changed` refreshes it; it still polls because staff
+ * without request permissions get no stream.
  */
 export function useSupportOverview(enabled: boolean) {
   return useQuery({
@@ -98,8 +98,10 @@ export function useStaffStream(enabled: boolean) {
       else void qc.invalidateQueries({ queryKey: ["services"] })
       lists ??= setTimeout(() => { lists = undefined; void qc.invalidateQueries({ queryKey: ["fr"] }); void qc.invalidateQueries({ queryKey: ["cargo-list"] }) }, 500)
     })
-    // Reserved name for a ticket event; harmless until the API sends one.
+    // Any support ticket moved (ADR-0039: the API now sends this for the support_ticket aggregate).
     es.addEventListener("support-changed", () => { void qc.invalidateQueries({ queryKey: ["support"] }) })
+    // A new staff-feed item for this person (ADR-0039 D1): badges, bell and the toast read the refreshed summary.
+    es.addEventListener("notifications", () => { void qc.invalidateQueries({ queryKey: ["staff-notif"] }) })
     return () => { es.close(); setLive(false); if (lists) clearTimeout(lists) }
   }, [enabled, paused, epoch, qc])
 }

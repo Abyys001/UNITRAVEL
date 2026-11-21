@@ -22,7 +22,7 @@ export function useDateParts() {
 // Friday is the Iranian weekend; Saturday and Sunday the UK one.
 const isWeekend = (iso: string, cal: CalendarKind) => { const d = noon(iso).getUTCDay(); return cal === "JALALI" ? d === 5 : d === 0 || d === 6 }
 
-interface Panel { start: string | null; end: string | null; min: string; cursor: string; today: string; hover: string | null; range: boolean; setHover: (d: string | null) => void; pick: (d: string) => void }
+interface Panel { start: string | null; end: string | null; min: string; max?: string; cursor: string; today: string; hover: string | null; range: boolean; setHover: (d: string | null) => void; pick: (d: string) => void }
 
 function Month({ first, panel, cursorRef }: { first: string; panel: Panel; cursorRef: React.RefObject<HTMLButtonElement | null> }) {
   const { locale, calendar } = useI18n()
@@ -55,7 +55,7 @@ function Month({ first, panel, cursorRef }: { first: string; panel: Panel; curso
                 return (
                   <td key={d} className={`p-0 py-0.5 ${inRange ? `bg-orange/15 ${d === start ? "rounded-s-full" : ""} ${d === reach ? "rounded-e-full" : ""}` : ""}`}>
                     <button
-                      type="button" data-day={d} ref={d === cursor ? cursorRef : undefined} tabIndex={d === cursor ? 0 : -1} disabled={d < min}
+                      type="button" data-day={d} ref={d === cursor ? cursorRef : undefined} tabIndex={d === cursor ? 0 : -1} disabled={d < min || (!!panel.max && d > panel.max)}
                       aria-label={full.format(noon(d))} aria-pressed={isEdge} aria-current={d === today ? "date" : undefined}
                       onClick={() => panel.pick(d)} onMouseEnter={() => panel.setHover(d)} onFocus={() => panel.setHover(d)}
                       className={`mx-auto flex aspect-square w-full max-w-11 items-center justify-center rounded-full text-sm tabular-nums outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-royal/50 disabled:cursor-not-allowed disabled:text-steel/40 pointer-coarse:min-h-11 ${isEdge ? "bg-orange font-bold text-navy-950 shadow-[0_4px_12px_-4px_rgb(247_148_29/0.7)]" : `${isWeekend(d, calendar) ? "text-orange-700" : "text-navy-950"} enabled:hover:bg-orange/25`} ${d === today && !isEdge ? "ring-1 ring-inset ring-royal/60" : ""}`}
@@ -79,6 +79,8 @@ export interface CalendarProps {
   /** Range mode only: start the panel on the end date (the visitor opened the second half of the trigger). */
   initialPicking?: "start" | "end"
   min: string
+  /** Last pickable day; later days are disabled and the panel does not page past its month. */
+  max?: string
   today: string
   /** Shortest range in days: 1 for hotel nights, 0 for a same-day return flight. */
   minSpan?: number
@@ -87,19 +89,24 @@ export interface CalendarProps {
   cursorRef: React.RefObject<HTMLButtonElement | null>
   footer?: React.ReactNode
   testId?: string
+  /** Single mode: the month to open on when `start` is empty or far away (the field's year/month jump). */
+  initialCursor?: string
+  /** Called with the first day of the first visible month, so an outside year/month jump can follow arrow-key paging. */
+  onViewChange?: (first: string) => void
 }
 
 /**
  * Month grid in the visitor's calendar (Solar Hijri or Gregorian) with the other calendar's months under each title,
  * roving-focus keyboard navigation (arrows, PageUp/PageDown) and two months side by side from 768px.
  */
-export function Calendar({ mode, start: initialStart, end: initialEnd = null, initialPicking = "start", min, today, minSpan = 1, labels, onCommit, cursorRef, footer, testId }: CalendarProps) {
+export function Calendar({ mode, start: initialStart, end: initialEnd = null, initialPicking = "start", min, max, today, minSpan = 1, labels, onCommit, cursorRef, footer, testId, initialCursor, onViewChange }: CalendarProps) {
   const { t, calendar, locale } = useI18n()
   const parts = useDateParts()
   const range = mode === "range"
   const [sel, setSel] = useState<{ start: string; end: string | null }>({ start: initialStart, end: range ? initialEnd : null })
   const [picking, setPicking] = useState<"start" | "end">(range ? initialPicking : "start")
-  const [cursor, setCursor] = useState(picking === "end" && initialEnd ? initialEnd : initialStart)
+  // An empty single-date field (date of birth) has no selection yet; the grid still needs a focusable day.
+  const [cursor, setCursor] = useState(initialCursor ?? (picking === "end" && initialEnd ? initialEnd : initialStart || (max && today > max ? max : today < min ? min : today)))
   const [hover, setHover] = useState<string | null>(null)
   const [view, setView] = useState(firstOfMonth(cursor, calendar))
   // Set once when the panel opens: a resize while it is open should not rearrange the months under the pointer.
@@ -107,12 +114,15 @@ export function Calendar({ mode, start: initialStart, end: initialEnd = null, in
   const moved = useRef(false)
   const months = Array.from({ length: count }, (_, i) => shiftMonth(view, i, calendar))
   const canGoBack = view > firstOfMonth(min, calendar)
-  const endMin = addDays(sel.start, minSpan)
+  const canGoForward = !max || shiftMonth(view, count, calendar) <= max
+  const endMin = sel.start ? addDays(sel.start, minSpan) : min
 
   useEffect(() => {
     if (moved.current) cursorRef.current?.focus()
     moved.current = false
   }, [cursor, view, cursorRef])
+
+  useEffect(() => { onViewChange?.(view) }, [view, onViewChange])
 
   const pick = (d: string) => {
     setCursor(d)
@@ -127,7 +137,7 @@ export function Calendar({ mode, start: initialStart, end: initialEnd = null, in
   }
 
   const moveTo = (d: string) => {
-    const next = d < min ? min : d
+    const next = d < min ? min : max && d > max ? max : d
     moved.current = true
     setCursor(next)
     const lastShown = addDays(shiftMonth(view, count, calendar), -1)
@@ -140,7 +150,7 @@ export function Calendar({ mode, start: initialStart, end: initialEnd = null, in
     const to = { ArrowLeft: addDays(cursor, back), ArrowRight: addDays(cursor, -back), ArrowUp: addDays(cursor, -7), ArrowDown: addDays(cursor, 7), PageUp: shiftMonth(cursor, -1, calendar), PageDown: shiftMonth(cursor, 1, calendar) }[e.key]
     if (to) { e.preventDefault(); moveTo(to) }
   }
-  const panel: Panel = { start: sel.start, end: sel.end, min, cursor, today, hover, range, setHover, pick }
+  const panel: Panel = { start: sel.start || null, end: sel.end, min, max, cursor, today, hover, range, setHover, pick }
   const navBtn = "absolute top-0 z-10 flex size-9 items-center justify-center rounded-full border border-line bg-white text-navy-950 outline-none transition-colors hover:bg-cloud focus-visible:ring-[3px] focus-visible:ring-royal/50 disabled:opacity-40 pointer-coarse:size-11"
   const chip = (which: "start" | "end", label: string, iso: string | null) => (
     <button
@@ -156,7 +166,7 @@ export function Calendar({ mode, start: initialStart, end: initialEnd = null, in
       {range && labels.end ? <div className="mb-4 flex gap-2">{chip("start", labels.start, sel.start)}{chip("end", labels.end, sel.end)}</div> : null}
       <div className="relative">
         <button type="button" className={`${navBtn} start-0`} disabled={!canGoBack} aria-label={t("stays.prevMonth")} onClick={() => setView(shiftMonth(view, -1, calendar))}><ChevronLeft className="size-4 rtl:rotate-180" aria-hidden /></button>
-        <button type="button" className={`${navBtn} end-0`} aria-label={t("stays.nextMonth")} onClick={() => setView(shiftMonth(view, 1, calendar))}><ChevronRight className="size-4 rtl:rotate-180" aria-hidden /></button>
+        <button type="button" className={`${navBtn} end-0`} disabled={!canGoForward} aria-label={t("stays.nextMonth")} onClick={() => setView(shiftMonth(view, 1, calendar))}><ChevronRight className="size-4 rtl:rotate-180" aria-hidden /></button>
         <div className="flex gap-6">{months.map((m) => <Month key={m} first={m} panel={panel} cursorRef={cursorRef} />)}</div>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">

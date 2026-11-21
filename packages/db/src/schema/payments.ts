@@ -70,3 +70,48 @@ export const paymentConfig = pgTable("payment_config", {
   updatedBy: uuid(),
   updatedAt: tstz().notNull().defaultNow(),
 })
+
+/**
+ * ADR-0039 D4: the Stripe Customer per user and Stripe account (`platform` or the connected `acct_…`). Created on the
+ * first Stripe invoice; never holds card data.
+ */
+export const stripeCustomers = pgTable("stripe_customers", {
+  id: id(),
+  userId: uuid().notNull().references(() => users.id),
+  accountKey: varchar({ length: 64 }).notNull(),
+  mode: text({ enum: ["test", "live"] }).notNull().default("test"),
+  stripeCustomerId: varchar({ length: 255 }).notNull().unique(),
+  ...timestamps,
+}, (t) => [uniqueIndex("stripe_customers_user_account_uq").on(t.userId, t.accountKey, t.mode)])
+
+/**
+ * ADR-0039 D4: the Stripe Invoice that collects one of our invoices. Our invoice stays the record (number, state, frozen
+ * amounts); this row mirrors Stripe's status for staff and for the pay page. At most one live Stripe invoice per invoice.
+ */
+export const stripeInvoices = pgTable("stripe_invoices", {
+  id: id(),
+  invoiceId: uuid().notNull().references(() => invoices.id),
+  mode: text({ enum: ["test", "live"] }).notNull().default("test"),
+  accountKey: varchar({ length: 64 }).notNull(),
+  /** CREATING until finalized; then Stripe's own status. FAILED keeps the error and allows a retry. */
+  status: text({ enum: ["CREATING", "DRAFT", "OPEN", "PAID", "VOID", "UNCOLLECTIBLE", "FAILED"] }).notNull().default("CREATING"),
+  attempt: integer().notNull().default(1),
+  stripeInvoiceId: varchar({ length: 255 }).unique(),
+  stripeCustomerId: varchar({ length: 255 }),
+  amountDueMinor: bigint({ mode: "number" }),
+  amountPaidMinor: bigint({ mode: "number" }),
+  currency: varchar({ length: 3 }).notNull(),
+  hostedInvoiceUrl: text(),
+  invoicePdfUrl: text(),
+  paymentIntentId: varchar({ length: 255 }),
+  lastError: text(),
+  createdBy: uuid().references(() => users.id),
+  finalizedAt: tstz(),
+  paidAt: tstz(),
+  voidedAt: tstz(),
+  syncedAt: tstz(),
+  ...timestamps,
+}, (t) => [
+  index("stripe_invoices_invoice_idx").on(t.invoiceId),
+  uniqueIndex("stripe_invoices_one_live_per_invoice_uq").on(t.invoiceId).where(sql`${t.status} in ('CREATING','DRAFT','OPEN','PAID')`),
+])

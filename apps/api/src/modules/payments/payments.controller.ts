@@ -3,7 +3,7 @@ import { ApiTags } from "@nestjs/swagger"
 import type { Request } from "express"
 import { z } from "zod"
 
-import { PaymentBody, PaymentConfigPatchBody, PaymentPageView, RefundRejectBody, RefundRequestBody, StripeCredentialsBody, StripeModeRequestBody } from "@unitravel/contracts"
+import { PaymentBody, PaymentConfigPatchBody, PaymentPageView, RefundRejectBody, RefundRequestBody, StripeCredentialsBody, StripeInvoiceView, StripeModeRequestBody } from "@unitravel/contracts"
 import { isLocal } from "../../core/env"
 
 import { AppError } from "../../core/errors"
@@ -15,6 +15,7 @@ import type { FakeEventKind } from "./fake-payment.adapter"
 import { PaymentConfigService } from "./payment-config.service"
 import { PaymentsService } from "./payments.service"
 import { RefundsService } from "./refunds.service"
+import { StripeInvoicesService } from "./stripe-invoices.service"
 
 const OWN = ["flight_request.read.own", "cargo_request.read.own"] as const
 
@@ -55,7 +56,38 @@ const READ = ["flight_request.read.any", "cargo_request.read.any", "commercial_d
 @Controller("v1/admin")
 @StaffOnly()
 export class AdminPaymentsController {
-  constructor(private readonly payments: PaymentsService, private readonly refunds: RefundsService, private readonly invoices: InvoicesService, private readonly bookings: BookingsService) {}
+  constructor(private readonly payments: PaymentsService, private readonly refunds: RefundsService, private readonly invoices: InvoicesService, private readonly bookings: BookingsService, private readonly stripeInvoices: StripeInvoicesService) {}
+
+  /** ADR-0039 D4: the Stripe invoice that collects this invoice (status, hosted page, PDF, errors, eligibility). */
+  @Get("invoices/:id/stripe")
+  @RequirePermission(...READ)
+  @ApiZodResponse(200, StripeInvoiceView)
+  async stripeView(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor) {
+    await this.invoices.staffById(id, actor)
+    return this.stripeInvoices.view(id)
+  }
+
+  /** Creates the Stripe invoice now (or retries a failed attempt). Server-side only; amounts come from the issued invoice. */
+  @Post("invoices/:id/stripe")
+  @RequirePermission("commercial_document.issue")
+  @HttpCode(200)
+  @RateLimit({ name: "stripe-invoice-create", limit: 20, windowSeconds: 600, key: "user" })
+  @ApiZodResponse(200, StripeInvoiceView)
+  async stripeCreate(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor) {
+    await this.invoices.staffById(id, actor)
+    return this.stripeInvoices.ensure(id, { userId: actor.userId, ip: actor.ip })
+  }
+
+  /** Re-reads the Stripe invoice (status, amounts, payment) when a webhook may have been missed. */
+  @Post("invoices/:id/stripe/sync")
+  @RequirePermission("commercial_document.issue")
+  @HttpCode(200)
+  @RateLimit({ name: "stripe-invoice-sync", limit: 30, windowSeconds: 600, key: "user" })
+  @ApiZodResponse(200, StripeInvoiceView)
+  async stripeSync(@Param("id", zbody(z.uuid())) id: string, @CurrentActor() actor: Actor) {
+    await this.invoices.staffById(id, actor)
+    return this.stripeInvoices.sync(id)
+  }
 
   /** Offline money on a service invoice (ADR-0028 D9); flight and cargo payments stay on their request routes. */
   @Post("invoices/:id/payments")
@@ -182,6 +214,26 @@ const SimulateBody = z.object({
  * Stripe-shaped event a payment would produce. `deliver` runs it through the real webhook handler; `sign` hands the
  * signed payload back so a test can POST it to /v1/webhooks/stripe like Stripe would.
  */
+const SimulateInvoiceBody = z.object({ kind: z.enum(["paid", "payment_failed"]), amountMinor: z.number().int().min(1).optional(), eventId: z.string().min(4).max(120).optional() })
+
+/** Local only (FAKE provider): signs `invoice.paid` / `invoice.payment_failed` for a FAKE Stripe invoice and runs it through the real webhook handler. */
+@ApiTags("dev-sink")
+@Controller("v1/dev-sink/stripe-invoices")
+export class DevStripeInvoiceSinkController {
+  constructor(private readonly payments: PaymentsService) {}
+
+  @Post(":providerInvoiceId/deliver")
+  @Public()
+  @HttpCode(200)
+  async deliver(@Param("providerInvoiceId") id: string, @Body(zbody(SimulateInvoiceBody)) body: z.infer<typeof SimulateInvoiceBody>) {
+    if (!isLocal()) throw new AppError("NOT_FOUND")
+    const fake = await this.payments.fake()
+    if (!fake) throw new AppError("NOT_FOUND")
+    const event = await fake.simulateInvoice(id, body.kind, body)
+    return { eventId: event.eventId, ...(await this.payments.handleWebhook(Buffer.from(event.payload), event.signature)) }
+  }
+}
+
 @ApiTags("dev-sink")
 @Controller("v1/dev-sink/payments")
 export class DevPaymentSinkController {

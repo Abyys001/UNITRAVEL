@@ -5,7 +5,7 @@ import {
   type CreateTicketBody, type CustomerTicketSummary, type CustomerTicketView, type StaffTicketListQuery, type StaffTicketPage, type StaffTicketSummary, type StaffTicketView, type SupportTicketStatus,
   type StaffTicketCommandBody, type SupportTopic,
 } from "@unitravel/contracts"
-import { callLogs, type Db, type DbOrTx, supportMessages, supportTickets, type Tx, users } from "@unitravel/db"
+import { callLogs, type Db, type DbOrTx, notifications, supportMessages, supportTickets, type Tx, users } from "@unitravel/db"
 import {
   allowedCommands, evaluate, generateTicketRef, type MachineActor, normaliseReference, normaliseTicketRef, TICKET_AUTO_CLOSE_DAYS, TICKET_TRANSITIONS, type TicketCommandName, type TicketFacts,
 } from "@unitravel/domain"
@@ -152,16 +152,23 @@ export class SupportService implements OnModuleInit {
 
   // ---------------- customer ----------------
 
+  /** A staff message the customer has not opened yet (ADR-0040 D3). Internal notes never count. */
+  // Columns are written out with the table name: inside the subquery an unqualified "id" would resolve to support_messages.id.
+  private static readonly UNREAD = sql<boolean>`exists (select 1 from support_messages m where m.ticket_id = support_tickets.id and m.kind = 'STAFF' and (support_tickets.customer_read_at is null or m.created_at > support_tickets.customer_read_at))`
+
   async customerList(userId: string): Promise<CustomerTicketSummary[]> {
-    const rows = await this.db.select().from(supportTickets).where(eq(supportTickets.userId, userId)).orderBy(desc(supportTickets.lastMessageAt)).limit(100)
-    return rows.map(summary)
+    const rows = await this.db.select({ t: supportTickets, unread: SupportService.UNREAD }).from(supportTickets).where(eq(supportTickets.userId, userId)).orderBy(desc(supportTickets.lastMessageAt)).limit(100)
+    return rows.map((r) => summary(r.t, r.unread))
   }
 
+  /** Opening a ticket marks it read: the ticket's own state and the inbox notice that pointed at it. */
   async customerDetail(ref: string, userId: string): Promise<CustomerTicketView> {
     const t = await this.owned(ref, userId)
+    await this.db.update(supportTickets).set({ customerReadAt: new Date() }).where(eq(supportTickets.id, t.id))
+    await this.db.update(notifications).set({ readAt: new Date() }).where(and(eq(notifications.userId, userId), isNull(notifications.readAt), sql`${notifications.data}->>'requestKey' = ${`support:${t.ref}`}`))
     // Internal notes are excluded in the query itself, not only in the serialiser.
     const msgs = await this.db.select().from(supportMessages).where(and(eq(supportMessages.ticketId, t.id), inArray(supportMessages.kind, ["CUSTOMER", "STAFF"]))).orderBy(supportMessages.createdAt)
-    return { ...summary(t), canReply: t.status !== "CLOSED", messages: msgs.map((m) => ({ id: m.id, direction: m.kind === "CUSTOMER" ? "FROM_CUSTOMER" as const : "TO_CUSTOMER" as const, authorName: m.kind === "CUSTOMER" ? m.authorName : "Uni Travel", body: m.body, createdAt: m.createdAt.toISOString() })) }
+    return { ...summary(t, false), canReply: t.status !== "CLOSED", messages: msgs.map((m) => ({ id: m.id, direction: m.kind === "CUSTOMER" ? "FROM_CUSTOMER" as const : "TO_CUSTOMER" as const, authorName: m.kind === "CUSTOMER" ? m.authorName : "Uni Travel", body: m.body, createdAt: m.createdAt.toISOString() })) }
   }
 
   async customerReply(ref: string, actor: Actor, body: string): Promise<CustomerTicketView> {
@@ -171,7 +178,9 @@ export class SupportService implements OnModuleInit {
       const owner: MachineActor = { kind: "CUSTOMER", userId: actor.userId, permissions: new Set(), isOwner: true }
       // A pending or resolved ticket reopens; CLOSED is refused by the table.
       const moved = await this.transition(tx, t, "customer_reply", owner, { patch: { lastMessageAt: new Date() } })
-      await tx.insert(supportMessages).values({ ticketId: moved.id, kind: "CUSTOMER", authorUserId: actor.userId, authorName: u?.name ?? "Customer", body })
+      const [m] = await tx.insert(supportMessages).values({ ticketId: moved.id, kind: "CUSTOMER", authorUserId: actor.userId, authorName: u?.name ?? "Customer", body }).returning({ id: supportMessages.id })
+      // ADR-0039 D1: staff feed only; the text stays in the ticket.
+      await this.outbox.add(tx, { aggregateType: "support_ticket", aggregateId: moved.id, eventType: "support.customer_replied", payload: { ticketId: moved.id, ref: moved.ref }, dedupeKey: `support-customer-reply:${m!.id}` })
     })
     return this.customerDetail(ref, actor.userId)
   }
@@ -227,7 +236,8 @@ export class SupportService implements OnModuleInit {
       const moved = await this.transition(tx, t, "staff_reply", staffActor(actor), { patch: { lastMessageAt: new Date(), assigneeUserId: t.assigneeUserId ?? actor.userId } })
       // Email only where there is an address; a phone-only contact is answered by calling (the console shows `emailed: false`).
       const [m] = await tx.insert(supportMessages).values({ ticketId: moved.id, kind: "STAFF", authorUserId: actor.userId, authorName: u?.name ?? "Staff", body, emailQueued: !!t.contactEmail }).returning()
-      if (t.contactEmail) await this.outbox.add(tx, { aggregateType: "support_ticket", aggregateId: t.id, eventType: SUPPORT_REPLY_EVENT, payload: { ticketId: t.id, messageId: m!.id }, dedupeKey: `support-reply:${m!.id}` })
+      // The email worker skips contacts without an address; the router tells a signed-in customer in their inbox (ADR-0040 D3).
+      if (t.contactEmail || t.userId) await this.outbox.add(tx, { aggregateType: "support_ticket", aggregateId: t.id, eventType: SUPPORT_REPLY_EVENT, payload: { ticketId: t.id, messageId: m!.id, ref: t.ref, customerUserId: t.userId }, dedupeKey: `support-reply:${m!.id}` })
     })
     return this.staffDetail(ref, actor)
   }
@@ -274,7 +284,7 @@ export class SupportService implements OnModuleInit {
   }
 }
 
-const summary = (t: Ticket): CustomerTicketSummary => ({ ref: t.ref as CustomerTicketSummary["ref"], topic: t.topic as SupportTopic, subject: t.subject, status: t.status, requestRef: t.requestRef, createdAt: t.createdAt.toISOString(), updatedAt: t.updatedAt.toISOString(), lastMessageAt: t.lastMessageAt.toISOString() })
+const summary = (t: Ticket, unread: boolean): CustomerTicketSummary => ({ ref: t.ref as CustomerTicketSummary["ref"], topic: t.topic as SupportTopic, subject: t.subject, status: t.status, requestRef: t.requestRef, createdAt: t.createdAt.toISOString(), updatedAt: t.updatedAt.toISOString(), lastMessageAt: t.lastMessageAt.toISOString(), unread })
 
 function staffSummary(t: Ticket, assigneeName: string | null, messageCount: number): StaffTicketSummary {
   return {

@@ -3,7 +3,7 @@ import Stripe from "stripe"
 import { canEnterStripeMode } from "@unitravel/domain"
 
 import { AppError } from "../../core/errors"
-import type { CreateSessionInput, PaymentProvider, ProviderSession, RefundInput } from "./payment-port"
+import type { CreateInvoiceInput, CreateSessionInput, InvoiceItemInput, PaymentProvider, ProviderInvoice, ProviderInvoicing, ProviderSession, RefundInput } from "./payment-port"
 
 /** Shared by the Stripe and FAKE adapters, so the simulated path exercises the production verification code. */
 export function verifyStripeSignature(rawBody: Buffer, signature: string | undefined, secret: string): Stripe.Event {
@@ -21,6 +21,17 @@ export function toProviderSession(s: Stripe.Checkout.Session): ProviderSession {
     id: s.id, status: s.status === "complete" ? "complete" : s.status === "expired" ? "expired" : "open", paymentStatus: s.payment_status as ProviderSession["paymentStatus"],
     clientSecret: s.client_secret ?? null, amountTotal: s.amount_total ?? null, currency: s.currency ? s.currency.toUpperCase() : null, paymentIntentId: pi,
     expiresAt: s.expires_at ? new Date(s.expires_at * 1000) : null, payerName: s.customer_details?.name ?? null,
+  }
+}
+
+/** API `2026-09-30.endive` (stripe 23): an Invoice has no `payment_intent`; the PaymentIntent is on `payments.data[].payment`. */
+export function toProviderInvoice(i: Stripe.Invoice): ProviderInvoice {
+  const pay = i.payments?.data.find((p) => p.status === "paid") ?? i.payments?.data[0]
+  const pi = pay?.payment.payment_intent
+  return {
+    id: i.id!, status: (i.status ?? "draft") as ProviderInvoice["status"], amountDue: i.amount_due, amountPaid: i.amount_paid, currency: i.currency.toUpperCase(),
+    hostedInvoiceUrl: i.hosted_invoice_url ?? null, invoicePdf: i.invoice_pdf ?? null, paymentIntentId: typeof pi === "string" ? pi : pi?.id ?? null,
+    customerId: typeof i.customer === "string" ? i.customer : i.customer?.id ?? null, invoiceId: i.metadata?.invoiceId ?? null,
   }
 }
 
@@ -72,6 +83,40 @@ export class StripeAdapter implements PaymentProvider {
   async createRefund(i: RefundInput): Promise<{ id: string }> {
     const r = await this.stripe.refunds.create({ payment_intent: i.paymentIntentId, amount: i.amountMinor, metadata: { refundRequestId: i.refundId } }, { idempotencyKey: i.idempotencyKey, ...this.onAccount })
     return { id: r.id }
+  }
+
+  /** ADR-0039 D4: server-side Stripe Invoicing. Every create carries an idempotency key, so a retry never duplicates. */
+  readonly invoicing: ProviderInvoicing = {
+    ensureCustomer: async (c) => {
+      const cu = await this.stripe.customers.create({ name: c.name, ...(c.email ? { email: c.email } : {}), metadata: { userId: c.userId } }, { idempotencyKey: c.idempotencyKey, ...this.onAccount })
+      return { id: cu.id }
+    },
+    createInvoice: async (i: CreateInvoiceInput) => toProviderInvoice(await this.stripe.invoices.create({
+      customer: i.customerId, currency: i.currency.toLowerCase(), collection_method: "send_invoice", due_date: Math.floor(i.dueDate.getTime() / 1000),
+      // We finalize ourselves after adding the lines; Stripe must not send its own emails or finalize early (our email carries the link).
+      auto_advance: false, pending_invoice_items_behavior: "exclude", description: i.description,
+      ...(i.stripeNumber ? { number: i.stripeNumber } : {}),
+      metadata: { invoiceId: i.invoiceId, invoiceNumber: i.invoiceNumber },
+    }, { idempotencyKey: i.idempotencyKey, ...this.onAccount })),
+    addItem: async (i: InvoiceItemInput) => {
+      await this.stripe.invoiceItems.create({ customer: i.customerId, invoice: i.providerInvoiceId, amount: i.amountMinor, currency: i.currency.toLowerCase(), description: i.description, metadata: { lineId: i.lineId } }, { idempotencyKey: i.idempotencyKey, ...this.onAccount })
+    },
+    finalize: async (id, idempotencyKey) => toProviderInvoice(await this.stripe.invoices.finalizeInvoice(id, { auto_advance: false, expand: ["payments"] }, { idempotencyKey, ...this.onAccount })),
+    retrieve: async (id) => {
+      try {
+        return toProviderInvoice(await this.stripe.invoices.retrieve(id, { expand: ["payments"] }, this.onAccount))
+      } catch (err) {
+        if (err instanceof Stripe.errors.StripeInvalidRequestError && err.statusCode === 404) return null
+        throw err
+      }
+    },
+    discard: async (id) => {
+      const cur = await this.invoicing.retrieve(id)
+      if (!cur) return null
+      if (cur.status === "draft") { await this.stripe.invoices.del(id, undefined, this.onAccount); return { ...cur, status: "void" } }
+      if (cur.status === "open" || cur.status === "uncollectible") return toProviderInvoice(await this.stripe.invoices.voidInvoice(id, undefined, this.onAccount))
+      return cur
+    },
   }
 
   verifyWebhook(rawBody: Buffer, signature: string | undefined): Stripe.Event {

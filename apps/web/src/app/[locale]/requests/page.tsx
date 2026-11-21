@@ -46,7 +46,7 @@ export default function RequestsPage() {
         <Stat label={t("panel.unread")} value={stats.unread} tone="orange" icon={<Bell className="size-4" />} />
       </div>
       <div role="group" aria-label={t("panel.filter")} className="-mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
-        {filters.map(([k, label]) => <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition-colors pointer-coarse:min-h-11 ${filter === k ? "bg-orange text-navy-950 ring-orange" : "bg-white/70 text-navy-900 ring-line hover:bg-cloud"}`}>{label}</button>)}
+        {filters.map(([k, label]) => <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition-colors pointer-coarse:min-h-11 ${filter === k ? "bg-orange text-navy-950 ring-orange" : "bg-white text-navy-900 ring-haze hover:bg-cloud"}`}>{label}</button>)}
       </div>
       {q.isLoading && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
       {!q.isLoading && !shown.length && <EmptyState className="mt-6" icon={<Ticket />} title={t("requests.empty")} />}

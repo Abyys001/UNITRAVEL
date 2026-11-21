@@ -18,22 +18,20 @@ import { Empty, ErrorLine, Field, Loading, PageHead, Panel, Tag } from "@/compon
 import { api } from "@/lib/api"
 import { useCrumbLabel } from "@/lib/crumb"
 import { fmtDateTime, rel } from "@/lib/format"
-import { useT } from "@/lib/i18n"
+import { type MsgKey, useT } from "@/lib/i18n"
 import { useSession } from "@/lib/session"
+import { useReadOnOpen } from "@/lib/notifications"
 
-const REASON_LABEL: Record<string, string> = {
-  UNREADABLE_SCAN: "Scan not readable", NAME_MISMATCH: "Name does not match", NUMBER_MISMATCH: "Passport number does not match", DOB_MISMATCH: "Date of birth does not match",
-  NATIONALITY_MISMATCH: "Nationality does not match", EXPIRY_MISMATCH: "Expiry date does not match", EXPIRED_DOCUMENT: "Passport expired", NOT_A_PASSPORT: "Not a passport photo page",
-  SCAN_INCOMPLETE: "Scan cut off or incomplete", OTHER: "Other",
-}
 
 /** Side by side: the scan on one side, the customer's confirmed fields on the other; the number only through the audited Reveal. */
 export default function VerificationPage() {
   const { id } = useParams<{ id: string }>()
+  useReadOnOpen(id)
   const router = useRouter()
   const qc = useQueryClient()
   const { can } = useSession()
   const t0 = useT()
+  const reasonLabel = (code: string) => t0(`ver2.reason.${code}` as MsgKey)
   const [tab, setTab] = useState<"scan" | "fields" | "decide">("scan")
   const q = useQuery({ queryKey: ["verification", id], queryFn: () => api<VerificationDetail>(`/v1/admin/verifications/${id}`) })
   const [scanUrl, setScanUrl] = useState<string | null>(null)
@@ -62,7 +60,7 @@ export default function VerificationPage() {
     setBusy(true); setErr(null)
     try {
       await api(`/v1/admin/verifications/${id}/decide`, { body: { decision: f.decision, reviewHash: d.reviewHash, reasonCode: f.decision === "VERIFIED" ? undefined : f.reasonCode, reasonText: f.decision === "VERIFIED" ? undefined : f.reasonText } })
-      toast.success(`Recorded — ${f.decision.replace(/_/g, " ").toLowerCase()}`)
+      toast.success(t0("ver2.recorded", { d: t0(`ver2.d.${f.decision}` as MsgKey) }))
       void qc.invalidateQueries({ queryKey: ["verifications"] })
       router.push("/verifications")
     } catch (e) { setErr(e); void q.refetch() } finally { setBusy(false) }
@@ -75,41 +73,41 @@ export default function VerificationPage() {
       <PageHead kicker={<Link className="hover:underline" href="/verifications">{t0("nav.passport")}</Link>} title={<span dir="ltr">{t.givenNames} {t.surname}</span>} />
       <dl className="mx-4 mt-4 grid grid-cols-2 divide-x divide-rule overflow-hidden rounded-xl border border-rule bg-surface-raised shadow-[var(--tile-shadow)] max-sm:divide-x-0 max-sm:gap-y-3 max-sm:p-3 md:mx-6 lg:grid-cols-4 rtl:divide-x-reverse" data-testid="case-summary">
         <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.waiting")}</dt><dd className="num mt-1 font-medium">{d.confirmedAt ? rel(d.confirmedAt) : "—"}</dd><dd className="num text-meta text-steel">{d.confirmedAt ? fmtDateTime(d.confirmedAt) : ""}</dd></div>
-        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.document")}</dt><dd className="mt-1 font-medium">{d.document.type === "PASSPORT" ? t0("pg.ver.passport") : t0("pg.ver.nid")} <span className="num" dir="ltr">••••{d.document.last4}</span></dd><dd className={cn("text-meta", expired ? "font-medium text-danger" : "text-steel")}>{expired ? `EXPIRED ${d.document.expiryDate}` : `Expires ${d.document.expiryDate}`} · {d.document.issuingCountry}</dd></div>
+        <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.document")}</dt><dd className="mt-1 font-medium">{d.document.type === "PASSPORT" ? t0("pg.ver.passport") : t0("pg.ver.nid")} <span className="num" dir="ltr">••••{d.document.last4}</span></dd><dd className={cn("text-meta", expired ? "font-medium text-danger" : "text-steel")}>{expired ? t0("ver2.expired", { d: d.document.expiryDate }) : t0("ver2.expires", { d: d.document.expiryDate })} · {d.document.issuingCountry}</dd></div>
         <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.scan")}</dt><dd className="mt-1"><StatusChip tone={d.scan ? "ok" : "danger"}>{d.scan ? t0("ver.scan.onfile") : t0("ver.scan.none")}</StatusChip></dd>{d.scan && <dd className="truncate text-meta text-steel">{d.scan.filename}</dd>}</div>
         <div className="px-4 py-3 max-sm:p-0"><dt className="cap">{t0("ver.state")}</dt><dd className="mt-1"><StateChip value={d.status} /></dd></div>
       </dl>
       <CaseTabs label={t0("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "scan", label: t0("ver.tab.scan") }, { key: "fields", label: t0("ver.tab.fields") }, ...(d.status === "SUBMITTED" ? [{ key: "decide" as const, label: t0("ver.tab.decide") }] : [])]} />
       <div className="grid items-start gap-x-6 px-4 pt-2 md:px-6 lg:grid-cols-2">
         <div {...paneProps("scan")} className={paneClass(tab, "scan")}>
-        <Panel title="Scan" aside={!scanUrl && d.scan && can("customer.read.documents") ? <Button size="sm" variant="outline" onClick={() => void showScan()}>Show scan (audited)</Button> : null}>
-          {!d.scan ? <Empty>No scan on file. Ask the customer to upload one.</Empty> : !can("customer.read.documents") ? <Empty>Your role cannot open identity documents.</Empty> : scanUrl ? (
+        <Panel title={t0("ver2.scan")} aside={!scanUrl && d.scan && can("customer.read.documents") ? <Button size="sm" variant="outline" onClick={() => void showScan()}>{t0("ver2.showScan")}</Button> : null}>
+          {!d.scan ? <Empty>{t0("ver2.noScan")}</Empty> : !can("customer.read.documents") ? <Empty>{t0("ver2.noRole")}</Empty> : scanUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- a blob: URL of the sanitised scan; next/image cannot optimise it
-            <img src={scanUrl} alt={`Passport scan for ${t.givenNames} ${t.surname}`} className="max-h-[70vh] w-full rounded-sm border border-rule bg-surface-raised object-contain" data-testid="scan-image" />
-          ) : <p className="text-steel">{d.scan.filename} · {d.scan.mime}. Every time the scan is opened it is written to the audit log.</p>}
+            <img src={scanUrl} alt={t0("ver2.scanAlt", { n: `${t.givenNames} ${t.surname}` })} className="max-h-[70vh] w-full rounded-sm border border-rule bg-surface-raised object-contain" data-testid="scan-image" />
+          ) : <p className="text-steel">{d.scan.filename} · {d.scan.mime}. {t0("ver2.scanAudit")}</p>}
           <ErrorLine error={scanErr} />
         </Panel>
         </div>
         <div>
           <div {...paneProps("fields")} className={paneClass(tab, "fields")}>
-          <Panel title="Details the customer confirmed">
+          <Panel title={t0("ver2.fields")}>
             <dl data-testid="verification-fields">
-              {row("Surname", <span dir="ltr">{t.surname}</span>)}
-              {row("Given names", <span dir="ltr">{t.givenNames}</span>)}
-              {row("Persian name", t.nameFa ?? "—")}
-              {row("Date of birth", <span dir="ltr">{t.dateOfBirth}</span>)}
-              {row("Gender on document", t.genderOnDocument)}
-              {row("Nationality", <Country code={t.nationality} />)}
-              {row("Document", d.document.type === "PASSPORT" ? "Passport" : "National ID")}
-              {row("Number", <span className="num" dir="ltr">{number ?? `••••${d.document.last4}`}{can("customer.read.documents") && number === null && <button type="button" className="ms-3 text-meta font-normal text-royal underline" onClick={() => void reveal()}>Reveal (audited)</button>}</span>)}
-              {row("Issuing country", <Country code={d.document.issuingCountry} />)}
-              {row("Expiry date", <span dir="ltr">{d.document.expiryDate}</span>)}
+              {row(t0("ver2.f.surname"), <span dir="ltr">{t.surname}</span>)}
+              {row(t0("ver2.f.given"), <span dir="ltr">{t.givenNames}</span>)}
+              {row(t0("ver2.f.nameFa"), t.nameFa ?? "—")}
+              {row(t0("ver2.f.dob"), <span dir="ltr">{t.dateOfBirth}</span>)}
+              {row(t0("ver2.f.gender"), t.genderOnDocument)}
+              {row(t0("ver2.f.nationality"), <Country code={t.nationality} />)}
+              {row(t0("ver2.f.document"), d.document.type === "PASSPORT" ? t0("pg.ver.passport") : t0("pg.ver.nid"))}
+              {row(t0("ver2.f.number"), <span className="num" dir="ltr">{number ?? `••••${d.document.last4}`}{can("customer.read.documents") && number === null && <button type="button" className="ms-3 text-meta font-normal text-royal underline" onClick={() => void reveal()}>{t0("ver2.reveal")}</button>}</span>)}
+              {row(t0("ver2.f.issuer"), <Country code={d.document.issuingCountry} />)}
+              {row(t0("ver2.f.expiry"), <span dir="ltr">{d.document.expiryDate}</span>)}
             </dl>
             <ErrorLine error={revealErr} />
           </Panel>
           {d.history.length > 0 && (
-            <Panel title="Earlier decisions">
-              <ul className="ledger-rows">{d.history.map((h, i) => <li key={i} className="py-1.5"><Tag value={h.decision} /> <span className="text-steel">{h.reviewerName} · {fmtDateTime(h.at)}</span>{h.reasonCode && <span className="block">{REASON_LABEL[h.reasonCode]}{h.reasonText ? ` — ${h.reasonText}` : ""}</span>}</li>)}</ul>
+            <Panel title={t0("ver2.history")}>
+              <ul className="ledger-rows">{d.history.map((h, i) => <li key={i} className="py-1.5"><Tag value={h.decision} /> <span className="text-steel">{h.reviewerName} · {fmtDateTime(h.at)}</span>{h.reasonCode && <span className="block">{reasonLabel(h.reasonCode)}{h.reasonText ? ` — ${h.reasonText}` : ""}</span>}</li>)}</ul>
             </Panel>
           )}
           </div>
@@ -117,15 +115,15 @@ export default function VerificationPage() {
             <div {...paneProps("decide")} className={cn(paneClass(tab, "decide"), "lg:sticky lg:top-16")}>
             <Panel title={t0("ver.decide")}>
               <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); void decide() }}>
-                <fieldset className="grid gap-1.5" aria-label="Decision">
-                  {([["VERIFIED", "Verify"], ["CORRECTION_REQUIRED", "Needs correction"], ["REJECTED", "Reject"]] as const).map(([v, l]) => <label key={v} className={cn("flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2", f.decision === v ? "border-navy-900 bg-hover font-medium dark:border-white/80" : "border-rule hover:bg-hover")}><input type="radio" name="decision" value={v} checked={f.decision === v} onChange={() => setF({ ...f, decision: v })} />{l}</label>)}
+                <fieldset className="grid gap-1.5" aria-label={t0("ver2.decision")}>
+                  {([["VERIFIED", t0("ver2.opt.VERIFIED")], ["CORRECTION_REQUIRED", t0("ver2.opt.CORRECTION_REQUIRED")], ["REJECTED", t0("ver2.opt.REJECTED")]] as const).map(([v, l]) => <label key={v} className={cn("flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2", f.decision === v ? "border-navy-900 bg-hover font-medium dark:border-white/80" : "border-rule hover:bg-hover")}><input type="radio" name="decision" value={v} checked={f.decision === v} onChange={() => setF({ ...f, decision: v })} />{l}</label>)}
                 </fieldset>
                 {f.decision !== "VERIFIED" && <>
-                  <Field label="Reason"><NativeSelect className="field-input" value={f.reasonCode} onChange={(e) => setF({ ...f, reasonCode: e.target.value })}>{VerificationReasonCode.options.map((c) => <option key={c} value={c}>{REASON_LABEL[c]}</option>)}</NativeSelect></Field>
-                  <Field label="Message to the customer (shown to them as written)" hint="Do not include the passport number or other personal data."><textarea className="field-input min-h-20" dir="auto" required maxLength={300} value={f.reasonText} onChange={(e) => setF({ ...f, reasonText: e.target.value })} /></Field>
+                  <Field label={t0("ver2.reason")}><NativeSelect className="field-input" value={f.reasonCode} onChange={(e) => setF({ ...f, reasonCode: e.target.value })}>{VerificationReasonCode.options.map((c) => <option key={c} value={c}>{reasonLabel(c)}</option>)}</NativeSelect></Field>
+                  <Field label={t0("ver2.message")} hint={t0("ver2.message.hint")}><textarea className="field-input min-h-20" dir="auto" required maxLength={300} value={f.reasonText} onChange={(e) => setF({ ...f, reasonText: e.target.value })} /></Field>
                 </>}
                 <ErrorLine error={err} />
-                <ActionBar edge="bottom" className="-mx-1 px-1"><Button type="submit" size="sm" loading={busy} variant={f.decision === "REJECTED" ? "destructive" : "default"}>Record decision</Button></ActionBar>
+                <ActionBar edge="bottom" className="-mx-1 px-1"><Button type="submit" size="sm" loading={busy} variant={f.decision === "REJECTED" ? "destructive" : "default"}>{t0("ver2.record")}</Button></ActionBar>
               </form>
             </Panel>
             </div>

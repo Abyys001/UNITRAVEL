@@ -168,6 +168,13 @@ html[data-lite] .liquid { background: #fff; }
 @utility card-brand {
   background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-card);
 }
+/* Customer portal (ADR-0040 D8): content is opaque, with a visible border, on the pale page. */
+@utility portal-card {
+  background: var(--surface-raised); color: var(--ink); border: 1px solid var(--rule-strong); border-radius: 16px; box-shadow: var(--shadow-card);
+}
+html:not([data-surface]) [data-portal] :is(.card-brand, [data-slot="card"]) {
+  background: var(--surface-raised); border: 1px solid var(--rule-strong); box-shadow: var(--shadow-card);
+}
 @utility card-lift {
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s;
   &:hover, &:focus-within { transform: translateY(-4px); box-shadow: var(--shadow-lift); }

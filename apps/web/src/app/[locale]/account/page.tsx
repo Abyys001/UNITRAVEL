@@ -9,14 +9,13 @@ import { toast } from "sonner"
 import type { TravellerView } from "@unitravel/contracts"
 import { Button } from "@unitravel/ui/components/button"
 import { Switch } from "@unitravel/ui/components/switch"
-import { NativeSelect } from "@unitravel/ui/components/native-select"
 
+import { SelectField } from "@/components/form"
 import { PassportVerification } from "@/components/passport-verification"
 import { TravellerForm } from "@/components/traveller-form"
 import { VerificationBadge } from "@/components/verification-badge"
 import { api } from "@/lib/api"
 import { describeUserAgent } from "@/lib/user-agent"
-import { PanelFrame } from "@/components/customer-panel"
 import { useI18n } from "@/lib/i18n"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
@@ -45,7 +44,7 @@ export default function AccountPage() {
   const devices = [...(sessions.data ?? [])].sort((a, b) => Number(b.current) - Number(a.current) || b.lastSeenAt.localeCompare(a.lastSeenAt))
   const shown = allDevices ? devices : devices.slice(0, DEVICE_CAP)
   return (
-    <PanelFrame>
+    <>
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-3"><h1 className="font-display text-3xl md:text-4xl">{t("account.title")}</h1><Button variant="outline" className="rounded-xl border-navy-900 text-navy-900" onClick={() => void signOut()}>{t("nav.signOut")}</Button></div>
       <section><h2 className="font-display mb-3 text-xl">{t("account.profile")}</h2>
@@ -67,8 +66,8 @@ export default function AccountPage() {
       </section>
       <section><h2 className="font-display mb-3 text-xl">{t("account.preferences")}</h2>
         <div className="card-brand space-y-3 p-5 text-sm">
-          <label className="flex items-center justify-between">{t("account.language")}<NativeSelect className="field py-1" value={me.preferredLocale} onChange={(e) => { patch.mutate({ preferredLocale: e.target.value }); router.replace(`/${e.target.value}/account`) }}><option value="en">English</option><option value="fa">فارسی</option></NativeSelect></label>
-          <label className="flex items-center justify-between">{t("account.calendar")}<NativeSelect className="field py-1" value={me.calendar} onChange={(e) => patch.mutate({ calendar: e.target.value })}><option value="GREGORIAN">{t("search.gregorian")}</option><option value="JALALI">{t("search.jalali")}</option></NativeSelect></label>
+          <div className="flex items-center justify-between gap-3"><span>{t("account.language")}</span><SelectField id="acc-lang" label={t("account.language")} hideLabel className="w-44" value={me.preferredLocale} onChange={(v) => { patch.mutate({ preferredLocale: v }); router.replace(`/${v}/account`) }} options={[{ value: "en", label: "English" }, { value: "fa", label: "فارسی" }]} triggerClassName="h-9 text-sm" /></div>
+          <div className="flex items-center justify-between gap-3"><span>{t("account.calendar")}</span><SelectField id="acc-cal" label={t("account.calendar")} hideLabel className="w-44" value={me.calendar} onChange={(v) => patch.mutate({ calendar: v })} options={[{ value: "GREGORIAN", label: t("search.gregorian") }, { value: "JALALI", label: t("search.jalali") }]} triggerClassName="h-9 text-sm" /></div>
           <p className="pt-2 font-medium">{t("account.notifications")}</p>
           {(["PUSH", "SMS", "EMAIL"] as const).map((c) => <label key={c} className="flex items-center justify-between">{t(c === "PUSH" ? "account.notifPush" : c === "SMS" ? "account.notifSms" : "account.notifEmail")}<Switch checked={prefs[c] !== false} onCheckedChange={(v) => patch.mutate({ notificationPrefs: { ...prefs, [c]: v } })} /></label>)}
           <p className="text-xs text-steel">{t("account.essential")}</p>
@@ -101,6 +100,6 @@ export default function AccountPage() {
         <p className="mt-2 max-w-xl text-sm text-steel" lang={locale}>{t("account.deleteNote")}</p>
       </section>
     </div>
-    </PanelFrame>
+    </>
   )
 }

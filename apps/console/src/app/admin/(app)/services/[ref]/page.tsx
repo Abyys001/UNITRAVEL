@@ -8,19 +8,23 @@ import { toast } from "sonner"
 
 import type { StaffServiceRequestView } from "@unitravel/contracts"
 
+import { ClipboardList, CreditCard, History, MessagesSquare, ReceiptText, UserRound, UsersRound } from "lucide-react"
+
 import { Country } from "@unitravel/ui/product/country"
 import { TileError } from "@/components/bento"
-import { ActionBar, CaseHeader, CaseTabs, CommandBar, ListSkeleton, paneClass, paneProps, SlaChip, SummaryItem, Timeline } from "@/components/case"
+import { ActionBar, CaseHeader, CommandBar, ListSkeleton, SlaChip, SummaryItem, Timeline } from "@/components/case"
+import { CaseSection, SectionNav } from "@/components/case-section"
 import { InvoicesPanel } from "@/components/invoices-panel"
 import { isConflict, QuotesList, SERVICE_DIALOG_COMMANDS, ServiceCommandDialog, ServiceDetails, ServiceStatus, useServiceLabels } from "@/components/service-request"
 import { Composer, MessagesList } from "@/components/thread"
-import { Arrow, Loading, Panel } from "@/components/ui"
+import { Arrow, Loading } from "@/components/ui"
 import { api, errText } from "@/lib/api"
 import { useCrumbLabel } from "@/lib/crumb"
 import { fmtDateTime } from "@/lib/format"
 import { useKeys } from "@/lib/hooks"
 import { useFallbackInterval } from "@/lib/live"
 import { useSession } from "@/lib/session"
+import { useReadOnOpen } from "@/lib/notifications"
 
 /**
  * One service request (ADR-0015): customer, the form they sent, quotes, messages and the status trail. Commands are the
@@ -28,6 +32,7 @@ import { useSession } from "@/lib/session"
  */
 export default function ServiceRequestPage() {
   const { ref } = useParams<{ ref: string }>()
+  useReadOnOpen(ref)
   const qc = useQueryClient()
   const { me, can } = useSession()
   const L = useServiceLabels()
@@ -37,7 +42,6 @@ export default function ServiceRequestPage() {
   const d = q.data
   useCrumbLabel(d?.ref)
   const [command, setCommand] = useState<string | null>(null)
-  const [tab, setTab] = useState<"case" | "people" | "records">("case")
   const msgRef = useRef<HTMLTextAreaElement>(null)
   const refresh = async () => { await qc.invalidateQueries({ queryKey: key }); void qc.invalidateQueries({ queryKey: ["services", "list"] }) }
   const done = async (r: StaffServiceRequestView) => { qc.setQueryData(key, r); void qc.invalidateQueries({ queryKey: ["services", "list"] }) }
@@ -56,47 +60,70 @@ export default function ServiceRequestPage() {
   if (!d) return <><Loading label={`${ref}…`} /><ListSkeleton rows={6} /></>
   const mine = d.assignee?.userId === me?.id
   const timeline = [...d.timeline].sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+  const invoiced = d.quotes.some((x) => x.status === "ACCEPTED")
+  const navItems = [
+    { id: "sec-overview", label: t("rq2.overview"), icon: ClipboardList },
+    { id: "sec-customer", label: t("svc.customer"), icon: UserRound },
+    ...(d.travellers.length > 0 ? [{ id: "sec-travellers", label: t("svc.travellers"), icon: UsersRound, count: d.travellers.length }] : []),
+    { id: "sec-details", label: t("svc.details"), icon: ClipboardList },
+    { id: "sec-quotes", label: t("svc.quotes"), icon: ReceiptText, count: d.quotes.length },
+    ...(invoiced ? [{ id: "sec-payment", label: t("rq2.payment"), icon: CreditCard }] : []),
+    { id: "sec-messages", label: t("case.conversation"), icon: MessagesSquare, count: d.messages.length },
+    { id: "sec-timeline", label: t("rq2.timeline"), icon: History },
+  ]
   return (
-    <div className="pb-8">
-      <CaseHeader
-        reference={<span className="ref text-lead font-semibold" data-testid="ref">{d.ref}</span>}
-        title={d.title}
-        meta={<>{L.type(d.type)} · {t("svc.via", { at: fmtDateTime(d.createdAt), via: d.submittedVia.toLowerCase(), locale: d.submittedLocale })}</>}
-        summary={<>
-          <span data-testid="status"><ServiceStatus value={d.status} /></span>
-          <SummaryItem label={t("case.sla")}>{d.slaDueAt ? <SlaChip dueAt={d.slaDueAt} startAt={d.createdAt} /> : <span className="text-steel">{t("sla.none")}</span>}</SummaryItem>
-          <SummaryItem label={t("case.owner.short")}><span className="font-medium" data-testid="assignee">{d.assignee ? (mine ? t("case.assignedYou") : t("case.assignedTo", { name: d.assignee.name })) : <span className="text-danger">{t("case.unassigned")}</span>}</span></SummaryItem>
-          {d.complianceCaseId && <SummaryItem label={t("svc.compliance")}>{can("compliance.case.read") ? <Link href={`/compliance/${d.complianceCaseId}`} className="font-medium text-link hover:underline">{t("svc.compliance.open")}</Link> : <span className="text-steel">{t("svc.compliance.note")}</span>}</SummaryItem>}
-        </>}
-      />
-      <ActionBar data-testid="actions" aria-label={t("case.actions")}>
-        <CommandBar actions={d.allowedCommands} onRun={(c) => void run(c)} none={t("case.actions.none", { status: L.status(d.status) })} hint={<><span className="kbd">c</span> claim · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
-      </ActionBar>
-      <CaseTabs label={t("case.tabs")} value={tab} onChange={setTab} tabs={[{ key: "case", label: t("case.tab.case") }, { key: "people", label: t("case.tab.customer") }, { key: "records", label: t("case.tab.records") }]} />
-      <div className="grid gap-x-8 px-5 pt-2 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_360px]">
-        <div {...paneProps("people")} className={paneClass(tab, "people")}>
-          <Panel title={t("svc.customer")} aside={can("customer.read.pii") && <Link className="font-medium text-link hover:underline" href={`/customers/${d.customer.userId}?ref=${d.ref}`}>{t("svc.customer.context")}</Link>}>
-            <p className="font-medium" dir="auto" data-testid="service-customer">{d.customer.name}</p>
-            {d.customer.phone && <p className="num" dir="ltr"><a href={`tel:${d.customer.phone}`} className="text-link hover:underline">{d.customer.phone}</a></p>}
-          </Panel>
-          {d.travellers.length > 0 && (
-            <Panel title={t("svc.travellers")}>
-              <ul className="ledger-rows">{d.travellers.map((p) => <li key={p.id} className="py-1"><span dir="auto">{p.name}</span>{p.nationality && <span className="text-steel"> · <Country code={p.nationality} /></span>}</li>)}</ul>
-            </Panel>
-          )}
+    <div className="min-h-full bg-surface-sunk pb-8">
+      <div id="sec-overview" className="scroll-mt-32 px-3 pt-3 md:px-6 md:pt-4">
+        <div className="overflow-hidden rounded-[var(--radius-card)] border border-rule shadow-[var(--shadow-xs)]">
+          <CaseHeader
+            reference={<span className="ref text-lead font-semibold" data-testid="ref">{d.ref}</span>}
+            title={d.title}
+            meta={<>{L.type(d.type)} · {t("svc.via", { at: fmtDateTime(d.createdAt), via: d.submittedVia.toLowerCase(), locale: d.submittedLocale })}</>}
+            summary={<>
+              <span data-testid="status"><ServiceStatus value={d.status} /></span>
+              <SummaryItem label={t("case.sla")}>{d.slaDueAt ? <SlaChip dueAt={d.slaDueAt} startAt={d.createdAt} /> : <span className="text-steel">{t("sla.none")}</span>}</SummaryItem>
+              <SummaryItem label={t("case.owner.short")}><span className="font-medium" data-testid="assignee">{d.assignee ? (mine ? t("case.assignedYou") : t("case.assignedTo", { name: d.assignee.name })) : <span className="text-danger">{t("case.unassigned")}</span>}</span></SummaryItem>
+              {d.complianceCaseId && <SummaryItem label={t("svc.compliance")}>{can("compliance.case.read") ? <Link href={`/compliance/${d.complianceCaseId}`} className="font-medium text-link hover:underline">{t("svc.compliance.open")}</Link> : <span className="text-steel">{t("svc.compliance.note")}</span>}</SummaryItem>}
+            </>}
+          />
         </div>
-        <div {...paneProps("case")} className={`min-w-0 ${paneClass(tab, "case")}`}>
-          <Panel title={`${t("svc.details")} · ${L.type(d.type)}`}><ServiceDetails d={d} /></Panel>
-          <Panel title={t("case.conversation")}>
+      </div>
+      <div className="sticky top-0 z-sticky mt-3 bg-surface-sunk/95 backdrop-blur-sm">
+        <div className="px-3 pt-1 pb-2 md:px-6">
+          <ActionBar data-testid="actions" aria-label={t("case.actions")} className="static rounded-[var(--radius-card)] border border-rule px-4 py-2.5 shadow-[var(--shadow-xs)] md:px-4">
+            <CommandBar actions={d.allowedCommands} onRun={(c) => void run(c)} none={t("case.actions.none", { status: L.status(d.status) })} hint={<><span className="kbd">c</span> claim · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
+          </ActionBar>
+        </div>
+        <SectionNav label={t("rq2.nav")} items={navItems} className="md:px-6 md:pb-2" />
+      </div>
+
+      <div className="mt-3 flex flex-col gap-4 px-3 md:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
+          <CaseSection id="sec-details" icon={ClipboardList} title={`${t("svc.details")} · ${L.type(d.type)}`} description={t("rq2.svc.details.desc")} className="order-[30] lg:order-none"><ServiceDetails d={d} /></CaseSection>
+          <CaseSection id="sec-messages" icon={MessagesSquare} title={t("case.conversation")} description={t("rq2.messages.desc")} count={d.messages.length} className="order-[90] lg:order-none">
             <MessagesList messages={d.messages} />
             {can("service_request.write") && <Composer ref={msgRef} hint={t("case.composer.message")} label={t("svc.msg.send")} placeholder={t("svc.msg.placeholder")} testId="service-composer"
               onSend={async (body) => { try { await api(`/v1/admin/service-requests/${ref}/messages`, { body: { body, documentIds: [] } }); await refresh() } catch (e) { toast.error(errText(e)); throw e } }} />}
-          </Panel>
+          </CaseSection>
+          <CaseSection id="sec-timeline" icon={History} title={t("rq2.timeline")} description={t("rq2.timeline.desc")} count={timeline.length} className="order-[100] lg:order-none">
+            <Timeline data-testid="service-timeline" items={timeline.map((x, i) => ({ id: i, at: x.at, title: x.toStatus ? <>{x.label} <span className="text-steel"><Arrow /></span> {L.status(x.toStatus)}</> : x.label, detail: x.detail, meta: x.actor, tone: x.kind === "STATUS" ? "strong" : "muted" }))} />
+          </CaseSection>
         </div>
-        <div {...paneProps("records")} className={`${paneClass(tab, "records")} lg:col-span-2 xl:col-span-1`}>
-          <Panel title={t("svc.quotes")}><QuotesList d={d} /></Panel>
-          {d.quotes.some((x) => x.status === "ACCEPTED") && <InvoicesPanel requestRef={d.ref} />}
-          <Panel title={t("case.activity")}><Timeline data-testid="service-timeline" items={timeline.map((x, i) => ({ id: i, at: x.at, title: x.toStatus ? <>{x.label} <span className="text-steel"><Arrow /></span> {L.status(x.toStatus)}</> : x.label, detail: x.detail, meta: x.actor, tone: x.kind === "STATUS" ? "strong" : "muted" }))} /></Panel>
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
+          <CaseSection id="sec-customer" icon={UserRound} title={t("svc.customer")} className="order-[20] lg:order-none"
+            aside={can("customer.read.pii") && <Link className="font-medium text-link hover:underline" href={`/customers/${d.customer.userId}?ref=${d.ref}`}>{t("svc.customer.context")}</Link>}>
+            <p className="font-medium" dir="auto" data-testid="service-customer">{d.customer.name}</p>
+            {d.customer.phone && <p className="num" dir="ltr"><a href={`tel:${d.customer.phone}`} className="text-link hover:underline">{d.customer.phone}</a></p>}
+          </CaseSection>
+          {d.travellers.length > 0 && (
+            <CaseSection id="sec-travellers" icon={UsersRound} title={t("svc.travellers")} description={t("rq2.svc.travellers.desc")} count={d.travellers.length} className="order-[25] lg:order-none">
+              <ul className="ledger-rows">{d.travellers.map((p) => <li key={p.id} className="py-1"><span dir="auto">{p.name}</span>{p.nationality && <span className="text-steel"> · <Country code={p.nationality} /></span>}</li>)}</ul>
+            </CaseSection>
+          )}
+          <CaseSection id="sec-quotes" icon={ReceiptText} title={t("svc.quotes")} count={d.quotes.length} className="order-[40] lg:order-none"><QuotesList d={d} /></CaseSection>
+          {invoiced && (
+            <CaseSection id="sec-payment" icon={CreditCard} title={t("rq2.payment")} description={t("rq2.svc.payment.desc")} className="order-[45] lg:order-none"><InvoicesPanel requestRef={d.ref} /></CaseSection>
+          )}
         </div>
       </div>
       <ServiceCommandDialog command={command} d={d} version={d.version} onClose={() => setCommand(null)} done={done} onConflict={refresh} />

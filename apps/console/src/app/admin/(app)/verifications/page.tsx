@@ -15,6 +15,7 @@ import { PageHead } from "@/components/ui"
 import { api } from "@/lib/api"
 import { fmtDateTime, rel } from "@/lib/format"
 import { useT } from "@/lib/i18n"
+import { PageGuide } from "@/components/page-guide"
 
 /** Identity verification queue (ADR-0005): customers who confirmed their passport details, oldest first. */
 export default function VerificationQueue() {
@@ -31,6 +32,7 @@ export default function VerificationQueue() {
   return (
     <ListPage>
       <PageHead title={t("nav.passport")} />
+      <PageGuide id="identity" title="guide.identity.title" points={["guide.identity.1", "guide.identity.2", "guide.identity.3", "guide.identity.4"]} />
       <Toolbar query={search} onQuery={setSearch} placeholder={t("pg.ver.search")} count={q.data ? rows.length : undefined}>
         <Chips label={t("pg.c.document")} value={doc} options={[{ value: "", label: t("pg.all"), count: matched.length }, { value: "PASSPORT", label: t("pg.ver.passport"), count: passports }, { value: "OTHER", label: t("pg.ver.nid"), count: matched.length - passports }]} onChange={setDoc} />
       </Toolbar>

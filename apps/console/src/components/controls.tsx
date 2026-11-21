@@ -55,14 +55,14 @@ export function Tip({ label, side = "bottom", children, disabled }: { label: Rea
   )
 }
 
-export function Switch({ checked, onChange, label, description, disabled, className, testId }: { checked: boolean; onChange: (v: boolean) => void; label: React.ReactNode; description?: React.ReactNode; disabled?: boolean; className?: string; testId?: string }) {
+export function Switch({ checked, onChange, label, description, disabled, className, testId, quietDescription }: { checked: boolean; onChange: (v: boolean) => void; label: React.ReactNode; description?: React.ReactNode; disabled?: boolean; className?: string; testId?: string; /** Keeps the description for screen readers and the tooltip only, so a compact control keeps one line. */ quietDescription?: boolean }) {
   const id = useId()
   return (
     <label htmlFor={id} className={cn("inline-flex min-h-control cursor-pointer items-center gap-2.5 select-none", disabled && "cursor-not-allowed opacity-60", className)}>
       <input id={id} type="checkbox" role="switch" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} aria-describedby={description ? `${id}-d` : undefined} data-testid={testId} />
       <span className="flex flex-col leading-tight">
         <span className="font-medium">{label}</span>
-        {description && <span id={`${id}-d`} className="text-caption text-steel">{description}</span>}
+        {description && <span id={`${id}-d`} className={quietDescription ? "sr-only" : "text-caption text-steel"}>{description}</span>}
       </span>
     </label>
   )
