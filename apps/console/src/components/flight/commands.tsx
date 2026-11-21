@@ -13,7 +13,7 @@ import type { FlightDetail } from "@/lib/types"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
 /** Commands that need input (Table 13.1). The body shapes are CommandBodies in contracts; the API validates them. */
-export const DIALOG_COMMANDS = new Set(["assign", "request_info", "send_quote", "record_acceptance", "close", "reopen", "cancel", "decline", "mark_reservation_lapsed"])
+export const DIALOG_COMMANDS = new Set(["assign", "request_info", "resume_review", "send_quote", "record_acceptance", "close", "reopen", "cancel", "decline", "mark_reservation_lapsed"])
 
 const localNow = () => { const d = new Date(); d.setSeconds(0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
 
@@ -43,6 +43,7 @@ export function CommandDialog({ command, d, onClose, done }: { command: string |
   return (
     <FormDialog open onOpenChange={(o) => !o && onClose()} title={COMMAND_LABEL[command] ?? command} submitLabel={(COMMAND_LABEL[command] ?? command).replace("…", "")} destructive={command === "cancel" || command === "decline"} onSubmit={submit} testId={`dlg-${command}`}>
       {command === "assign" && <StaffSelect value={f.assigneeUserId ?? ""} onChange={(id) => setF({ ...f, assigneeUserId: id })} hint="The assignee must be able to work flight requests." />}
+      {command === "resume_review" && <Field label="Why continue without the customer's reply?" hint="E.g. the customer answered by phone. Moves the request back to IN_REVIEW; saved in the history and as an internal note."><textarea className="field-input min-h-24" value={f.note ?? ""} onChange={(e) => setF({ ...f, note: e.target.value })} required minLength={3} dir="auto" data-testid="resume-note" /></Field>}
       {command === "request_info" && <Field label="Message to the customer" hint="Moves the request to AWAITING_CUSTOMER and notifies them."><textarea className="field-input min-h-28" value={f.message ?? ""} onChange={set("message")} required dir="auto" /></Field>}
       {command === "send_quote" && (
         drafts.length ? (

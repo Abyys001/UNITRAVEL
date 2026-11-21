@@ -5,6 +5,13 @@ import { AdminCustomerListController, MeActivityController } from "./activity/ac
 import { BookingsService } from "./bookings/bookings.service"
 import { AdminCargoController, CustomerCargoController, DevCargoController } from "./cargo/cargo.controller"
 import { CargoService } from "./cargo/cargo.service"
+import { AgentSignInService } from "./cargo/agent-sign-in.service"
+import { PostageService } from "./cargo/postage.service"
+import { ShippingService } from "./cargo/shipping.service"
+import { AdminCargoOpsController, AgentJobsController, AgentSignInController, PublicCargoTrackingController, StaffIntakeController } from "./cargo/cargo-ops.controller"
+import { CargoOpsService } from "./cargo/cargo-ops.service"
+import { AgentsService } from "./cargo/agents.service"
+import { StaffIntakeService } from "./cargo/staff-intake.service"
 import { ApifyIntegrationController, CatalogAdminController } from "./catalog/catalog-admin.controller"
 import { CatalogAdminService } from "./catalog/catalog-admin.service"
 import { CatalogReadController } from "./catalog/catalog-read.controller"
@@ -75,7 +82,7 @@ import { VisaService } from "./visa/visa.service"
 /** Business modules (Figure 20.1 middle row) and their HTTP controllers, registered as each stage is built. */
 export const BUSINESS_CONTROLLERS: Type[] = [
   DocumentsController, TravellersController, MyDetailsController, AdminCustomersController, AdminVerificationsController, ComplianceController, CustomerFlightRequestsController, AdminFlightRequestsController, SearchController, StaffSearchController,
-  CustomerCargoController, AdminCargoController, DevCargoController, CustomerBillingController, AdminInvoicesController,
+  CustomerCargoController, AdminCargoController, DevCargoController, PublicCargoTrackingController, AdminCargoOpsController, AgentJobsController, AgentSignInController, StaffIntakeController, CustomerBillingController, AdminInvoicesController,
   CustomerPaymentsController, AdminPaymentsController, DevPaymentsController, StripeWebhookController, DevPaymentSinkController, DevStripeInvoiceSinkController,
   CustomerServiceRequestsController, AdminServiceRequestsController, SiteController, TrackController, CustomerClubController, AdminClubController, PublicCmsController, AdminCmsController,
   MeActivityController, AdminCustomerListController, SupportTicketsController, AdminSupportController, AdminCallsController, BonlineWebhookController, AdminAssignmentsController, PublicListingsController, AdminListingsController,
@@ -86,7 +93,7 @@ export const BUSINESS_CONTROLLERS: Type[] = [
   PortalController, DevCargoTrackingController, AdminCarrierTrackingController,
 ]
 
-export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, StripeInvoicesService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, ScheduleWriteService, ScheduleRefreshService, CatalogRefreshService, CatalogReadService, CatalogAdminService, FlightBuilderService, FlightBuilderJobsService, TicketDocumentsService, PortalService, CarrierTrackingService]
+export const BUSINESS_PROVIDERS = [DocumentsService, CustomersService, IdentityVerificationService, ComplianceService, TimersService, RequestsService, DashboardService, QuotesService, BookingsService, FlightLifecycle, SearchService, CargoService, CargoOpsService, AgentsService, AgentSignInService, PostageService, ShippingService, StaffIntakeService, StaffEvents, DocumentNumbersService, InvoicesService, PaymentsService, RefundsService, StripeInvoicesService, PaymentConfigService, ServicesService, SiteService, TrackService, LoyaltyService, CmsService, ActivityService, ListingsService, SupportService, ServicesCatalogService, CallsService, BonlineAdapter, { provide: TELEPHONY, useExisting: BonlineAdapter }, PageFetcher, VisaService, VisaResearchService, CatalogWriteService, ScheduleWriteService, ScheduleRefreshService, CatalogRefreshService, CatalogReadService, CatalogAdminService, FlightBuilderService, FlightBuilderJobsService, TicketDocumentsService, PortalService, CarrierTrackingService]
 
 @Module({ imports: [NotificationsModule], providers: BUSINESS_PROVIDERS, exports: BUSINESS_PROVIDERS })
 export class BusinessModules {}

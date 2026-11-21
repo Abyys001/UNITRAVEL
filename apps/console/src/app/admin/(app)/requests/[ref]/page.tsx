@@ -6,7 +6,7 @@ import { useParams } from "next/navigation"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { Button } from "@unitravel/ui/components/button"
+import { Button, buttonVariants } from "@unitravel/ui/components/button"
 import { cn } from "@unitravel/ui/lib/utils"
 import { NativeSelect } from "@unitravel/ui/components/native-select"
 
@@ -114,7 +114,11 @@ export default function FlightRequestPage() {
   const canOverride = !mobile && can("ticket.record") && d.status === "RESERVED"
 
   const allowedNow = visibleActions.filter((a) => a.allowed)
-  const primary = pickPrimary(allowedNow)
+  // ADR-0044 D6: staff can price straight away (no claim, no customer reply needed); the server claims/resumes as audited
+  // transitions. Until a draft is sendable, the quote builder is the next step, so it leads the action bar.
+  const quoteNext = can("quote.create") && ["NEW", "IN_REVIEW", "AWAITING_CUSTOMER"].includes(d.status) && !d.actions.some((a) => a.command === "send_quote" && a.allowed)
+  const quoteLead = quoteNext && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className={cn(buttonVariants({ size: mobile ? "default" : "sm" }), mobile ? "w-full pointer-coarse:min-h-11" : "px-4")} data-testid="next-quote">{draft ? t("case.quote.edit") : t("case.quote.new")} <Arrow /></Link>
+  const primary = quoteLead ? undefined : pickPrimary(allowedNow)
   const danger = allowedNow.filter((a) => DESTRUCTIVE.has(a.command))
   const mainRow = visibleActions.filter((a) => !(a.allowed && DESTRUCTIVE.has(a.command)))
   // Phones: one solid primary and a menu with everything else (also the commands that cannot run, with the server's reason).
@@ -124,7 +128,7 @@ export default function FlightRequestPage() {
     <ActionBar edge="bottom" aria-label={t("case.actions")} className="bottom-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="flex items-center gap-2">
         <div data-testid="actions" className="min-w-0 flex-1">
-          {primary ? <Button className="w-full pointer-coarse:min-h-11" onClick={() => run(primary.command)} data-command={primary.command}>{commandLabelOf(primary.command, locale)}</Button> : <p className="py-1 text-steel">{t("case.actions.none", { status: d.status })}</p>}
+          {quoteLead || (primary ? <Button className="w-full pointer-coarse:min-h-11" onClick={() => run(primary.command)} data-command={primary.command}>{commandLabelOf(primary.command, locale)}</Button> : <p className="py-1 text-steel">{t("case.actions.none", { status: d.status })}</p>)}
         </div>
         <ActionMenu items={phoneMenu} onRun={run} />
       </div>
@@ -134,7 +138,7 @@ export default function FlightRequestPage() {
     <ActionBar aria-label={t("case.actions")} className="static rounded-[var(--radius-card)] border border-rule px-4 py-2.5 shadow-[var(--shadow-xs)] md:px-4">
       <div className="flex items-start gap-2">
         <div data-testid="actions" className="min-w-0 flex-1">
-          <CommandBar actions={mainRow} onRun={run} none={t("case.actions.none", { status: d.status })} hint={<><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
+          <CommandBar actions={mainRow} onRun={run} lead={quoteLead || undefined} none={t("case.actions.none", { status: d.status })} hint={<><span className="kbd">c</span> claim · <span className="kbd">n</span> note · <span className="kbd">m</span> message · {t("case.actions.hint")}</>} />
         </div>
         <ActionMenu items={danger} onRun={run} />
       </div>
@@ -249,7 +253,7 @@ export default function FlightRequestPage() {
 
           {showQuotes && (
             <CaseSection id="sec-quotes" icon={ReceiptText} title={t("case.panel.quotes")} description={t("rq2.quotes.desc")} count={d.quotes.length} className="order-[50] lg:order-none"
-              aside={["IN_REVIEW", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className={textLink} data-testid="open-quote-builder">{draft ? t("case.quote.edit") : t("case.quote.new")} <Arrow /></Link>}>
+              aside={["NEW", "IN_REVIEW", "AWAITING_CUSTOMER", "QUOTED", "ACCEPTED"].includes(d.status) && <Link href={`/requests/${d.ref}/quote${draft ? `?quote=${draft.id}` : ""}`} className={textLink} data-testid="open-quote-builder">{draft ? t("case.quote.edit") : t("case.quote.new")} <Arrow /></Link>}>
               {!d.quotes.length ? <Empty>{t("case.quotes.none")}</Empty> : (
                 <ul className="space-y-2" data-testid="quotes">
                   {d.quotes.map((qv) => (
@@ -306,6 +310,8 @@ export default function FlightRequestPage() {
             <div>
               <SubHead className="mb-2">{t("case.rec.tickets")}</SubHead>
               {d.tickets.length ? <ul className="ledger-rows">{d.tickets.map((tk) => <li key={tk.id} className="flex items-center justify-between py-1"><span><span className="num">{tk.ticketNumber}</span> {tk.travellerName}</span><StateChip value={tk.status} /></li>)}</ul> : <Empty>—</Empty>}
+                {d.identityOverride && <p className="mt-1 rounded-md bg-warning-subtle px-2 py-1 text-caption" data-testid="identity-override-note">{t("tk.overrideShown", { by: d.identityOverride.by ?? "staff", at: d.identityOverride.at ? fmtDateTime(d.identityOverride.at) : "" })} <span dir="auto">“{d.identityOverride.reason}”</span></p>}
+                {d.intake?.createdByStaff && <p className="mt-1 text-caption text-steel">{t("fnew.createdBy", { by: d.intake.createdByStaff, channel: d.intake.channel.toLowerCase().replace("_", " ") })}</p>}
             </div>
             {(d.afterSales.length > 0 || (["TICKETED", "COMPLETED"].includes(d.status) && canAct)) && (
               <div data-testid="after-sales">

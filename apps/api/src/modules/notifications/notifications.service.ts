@@ -46,6 +46,8 @@ export interface NotifyInput {
   extraEmails?: string[]
   /** The account holder gets the inbox entry but no email (a resend addressed to a passenger only). */
   skipAccountEmail?: boolean
+  /** ADR-0042 D10: when the recipient has no verified email, send the notice by SMS instead. */
+  smsWhenNoEmail?: boolean
 }
 
 type Attachment = { filename: string; content: Buffer; contentType: string }
@@ -185,7 +187,7 @@ export class NotificationsService {
       }
       const doc = { ticketDocumentId: input.ticketDocumentId }
       if (rule.channels.includes("EMAIL") && r.email && allowed("EMAIL") && !input.skipAccountEmail) await this.queueDelivery(n.id, "EMAIL", "notify.email", defer, {}, doc)
-      else if (input.documentDelivery && !r.email && r.phone && allowed("SMS") && !input.skipAccountEmail) await this.queueDelivery(n.id, "SMS", "notify.sms", defer, {}, doc)
+      else if ((input.documentDelivery || input.smsWhenNoEmail) && !r.email && r.phone && allowed("SMS") && !input.skipAccountEmail) await this.queueDelivery(n.id, "SMS", "notify.sms", defer, {}, doc)
       // Addresses staff entered for this one send go out at once: they are not the account holder's preferences or quiet hours.
       for (const addressEnc of input.extraEmails ?? []) await this.queueDelivery(n.id, "EMAIL", "notify.email", 0, {}, { ...doc, recipient: "PASSENGER", addressEnc })
       if (rule.channels.includes("SMS") && r.phone && allowed("SMS")) {

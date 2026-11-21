@@ -126,13 +126,19 @@ export class RequestsService {
 
   // ---------------- submission (J2/J3) ----------------
 
-  async create(body: CreateFlightRequestBody, actor: Actor, ctx: { requestId: string; locale: Locale; via: "WEB" | "MOBILE" | "CONSOLE" }) {
+  /**
+   * `staff` (ADR-0044): staff create the request for this customer (always MANUAL). Nothing has to be verified to submit;
+   * the request records who created it and how it reached us, and goes through the same screening and notices.
+   */
+  async create(body: CreateFlightRequestBody, actor: Actor, ctx: { requestId: string; locale: Locale; via: "WEB" | "MOBILE" | "CONSOLE" }, staff?: { customerUserId: string; channel: string; note?: string }) {
     const auth = this.config.get("AUTH")
-    const [contact] = await this.db.select().from(userIdentities).where(and(eq(userIdentities.id, body.contactIdentityId), eq(userIdentities.userId, actor.userId), isNull(userIdentities.revokedAt)))
+    const ownerId = staff?.customerUserId ?? actor.userId
+    const [contact] = await this.db.select().from(userIdentities).where(and(eq(userIdentities.id, body.contactIdentityId), eq(userIdentities.userId, ownerId), isNull(userIdentities.revokedAt)))
     if (!contact || contact.type !== "PHONE") throw new AppError("VALIDATION_FAILED", "Choose one of your phone numbers", [{ path: "contactIdentityId", code: "INVALID" }])
-    // The contact number can be changed only to another verified number (ch. 11.3).
-    if (auth.requireVerifiedPhoneForRequests && !contact.verifiedAt) throw new AppError("PHONE_NOT_VERIFIED", "Verify your phone number before submitting a request")
-    const trav = await Promise.all(body.travellers.map((t) => this.customers.owned(actor.userId, t.travellerId)))
+    // The contact number can be changed only to another verified number (ch. 11.3). Staff intake records it unverified (ADR-0044).
+    if (!staff && auth.requireVerifiedPhoneForRequests && !contact.verifiedAt) throw new AppError("PHONE_NOT_VERIFIED", "Verify your phone number before submitting a request")
+    if (staff && body.kind !== "MANUAL") throw new AppError("VALIDATION_FAILED", "Staff-created requests are manual requests", [{ path: "kind", code: "MANUAL_ONLY" }])
+    const trav = await Promise.all(body.travellers.map((t) => this.customers.owned(ownerId, t.travellerId)))
     const interests = await this.catalog.resolveActiveCodes(this.db, body.serviceInterests ?? [])
     const umnr = body.ssrs.some((s) => s.code === "UMNR") || body.travellers.every((t) => t.passengerType === "CHD" || t.passengerType === "INF" || t.passengerType === "INS")
     let kind = body.kind
@@ -193,7 +199,7 @@ export class RequestsService {
       const ref = await this.uniqueRef(tx, "F")
       const now = new Date()
       const [req] = await tx.insert(flightRequests).values({
-        ref, kind, customerUserId: actor.userId, contactIdentityId: contact.id, contactPhoneSnapshot: contact.valueNormalised, contactPhoneVerified: !!contact.verifiedAt,
+        ref, kind, customerUserId: ownerId, contactIdentityId: contact.id, createdByStaffId: staff ? actor.userId : null, intakeChannel: staff?.channel ?? "ONLINE", contactPhoneSnapshot: contact.valueNormalised, contactPhoneVerified: !!contact.verifiedAt,
         alternativeContact: body.alternativeContact ?? null, status: "SUBMITTED", paymentStatus: "NONE", offerSnapshotId: snapshotId, tripType: query.tripType, query,
         manual: body.manual ?? null, preferences: { seatPreference: body.seatPreference, seatChoice: body.seatChoice, ssrs: body.ssrs, bestTimeToCall: body.bestTimeToCall, selfTransferAcknowledged: body.acknowledgements.selfTransfer },
         customerNote: body.note ?? null, submittedVia: ctx.via, submittedLocale: ctx.locale, firstTravelDate: firstDate, urgent,
@@ -201,9 +207,9 @@ export class RequestsService {
       }).returning()
       await tx.insert(requestTravellers).values(trav.map((t, i) => ({ requestId: req!.id, travellerId: t.id, passengerType: body.travellers[i]!.passengerType, nameSnapshot: { title: t.title, givenNames: t.givenNames, surname: t.surname, nameFa: t.nameFa, dateOfBirth: t.dateOfBirth } })))
       if (interests.length) await tx.insert(requestServiceInterests).values(interests.map((i) => ({ requestId: req!.id, catalogueItemId: i.id })))
-      await tx.insert(requestStatusHistory).values({ requestType: "FLIGHT", requestId: req!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: "CUSTOMER" })
-      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "flight_request.submitted", entityType: "flight_request", entityId: req!.id, contextRef: ref, after: { kind, tripType: query.tripType, travellers: trav.length, snapshot: !!snapshotId, catalogResultId: catalogSnap?.resultId, serviceInterests: interests.map((i) => i.code) }, ip: actor.ip, requestId: ctx.requestId })
-      await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: req!.id, eventType: "flight_request.submitted", payload: { requestId: req!.id, ref, customerUserId: actor.userId, routeLabel: this.routeLabel(query, ctx.locale), urgent, route: demandRoute(query) }, dedupeKey: `fr-submitted:${req!.id}` })
+      await tx.insert(requestStatusHistory).values({ requestType: "FLIGHT", requestId: req!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: staff ? "STAFF" : "CUSTOMER" })
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: staff ? "STAFF" : "CUSTOMER", action: staff ? "flight_request.submitted_by_staff" : "flight_request.submitted", entityType: "flight_request", entityId: req!.id, contextRef: ref, after: { ...(staff ? { customerUserId: ownerId, channel: staff.channel, note: staff.note } : {}), kind, tripType: query.tripType, travellers: trav.length, snapshot: !!snapshotId, catalogResultId: catalogSnap?.resultId, serviceInterests: interests.map((i) => i.code) }, ip: actor.ip, requestId: ctx.requestId })
+      await this.outbox.add(tx, { aggregateType: "flight_request", aggregateId: req!.id, eventType: "flight_request.submitted", payload: { requestId: req!.id, ref, customerUserId: ownerId, routeLabel: this.routeLabel(query, ctx.locale), urgent, route: demandRoute(query) }, dedupeKey: `fr-submitted:${req!.id}` })
       return { ref, status: "SUBMITTED" as const, kind }
     })
   }
@@ -233,6 +239,7 @@ export class RequestsService {
       activeReservation: active ? { status: active.status, ticketingDeadline: active.ticketingDeadline } : null,
       ticketsIssuedForEveryTraveller: rt.length > 0 && rt.every((t) => tks.some((k) => k.travellerId === t.travellerId)),
       creditOverrideApproved: override.some((o) => !!o.approvedBy),
+      identityOverrideReason: r.identityOverrideReason,
       lastSegmentDeparture: segs.length ? new Date(segs[segs.length - 1]!.departure.utc) : null,
       ...extra,
     }
@@ -352,6 +359,13 @@ export class RequestsService {
           const target = String(body.assigneeUserId)
           const acc = await this.access.load(target, tx)
           return this.transition(tx, r, "assign", m, { ...common, facts: { assigneeCanTransition: acc.permissions.includes("flight_request.transition") }, patch: { assigneeUserId: target, assignedAt: new Date() } })
+        }
+        case "resume_review": {
+          // ADR-0044 D5: staff continue without the customer's reply; the note is the reason in the history and an internal note.
+          const note = String(body.note ?? "")
+          const updated = await this.transition(tx, r, "resume_review", m, { ...common, facts: { message: note }, reasonText: note })
+          await tx.insert(requestNotes).values({ requestType: "FLIGHT", requestId: r.id, authorId: actor.userId, body: `Continued without the customer's reply: ${note}` })
+          return updated
         }
         case "request_info": {
           const message = String(body.message ?? "")
@@ -626,7 +640,7 @@ export class RequestsService {
     // Likewise in PAY_ON_TICKETING the payment is recorded inside the ticketing step (bookings.service recordTickets),
     // so ticketing is offered before the request is PAID; the command still refuses it without a payment or override.
     const payOnTicketing = this.config.get("WORKFLOW").atolMode === "PAY_ON_TICKETING" && r.status === "RESERVED"
-    const actions = allowedCommands(FLIGHT_TRANSITIONS, { ...f, assigneeCanTransition: true, ...(payOnTicketing ? { paymentStatus: "PAID" as const } : {}) }, staffActor(actor), ["claim", "assign", "request_info", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "close", "reopen", "cancel", "decline"])
+    const actions = allowedCommands(FLIGHT_TRANSITIONS, { ...f, assigneeCanTransition: true, ...(payOnTicketing ? { paymentStatus: "PAID" as const } : {}) }, staffActor(actor), ["claim", "assign", "request_info", "resume_review", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "close", "reopen", "cancel", "decline"])
     return {
       ref: r.ref, id: r.id, kind: r.kind, status: r.status, paymentStatus: r.paymentStatus, version: r.version, tripType: r.tripType, query: r.query, manual: r.manual, preferences: r.preferences,
       customerNote: r.customerNote, urgent: r.urgent, firstTravelDate: r.firstTravelDate, submittedAt: r.submittedAt.toISOString(), submittedVia: r.submittedVia, submittedLocale: r.submittedLocale,
@@ -655,6 +669,9 @@ export class RequestsService {
       payments: pays.map((x) => ({ id: x.id, amount: { amountMinor: x.amountMinor, currency: x.currency }, method: x.method, receivedAt: x.receivedAt.toISOString(), externalReference: x.externalReference, payerName: x.payerName, status: x.status, recordedBy: x.recordedBy ? names.get(x.recordedBy) ?? x.recordedBy : "System (card payment)", verifiedBy: x.verifiedBy ? names.get(x.verifiedBy) ?? x.verifiedBy : null, needsSecondVerifier: x.status === "RECORDED" && x.amountMinor > threshold })),
       documents: docs.map((d) => ({ id: d.id, type: d.type, filename: d.filename, visibility: d.visibility, createdAt: d.createdAt.toISOString() })),
       afterSales: after.map((c) => ({ ref: c.ref, type: c.type, status: c.status, note: c.note, resolutionNote: c.resolutionNote, ticketIds: c.ticketIds, createdAt: c.createdAt.toISOString() })),
+      // ADR-0044: ticketed without identity verification, and staff intake.
+      identityOverride: r.identityOverrideReason ? { reason: r.identityOverrideReason, by: r.identityOverrideBy ? (await this.db.select({ n: users.displayName }).from(users).where(eq(users.id, r.identityOverrideBy)))[0]?.n ?? null : null, at: r.identityOverrideAt?.toISOString() ?? null } : null,
+      intake: { channel: r.intakeChannel, createdByStaff: r.createdByStaffId ? (await this.db.select({ n: users.displayName }).from(users).where(eq(users.id, r.createdByStaffId)))[0]?.n ?? "staff" : null },
       creditOverrides: overrides.map((o) => ({ id: o.id, reason: o.reason, requestedBy: names.get(o.requestedBy) ?? o.requestedBy, requestedById: o.requestedBy, requestedByMe: o.requestedBy === actor.userId, approvedBy: o.approvedBy ? names.get(o.approvedBy) ?? o.approvedBy : null, approvedById: o.approvedBy ?? null, approvedAt: o.approvedAt?.toISOString() ?? null, createdAt: o.createdAt.toISOString() })),
       compliance: await this.compliance.casesForRequest("FLIGHT", r.id),
       actions,

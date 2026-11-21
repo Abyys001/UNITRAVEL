@@ -8,6 +8,7 @@ import { trackingEventAllowed } from "./cargo-tracking"
 import { FLIGHT_TRANSITIONS, type FlightFacts } from "./flight-request"
 import { allowedCommands, evaluate, type MachineActor } from "./machine"
 import { passengerMixMismatch } from "./passengers"
+import { TRAVELLERS_NOT_VERIFIED } from "./identity-verification"
 import { POLICY_PROPOSAL_TRANSITIONS, type PolicyProposalFacts } from "./policy-proposal"
 import { unknownQuoteFields } from "./payments"
 
@@ -34,9 +35,12 @@ describe("allowedCommands (ADR-0008 W1)", () => {
   })
 
   it("keeps state-based reasons visible", () => {
-    const r = allowedCommands(FLIGHT_TRANSITIONS, flight("RESERVED", { allTravellersVerified: false, paymentStatus: "PARTIAL" }), staff).find((x) => x.command === "record_tickets")!
-    expect(r.allowed).toBe(false)
-    expect(r.reason).toMatch(/verified/i)
+    // ADR-0044: unverified travellers no longer hide the command; the dialog asks for an override reason and the server checks it.
+    const r = allowedCommands(FLIGHT_TRANSITIONS, flight("RESERVED", { allTravellersVerified: false, paymentStatus: "PAID" }), staff).find((x) => x.command === "record_tickets")!
+    expect(r.allowed).toBe(true)
+    expect(evaluate(FLIGHT_TRANSITIONS, "record_tickets", { status: "RESERVED", paymentStatus: "PAID", now, allTravellersVerified: false, ticketsIssuedForEveryTraveller: true }, staff)).toMatchObject({ ok: false, reason: TRAVELLERS_NOT_VERIFIED })
+    expect(evaluate(FLIGHT_TRANSITIONS, "record_tickets", { status: "RESERVED", paymentStatus: "PAID", now, allTravellersVerified: false, ticketsIssuedForEveryTraveller: true, identityOverrideReason: "too short" }, staff).ok).toBe(false)
+    expect(evaluate(FLIGHT_TRANSITIONS, "record_tickets", { status: "RESERVED", paymentStatus: "PAID", now, allTravellersVerified: false, ticketsIssuedForEveryTraveller: true, identityOverrideReason: "Passport checked in person at the office" }, staff).ok).toBe(true)
     const paid = allowedCommands(FLIGHT_TRANSITIONS, flight("RESERVED", { allTravellersVerified: true, paymentStatus: "PARTIAL" }), staff).find((x) => x.command === "record_tickets")!
     expect(paid.reason).toMatch(/PAID/)
     expect(allowedCommands(FLIGHT_TRANSITIONS, flight("RESERVED", { allTravellersVerified: true, paymentStatus: "PAID" }), staff).find((x) => x.command === "record_tickets")!.allowed).toBe(true)

@@ -44,6 +44,13 @@ export const flightRequests = pgTable("flight_requests", {
   version: rowVersion(),
   submittedAt: tstz().notNull().defaultNow(),
   closedAt: tstz(),
+  /** ADR-0044: tickets were recorded for travellers whose identity was not VERIFIED; who, when and why. */
+  identityOverrideReason: text(),
+  identityOverrideBy: uuid(),
+  identityOverrideAt: tstz(),
+  /** ADR-0044: set when staff created the request for the customer; `intakeChannel` says how it reached us. */
+  createdByStaffId: uuid(),
+  intakeChannel: varchar({ length: 12 }).notNull().default("ONLINE"),
   ...timestamps,
 }, (t) => [
   index("fr_queue_idx").on(t.status, t.slaDueAt),

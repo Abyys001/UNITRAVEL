@@ -1,12 +1,14 @@
 import { Inject, Injectable, type OnModuleInit } from "@nestjs/common"
 import { and, asc, desc, eq, inArray, isNull, lt, max, ne, sql } from "drizzle-orm"
 
-import { type CargoCommand, CargoCustomerView, CargoQuoteLines, type CargoStatus, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, TRACKING_EVENT_LABELS, type TrackingEventCode, type CreateCargoRequestBody, FlightRequestListItem, type GoodsCategory } from "@unitravel/contracts"
+import { CARGO_MILESTONE_LABELS, LEGACY_EVENT_CODES, type CargoCommand, CargoCustomerView, CargoQuoteLines, type CargoStatus, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, TRACKING_EVENT_LABELS, type TrackingEventCode, type CreateCargoRequestBody, FlightRequestListItem, type GoodsCategory, STAFF_BULK_COMMANDS } from "@unitravel/contracts"
 import {
-  cargoItems, cargoLanes, cargoPieces, cargoRequests, contactAttempts, type Db, type DbOrTx, partnerBookings, partners, paymentRecords, quotes, requestMessages, requestNotes,
+  cargoConsignments, cargoItems, cargoLanes, cargoPieces, cargoRequests, contactAttempts, type Db, type DbOrTx, partnerBookings, partners, paymentRecords, quotes, requestMessages, requestNotes,
   requestStatusHistory, serviceAvailability, trackingEvents, type Tx, userIdentities, users,
 } from "@unitravel/db"
-import { CARGO_TRANSITIONS, type CargoCommandName, type CargoFacts, type CargoTrackingPort, cargoWeights, dedupeIncoming, effectiveRecordIds, effectiveTimeline, evaluate, lastEvent, ManualTrackingAdapter, type TrackingRecord, generateReference, type MachineActor, normaliseReference, validateAwb, allowedCommands, paymentRecordingState, trackingEventAllowed } from "@unitravel/domain"
+import { CARGO_TRANSITIONS, type CargoCommandName, type CargoFacts, type CargoTrackingPort, cargoWeights, dedupeIncoming, effectiveRecordIds, effectiveTimeline, evaluate, lastEvent, ManualTrackingAdapter, type TrackingRecord, generateReference, type MachineActor, normaliseReference, validateAwb, allowedCommands, paymentRecordingState, trackingEventAllowed, cargoMilestone, makeTrackingNumber } from "@unitravel/domain"
+
+import { randomInt } from "node:crypto"
 
 import { AppError, notFound } from "../../core/errors"
 import { DB, UnitOfWork } from "../../core/infra.module"
@@ -193,32 +195,40 @@ export class CargoService implements OnModuleInit {
 
   // ---------------- requests ----------------
 
-  async create(body: CreateCargoRequestBody, actor: Actor, ctx: { requestId: string; locale: "en" | "fa" }) {
+  /**
+   * `staff` (ADR-0042 D13): staff create the request for this customer. The phone cannot be OTP-verified then; the request
+   * records who created it and how it reached us, and goes through the same screening and notices.
+   */
+  async create(body: CreateCargoRequestBody, actor: Actor, ctx: { requestId: string; locale: "en" | "fa" }, staff?: { customerUserId: string; identityId: string; channel: string; note?: string }) {
     if (!this.config.flag("cargo.enabled")) throw new AppError("FEATURE_DISABLED", "Cargo requests are not available")
     const [lane] = await this.db.select().from(cargoLanes).where(eq(cargoLanes.id, body.laneId))
     if (!lane || !lane.enabled) throw new AppError("LANE_DISABLED", "This lane is not available")
     const blocks = await this.laneBlocks()
     if (!lane.services.includes(body.service) || blocks.has(`${lane.originCountry}:${body.service}`) || blocks.has(`${lane.destinationCountry}:${body.service}`)) throw new AppError("LANE_DISABLED", "This service is not offered on the lane", [{ path: "service", code: "NOT_OFFERED" }])
-    // The shipper's phone must be the verified account phone or another verified number (ch. 14.3).
-    const [phone] = await this.db.select().from(userIdentities).where(and(eq(userIdentities.id, body.shipperIdentityId), eq(userIdentities.userId, actor.userId), isNull(userIdentities.revokedAt)))
-    if (!phone?.verifiedAt) throw new AppError("PHONE_NOT_VERIFIED", "The shipper's phone must be a verified number on your account")
+    const customerUserId = staff?.customerUserId ?? actor.userId
+    // The shipper's phone must be the verified account phone or another verified number (ch. 14.3). Staff intake: the identity is the customer's own (D13).
+    const [phone] = await this.db.select().from(userIdentities).where(and(eq(userIdentities.id, staff?.identityId ?? body.shipperIdentityId), eq(userIdentities.userId, customerUserId), isNull(userIdentities.revokedAt)))
+    if (!phone) throw new AppError("PHONE_NOT_VERIFIED", "The shipper's phone must be a verified number on your account")
+    if (!staff && !phone.verifiedAt) throw new AppError("PHONE_NOT_VERIFIED", "The shipper's phone must be a verified number on your account")
     const currency = body.declaredTotal.currency
     return this.uow.run(async (tx) => {
       let ref = generateReference("C")
       for (let i = 0; i < 5 && (await tx.select({ id: cargoRequests.id }).from(cargoRequests).where(eq(cargoRequests.ref, ref))).length; i++) ref = generateReference("C")
       const wf = this.config.get("WORKFLOW")
       const [r] = await tx.insert(cargoRequests).values({
-        ref, customerUserId: actor.userId, service: body.service, laneId: lane.id, status: "SUBMITTED", shipperIdentityId: phone.id, shipper: { ...body.shipper, phone: phone.valueNormalised }, consignee: body.consignee,
+        ref, customerUserId, service: body.service, laneId: lane.id, status: "SUBMITTED", shipperIdentityId: phone.id, shipper: { ...body.shipper, phone: staff || phone.type !== "PHONE" ? body.shipper.phone : phone.valueNormalised },
+        createdByStaffId: staff ? actor.userId : null, intakeChannel: staff?.channel ?? "ONLINE", consignee: body.consignee,
         purpose: body.items[0]?.purpose, declaredValueMinor: body.declaredTotal.amountMinor, currency, insuranceRequested: body.declarations.insuranceRequested, readyDate: body.readyDate,
         handoverMode: body.handoverMode, dgDeclared: body.declarations.dangerousGoods, declarations: body.declarations, commercial: body.commercial ?? null, customerNote: body.note ?? null,
+        preferredDeliveryDate: body.preferredDeliveryDate ?? null, handlingInstructions: body.handlingInstructions || null,
         slaDueAt: addBusinessMinutes(wf.businessHours, new Date(), wf.sla.unassignedMinutes),
       }).returning()
       await tx.insert(cargoPieces).values(body.pieces.map((p) => ({ cargoRequestId: r!.id, ...p })))
       await tx.insert(cargoItems).values(body.items.map((i) => ({ cargoRequestId: r!.id, description: i.description, category: i.category, quantity: i.quantity, unitValueMinor: i.unitValue.amountMinor, currency: i.unitValue.currency, hsCode: i.hsCode ?? null, originCountry: i.originCountry, purpose: i.purpose })))
       await this.docs.attach(tx, body.documentIds, "CARGO", r!.id, actor.userId)
-      await tx.insert(requestStatusHistory).values({ requestType: "CARGO", requestId: r!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: "CUSTOMER" })
-      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "CUSTOMER", action: "cargo_request.submitted", entityType: "cargo_request", entityId: r!.id, contextRef: ref, after: { service: body.service, lane: this.laneLabel(lane), items: body.items.length, pieces: body.pieces.length } })
-      await this.outbox.add(tx, { aggregateType: "cargo_request", aggregateId: r!.id, eventType: "cargo_request.submitted", payload: { requestId: r!.id, ref, customerUserId: actor.userId, routeLabel: this.laneLabel(lane, ctx.locale), urgent: false } })
+      await tx.insert(requestStatusHistory).values({ requestType: "CARGO", requestId: r!.id, fromStatus: null, toStatus: "SUBMITTED", command: "submit", actorUserId: actor.userId, actorKind: staff ? "STAFF" : "CUSTOMER" })
+      await this.audit.record(tx, { actorUserId: actor.userId, actorKind: staff ? "STAFF" : "CUSTOMER", action: staff ? "cargo_request.submitted_by_staff" : "cargo_request.submitted", entityType: "cargo_request", entityId: r!.id, contextRef: ref, after: { ...(staff ? { customerUserId, channel: staff.channel, note: staff.note } : {}), service: body.service, lane: this.laneLabel(lane), items: body.items.length, pieces: body.pieces.length } })
+      await this.outbox.add(tx, { aggregateType: "cargo_request", aggregateId: r!.id, eventType: "cargo_request.submitted", payload: { requestId: r!.id, ref, customerUserId, routeLabel: this.laneLabel(lane, ctx.locale), urgent: false } })
       return { ref, status: "SUBMITTED" as const, weights: cargoWeights(body.pieces, lane.volumetricDivisor) }
     })
   }
@@ -285,6 +295,15 @@ export class CargoService implements OnModuleInit {
     return { lane: lane!, pieces, weights: cargoWeights(pieces, lane!.volumetricDivisor) }
   }
 
+  /** ADR-0046 D2: what staff bulk scanning may do with a scanned shipment (state machine decides, per command). */
+  async scanView(trackingNumber: string, actor: Actor) {
+    const [r] = await this.db.select().from(cargoRequests).where(eq(cargoRequests.trackingNumber, trackingNumber))
+    if (!r) throw notFound("Shipment")
+    const f = await this.facts(this.db, r)
+    const actions = allowedCommands(CARGO_TRANSITIONS, { ...f, assigneeCanTransition: true }, staffActor(actor), [...STAFF_BULK_COMMANDS])
+    return { ref: r.ref, trackingNumber, version: r.version, status: r.status, actions }
+  }
+
   private async facts(tx: DbOrTx, r: Cargo, extra: Partial<CargoFacts> & { quoteId?: string } = {}): Promise<CargoFacts> {
     const [q] = extra.quoteId ? await tx.select().from(quotes).where(and(eq(quotes.id, extra.quoteId), eq(quotes.requestId, r.id))) : await tx.select().from(quotes).where(and(eq(quotes.requestType, "CARGO"), eq(quotes.requestId, r.id))).orderBy(desc(quotes.version)).limit(1)
     if (extra.quoteId && !q) throw notFound("Quote")
@@ -300,28 +319,63 @@ export class CargoService implements OnModuleInit {
     if (!ev.ok) throw new AppError(ev.code === "FORBIDDEN" ? "FORBIDDEN" : "INVALID_TRANSITION", ev.reason)
     const [u] = await tx.update(cargoRequests).set({ status: ev.to, version: r.version + 1, closedAt: TERMINAL.includes(ev.to) ? new Date() : r.closedAt, ...opts.patch }).where(and(eq(cargoRequests.id, r.id), eq(cargoRequests.version, r.version))).returning()
     if (!u) throw new AppError("VERSION_CONFLICT", "Request changed; reload")
+    // ADR-0042 D2: the request is confirmed, so it gets its public tracking number (once).
+    if (ev.to === "ACCEPTED" && !u.trackingNumber) u.trackingNumber = await this.issueTrackingNumber(tx, u, actor.userId ?? null)
     await tx.insert(requestStatusHistory).values({ requestType: "CARGO", requestId: r.id, fromStatus: ev.from, toStatus: ev.to, command, actorUserId: actor.userId ?? null, actorKind: actor.kind, reasonCode: opts.reasonCode, reasonText: opts.reasonText })
     await this.audit.record(tx, { actorUserId: actor.userId, actorKind: actor.kind, action: `cargo_request.${command}`, entityType: "cargo_request", entityId: r.id, contextRef: r.ref, before: { status: ev.from }, after: { status: ev.to, reasonCode: opts.reasonCode } })
     await this.outbox.add(tx, { aggregateType: "cargo_request", aggregateId: r.id, eventType: "cargo_request.transitioned", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, assigneeUserId: u.assigneeUserId, from: ev.from, to: ev.to, command, actorUserId: actor.userId ?? null, statusLabels: { en: this.label(ev.to, "en"), fa: this.label(ev.to, "fa") }, message: opts.message } })
     return u
   }
 
+  /** ADR-0042 D2: `UT` + 10 random digits + Luhn; retried on the (unlikely) clash with the unique index. Audited. */
+  async issueTrackingNumber(tx: Tx, r: Cargo, actorId: string | null): Promise<string> {
+    if (r.trackingNumber) return r.trackingNumber
+    for (let i = 0; i < 8; i++) {
+      const digits = String(randomInt(0, 1e10)).padStart(10, "0")
+      const n = makeTrackingNumber(digits)
+      const [clash] = await tx.select({ id: cargoRequests.id }).from(cargoRequests).where(eq(cargoRequests.trackingNumber, n))
+      if (clash) continue
+      await tx.update(cargoRequests).set({ trackingNumber: n, trackingNumberIssuedAt: new Date() }).where(and(eq(cargoRequests.id, r.id), isNull(cargoRequests.trackingNumber)))
+      const [after] = await tx.select({ n: cargoRequests.trackingNumber }).from(cargoRequests).where(eq(cargoRequests.id, r.id))
+      await this.audit.record(tx, { actorUserId: actorId ?? undefined, actorKind: actorId ? "STAFF" : "SYSTEM", action: "cargo_request.tracking_number_issued", entityType: "cargo_request", entityId: r.id, contextRef: r.ref, after: { trackingNumber: after!.n } })
+      await this.outbox.add(tx, { aggregateType: "cargo_request", aggregateId: r.id, eventType: "cargo.milestone_check", payload: { requestId: r.id, ref: r.ref, customerUserId: r.customerUserId, key: "TRACKING_NUMBER" } })
+      return after!.n!
+    }
+    throw new AppError("VERSION_CONFLICT", "Could not issue a tracking number; try again")
+  }
+
+  /** Town for customer-visible places: never the street address (ADR-0042 D4). */
+  cityOf(party: unknown) {
+    const p = party as { address?: { city?: string; country?: string } }
+    return [p.address?.city, p.address?.country].filter(Boolean).join(", ") || "—"
+  }
+
+  /** The customer milestone from the state and the effective timeline (ADR-0042 D3). */
+  milestoneOf(r: Pick<Cargo, "status" | "exceptionReason">, records: TrackingRecord[]) {
+    return cargoMilestone(r.status, r.exceptionReason, effectiveTimeline(records))
+  }
+
+  /** ADR-0042/0043: agent and assignment events use the same ingest path (stage gate checked by the caller); `agentId` names who recorded it. */
+  async recordEvent(tx: Tx, r: Cargo, code: string, location: string, occurredAt: Date, description: string | undefined, actorId: string, agentId?: string) {
+    await this.tracking(tx, r, code, location, occurredAt, description, actorId, agentId)
+  }
+
   /** Staff entry goes through the same ingest path a partner feed will use. */
-  private async tracking(tx: Tx, r: Cargo, code: string, location: string, occurredAt: Date, description: string | undefined, actorId: string) {
-    await this.ingest(tx, r, new ManualTrackingAdapter([{ eventCode: code, location, occurredAt: occurredAt.toISOString(), description }]), actorId)
+  private async tracking(tx: Tx, r: Cargo, code: string, location: string, occurredAt: Date, description: string | undefined, actorId: string, agentId?: string) {
+    await this.ingest(tx, r, new ManualTrackingAdapter([{ eventCode: code, location, occurredAt: occurredAt.toISOString(), description }]), actorId, agentId)
   }
 
   /**
    * Stores what a tracking source reports. Idempotent: an event whose (source, externalEventId) is already stored is
    * skipped, so a replayed partner payload changes nothing. Returns how many rows were new.
    */
-  async ingest(tx: Tx, r: Cargo, port: CargoTrackingPort, actorId: string | null): Promise<number> {
+  async ingest(tx: Tx, r: Cargo, port: CargoTrackingPort, actorId: string | null, agentId?: string): Promise<number> {
     const [booking] = await tx.select({ awb: partnerBookings.awbNumber }).from(partnerBookings).where(eq(partnerBookings.cargoRequestId, r.id)).orderBy(desc(partnerBookings.bookedAt)).limit(1)
     const incoming = await port.fetchEvents({ ref: r.ref, awbNumber: booking?.awb ?? null })
     const stored = await tx.select({ x: trackingEvents.externalEventId }).from(trackingEvents).where(and(eq(trackingEvents.source, port.source), eq(trackingEvents.cargoRequestId, r.id)))
     const fresh = dedupeIncoming(incoming, new Set(stored.flatMap((s) => (s.x ? [s.x] : []))))
     if (!fresh.length) return 0
-    const rows = await tx.insert(trackingEvents).values(fresh.map((e) => ({ cargoRequestId: r.id, eventCode: e.eventCode, location: e.location, occurredAt: new Date(e.occurredAt), description: e.description, source: port.source, externalEventId: e.externalEventId, createdBy: actorId }))).onConflictDoNothing().returning({ id: trackingEvents.id })
+    const rows = await tx.insert(trackingEvents).values(fresh.map((e) => ({ cargoRequestId: r.id, eventCode: e.eventCode, location: e.location, occurredAt: new Date(e.occurredAt), description: e.description, source: port.source, externalEventId: e.externalEventId, createdBy: actorId, agentId: agentId ?? null }))).onConflictDoNothing().returning({ id: trackingEvents.id })
     return rows.length
   }
 
@@ -342,6 +396,13 @@ export class CargoService implements OnModuleInit {
         case "assign": {
           const acc = await this.access.load(String(body.assigneeUserId), tx)
           return this.transition(tx, r, "assign", m, { ...o, facts: { assigneeCanTransition: acc.permissions.includes("cargo_request.transition") }, patch: { assigneeUserId: String(body.assigneeUserId) } })
+        }
+        case "resume_review": {
+          // ADR-0044 D5: staff continue without the customer's reply; the note is the reason in the history and an internal note.
+          const note = String(body.note ?? "")
+          const updated = await this.transition(tx, r, "resume_review", m, { ...o, facts: { message: note }, reasonText: note })
+          await tx.insert(requestNotes).values({ requestType: "CARGO", requestId: r.id, authorId: actor.userId, body: `Continued without the customer's reply: ${note}` })
+          return updated
         }
         case "request_info": {
           const updated = await this.transition(tx, r, "request_info", m, { ...o, facts: { message: String(body.message) }, message: String(body.message) })
@@ -394,7 +455,7 @@ export class CargoService implements OnModuleInit {
         }
         case "schedule_handover": {
           const updated = await this.transition(tx, r, "schedule_handover", m, { ...o })
-          await this.tracking(tx, r, "NOTE", r.handoverMode === "PICKUP" ? "Pickup scheduled" : "Awaiting drop-off", body.at ? new Date(String(body.at)) : new Date(), String(body.note), actor.userId)
+          await this.tracking(tx, r, "COLLECTION_SCHEDULED", r.handoverMode === "PICKUP" ? this.cityOf(r.shipper) : "Drop-off point", body.at ? new Date(String(body.at)) : new Date(), String(body.note), actor.userId)
           return updated
         }
         case "receive": {
@@ -442,7 +503,10 @@ export class CargoService implements OnModuleInit {
   /** Cargo quote lines (ch. 14.6): partner cost and margin stay internal; validity default from configuration. */
   async draftQuote(ref: string, body: { validUntil?: string; partnerId: string; lines: Record<string, unknown> & { total: { amountMinor: number; currency: string } }; transitNote?: string; partnerCostMinor?: number }, actor: Actor) {
     return this.uow.run(async (tx) => {
-      const r = await this.byRef(ref, tx, true)
+      let r = await this.byRef(ref, tx, true)
+      // ADR-0044 D6: price straight away; NEW is claimed, AWAITING_CUSTOMER goes back to review (audited transitions).
+      if (r.status === "NEW") r = await this.transition(tx, r, "claim", staffActor(actor), { patch: { assigneeUserId: actor.userId } })
+      else if (r.status === "AWAITING_CUSTOMER") r = await this.transition(tx, r, "resume_review", staffActor(actor), { facts: { message: "Staff prepared a quote" }, reasonText: "Staff prepared a quote" })
       if (!["IN_REVIEW", "QUOTED", "EXCEPTION"].includes(r.status)) throw new AppError("INVALID_TRANSITION", `Quotes cannot be drafted while ${r.status}`)
       const [p] = await tx.select().from(partners).where(eq(partners.id, body.partnerId))
       if (!p || !p.laneIds.includes(r.laneId) || !p.services.includes(r.service)) throw new AppError("VALIDATION_FAILED", "Partner does not serve this lane and service", [{ path: "partnerId", code: "NOT_SERVING" }])
@@ -583,7 +647,7 @@ export class CargoService implements OnModuleInit {
   }
 
   private record(t: typeof trackingEvents.$inferSelect): TrackingRecord {
-    return { id: t.id, eventCode: t.eventCode, location: t.location, occurredAt: t.occurredAt.toISOString(), description: t.description, correctsEventId: t.correctsEventId, createdAt: t.createdAt.toISOString() }
+    return { id: t.id, eventCode: LEGACY_EVENT_CODES[t.eventCode] ?? t.eventCode, location: t.location, occurredAt: t.occurredAt.toISOString(), description: t.description, correctsEventId: t.correctsEventId, createdAt: t.createdAt.toISOString() }
   }
 
   /** Customer timeline: corrections applied, no source, author, reason or partner id. */
@@ -600,13 +664,23 @@ export class CargoService implements OnModuleInit {
     const ids = rows.map(({ r }) => r.id)
     const events = await this.db.select().from(trackingEvents).where(inArray(trackingEvents.cargoRequestId, ids))
     const books = await this.db.select({ id: partnerBookings.cargoRequestId, awb: partnerBookings.awbNumber }).from(partnerBookings).where(inArray(partnerBookings.cargoRequestId, ids)).orderBy(asc(partnerBookings.bookedAt))
+    // ADR-0047 D6: dispatched consignments only, courier and service, never the cost.
+    const cons = await this.db.select({ c: cargoConsignments, p: partners.name }).from(cargoConsignments).leftJoin(partners, eq(partners.id, cargoConsignments.partnerId))
+      .where(and(inArray(cargoConsignments.cargoRequestId, ids), eq(cargoConsignments.status, "DISPATCHED"))).orderBy(asc(cargoConsignments.dispatchedAt))
     return rows.map(({ r, l }) => {
       const timeline = this.trackingView(events.filter((e) => e.cargoRequestId === r.id).map((e) => this.record(e)), locale)
       return ShipmentView.parse({
         ref: r.ref, service: r.service, status: r.status, statusLabel: this.label(r.status, locale), laneLabel: this.laneLabel(l, locale), awbNumber: books.filter((b) => b.id === r.id).at(-1)?.awb ?? null,
         estimatedDeliveryAt: r.estimatedDeliveryAt?.toISOString() ?? null, lastEvent: lastEvent(timeline), timeline,
+        trackingNumber: r.trackingNumber, ...this.milestoneFields(r, events.filter((e) => e.cargoRequestId === r.id).map((e) => this.record(e)), locale),
+        couriers: cons.filter(({ c }) => c.cargoRequestId === r.id).map(({ c, p }) => ({ shipmentNo: c.shipmentNo, direction: c.direction, courier: p ?? "Courier", serviceLevel: c.serviceLevel, trackingNumber: c.courierTrackingNumber, trackingUrl: c.courierTrackingUrl, shipDate: c.shipDate, estimatedDelivery: c.estimatedDelivery })),
       })
     })
+  }
+
+  private milestoneFields(r: Cargo, records: TrackingRecord[], locale: "en" | "fa") {
+    const milestone = this.milestoneOf(r, records)
+    return { milestone, milestoneLabel: CARGO_MILESTONE_LABELS[milestone][locale] }
   }
 
   async customerShipments(userId: string, locale: "en" | "fa") {
@@ -703,6 +777,8 @@ export class CargoService implements OnModuleInit {
       booking: booking ? { partnerName: staff ? booking.p : "Uni Travel partner", awbNumber: booking.b.awbNumber, ...(staff ? { partnerReference: booking.b.partnerReference } : {}) } : null,
       actions: r.status === "QUOTED" || (r.status === "EXCEPTION" && r.exceptionReason === "REWEIGH") ? ["ACCEPT_QUOTE", "MESSAGE"] : TERMINAL.includes(r.status) ? [] : ["MESSAGE", ...(["SUBMITTED", "COMPLIANCE_HOLD", "NEW", "IN_REVIEW", "AWAITING_CUSTOMER", "QUOTED", "ACCEPTED"].includes(r.status) ? ["CANCEL"] : [])],
       notice: lane.customerNotice?.[locale] ?? null,
+      trackingNumber: r.trackingNumber, ...this.milestoneFields(r, records, locale),
+      preferredDeliveryDate: r.preferredDeliveryDate, handlingInstructions: r.handlingInstructions,
     }
     if (!staff) return base
     const notes = await this.db.select({ n: requestNotes, author: users.displayName }).from(requestNotes).leftJoin(users, eq(users.id, requestNotes.authorId)).where(and(eq(requestNotes.requestType, "CARGO"), eq(requestNotes.requestId, r.id))).orderBy(desc(requestNotes.createdAt))

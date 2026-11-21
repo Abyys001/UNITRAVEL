@@ -67,6 +67,10 @@ export function toProblem(error: unknown, requestId: string | undefined, locale:
     return { type: problemType(code), title: title(code), status, code, requestId }
   }
   // Error pages never echo stack traces (ch. 28.4); the request id ties the response to the log line.
+  // body-parser's own errors (not HttpExceptions): an over-size or malformed body is the client's mistake, not a 500.
+  const bp = error as { type?: string; status?: number }
+  if (bp?.type === "entity.too.large") return { type: problemType("VALIDATION_FAILED"), title: title("VALIDATION_FAILED"), status: 413, code: "VALIDATION_FAILED", detail: "The request body is too large", requestId }
+  if (bp?.type === "entity.parse.failed") return { type: problemType("VALIDATION_FAILED"), title: title("VALIDATION_FAILED"), status: 400, code: "VALIDATION_FAILED", detail: "The request body is not valid JSON", requestId }
   return { type: problemType("INTERNAL"), title: title("INTERNAL"), status: 500, code: "INTERNAL", requestId }
 }
 

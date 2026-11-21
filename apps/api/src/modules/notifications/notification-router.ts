@@ -33,6 +33,12 @@ export class NotificationRouter {
   /** ADR-0038 D6: the wording of `{attachments_note}` in the ticket emails. */
   private static readonly ATTACHED = { attachments_note_en: "Your Uni Travel ticket and the airline's original document are attached as PDF files. Keep the original for check-in and boarding.", attachments_note_fa: "بلیت یونی‌تراول و سند اصلی شرکت هواپیمایی به‌صورت فایل PDF پیوست شده‌اند. سند اصلی را برای پذیرش و سوار شدن نگه دارید." }
   private static readonly IN_ACCOUNT = { attachments_note_en: "Your ticket documents will be available in your account.", attachments_note_fa: "اسناد بلیت شما در حساب کاربری‌تان در دسترس خواهد بود." }
+  private cargoHandler?: (e: DispatchedEvent) => Promise<void>
+
+  /** ADR-0042 D10: cargo customer notices follow the milestone; the cargo module decides (it owns the tables) and calls notify. */
+  onCargoMilestone(handler: (e: DispatchedEvent) => Promise<void>) {
+    this.cargoHandler = handler
+  }
 
   private requestPath(ref: string) {
     return ref.startsWith("UT-C") ? `/cargo/${ref}` : ref.startsWith("UT-S") ? `/services/${ref}` : `/requests/${ref}`
@@ -86,8 +92,24 @@ export class NotificationRouter {
         return this.n.notify({ eventId: e.id, requestKey: `support:${c.ref}`, data: { ref: c.ref }, eventType: "support.reply", audience: "CUSTOMER", userIds: [c.customerUserId], vars: { ref: c.ref }, linkPath: `/support/${c.ref}` })
       }
       case "cargo_request.submitted":
-        await this.n.notify({ ...base, eventType: "cargo.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, route: p.routeLabel }, linkPath: this.requestPath(p.ref) })
+        // ADR-0042 D10: the customer's receipt is the REQUEST_RECEIVED milestone (inbox + email, SMS when there is no email).
+        if (this.cargoHandler) await this.cargoHandler(e)
+        else await this.n.notify({ ...base, eventType: "cargo.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars: { ref: p.ref, route: p.routeLabel }, linkPath: this.requestPath(p.ref) })
         return this.alertAdmins(e, { ...p, productType: "CARGO" }, "cargo.submitted")
+      case "cargo.milestone_check":
+        return this.cargoHandler?.(e)
+      case "cargo.job_declined": {
+        const j = e.payload as { staffUserId: string; ref: string; agent: string; kind: string; kind_fa: string; reason: string }
+        return this.n.notify({ eventId: e.id, requestKey: j.ref, data: { ref: j.ref }, eventType: "cargo.job_declined", audience: "ASSIGNEE", userIds: [j.staffUserId], vars: { ref: j.ref, agent: j.agent, kind: j.kind, kind_fa: j.kind_fa, reason: j.reason }, linkPath: `/cargo/${j.ref}` })
+      }
+      case "cargo.agent_problem": {
+        const j = e.payload as { staffUserIds: string[]; ref: string; agent: string; category: string; message: string }
+        return this.n.notify({ eventId: e.id, requestKey: j.ref, data: { ref: j.ref }, eventType: "cargo.agent_problem", audience: "ASSIGNEE", userIds: j.staffUserIds, vars: { ref: j.ref, agent: j.agent, category: j.category.toLowerCase(), message: j.message }, linkPath: `/cargo/${j.ref}` })
+      }
+      case "cargo.job_assigned": {
+        const j = e.payload as { agentUserId: string; ref: string; kind: string; kind_fa: string; scheduledFor?: string | null }
+        return this.n.notify({ eventId: e.id, requestKey: j.ref, data: { ref: j.ref }, eventType: "cargo.job_assigned", audience: "ASSIGNEE", userIds: [j.agentUserId], vars: { ref: j.ref, kind: j.kind, kind_fa: j.kind_fa, when_at: j.scheduledFor ?? undefined }, linkPath: "/agent" })
+      }
       case "service_request.submitted": {
         const vars = { ref: p.ref, route: p.routeLabel, service_en: p.service_en, service_fa: p.service_fa }
         await this.n.notify({ ...base, eventType: "service_request.submitted", audience: "CUSTOMER", userIds: [p.customerUserId], vars, linkPath: this.requestPath(p.ref) })
@@ -113,6 +135,8 @@ export class NotificationRouter {
           if (p.assigneeUserId && p.assigneeUserId !== p.actorUserId) await this.n.notify({ ...base, eventType: "request.assigned", audience: "ASSIGNEE", userIds: [p.assigneeUserId], vars: { ref: p.ref, route: p.routeLabel } })
           return
         }
+        // ADR-0042 D10: everything else is a milestone notice, sent once per milestone.
+        if (this.cargoHandler) return this.cargoHandler(e)
         // cargo.status_changed: inbox + push; SMS only for handover, customs, delivered and exceptions (Table 17.1).
         return this.n.notify({
           ...base, eventType: smsWorthy ? "cargo.status_changed" : "request.status_changed", audience: "CUSTOMER", userIds: [p.customerUserId],

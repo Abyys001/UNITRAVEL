@@ -1,14 +1,15 @@
 "use client"
 
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Download } from "lucide-react"
+import { Download, SearchCheck } from "lucide-react"
+import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useState } from "react"
 
 import { Textarea } from "@unitravel/ui/components/textarea"
 import { ErrorState, LoadingState } from "@unitravel/ui/product/states"
 
-import { Auto } from "@/components/badges"
+import { Auto, Ltr } from "@/components/badges"
 import { InvoiceDue } from "@/components/invoice-due"
 import { StatusTimeline } from "@/components/status-timeline"
 import { type TrackingEvent, TrackingTimeline } from "@/components/tracking-timeline"
@@ -19,11 +20,11 @@ import { useI18n } from "@/lib/i18n"
 import { localiseRanges } from "@/lib/text"
 import { useRequireSignIn } from "@/lib/use-auth-redirect"
 
-interface CargoView { ref: string; status: string; statusLabel: string; service: string; lane: { label: string }; weights: { actualKg: number; volumetricKg: number; chargeableKg: number }; timeline: { at: string; label: string }[]; tracking: TrackingEvent[]; estimatedDeliveryAt: string | null; quotes: { id: string; status: string; validUntil: string | null; lines: Record<string, { amountMinor: number; currency: string } | string | boolean | object>; transitNote: string | null }[]; messages: { id: string; direction: string; body: string; authorName: string; createdAt: string }[]; documents: { id: string; filename: string }[]; booking: { awbNumber: string | null } | null; actions: string[]; notice: string | null }
+interface CargoView { ref: string; status: string; statusLabel: string; service: string; lane: { label: string }; weights: { actualKg: number; volumetricKg: number; chargeableKg: number }; timeline: { at: string; label: string }[]; tracking: TrackingEvent[]; estimatedDeliveryAt: string | null; quotes: { id: string; status: string; validUntil: string | null; lines: Record<string, { amountMinor: number; currency: string } | string | boolean | object>; transitNote: string | null }[]; messages: { id: string; direction: string; body: string; authorName: string; createdAt: string }[]; documents: { id: string; filename: string }[]; booking: { awbNumber: string | null } | null; actions: string[]; notice: string | null; trackingNumber: string | null; milestone: string; milestoneLabel: string; preferredDeliveryDate: string | null; handlingInstructions: string | null }
 
 export default function CargoDetail() {
   const { ref } = useParams<{ ref: string }>()
-  const { t, date, money, sep, locale } = useI18n()
+  const { t, date, money, sep, locale, href } = useI18n()
   const { me } = useRequireSignIn()
   const [msg, setMsg] = useState("")
   const q = useQuery({ queryKey: ["cargo", ref], queryFn: () => api<CargoView>(`/v1/cargo-requests/${ref}`), enabled: !!me, refetchInterval: 20_000 })
@@ -38,7 +39,7 @@ export default function CargoDetail() {
     <div className="min-w-0">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div><p className="font-mono text-sm text-steel" dir="ltr">{r.ref}</p><h1 className="font-display text-3xl md:text-4xl"><Auto>{r.lane.label}</Auto></h1><p className="text-steel">{t(`cargo.${r.service}` as never)}{sep}{t("cargo.weights", { actual: r.weights.actualKg, vol: r.weights.volumetricKg, charge: r.weights.chargeableKg })}</p></div>
-        <span className="rounded-full bg-navy-950 px-4 py-1.5 text-sm font-semibold text-white">{r.statusLabel}</span>
+        <span className="inline-flex items-center gap-2 rounded-full bg-navy-950 px-4 py-1.5 text-sm font-semibold text-white" data-testid="cargo-milestone"><span aria-hidden className="size-2 rounded-full bg-orange" />{r.milestoneLabel}</span>
       </div>
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_300px]">
         <div className="space-y-8">
@@ -56,6 +57,11 @@ export default function CargoDetail() {
               {r.actions.includes("ACCEPT_QUOTE") && <ConfirmAccept label={r.lane.label} total={money(quote.lines.total as never)} pending={accept.isPending} onConfirm={() => accept.mutate(quote.id)} />}
             </section>
           )}
+          <section className="card-brand flex flex-wrap items-center justify-between gap-3 p-5" data-testid="cargo-tracking-number">
+            <div><p className="text-xs font-bold uppercase tracking-wide text-steel">{t("cargo.trackingNumber")}</p>
+              {r.trackingNumber ? <p className="font-mono text-xl font-semibold tracking-wider"><Ltr>{r.trackingNumber}</Ltr></p> : <p className="text-sm text-steel">{t("cargo.trackingNumberPending")}</p>}</div>
+            {r.trackingNumber && <Link href={href(`/tracking/${r.trackingNumber}`)} className="inline-flex items-center gap-1.5 rounded-full border-2 border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-900 hover:text-white pointer-coarse:min-h-11"><SearchCheck className="size-4" aria-hidden />{t("cargo.openTracking")}</Link>}
+          </section>
           <section><h2 className="font-display mb-3 text-xl">{t("cargo.tracking")}{r.booking?.awbNumber && <span className="ms-2 font-mono text-sm text-steel" dir="ltr">AWB {r.booking.awbNumber}</span>}</h2>
             {r.estimatedDeliveryAt && <p className="mb-3 text-sm"><span className="font-semibold">{t("shipments.eta")}:</span> {date(r.estimatedDeliveryAt, { dateOnly: true })}<span className="block text-xs text-steel">{t("shipments.etaNote")}</span></p>}
             <div className="card-brand p-5"><TrackingTimeline events={r.tracking} /></div>
@@ -66,6 +72,12 @@ export default function CargoDetail() {
           </section>
         </div>
         <aside className="space-y-6">
+          {(r.preferredDeliveryDate || r.handlingInstructions) && (
+            <section className="card-brand space-y-3 p-5 text-sm" data-testid="cargo-wishes">
+              {r.preferredDeliveryDate && <div><p className="text-xs font-bold uppercase tracking-wide text-steel">{t("cargo.preferredDelivery")}</p><p className="font-semibold">{date(r.preferredDeliveryDate, { dateOnly: true, year: true })}</p></div>}
+              {r.handlingInstructions && <div><p className="text-xs font-bold uppercase tracking-wide text-steel">{t("cargo.handlingInstructions")}</p><p dir="auto" className="whitespace-pre-wrap">{r.handlingInstructions}</p></div>}
+            </section>
+          )}
           <section className="card-brand p-5"><h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-steel">{t("requests.timeline")}</h2><StatusTimeline items={r.timeline} /></section>
           {r.documents.length > 0 && <section className="card-brand p-5"><h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-steel">{t("requests.documents")}</h2><ul className="space-y-1 text-sm">{r.documents.map((d) => <li key={d.id}><button className="flex items-center gap-1.5 underline" onClick={() => void download(d.id)}><Download className="size-3.5" />{d.filename}</button></li>)}</ul></section>}
           {r.notice && <p className="text-sm text-steel">{r.notice}</p>}

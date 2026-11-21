@@ -64,6 +64,11 @@ export const TestSignInBody = z.object({ email: z.string().email().max(254), dev
 export type TestSignInBody = z.infer<typeof TestSignInBody>
 /** `staff` is false when TEST_SIGN_IN=customers: staff accounts then sign in with a code and their second factor (ADR-0017). */
 export const TestSignInStatus = z.object({ enabled: z.boolean(), staff: z.boolean() })
+/** ADR-0045: an agent redeems the sign-in QR shown on their profile (single use, 10 minutes). */
+export const AgentCodeSignInBody = z.object({ code: z.string().regex(/^[A-Za-z0-9_-]{40,64}$/, "Invalid code"), deviceId: z.string().min(8).max(128).optional() })
+export type AgentCodeSignInBody = z.infer<typeof AgentCodeSignInBody>
+export const AgentSignInCode = z.object({ url: z.string(), expiresAt: z.string(), qrSvg: z.string() })
+export type AgentSignInCode = z.infer<typeof AgentSignInCode>
 
 export const RefreshBody = z.object({ refreshToken: z.string().optional() })
 

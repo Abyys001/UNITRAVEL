@@ -47,7 +47,7 @@ export async function seedReference(db: Db) {
 }
 
 export async function seedAccess(db: Db) {
-  const names: Record<string, string> = { customer: "Customer", admin: "Administrator", cargo_admin: "Cargo administrator", compliance_officer: "Compliance officer", developer: "Developer", owner: "Owner" }
+  const names: Record<string, string> = { customer: "Customer", admin: "Administrator", cargo_admin: "Cargo administrator", compliance_officer: "Compliance officer", developer: "Developer", owner: "Owner", agent: "Agent" }
   for (const key of BUILT_IN_ROLES) {
     const [role] = await db.insert(s.roles).values({ key, name: names[key]!, builtIn: true, privileged: PRIVILEGED_ROLES.includes(key) }).onConflictDoUpdate({ target: s.roles.key, set: { name: names[key]! } }).returning()
     await db.insert(s.rolePermissions).values(DEFAULT_ROLE_PERMISSIONS[key].map((permission) => ({ roleId: role!.id, permission }))).onConflictDoNothing()

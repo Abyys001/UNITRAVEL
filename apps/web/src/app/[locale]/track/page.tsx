@@ -206,6 +206,7 @@ function TrackView() {
           <p className="mt-2 max-w-2xl leading-7 text-(color:--ink-muted)">{t("track.lead")}</p>
         </div>
       </header>
+      <p className="card-brand flex items-center gap-3 p-4 text-sm" data-testid="track-cargo-link"><Package aria-hidden className="size-5 shrink-0 text-royal" /><Link href={href("/tracking")} className="font-semibold text-royal underline underline-offset-4">{t("track.cargoLink")}</Link></p>
       {loading && <LoadingState label={t("common.loading")} rows={3} />}
       {!loading && !me && <SignInGate />}
       {!loading && me && <><Search /><Mine /><Lookup /></>}

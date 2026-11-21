@@ -218,6 +218,55 @@
       "when": 1793183300000,
       "tag": "0029_admin_notifications_points_stripe_invoices",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793183400000,
+      "tag": "0032_cargo_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793183500000,
+      "tag": "0033_cargo_recipients_staff_intake",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793183600000,
+      "tag": "0034_cargo_agents",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793183700000,
+      "tag": "0035_staff_intake_identity_override",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793183800000,
+      "tag": "0036_agent_sign_in_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793183900000,
+      "tag": "0037_cargo_rate_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793184000000,
+      "tag": "0038_cargo_consignments",
+      "breakpoints": true
     }
   ]
 }

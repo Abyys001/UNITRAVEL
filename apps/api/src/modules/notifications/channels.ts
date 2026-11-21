@@ -150,7 +150,7 @@ export class EmailSender {
   async send(to: string, subject: string, text: string, locale: "en" | "fa", attachments?: { filename: string; content: Buffer; contentType: string }[]): Promise<SendResult> {
     const { t, provider, from } = await this.transporter()
     const dir = locale === "fa" ? "rtl" : "ltr"
-    const html = `<!doctype html><html dir="${dir}" lang="${locale}"><body style="font-family:Vazirmatn,Inter,Arial,sans-serif;background:#f5f1ea;padding:24px"><div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:24px;color:#13263f"><p style="font-size:12px;letter-spacing:.2em;color:#b07a45">UNI TRAVEL</p><h1 style="font-size:20px">${escapeHtml(subject)}</h1><p style="font-size:15px;line-height:1.6">${escapeHtml(text).replace(/\n/g, "<br>")}</p></div></body></html>`
+    const html = `<!doctype html><html dir="${dir}" lang="${locale}"><body style="font-family:Vazirmatn,Inter,Arial,sans-serif;background:#f5f1ea;padding:24px"><div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:24px;color:#13263f"><p style="font-size:12px;letter-spacing:.2em;color:#b07a45">UNI TRAVEL</p><h1 style="font-size:20px">${escapeHtml(subject)}</h1><p style="font-size:15px;line-height:1.6">${linkify(escapeHtml(text)).replace(/\n/g, "<br>")}</p></div></body></html>`
     const info = await t.sendMail({ from, to, subject, text, html, ...(attachments?.length ? { attachments } : {}) })
     // Mailpit also holds it, but the sign-in screens read this sink to fill email codes in test sessions.
     if (isLocal()) {
@@ -159,6 +159,11 @@ export class EmailSender {
     }
     return { provider, messageId: info.messageId }
   }
+}
+
+/** Plain-text bodies carry absolute links (tracking pages, short links); make them clickable in the HTML part. */
+function linkify(escaped: string) {
+  return escaped.replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}" style="color:#1f4fd1;word-break:break-all">${u}</a>`)
 }
 
 function escapeHtml(s: string) {

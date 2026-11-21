@@ -14,7 +14,7 @@ export const NOTIFICATION_EVENTS = [
   "ticket.issued", "ticket.resent",
   "identity.verification_verified", "identity.verification_rejected", "identity.verification_correction",
   "sla.unassigned", "sla.first_contact_due", "sla.awaiting_customer_reminder",
-  "cargo.submitted", "cargo.status_changed",
+  "cargo.submitted", "cargo.status_changed", "cargo.milestone", "cargo.milestone_important", "cargo.job_assigned", "cargo.job_declined", "cargo.agent_problem",
   "service_request.submitted", "service_request.quoted", "service_request.confirmed", "service_request.cancelled",
   // ADR-0041 D5: staff wording and a console link for a new service request (email included); never sent to customers.
   "service_request.new",

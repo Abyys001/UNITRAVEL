@@ -68,6 +68,10 @@ export const PERMISSIONS = [
   "audit.read",
   "diagnostics.read",
   "service_catalog.manage",
+  "cargo_job.agent",
+  "cargo_agent.manage",
+  "cargo_request.create.any",
+  "flight_request.create.any",
 ] as const
 
 export type Permission = (typeof PERMISSIONS)[number]
@@ -150,6 +154,14 @@ export const PERMISSION_CATALOGUE: Record<Permission, { privileged: boolean }> =
   "diagnostics.read": { privileged: false },
   // Sets the default prices staff put on requests and invoices, so it is privileged like invoice.direct.
   "service_catalog.manage": { privileged: true },
+  // ADR-0042/0043: an agent sees and updates only the cargo jobs assigned to them.
+  "cargo_job.agent": { privileged: false },
+  // ADR-0043: Agent Management; creating an agent grants exactly the `agent` role, nothing else.
+  "cargo_agent.manage": { privileged: false },
+  // ADR-0042 D13: create a cargo request on a customer's behalf (screened like any other).
+  "cargo_request.create.any": { privileged: false },
+  // ADR-0044: create a flight request on a customer's behalf (screened like any other).
+  "flight_request.create.any": { privileged: false },
 }
 
 export const PRIVILEGED_PERMISSIONS: readonly Permission[] = PERMISSIONS.filter((p) => PERMISSION_CATALOGUE[p].privileged)
@@ -158,7 +170,7 @@ export function hasPrivilegedPermission(permissions: readonly string[]): boolean
   return permissions.some((p) => PRIVILEGED_PERMISSIONS.includes(p as Permission))
 }
 
-export const BUILT_IN_ROLES = ["customer", "admin", "cargo_admin", "compliance_officer", "developer", "owner"] as const
+export const BUILT_IN_ROLES = ["customer", "admin", "cargo_admin", "compliance_officer", "developer", "owner", "agent"] as const
 export type BuiltInRole = (typeof BUILT_IN_ROLES)[number]
 
 /** Granting these needs `user.role.assign.privileged`, step-up, and alerts every owner (ch. 10.3). */
@@ -176,11 +188,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
     "payment.record", "payment.refund.request", "payment.refund.approve", "customer.read.pii", "customer.read.documents", "identity.verify", "engine.rules.read",
     "service_request.read.any", "service_request.write", "loyalty.read", "loyalty.manage", "loyalty.benefit.approve", "cms.read", "cms.write",
     "customer.read", "service.assign", "invoice.direct", "service_catalog.manage", "support.read", "support.reply", "call.log", "listings.write", "visa.read", "visa.write",
-    "catalog.read", "catalog.manage", "catalog.capture",
+    "catalog.read", "catalog.manage", "catalog.capture", "cargo_agent.manage", "cargo_request.create.any", "flight_request.create.any",
   ],
   cargo_admin: [
     "flight_search.run", "flight_request.note.internal", "payment.record", "cargo_request.read.any",
-    "cargo_request.transition", "customer.read.pii", "customer.read.documents",
+    "cargo_request.transition", "customer.read.pii", "customer.read.documents", "cargo_agent.manage", "cargo_request.create.any",
   ],
   compliance_officer: [
     "flight_request.read.any", "flight_request.note.internal", "cargo_request.read.any", "customer.read.pii",
@@ -192,10 +204,12 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<BuiltInRole, readonly Permission[]
     "audit.read", "diagnostics.read", "payments.configure", "catalog.read", "catalog.manage",
   ],
   owner: [...PERMISSIONS],
+  // ADR-0043: one permission; every agent route also checks the agent's own assignment.
+  agent: ["cargo_job.agent"],
 }
 
 /** Permissions that only make sense for staff; their presence turns on admin mode in the apps. */
-export const STAFF_SURFACE_PERMISSIONS: readonly Permission[] = ["flight_request.read.any", "cargo_request.read.any", "service_request.read.any"]
+export const STAFF_SURFACE_PERMISSIONS: readonly Permission[] = ["flight_request.read.any", "cargo_request.read.any", "service_request.read.any", "cargo_job.agent"]
 export const DEV_SURFACE_PERMISSIONS: readonly Permission[] = ["user.read", "provider.config.read", "diagnostics.read", "settings.write"]
 
 export function isPermission(value: string): value is Permission {

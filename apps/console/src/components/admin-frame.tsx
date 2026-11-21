@@ -1,6 +1,6 @@
 "use client"
 
-import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Receipt, Search, ShieldAlert, Tags, Ticket, Users } from "lucide-react"
+import { BookCheck, CalendarRange, ConciergeBell, FileText, Gem, Headset, Home, IdCard, Inbox, ListChecks, Package, Receipt, Search, ShieldAlert, Tags, Ticket, Truck, Users } from "lucide-react"
 
 import { normaliseReference } from "@unitravel/domain"
 
@@ -32,7 +32,13 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   // A short flat list; each queue is a tab on the Requests page and policies/lists are tabs under Compliance.
   const items: NavItem[] = [
     { href: "/", label: t("nav.home"), mobile: true, group: "work", icon: <Home className="size-[18px]" /> },
-    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests", "/cargo"], group: "work", count: badge(unread?.REQUEST), alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
+    ...(flights || cargo ? [{ href: flights ? "/queues?tab=new" : "/queues?tab=cargo", label: t("nav.requests"), match: ["/queues", "/requests"], group: "work", count: badge(unread?.REQUEST), alert: (s?.slaBreaches ?? 0) > 0, mobile: true, icon: <Inbox className="size-[18px]" /> }] : []),
+    // ADR-0042/0043: cargo operations (overview buckets, Agent Management, notices) and the agent's own dashboard.
+    ...(cargo ? [{
+      href: "/cargo", label: t("nav.cargoOps"), match: ["/cargo"], group: "work", mobile: !flights, icon: <Package className="size-[18px]" />,
+      tabs: [{ href: "/cargo", label: t("ops.overview") }, { href: "/cargo/dashboard", label: t("dash.title") }, ...(can("cargo_request.create.any") ? [{ href: "/cargo/new", label: t("ops.newRequest") }] : []), ...(can("cargo_request.transition") ? [{ href: "/cargo/scan", label: t("bulk.title") }] : []), { href: "/cargo/calculator", label: t("calc.title") }, { href: "/cargo/agents", label: t("ops.agents") }, { href: "/cargo/notifications", label: t("ops.notices.title") }],
+    }] : []),
+    ...(can("cargo_job.agent") ? [{ href: "/agent", label: t("agt.title"), match: ["/agent"], group: "work", mobile: true, icon: <Truck className="size-[18px]" />, tabs: [{ href: "/agent", label: t("agt.open") }, { href: "/agent/scan", label: t("agt.scan") }, { href: "/agent/bulk", label: t("bulk.title") }, { href: "/agent/manifest", label: t("man.title") }] }] : []),
     ...(can("service_request.read.any") ? [{ href: "/services", label: t("nav.services"), group: "work", count: badge(unread?.SERVICE), icon: <ConciergeBell className="size-[18px]" /> }] : []),
     ...(can("customer.read") ? [{ href: "/customers", label: t("nav.customers"), group: "work", icon: <Users className="size-[18px]" /> }] : []),
     ...(can("support.read", "call.log") ? [{

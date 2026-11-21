@@ -1,7 +1,7 @@
 import fc from "fast-check"
 import { describe, expect, it } from "vitest"
 
-import { PortalOverview, TrackDetail, BillingDocuments, CargoCustomerView, CustomerInvoice, CustomerServiceRequestView, PublicTrackView, StaffServiceRequestView, ServiceQuoteView, StaffInvoice, CustomerSearchState, CustomerSeatMap, FlightListingsView, FlightRequestCustomerView, FlightRequestListItem, Itinerary, PublicFare, MyDetails, NormalisedOffer, SeatMap, ShipmentSummary, ShipmentView, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
+import { BillingDocuments, CargoCustomerView, CustomerInvoice, CustomerSearchState, CustomerSeatMap, CustomerServiceRequestView, FlightListingsView, FlightRequestCustomerView, FlightRequestListItem, Itinerary, MyDetails, NormalisedOffer, PortalOverview, PublicCargoTracking, PublicFare, PublicTrackView, SeatMap, ServiceQuoteView, ShipmentSummary, ShipmentView, StaffInvoice, StaffServiceRequestView, TrackDetail, TRACKING_EVENT_CODES, VerificationStatus } from "@unitravel/contracts"
 
 import { encryptField } from "./core/crypto"
 import { CustomersService } from "./modules/customers/customers.service"
@@ -228,7 +228,7 @@ describe("identity verification customer views (ADR-0005)", () => {
 describe("cargo tracking customer views (Phase E)", () => {
   const STAFF_ONLY = ["source", "externalEventId", "correctsEventId", "correctionReason", "reason", "createdBy", "internalNotes", "rawPayload", "partnerPayload", "partnerReference", "author"]
   const event = fc.record({ id: uuid, eventCode: fc.constantFrom(...TRACKING_EVENT_CODES), label: fc.string({ minLength: 1 }), location: fc.string({ minLength: 2 }), occurredAt: iso, description: fc.option(fc.string(), { nil: undefined }), corrected: fc.boolean() })
-  const shipment = fc.record({ ref: fc.constant("UT-C-7Q2K9M"), service: fc.constantFrom("DOCUMENTS", "PARCEL", "EXCESS_BAGGAGE", "AIR_FREIGHT"), status: fc.constantFrom("BOOKED", "IN_TRANSIT", "DELIVERED"), statusLabel: fc.string(), laneLabel: fc.string(), awbNumber: fc.option(fc.constant("176-12345675"), { nil: null }), estimatedDeliveryAt: fc.option(iso, { nil: null }), lastEvent: fc.option(event, { nil: null }), timeline: fc.array(event, { maxLength: 5 }) })
+  const shipment = fc.record({ ref: fc.constant("UT-C-7Q2K9M"), service: fc.constantFrom("DOCUMENTS", "PARCEL", "EXCESS_BAGGAGE", "AIR_FREIGHT"), status: fc.constantFrom("BOOKED", "IN_TRANSIT", "DELIVERED"), statusLabel: fc.string(), laneLabel: fc.string(), awbNumber: fc.option(fc.constant("176-12345675"), { nil: null }), estimatedDeliveryAt: fc.option(iso, { nil: null }), lastEvent: fc.option(event, { nil: null }), timeline: fc.array(event, { maxLength: 5 }), trackingNumber: fc.option(fc.constant("UT12345678903"), { nil: null }), milestone: fc.constant("IN_TRANSIT"), milestoneLabel: fc.string() })
   const picks = fc.array(fc.record({ key: fc.constantFrom(...STAFF_ONLY), depthSeed: fc.nat() }), { minLength: 1, maxLength: 10 })
 
   it("shipment views drop staff-only fields even when the record carries them", () => {
@@ -251,6 +251,20 @@ describe("cargo tracking customer views (Phase E)", () => {
       expect(Object.keys(out).filter((k) => STAFF_ONLY.includes(k))).toEqual([])
     }), { numRuns: 200 })
     expect(CargoCustomerView.shape.estimatedDeliveryAt.safeParse(null).success).toBe(true)
+  })
+})
+
+describe("public cargo tracking (ADR-0042 D4)", () => {
+  const PRIVATE = ["name", "phone", "email", "line1", "postcode", "description", "createdBy", "source", "correctionReason", "customerUserId", "ref", "note", "receiverName", "agentId", "agentCode", "displayName", "userId", "vehicle"]
+  const pub = {
+    trackingNumber: "UT12345678903", service: "PARCEL", milestone: "DELIVERED", milestoneLabel: "Delivered", origin: { city: "London", country: "United Kingdom" }, destination: { city: "Istanbul", country: "Türkiye" },
+    timeline: [{ eventCode: "DELIVERED", label: "Delivered by agent", location: "Istanbul", occurredAt: "2026-11-19T10:00:00.000Z", agent: "Dara M." }], lastUpdatedAt: "2026-11-19T10:00:00.000Z", estimatedDeliveryAt: null,
+    delivered: { at: "2026-11-19T10:00:00.000Z", receivedBy: "J. S." }, labelVerified: true, progress: [{ milestone: "DELIVERED", label: "Delivered", reached: true, current: true }],
+  }
+  it("drops names, contacts, addresses and notes even when the record carries them", () => {
+    fc.assert(fc.property(fc.array(fc.record({ key: fc.constantFrom(...PRIVATE), depthSeed: fc.nat() }), { minLength: 1, maxLength: 12 }), (p) => {
+      expect(JSON.stringify(PublicCargoTracking.parse(contaminate(structuredClone(pub), p)))).not.toContain("SECRET-")
+    }), { numRuns: 300 })
   })
 })
 

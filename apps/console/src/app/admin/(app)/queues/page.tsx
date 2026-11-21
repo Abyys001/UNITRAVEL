@@ -174,6 +174,7 @@ function QueuesInner() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHead title={t("nav.requests")}>
+        {can("flight_request.create.any") && <Link href="/requests/new" className="inline-flex h-8 items-center rounded-lg bg-navy-900 px-3 text-meta font-medium text-white" data-testid="new-flight-link">{t("fnew.button")}</Link>}
         {viewsGroup}
         <Button size="sm" variant="outline" type="button" aria-pressed={newest} onClick={toggleSort} data-testid="sort-newest" className={cn(newest && "bg-hover")}>{t("q.sortNewest")}</Button>
         <p className="hidden items-center gap-1.5 text-caption text-steel xl:flex pointer-coarse:hidden" dir="ltr"><span className="kbd">j</span><span className="kbd">k</span> {t("q.keys")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">Enter</span> {t("q.k.open")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">c</span> {t("q.k.claim")} <span className="mx-1 text-rule-strong">|</span> <span className="kbd">n</span> {t("q.k.note")}</p>

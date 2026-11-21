@@ -253,7 +253,7 @@ export class BookingsService {
    * record_tickets (Table 13.1): one ISSUED ticket per traveller, 13 digits with the validating carrier's prefix, and
    * payment PAID or an owner-approved credit override. In PAY_ON_TICKETING mode the payment is recorded in this step.
    */
-  async recordTickets(ref: string, body: { reservationId: string; tickets: { travellerId: string; ticketNumber: string; validatingCarrier: string; issueDate: string; coupons: unknown[]; receiptDocumentId?: string }[]; payment?: PaymentBody; creditOverride?: { reason: string } }, actor: Actor, expectedVersion: number | undefined, requestId: string) {
+  async recordTickets(ref: string, body: { reservationId: string; tickets: { travellerId: string; ticketNumber: string; validatingCarrier: string; issueDate: string; coupons: unknown[]; receiptDocumentId?: string }[]; payment?: PaymentBody; creditOverride?: { reason: string }; identityOverride?: { reason: string } }, actor: Actor, expectedVersion: number | undefined, requestId: string) {
     return this.uow.run(async (tx) => {
       const r = await this.requests.byRef(ref, tx, true)
       if (expectedVersion !== undefined && expectedVersion !== r.version) throw new AppError("VERSION_CONFLICT", "Request changed; reload")
@@ -261,7 +261,14 @@ export class BookingsService {
       const [res] = await tx.select().from(reservations).where(and(eq(reservations.id, body.reservationId), eq(reservations.requestId, r.id)))
       if (!res || !["HELD", "CONFIRMED"].includes(res.status)) throw new AppError("VALIDATION_FAILED", "Choose the active reservation", [{ path: "reservationId", code: "INVALID" }])
       const unverified = await this.requests.unverifiedTravellers(tx, r)
-      if (unverified.length) throw new AppError("IDENTITY_NOT_VERIFIED", `${TRAVELLERS_NOT_VERIFIED}: ${unverified.map((u) => u.name).join(", ")}`, undefined, { travellers: unverified })
+      if (unverified.length) {
+        // ADR-0044: staff may ticket without identity verification, with a reason that is stored and audited.
+        const reason = body.identityOverride?.reason?.trim()
+        if (!reason || reason.length < 10) throw new AppError("IDENTITY_NOT_VERIFIED", `${TRAVELLERS_NOT_VERIFIED}: ${unverified.map((u) => u.name).join(", ")}`, undefined, { travellers: unverified, overrideAllowed: true })
+        const [ov] = await tx.update(flightRequests).set({ identityOverrideReason: reason, identityOverrideBy: actor.userId, identityOverrideAt: new Date() }).where(eq(flightRequests.id, r.id)).returning()
+        Object.assign(r, { identityOverrideReason: ov!.identityOverrideReason, identityOverrideBy: ov!.identityOverrideBy, identityOverrideAt: ov!.identityOverrideAt })
+        await this.audit.record(tx, { actorUserId: actor.userId, actorKind: "STAFF", action: "flight_request.identity_override", entityType: "flight_request", entityId: r.id, contextRef: r.ref, after: { reason, travellers: unverified.map((u) => ({ travellerId: u.travellerId, status: u.status })) }, ip: actor.ip, requestId })
+      }
       const rt = await tx.select().from(requestTravellers).where(eq(requestTravellers.requestId, r.id))
       const errors: { path: string; code: string; message: string }[] = []
       body.tickets.forEach((t, i) => {

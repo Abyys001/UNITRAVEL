@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
 import fontkit from "@pdf-lib/fontkit"
-import { PDFDocument, type PDFPage, rgb, StandardFonts } from "pdf-lib"
+import { PDFDocument, type PDFFont, type PDFPage, rgb, StandardFonts } from "pdf-lib"
 
 /** `table` rows are left-aligned text except the columns marked `right` (amounts); `emphasis` bolds the last row (a total). */
 export interface PdfTable { columns: { label: string; x: number; right?: boolean }[]; rows: string[][]; emphasis?: boolean }
@@ -58,15 +58,31 @@ export function bidiRuns(text: string): { text: string; rtl: boolean }[] {
 }
 
 /** Persian keeps its own letters; bidi marks have no glyph in the font and are dropped. */
-const persian = (s: string) => ascii(s).normalize("NFC").replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").replace(/[^\x20-\x7E\u00A0\u0600-\u06FF\u0750-\u077F\u200c\u200d£€]/g, "").replace(/£/g, "GBP ").replace(/€/g, "EUR ")
+export const persian = (s: string) => ascii(s).normalize("NFC").replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").replace(/[^\x20-\x7E\u00A0\u0600-\u06FF\u0750-\u077F\u200c\u200d£€]/g, "").replace(/£/g, "GBP ").replace(/€/g, "EUR ")
 
-const PERSIAN_TEXT = /[\u0600-\u06FF\u0750-\u077F]/
+export const PERSIAN_TEXT = /[\u0600-\u06FF\u0750-\u077F]/
 
 // apps/api/assets/fonts, from both src/modules/documents (tests) and dist/modules/documents (runtime).
 const fontBytes = new Map<string, Buffer>()
-const vazirmatn = (weight: "Regular" | "Bold") => {
+export const vazirmatn = (weight: "Regular" | "Bold") => {
   if (!fontBytes.has(weight)) fontBytes.set(weight, readFileSync(join(__dirname, "../../../assets/fonts", `Vazirmatn-${weight}.ttf`)))
   return fontBytes.get(weight)!
+}
+
+/** Draws text ending at `xr`, first logical run rightmost. fontkit reverses whatever it draws as Persian, so Persian digits are handed over pre-reversed to read left to right. */
+export function drawRtl(pg: PDFPage, text: string, xr: number, yy: number, size: number, f: PDFFont, color: ReturnType<typeof rgb>) {
+  let x = xr
+  for (const run of bidiRuns(text)) {
+    // A ZWNJ must break joining without a visible gap: the font has no usable glyph for it, so the run is drawn as separately shaped pieces (logical order is right to left).
+    const pieces = run.rtl ? run.text.split("\u200c").filter(Boolean).reverse() : run.text.split(FA_DIGITS).filter(Boolean)
+    const placed: { t: string; w: number; draw: string }[] = pieces.map((t) => ({ t, w: f.widthOfTextAtSize(t, size), draw: !run.rtl && FA_DIGITS.test(t) ? [...t].reverse().join("") : t }))
+    x -= placed.reduce((n, p) => n + p.w, 0)
+    let px = x
+    for (const p of placed) {
+      if (p.t.trim()) pg.drawText(p.draw, { x: px, y: yy, size, font: f, color })
+      px += p.w
+    }
+  }
 }
 
 /** Simple branded A4 document (quote, receipt, ATOL certificate, shipment summary, commercial invoice template). */
@@ -82,21 +98,6 @@ export async function renderPdf(title: string, subtitle: string, sections: PdfSe
   const faFont = mixed ? await doc.embedFont(vazirmatn("Regular"), { subset: true }) : null
   const faBold = mixed ? await doc.embedFont(vazirmatn("Bold"), { subset: true }) : null
   const clean = fa ? persian : (s: string) => (PERSIAN_TEXT.test(s) ? s : latin(s))
-  /** Draws text ending at `xr`, first logical run rightmost. fontkit reverses whatever it draws as Persian, so Persian digits are handed over pre-reversed to read left to right. */
-  const drawRtl = (pg: PDFPage, text: string, xr: number, yy: number, size: number, f: typeof font, color: ReturnType<typeof rgb>) => {
-    let x = xr
-    for (const run of bidiRuns(text)) {
-      // A ZWNJ must break joining without a visible gap: the font has no usable glyph for it, so the run is drawn as separately shaped pieces (logical order is right to left).
-      const pieces = run.rtl ? run.text.split("\u200c").filter(Boolean).reverse() : run.text.split(FA_DIGITS).filter(Boolean)
-      const placed: { t: string; w: number; draw: string }[] = pieces.map((t) => ({ t, w: f.widthOfTextAtSize(t, size), draw: !run.rtl && FA_DIGITS.test(t) ? [...t].reverse().join("") : t }))
-      x -= placed.reduce((n, p) => n + p.w, 0)
-      let px = x
-      for (const p of placed) {
-        if (p.t.trim()) pg.drawText(p.draw, { x: px, y: yy, size, font: f, color })
-        px += p.w
-      }
-    }
-  }
   let page = doc.addPage([595, 842])
   let y = 790
   const line = (text: string, opts: { size?: number; f?: typeof font; color?: ReturnType<typeof rgb>; x?: number } = {}) => {

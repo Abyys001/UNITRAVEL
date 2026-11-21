@@ -42,6 +42,7 @@ export function CargoCommandDialog({ command, d, onClose, done }: { command: str
   return (
     <FormDialog open onOpenChange={(o) => !o && onClose()} title={label} submitLabel={label.replace("…", "")} onSubmit={submit} destructive={["cancel", "decline", "raise_exception"].includes(command)} testId={`dlg-${command}`} wide={command === "receive"}>
       {command === "assign" && <StaffSelect value={f.assigneeUserId ?? ""} onChange={(id) => setF({ ...f, assigneeUserId: id })} />}
+      {command === "resume_review" && <Field label="Why continue without the customer's reply?" hint="E.g. the customer answered by phone. Moves the request back to IN_REVIEW."><textarea className="field-input min-h-24" value={f.note ?? ""} onChange={set("note")} required minLength={3} dir="auto" data-testid="resume-note" /></Field>}
       {command === "request_info" && <Field label="Message to the customer"><textarea className="field-input min-h-24" value={f.message ?? ""} onChange={set("message")} required dir="auto" /></Field>}
       {command === "send_quote" && <Field label="Draft quote"><NativeSelect className="field-input" value={f.quoteId} onChange={set("quoteId")} required>{d.quotes.filter((q) => q.status === "DRAFT").map((q) => <option key={q.id} value={q.id}>v{q.version} · {q.partnerName} · {money(q.lines.total)}</option>)}</NativeSelect></Field>}
       {command === "record_acceptance" && <><Field label="Call time"><input type="datetime-local" className="field-input" value={f.calledAt ?? ""} onChange={set("calledAt")} required /></Field><Field label="Note"><textarea className="field-input" value={f.note ?? ""} onChange={set("note")} minLength={3} required /></Field></>}
@@ -124,7 +125,8 @@ export function TrackingDialog({ d, done, open, onOpenChange }: { d: CargoDetail
   )
 }
 
-const TRACKING_CODES = ["PICKED_UP", "RECEIVED", "DEPARTED", "ARRIVED", "AT_CUSTOMS", "CLEARED", "OUT_FOR_DELIVERY", "DELIVERED", "HELD", "DAMAGED", "RETURNED", "NOTE"]
+// ADR-0042: driver assignment and failed attempts come from their own forms; staff can still record them here (e.g. for a partner courier).
+const TRACKING_CODES = ["PICKED_UP", "RECEIVED", "SORTING_FACILITY", "DEPARTED", "ARRIVED", "AT_CUSTOMS", "CLEARED", "OUT_FOR_DELIVERY", "DELIVERY_FAILED", "COLLECTION_SCHEDULED", "COLLECTION_FAILED", "DELIVERED", "HELD", "DAMAGED", "RETURNED", "NOTE"]
 const toLocalInput = (iso: string) => { const d = new Date(iso); d.setSeconds(0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
 
 /** A correction is appended and points at the row it replaces; the original stays visible here and is hidden from the customer. */

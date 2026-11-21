@@ -101,12 +101,13 @@ export class CustomersService {
     if (rows.some((r) => r.id !== exceptId)) throw new AppError("SELF_TRAVELLER_EXISTS", "You already have a traveller marked as yourself")
   }
 
-  async create(ownerUserId: string, input: TravellerInput, ctx: { requestId?: string; ip?: string }) {
+  /** `ctx.staffUserId` (ADR-0044): staff created the traveller on the customer's account; audited as staff. */
+  async create(ownerUserId: string, input: TravellerInput, ctx: { requestId?: string; ip?: string; staffUserId?: string }) {
     return this.uow.run(async (tx) => {
       if (input.relationship === "SELF") await this.assertNoOtherSelf(tx, ownerUserId)
       const [t] = await tx.insert(travellers).values({ ownerUserId, title: input.title, givenNames: input.givenNames.toUpperCase(), surname: input.surname.toUpperCase(), nameFa: input.nameFa ?? null, dateOfBirth: input.dateOfBirth, genderOnDocument: input.genderOnDocument, nationality: input.nationality, relationship: input.relationship }).returning()
       if (input.document) await this.saveDocument(tx, t!.id, input.document)
-      await this.audit.record(tx, { actorUserId: ownerUserId, actorKind: "CUSTOMER", action: "traveller.created", entityType: "traveller", entityId: t!.id, after: { nationality: input.nationality, hasDocument: !!input.document }, ip: ctx.ip, requestId: ctx.requestId })
+      await this.audit.record(tx, { actorUserId: ctx.staffUserId ?? ownerUserId, actorKind: ctx.staffUserId ? "STAFF" : "CUSTOMER", action: ctx.staffUserId ? "traveller.created_by_staff" : "traveller.created", entityType: "traveller", entityId: t!.id, after: { nationality: input.nationality, hasDocument: !!input.document }, ip: ctx.ip, requestId: ctx.requestId })
       await this.outbox.add(tx, { aggregateType: "traveller", aggregateId: t!.id, eventType: "traveller.updated", payload: { travellerId: t!.id, ownerUserId } })
       return (await this.byIds([t!.id], tx))[0]!
     })

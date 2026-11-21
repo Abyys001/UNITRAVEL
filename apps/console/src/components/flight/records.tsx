@@ -57,6 +57,7 @@ export function ReservationDialog({ d, done, ...bind }: Bind & { d: FlightDetail
 
 /** Ticket numbers (13 digits, prefix = validating carrier's accounting code — the API checks the code). */
 export function TicketsDialog({ d, done, ...bind }: Bind & { d: FlightDetail; done: () => Promise<void> }) {
+  const tr = useT()
   const res = d.reservations.find((r) => r.status === "HELD" || r.status === "CONFIRMED")
   const acc = accepted(d)
   const firstCarrier = acc?.option?.slices[0]?.segments[0]?.marketing.carrier ?? ""
@@ -65,6 +66,9 @@ export function TicketsDialog({ d, done, ...bind }: Bind & { d: FlightDetail; do
   const [withPayment, setWithPayment] = useState(d.atolMode === "PAY_ON_TICKETING" && d.paymentStatus !== "PAID")
   const [pay, setPay] = useState({ amount: acc?.option ? String(acc.option.priceBreakdown.total.amountMinor / 100) : "", currency: acc?.option?.priceBreakdown.total.currency ?? "GBP", method: "BANK_TRANSFER", ref: "", payer: "", received: localNow() })
   const [override, setOverride] = useState("")
+  const [identityReason, setIdentityReason] = useState("")
+  // ADR-0044: unverified travellers no longer block ticketing; staff record why they are ticketing without verification.
+  const unverified = d.travellers.filter((t) => t.verificationStatus !== "VERIFIED")
   useEffect(() => { if (bind.open) setRows(d.travellers.map((t) => ({ travellerId: t.travellerId, ticketNumber: "", carrier: firstCarrier }))) }, [bind.open, d.travellers, firstCarrier])
   const coupons = (acc?.option?.slices ?? []).flatMap((s, si) => s.segments.map((_, gi) => ({ sliceIndex: si, segmentIndex: gi })))
   const submit = async () => {
@@ -75,6 +79,7 @@ export function TicketsDialog({ d, done, ...bind }: Bind & { d: FlightDetail; do
         tickets: rows.map((r) => ({ travellerId: r.travellerId, ticketNumber: r.ticketNumber, validatingCarrier: r.carrier.toUpperCase(), issueDate, coupons: coupons.length ? coupons : [{ sliceIndex: 0, segmentIndex: 0 }] })),
         payment: withPayment ? { amount: { amountMinor: toMinor(pay.amount, pay.currency), currency: pay.currency }, method: pay.method, receivedAt: iso(pay.received), externalReference: pay.ref, payerName: pay.payer } : undefined,
         creditOverride: !withPayment && override ? { reason: override } : undefined,
+        identityOverride: unverified.length ? { reason: identityReason } : undefined,
       },
       headers: { "if-match": String(d.version), "idempotency-key": newIdempotencyKey() },
     })
@@ -100,6 +105,12 @@ export function TicketsDialog({ d, done, ...bind }: Bind & { d: FlightDetail; do
         </tbody>
       </table>
       <Field label="Issue date" className="w-48"><input type="date" className="field-input" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} required /></Field>
+      {unverified.length > 0 && (
+        <div className="rounded-md border border-warning-border bg-warning-subtle p-3" data-testid="identity-override">
+          <p className="font-medium">{tr("tk.unverified", { names: unverified.map((x) => `${x.name.givenNames} ${x.name.surname}`).join(", ") })}</p>
+          <Field label={tr("tk.overrideReason")} hint={tr("tk.overrideHint")}><textarea className="field-input min-h-16" value={identityReason} onChange={(e) => setIdentityReason(e.target.value)} required minLength={10} maxLength={500} dir="auto" data-testid="identity-reason" /></Field>
+        </div>
+      )}
       <label className="flex items-center gap-2"><input type="checkbox" checked={withPayment} onChange={(e) => setWithPayment(e.target.checked)} /> Record the customer&apos;s payment in this step (PAY_ON_TICKETING)</label>
       {withPayment ? <PaymentFields p={pay} set={setPay} /> : <Field label="Credit override reason" hint="Only with an owner-approved credit override on this request"><input className="field-input" value={override} onChange={(e) => setOverride(e.target.value)} /></Field>}
     </FormDialog>

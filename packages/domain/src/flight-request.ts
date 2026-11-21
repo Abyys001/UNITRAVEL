@@ -43,13 +43,15 @@ export interface FlightFacts {
   ticketsIssuedForEveryTraveller?: boolean
   /** Every traveller on the request holds a VERIFIED document (ADR-0005, owner decision 4). */
   allTravellersVerified?: boolean
+  /** ADR-0044: staff may ticket unverified travellers with a recorded reason (owner instruction, 19 Nov 2026). */
+  identityOverrideReason?: string | null
   creditOverrideApproved?: boolean
   lastSegmentDeparture?: Date | null
   decisionReason?: string
 }
 
 export type FlightCommandName =
-  | "screen_pass" | "screen_flag" | "release_hold" | "decline" | "claim" | "assign" | "request_info" | "respond"
+  | "screen_pass" | "screen_flag" | "release_hold" | "decline" | "claim" | "assign" | "request_info" | "resume_review" | "respond"
   | "send_quote" | "accept_quote" | "decline_quote" | "record_acceptance" | "record_reservation" | "record_tickets" | "close"
   | "expire_quote" | "expire_reservation" | "reopen" | "cancel_by_customer" | "cancel" | "complete"
 
@@ -101,6 +103,11 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
     from: ["IN_REVIEW"], to: "AWAITING_CUSTOMER", actor: "STAFF", permissions: ["flight_request.transition"],
     inputGuard: (f) => (f.message && f.message.trim() ? null : "A customer-visible message is required"),
   },
+  // ADR-0044 D5: staff move on without waiting for the customer (they answered by phone, or staff proceed anyway); a note is required.
+  resume_review: {
+    from: ["AWAITING_CUSTOMER"], to: "IN_REVIEW", actor: "STAFF", permissions: ["flight_request.transition"], label: "Continue…",
+    inputGuard: (f) => (f.message && f.message.trim().length >= 3 ? null : "Say why you continue without the customer's reply"),
+  },
   respond: {
     from: ["AWAITING_CUSTOMER"], to: "IN_REVIEW", actor: "CUSTOMER",
     inputGuard: (f) => (f.responseProvided ? null : "A message or the requested data is required"),
@@ -132,11 +139,14 @@ export const FLIGHT_TRANSITIONS: TransitionTable<FlightRequestStatus, FlightFact
   record_tickets: {
     from: ["RESERVED"], to: "TICKETED", actor: "STAFF", permissions: ["ticket.record"],
     guard: (f) => {
-      if (!f.allTravellersVerified) return TRAVELLERS_NOT_VERIFIED
       if (f.paymentStatus !== "PAID" && !f.creditOverrideApproved) return "Payment status must be PAID, or an owner-approved credit override"
       return null
     },
-    inputGuard: (f) => (f.ticketsIssuedForEveryTraveller ? null : "Every traveller needs one ISSUED ticket"),
+    // ADR-0044: identity verification is checked when the tickets are recorded, so the dialog can take a staff override reason.
+    inputGuard: (f) => {
+      if (!f.allTravellersVerified && !(f.identityOverrideReason?.trim().length && f.identityOverrideReason.trim().length >= 10)) return TRAVELLERS_NOT_VERIFIED
+      return f.ticketsIssuedForEveryTraveller ? null : "Every traveller needs one ISSUED ticket"
+    },
   },
   close: { from: ["TICKETED"], to: "COMPLETED", actor: "STAFF", permissions: ["flight_request.transition"] },
   expire_quote: {

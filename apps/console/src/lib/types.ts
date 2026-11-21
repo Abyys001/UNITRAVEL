@@ -46,6 +46,9 @@ export interface FlightDetail {
     history: { ref: string; status: string; submittedAt: string; productType: string }[]
   }
   travellers: StaffTraveller[]
+  /** ADR-0044: ticketed without identity verification (who, when, why) and how the request reached us. */
+  identityOverride?: { reason: string; by: string | null; at: string | null } | null
+  intake?: { channel: string; createdByStaff: string | null }
   snapshot: { id: string; itinerary: Itinerary; priceAtSubmit?: Money; priceRevalidated?: Money | null; revalidatedAt?: string | null; sources?: SnapshotSource[]; ruleVersion: number; engineVersion: string; contentHash: string; createdAt: string
     /** ADR-0037: catalog fare as captured by staff. Price fields are present only for callers with `pricing.read.internal`. */
     staffFare?: (StaffFare | StaffFareNoPrice) & { sourceRecordId?: string | null } | null } | null

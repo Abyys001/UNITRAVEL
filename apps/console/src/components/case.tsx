@@ -270,7 +270,7 @@ export const SummaryItem = ({ label, children, className }: { label: React.React
 )
 
 // Presentation order only: which allowed command is the usual next step. Whether a command is allowed is the server's call.
-const NEXT_STEP = ["claim", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "receive", "record_booking", "request_info", "assign"]
+const NEXT_STEP = ["claim", "resume_review", "send_quote", "record_acceptance", "record_reservation", "record_tickets", "receive", "record_booking", "request_info", "assign"]
 const COOL = new Set(["cancel", "decline", "close", "reject"])
 /** Commands that end the case: kept out of the main row, in an overflow menu with destructive styling (they still open their confirm dialog). */
 export const DESTRUCTIVE = new Set(["cancel", "decline"])
@@ -307,7 +307,7 @@ export function ActionMenu({ items, onRun, className }: { items: AllowedCommand[
  * Commands as the server computed them. The first allowed next step is solid, other allowed ones are outlined, and the
  * ones that cannot run now sit in a collapsed disclosure (an opened one is remembered) with the server's reason beside each.
  */
-export function CommandBar({ actions, onRun, none, hint }: { actions: AllowedCommand[]; onRun: (command: string) => void; none: React.ReactNode; hint?: React.ReactNode }) {
+export function CommandBar({ actions, onRun, none, hint, lead }: { actions: AllowedCommand[]; onRun: (command: string) => void; none: React.ReactNode; hint?: React.ReactNode; lead?: React.ReactNode }) {
   const t = useT()
   const [locale] = useLocale()
   const [open, setOpen] = useState(false)
@@ -315,12 +315,14 @@ export function CommandBar({ actions, onRun, none, hint }: { actions: AllowedCom
   useEffect(() => { try { if (localStorage.getItem("ut-cmd-more") === "1") setOpen(true) } catch { /* storage blocked: stay collapsed */ } }, [])
   const label = (c: string) => commandLabelOf(c, locale)
   const allowed = actions.filter((a) => a.allowed), blocked = actions.filter((a) => !a.allowed)
-  const primary = pickPrimary(allowed)
+  // A lead (e.g. "Add price / quote") is the next step, so no command competes with it as the solid button.
+  const primary = lead ? undefined : pickPrimary(allowed)
   return (
     <div>
       <div role="group" aria-label={t("case.actions")} className="flex flex-wrap items-center gap-2">
+        {lead}
         {allowed.map((a) => <Button key={a.command} size="sm" variant={a === primary ? "default" : "outline"} className={a === primary ? "px-4" : undefined} onClick={() => onRun(a.command)} data-command={a.command}>{label(a.command)}</Button>)}
-        {!actions.length && <p className="py-1 text-steel">{none}</p>}
+        {!actions.length && !lead && <p className="py-1 text-steel">{none}</p>}
         {hint && <p className="ms-auto hidden shrink-0 text-caption text-steel xl:block pointer-coarse:hidden">{hint}</p>}
       </div>
       {blocked.length > 0 && (

@@ -26,6 +26,9 @@ export interface CargoValues {
   pieces: Piece[]
   items: Item[]
   readyDate: string
+  /** ADR-0042: optional wishes; the API refuses a delivery date before the collection date. */
+  preferredDeliveryDate: string
+  handlingInstructions: string
   handoverMode: string
   incoterm: string
   declarations: Record<(typeof DECLARATIONS)[number], boolean>
@@ -44,6 +47,7 @@ export const initialValues = (): CargoValues => ({
   pieces: [{ lengthCm: 40, widthCm: 30, heightCm: 20, weightKg: 5 }],
   items: [{ description: "", category: "CLOTHING", quantity: 1, value: 50, originCountry: "GB", hsCode: "", purpose: "PERSONAL_EFFECTS" }],
   readyDate: new Date(Date.now() + 3 * 86400_000).toISOString().slice(0, 10),
+  preferredDeliveryDate: "", handlingInstructions: "",
   handoverMode: "PICKUP", incoterm: "DAP",
   declarations: { batteries: false, liquids: false, medicines: false, magnets: false, dangerousGoods: false, insuranceRequested: false },
   shipper: emptyParty("GB"), consignee: emptyParty("TR"),
@@ -88,8 +92,9 @@ export const serviceSchema = (lanes: Lane[]) => z.object({ laneId: z.string(), s
   .refine((v) => lanes.find((l) => l.id === v.laneId)?.services.includes(v.service) ?? false, { path: ["service"] })
 
 export const shipmentSchema = z
-  .object({ service: z.string(), pieces: z.array(CargoPieceInput).min(1).max(50), items: z.array(ItemInput).min(1).max(100), readyDate: IsoDate, handoverMode: HandoverMode, incoterm: z.string() })
+  .object({ service: z.string(), pieces: z.array(CargoPieceInput).min(1).max(50), items: z.array(ItemInput).min(1).max(100), readyDate: IsoDate, preferredDeliveryDate: z.union([z.literal(""), IsoDate]), handlingInstructions: z.string().max(500), handoverMode: HandoverMode, incoterm: z.string() })
   .superRefine((v, ctx) => {
+    if (v.preferredDeliveryDate && v.preferredDeliveryDate < v.readyDate) ctx.addIssue({ code: "custom", path: ["preferredDeliveryDate"], message: "Before the collection date" })
     if (v.service !== "AIR_FREIGHT") return
     if (!Incoterm.safeParse(v.incoterm).success) ctx.addIssue({ code: "custom", path: ["incoterm"], message: "Required for air freight" })
     v.items.forEach((it, i) => { if (!it.hsCode) ctx.addIssue({ code: "custom", path: ["items", i, "hsCode"], message: "Required for air freight" }) })
@@ -113,7 +118,7 @@ export function toBody(v: CargoValues, phone: { id: string; value: string } | un
   return {
     service: v.service, laneId: v.laneId, shipperIdentityId: phone?.id,
     shipper: party(v.shipper, phone?.value ?? ""), consignee: party(v.consignee, phone?.value ?? ""),
-    readyDate: v.readyDate, handoverMode: v.handoverMode, pieces: v.pieces,
+    readyDate: v.readyDate, preferredDeliveryDate: v.preferredDeliveryDate || undefined, handlingInstructions: v.handlingInstructions.trim() || undefined, handoverMode: v.handoverMode, pieces: v.pieces,
     items: v.items.map((i) => ({ description: i.description, category: i.category, quantity: i.quantity, unitValue: { amountMinor: Math.round(i.value * 100), currency: "GBP" }, originCountry: i.originCountry, hsCode: i.hsCode || undefined, purpose: i.purpose })),
     commercial: v.service === "AIR_FREIGHT" ? { incoterm: v.incoterm } : undefined,
     declarations: v.declarations, declaredTotal: { amountMinor: declaredTotalMinor(v.items), currency: "GBP" },
@@ -135,7 +140,7 @@ export function mapServerPath(path: string): { step: StepId; key: string } {
   if (head === "items") return { step: "shipment", key: key.replace(/\.unitValue(\..*)?$/, ".value") }
   if (head === "commercial") return { step: "shipment", key: "incoterm" }
   if (head === "declaredTotal") return { step: "shipment", key: "items" }
-  if (head && ["pieces", "readyDate", "handoverMode", "declarations"].includes(head)) return { step: "shipment", key }
+  if (head && ["pieces", "readyDate", "preferredDeliveryDate", "handlingInstructions", "handoverMode", "declarations"].includes(head)) return { step: "shipment", key }
   if (head === "shipper" || head === "consignee") return { step: "contact", key }
   if (head === "documentIds") return { step: "contact", key: "docs" }
   return { step: "review", key }

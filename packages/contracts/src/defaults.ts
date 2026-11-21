@@ -188,6 +188,13 @@ export const DEFAULT_NOTIFICATION_MATRIX: NotificationMatrix = {
     { event: "cargo.submitted", audience: "CUSTOMER", channels: ["INBOX", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
     { event: "cargo.submitted", audience: "ON_DUTY_ADMINS", channels: ["INBOX", "PUSH"], sms: "NONE", critical: false, locked: false },
     { event: "cargo.status_changed", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS"], sms: "IMMEDIATE", critical: false, locked: false },
+    // ADR-0042: one notice per customer milestone; email by default, SMS for the important ones.
+    { event: "cargo.milestone", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: false, locked: false },
+    { event: "cargo.milestone_important", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "EMAIL", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
+    { event: "cargo.job_assigned", audience: "ASSIGNEE", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: false, locked: false },
+    // ADR-0043: the staff member who assigned the job hears when the agent declines it or reports a problem.
+    { event: "cargo.job_declined", audience: "ASSIGNEE", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
+    { event: "cargo.agent_problem", audience: "ASSIGNEE", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: true, locked: false },
     { event: "service_request.submitted", audience: "CUSTOMER", channels: ["INBOX", "SMS"], sms: "IMMEDIATE", critical: true, locked: false },
     { event: "service_request.new", audience: "ON_DUTY_ADMINS", channels: ["INBOX", "PUSH", "EMAIL"], sms: "NONE", critical: false, locked: false },
     { event: "service_request.quoted", audience: "CUSTOMER", channels: ["INBOX", "PUSH", "SMS", "EMAIL"], sms: "IMMEDIATE", critical: true, locked: false },

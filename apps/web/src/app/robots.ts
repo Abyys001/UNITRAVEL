@@ -5,5 +5,5 @@ const PRIVATE = ["account", "inbox", "billing", "requests", "sign-in", "services
 
 export const dynamic = "force-dynamic"
 export default function robots(): MetadataRoute.Robots {
-  return { rules: [{ userAgent: "*", allow: "/", disallow: ["/api/", ...["en", "fa"].flatMap((l) => PRIVATE.map((p) => `/${l}/${p}`))] }], sitemap: `${SITE}/sitemap.xml` }
+  return { rules: [{ userAgent: "*", allow: "/", disallow: ["/api/", ...["en", "fa"].flatMap((l) => [...PRIVATE.map((p) => `/${l}/${p}`), `/${l}/tracking/`])] }], sitemap: `${SITE}/sitemap.xml` }
 }

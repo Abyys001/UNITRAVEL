@@ -733,7 +733,11 @@
                           "notification.template.write",
                           "audit.read",
                           "diagnostics.read",
-                          "service_catalog.manage"
+                          "service_catalog.manage",
+                          "cargo_job.agent",
+                          "cargo_agent.manage",
+                          "cargo_request.create.any",
+                          "flight_request.create.any"
                         ]
                       }
                     },
@@ -4782,6 +4786,18 @@
         "tags": [
           "admin-cargo"
         ]
+      },
+      "post": {
+        "operationId": "AdminCargoOpsController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
       }
     },
     "/v1/admin/cargo/requests/{ref}": {
@@ -5214,6 +5230,1137 @@
         },
         "tags": [
           "dev"
+        ]
+      }
+    },
+    "/v1/public/cargo-tracking/{number}": {
+      "get": {
+        "operationId": "PublicCargoTrackingController_track",
+        "parameters": [
+          {
+            "name": "number",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "cargo-tracking"
+        ]
+      }
+    },
+    "/v1/admin/cargo/dashboard": {
+      "get": {
+        "operationId": "AdminCargoOpsController_dashboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/consignments": {
+      "get": {
+        "operationId": "AdminCargoOpsController_consignments",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCargoOpsController_createConsignment",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/consignments/{id}": {
+      "put": {
+        "operationId": "AdminCargoOpsController_updateConsignment",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/consignments/{id}/dispatch": {
+      "post": {
+        "operationId": "AdminCargoOpsController_dispatchConsignment",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/consignments/{id}/cancel": {
+      "post": {
+        "operationId": "AdminCargoOpsController_cancelConsignment",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/consignments/{id}/label": {
+      "post": {
+        "operationId": "AdminCargoOpsController_uploadConsignmentLabel",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/customs-review": {
+      "put": {
+        "operationId": "AdminCargoOpsController_saveCustomsReview",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/invoice/{kind}": {
+      "get": {
+        "operationId": "AdminCargoOpsController_customsInvoice",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/customer-rates": {
+      "get": {
+        "operationId": "AdminCargoOpsController_customerRates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCargoOpsController_saveCustomerRate",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/customer-rates/{id}": {
+      "delete": {
+        "operationId": "AdminCargoOpsController_deleteCustomerRate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/scan/{trackingNumber}": {
+      "get": {
+        "operationId": "AdminCargoOpsController_scan",
+        "parameters": [
+          {
+            "name": "trackingNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/agents/{id}/manifest": {
+      "get": {
+        "operationId": "AdminCargoOpsController_agentManifest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/agents/{id}/manifest.pdf": {
+      "get": {
+        "operationId": "AdminCargoOpsController_agentManifestPdf",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/rates": {
+      "get": {
+        "operationId": "AdminCargoOpsController_rates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      },
+      "put": {
+        "operationId": "AdminCargoOpsController_saveRate",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/rates/{id}": {
+      "delete": {
+        "operationId": "AdminCargoOpsController_deleteRate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/calculate": {
+      "post": {
+        "operationId": "AdminCargoOpsController_calculate",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/customs": {
+      "get": {
+        "operationId": "AdminCargoOpsController_customsCheck",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/customs.pdf": {
+      "get": {
+        "operationId": "AdminCargoOpsController_customsPdf",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/customers": {
+      "get": {
+        "operationId": "AdminCargoOpsController_lookup",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/ops/requests": {
+      "get": {
+        "operationId": "AdminCargoOpsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/ops/stats": {
+      "get": {
+        "operationId": "AdminCargoOpsController_stats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/ops/notifications": {
+      "get": {
+        "operationId": "AdminCargoOpsController_notifications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/operations": {
+      "get": {
+        "operationId": "AdminCargoOpsController_operations",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/tracking-number": {
+      "post": {
+        "operationId": "AdminCargoOpsController_issue",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/labels": {
+      "post": {
+        "operationId": "AdminCargoOpsController_label",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/details": {
+      "patch": {
+        "operationId": "AdminCargoOpsController_details",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/proofs": {
+      "post": {
+        "operationId": "AdminCargoOpsController_proof",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/images": {
+      "post": {
+        "operationId": "AdminCargoOpsController_image",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/assignments": {
+      "post": {
+        "operationId": "AdminCargoOpsController_assign",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/requests/{ref}/assignments/{id}/cancel": {
+      "post": {
+        "operationId": "AdminCargoOpsController_unassign",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/agents": {
+      "get": {
+        "operationId": "AdminCargoOpsController_listAgents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCargoOpsController_createAgent",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/agents/{id}": {
+      "get": {
+        "operationId": "AdminCargoOpsController_agentProfile",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminCargoOpsController_updateAgent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/agents/{id}/sign-in-code": {
+      "post": {
+        "operationId": "AdminCargoOpsController_agentSignInCode",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "expiresAt": {
+                      "type": "string"
+                    },
+                    "qrSvg": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "expiresAt",
+                    "qrSvg"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/admin/cargo/agents/{id}/photo": {
+      "post": {
+        "operationId": "AdminCargoOpsController_setAgentPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      },
+      "get": {
+        "operationId": "AdminCargoOpsController_agentPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-cargo-ops"
+        ]
+      }
+    },
+    "/v1/agent/manifest": {
+      "get": {
+        "operationId": "AgentJobsController_manifest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/manifest.pdf": {
+      "get": {
+        "operationId": "AgentJobsController_manifestPdf",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/jobs/by-tracking/{trackingNumber}": {
+      "get": {
+        "operationId": "AgentJobsController_byTracking",
+        "parameters": [
+          {
+            "name": "trackingNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/me": {
+      "get": {
+        "operationId": "AgentJobsController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/me/photo": {
+      "get": {
+        "operationId": "AgentJobsController_myPhoto",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/jobs": {
+      "get": {
+        "operationId": "AgentJobsController_jobs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/jobs/{id}": {
+      "get": {
+        "operationId": "AgentJobsController_job",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/jobs/{id}/actions/{action}": {
+      "post": {
+        "operationId": "AgentJobsController_act",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/agent/jobs/{id}/files": {
+      "post": {
+        "operationId": "AgentJobsController_upload",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "agent"
+        ]
+      }
+    },
+    "/v1/auth/agent-code": {
+      "post": {
+        "operationId": "AgentSignInController_redeem",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{40,64}$"
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/admin/intake/customers": {
+      "get": {
+        "operationId": "StaffIntakeController_lookup",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-intake"
+        ]
+      }
+    },
+    "/v1/admin/intake/flight-requests": {
+      "post": {
+        "operationId": "StaffIntakeController_createFlight",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-intake"
         ]
       }
     },

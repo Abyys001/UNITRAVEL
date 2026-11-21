@@ -12,6 +12,8 @@ import { cn } from "@unitravel/ui/lib/utils"
 import { Country } from "@unitravel/ui/product/country"
 import { StatusChip, TileError } from "@/components/bento"
 import { ActionBar, CaseHeader, CaseTabs, CommandBar, ListSkeleton, paneClass, paneProps, StateChip, statusTone, SummaryItem, TableScroll, Timeline } from "@/components/case"
+import { OperationsPanel } from "@/components/cargo-ops"
+import { ShippingPanels } from "@/components/shipping"
 import { CargoCommandDialog, CargoQuoteDialog, EstimateDialog, TrackingCorrectionDialog, TrackingDialog } from "@/components/cargo-dialogs"
 import { PaymentDialog } from "@/components/flight/records"
 import { useDialogs } from "@/components/form-dialog"
@@ -120,9 +122,9 @@ export default function CargoPage() {
           </Panel>
           <Panel title="Tracking" aside={can("cargo_request.transition") && <Button size="xs" variant="outline" onClick={() => dlg.open("tracking")}>Add event</Button>}>
             {!d.tracking.length ? <Empty>No tracking events.</Empty> : <ol className="ledger-rows" data-testid="tracking-history">{d.tracking.map((t) => (
-              <li key={t.id} className={cn("grid grid-cols-[8rem_7rem_1fr] gap-2 py-1", !t.effective && "text-steel")} data-effective={t.effective}>
+              <li key={t.id} className={cn("grid grid-cols-[8rem_minmax(0,11rem)_1fr] gap-2 py-1", !t.effective && "text-steel")} data-effective={t.effective}>
                 <span className="num text-meta">{fmtDateTime(t.occurredAt)}</span>
-                <span className={cn("font-mono text-caption", !t.effective && "line-through")}>{t.eventCode}</span>
+                <span className={cn("font-mono text-caption break-all", !t.effective && "line-through")}>{t.eventCode}</span>
                 <span>{t.location}{t.description && <span className="text-steel"> · {t.description}</span>}
                   <span className="ms-1 text-2xs text-steel">{t.source}{t.externalEventId && ` · ${t.externalEventId}`}{t.correctsEventId && ` · correction by ${t.createdBy ?? "staff"}`}{!t.effective && " · superseded"}</span>
                   {t.correctionReason && <span className="block text-caption text-steel">Reason: {t.correctionReason}</span>}
@@ -144,8 +146,10 @@ export default function CargoPage() {
           <Panel title={t("case.activity")}><Timeline items={d.timeline.map((x, i) => ({ id: i, at: x.at, title: x.label, detail: x.detail, tone: "muted" }))} /></Panel>
         </div>
         <div {...paneProps("records")} className={cn(paneClass(tab, "records"), "lg:col-span-2 xl:col-span-1")}>
+          <OperationsPanel cargoRef={d.ref} status={d.status} onChanged={refresh} />
+          <ShippingPanels cargoRef={d.ref} />
           {d.compliance.length > 0 && <Panel title="Compliance"><ul className="ledger-rows">{d.compliance.map((c) => <li key={c.id} className="flex justify-between gap-2 py-1"><span dir="auto">{c.summary}</span><Tag value={c.status} /></li>)}</ul></Panel>}
-          <Panel title="Partner quotes" aside={!mobile && can("cargo_request.transition") && ["IN_REVIEW", "QUOTED", "EXCEPTION"].includes(d.status) && <Button size="xs" variant="outline" onClick={() => dlg.open("quote")}>Draft quote</Button>}>
+          <Panel title="Partner quotes" aside={can("cargo_request.transition") && ["NEW", "IN_REVIEW", "AWAITING_CUSTOMER", "QUOTED", "EXCEPTION"].includes(d.status) && <Button size="xs" variant="outline" onClick={() => dlg.open("quote")} data-testid="cargo-add-price">Add price / quote</Button>}>
             {!d.quotes.length ? <Empty>No quotes.</Empty> : <ul className="ledger-rows">{d.quotes.map((x) => <li key={x.id} className="py-1"><p className="flex justify-between"><span>v{x.version} · {x.partnerName}</span><Tag value={x.status} /></p><p className="num text-meta">{money(x.lines.total)} · {x.lines.freight.chargeableKg} kg × {money(x.lines.freight.ratePerKg)}{x.lines.dutiesTaxes === "PAYABLE_BY_CONSIGNEE" ? " · duties payable by consignee" : ""}</p></li>)}</ul>}
             <p className="mt-1 text-caption text-steel">Eligible partners: {d.eligiblePartners.map((p) => `${p.name} (${p.complianceStatus.toLowerCase()})`).join(", ") || "none for this lane and service"}</p>
           </Panel>

@@ -31,7 +31,7 @@ describe("Phase E — cargo tracking (booklet ch. 14.5, 14.8, 32.2)", () => {
     list = await c.get("/v1/shipments", { "accept-language": "fa" })
     s = list.body.find((x: { ref: string }) => x.ref === ref)
     expect(s.lastEvent).toMatchObject({ eventCode: "AT_CUSTOMS", label: TRACKING_EVENT_LABELS.AT_CUSTOMS.fa, location: "IST customs", corrected: true })
-    expect(s.timeline.map((e: { eventCode: string }) => e.eventCode)).toEqual(["NOTE", "RECEIVED", "AT_CUSTOMS"])
+    expect(s.timeline.map((e: { eventCode: string }) => e.eventCode)).toEqual(["COLLECTION_SCHEDULED", "RECEIVED", "AT_CUSTOMS"])
     const wire = JSON.stringify(list.body.filter((x: { ref: string }) => x.ref === ref))
     expect(wire).not.toMatch(/DEPARTED|Partner entered|correct(s|ion)|source|externalEventId|createdBy/)
     // The request view and the per-shipment route agree.
@@ -59,7 +59,7 @@ describe("Phase E — cargo tracking (booklet ch. 14.5, 14.8, 32.2)", () => {
     detail = await admin.get(`/v1/admin/cargo/requests/${ref}`)
     const noteRow = detail.body.tracking.find((t: { eventCode: string; location: string }) => t.eventCode === "NOTE" && t.location === "Hub")
     expect((await admin.post(`/v1/admin/cargo/requests/${ref}/tracking-corrections`, { correctsEventId: noteRow.id, eventCode: "RETRACTED", location: "Hub", occurredAt: iso(2), reason: "Entered on the wrong shipment" })).status).toBe(201)
-    expect((await c.get(`/v1/shipments/${ref}`)).body.timeline.map((e: { eventCode: string }) => e.eventCode)).toEqual(["NOTE", "RECEIVED", "AT_CUSTOMS"])
+    expect((await c.get(`/v1/shipments/${ref}`)).body.timeline.map((e: { eventCode: string }) => e.eventCode)).toEqual(["COLLECTION_SCHEDULED", "RECEIVED", "AT_CUSTOMS"])
 
     // The estimate: staff set and clear it; customers cannot; it is returned as data for the client to label as an estimate.
     const eta = new Date(Date.now() + 3 * 86_400_000).toISOString()

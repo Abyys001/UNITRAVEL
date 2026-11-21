@@ -11,6 +11,7 @@ import { CustomerItinerary, SearchQuery } from "./search"
 import { InvoiceLineType } from "./invoices"
 import { RequestServiceInterest } from "./service-catalog"
 import { PublicFare } from "./flight-builder"
+import { TravellerInput } from "./travellers"
 
 export const SeatPreference = z.enum(["NONE", "WINDOW", "AISLE", "TOGETHER", "EXTRA_LEGROOM"])
 export const SsrCode = z.enum(["WCHR", "WCHS", "WCHC", "VGML", "MOML", "CHML", "DBML", "PETC", "EXST", "UMNR", "MEDA", "OTHER"])
@@ -203,6 +204,8 @@ export const TicketsBody = z.object({
   /** PAY_ON_TICKETING: the payment is recorded in the same step as the tickets (ch. 27.6). */
   payment: PaymentBody.optional(),
   creditOverride: z.object({ reason: z.string().min(5) }).optional(),
+  /** ADR-0044: ticket travellers whose identity is not VERIFIED; the reason is stored on the request and audited. */
+  identityOverride: z.object({ reason: z.string().trim().min(10).max(500) }).optional(),
 })
 
 export const PaymentView = z.object({
@@ -290,7 +293,7 @@ export const NoteBody = z.object({ body: z.string().min(1).max(4000) })
 export const MessageBody = z.object({ body: z.string().min(1).max(4000), documentIds: z.array(Uuid).max(5).default([]) })
 
 export const FLIGHT_COMMANDS = [
-  "claim", "assign", "request_info", "send_quote", "record_acceptance", "close", "reopen", "cancel", "decline", "mark_reservation_lapsed",
+  "claim", "assign", "request_info", "resume_review", "send_quote", "record_acceptance", "close", "reopen", "cancel", "decline", "mark_reservation_lapsed",
 ] as const
 export type FlightCommand = (typeof FLIGHT_COMMANDS)[number]
 
@@ -298,6 +301,7 @@ export const CommandBodies = {
   claim: z.object({}).strict(),
   assign: z.object({ assigneeUserId: Uuid }),
   request_info: z.object({ message: z.string().min(1).max(4000) }),
+  resume_review: z.object({ note: z.string().trim().min(3).max(1000) }),
   send_quote: z.object({ quoteId: Uuid }),
   record_acceptance: z.object({ quoteId: Uuid, optionId: Uuid, calledAt: IsoDateTime, note: z.string().min(3).max(1000) }),
   close: z.object({ note: z.string().max(1000).optional() }),
@@ -350,3 +354,36 @@ export const DashboardMetrics = z.object({
   }).nullable(),
 })
 export type DashboardMetrics = z.infer<typeof DashboardMetrics>
+
+/**
+ * ADR-0044: staff create a (manual) flight request for a customer. Travellers are picked from the customer's account or
+ * created on it (document optional; nothing has to be verified to submit). Same screening and state machine as online.
+ */
+export const StaffTravellerInput = z.union([
+  z.object({ travellerId: Uuid, passengerType: PassengerType }),
+  z.object({ traveller: TravellerInput, passengerType: PassengerType }),
+])
+export const StaffCreateFlightRequestBody = z.object({
+  customer: z.union([
+    z.object({ userId: Uuid }),
+    z.object({ name: z.string().trim().min(2).max(120), email: z.email().max(200) }),
+  ]),
+  /** Contact phone; required when the customer has none on the account (stored unverified). */
+  contactPhone: z.string().trim().min(6).max(32).optional(),
+  query: SearchQuery,
+  manual: z.object({
+    flexibility: z.string().max(500).optional(),
+    budget: Money.optional(),
+    airlinesAvoid: z.array(CarrierCode).max(10).default([]),
+    airlinesPrefer: z.array(CarrierCode).max(10).default([]),
+    overlandAcceptable: z.boolean().default(false),
+  }).optional(),
+  travellers: z.array(StaffTravellerInput).min(1).max(9),
+  seatPreference: SeatPreference.default("NONE"),
+  bestTimeToCall: z.string().max(80).optional(),
+  note: z.string().max(2000).optional(),
+  channel: z.enum(["PHONE", "IN_PERSON", "EMAIL", "OTHER"]),
+  staffNote: z.string().trim().max(1000).optional(),
+  customerConfirmed: z.literal(true),
+})
+export type StaffCreateFlightRequestBody = z.infer<typeof StaffCreateFlightRequestBody>

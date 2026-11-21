@@ -12,7 +12,7 @@ const SERVICES: Record<string, string> = { hotels: "/hotels", trains: "/trains",
 export const dynamic = "force-dynamic"
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [menu, cms] = await Promise.all([siteMenu(), getSitemap()])
-  const paths = [...STATIC, ...Object.entries(SERVICES).filter(([k]) => menu[k] === true).map(([, p]) => p)]
+  const paths = [...STATIC, ...Object.entries(SERVICES).filter(([k]) => menu[k] === true).map(([, p]) => p), ...(menu.cargo === true ? ["/tracking"] : [])]
   const alt = (p: string) => ({ languages: Object.fromEntries(LOCALES.map((l) => [l, `${SITE}/${l}${p}`])) })
   const fixed = LOCALES.flatMap((l) => paths.map((p) => ({ url: `${SITE}/${l}${p}`, alternates: alt(p) })))
   const entries = cms.ok

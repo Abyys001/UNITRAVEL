@@ -55,6 +55,7 @@ const arbFacts: fc.Arbitrary<FlightFacts> = fc.record({
   now: fc.constant(new Date("2026-11-01T10:00:00Z")),
   ticketsIssuedForEveryTraveller: fc.boolean(),
   allTravellersVerified: fc.boolean(),
+  identityOverrideReason: fc.option(fc.constantFrom("", "short", "Passport seen at the counter by Sara"), { nil: null }),
   creditOverrideApproved: fc.boolean(),
   travellerDocumentsComplete: fc.boolean(),
   responseProvided: fc.boolean(),
@@ -83,12 +84,12 @@ const commands = Object.keys(FLIGHT_TRANSITIONS) as FlightCommandName[]
 const actors = [staff(), customer, system]
 
 describe("flight request state machine (property)", () => {
-  it("never reaches TICKETED without a verified document and an issued ticket per traveller, and payment or override", () => {
+  it("never reaches TICKETED without a verified document (or a recorded staff override, ADR-0044) and an issued ticket per traveller, and payment or override", () => {
     fc.assert(fc.property(arbFacts, fc.constantFrom(...commands), fc.constantFrom(...actors), (facts, cmd, actor) => {
       const r = evaluate(FLIGHT_TRANSITIONS, cmd, facts, actor)
       if (r.ok && r.to === "TICKETED") {
         expect(facts.ticketsIssuedForEveryTraveller).toBe(true)
-        expect(facts.allTravellersVerified).toBe(true)
+        expect(facts.allTravellersVerified || (facts.identityOverrideReason ?? "").trim().length >= 10).toBe(true)
         expect(facts.paymentStatus === "PAID" || facts.creditOverrideApproved).toBe(true)
       }
     }), { numRuns: 5000 })

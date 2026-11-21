@@ -177,6 +177,36 @@ export const TEMPLATES: Record<string, EventTemplates> = {
     en: { title: "{ref} · {status_label}", body: "Your shipment {ref} is now: {status_label}." }, fa: { title: "{ref} · {status_label}", body: "وضعیت محمولهٔ {ref}: {status_label}" },
     smsEn: "Uni Travel: {ref} {status_label}. {link}", smsFa: "یونی‌تراول: {ref} {status_label} {link}",
   },
+  // ADR-0042: one notice per customer milestone. Same wording for the important ones, which also go by SMS.
+  ...Object.fromEntries((["cargo.milestone", "cargo.milestone_important"] as const).map((k) => [k, {
+    vars: ["name", "ref", "tracking_number", "status_label", "when_at", "tracking_link", "link"],
+    en: { title: "{status_label} · {ref}", body: "Your shipment {ref} is now: {status_label}." },
+    fa: { title: "{status_label} · {ref}", body: "وضعیت محمولهٔ {ref}: {status_label}" },
+    emailEn: {
+      title: "Your shipment {ref}: {status_label}",
+      body: "Hello {name},\n\nThere is an update on your shipment.\n\nStatus: {status_label}\nUpdated: {when_local}\nReference: {ref}\nTracking number: {tracking_number}\n\nFollow your shipment at any time: {tracking_link}\n\nUni Travel cargo team",
+    },
+    emailFa: {
+      title: "محمولهٔ {ref}: {status_label}",
+      body: "{name} عزیز،\n\nوضعیت محمولهٔ شما به‌روز شد.\n\nوضعیت: {status_label}\nزمان: {when_local}\nشمارهٔ درخواست: {ref}\nکد رهگیری: {tracking_number}\n\nپیگیری محموله در هر زمان: {tracking_link}\n\nتیم بار یونی‌تراول",
+    },
+    smsEn: "Uni Travel: shipment {ref} {status_label}. {tracking_link}", smsFa: "یونی‌تراول: محمولهٔ {ref} {status_label} {tracking_link}",
+  }])),
+  "cargo.job_assigned": {
+    vars: ["ref", "kind", "when_at", "link"],
+    en: { title: "New {kind} job · {ref}", body: "You have a new {kind} job for {ref}. Open your agent dashboard to see the details." },
+    fa: { title: "کار جدید {kind} · {ref}", body: "یک کار {kind} جدید برای {ref} دارید. جزئیات در داشبورد مأمور است." },
+  },
+  "cargo.job_declined": {
+    vars: ["ref", "agent", "kind", "reason", "link"],
+    en: { title: "Job declined · {ref}", body: "{agent} declined the {kind} job for {ref}: {reason}. Assign another agent." },
+    fa: { title: "کار رد شد · {ref}", body: "{agent} کار {kind} برای {ref} را نپذیرفت: {reason}. مأمور دیگری تعیین کنید." },
+  },
+  "cargo.agent_problem": {
+    vars: ["ref", "agent", "category", "message", "link"],
+    en: { title: "Problem reported · {ref}", body: "{agent} reported a {category} problem on {ref}: {message}" },
+    fa: { title: "گزارش مشکل · {ref}", body: "{agent} برای {ref} مشکل «{category}» گزارش کرد: {message}" },
+  },
   // ADR-0015: service requests. Wording never promises a booking, an outcome or a price before a quote is sent.
   "service_request.submitted": {
     vars: ["ref", "service", "link"],

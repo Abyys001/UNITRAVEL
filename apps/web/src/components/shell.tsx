@@ -1,6 +1,6 @@
 "use client"
 
-import { Armchair, BedDouble, BookA, BookOpen, Bus, ChevronDown, ClipboardList, CreditCard, Globe, House, Inbox, LayoutDashboard, LifeBuoy, Menu, Package, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, Ticket, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
+import { Armchair, BedDouble, BookA, BookOpen, Bus, ChevronDown, ClipboardList, CreditCard, Globe, House, Inbox, LayoutDashboard, LifeBuoy, Menu, Package, PackageSearch, Plane, ReceiptText, SearchCheck, ShieldCheck, Stamp, Star, Ticket, TrainFront, Truck, UserRound, X, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useRef, useState } from "react"
@@ -85,6 +85,7 @@ export function Header() {
   ]
   const help: NavLink[] = [
     { href: href("/track"), label: t("nav.track"), icon: SearchCheck },
+    ...(on("cargo") ? [{ href: href("/tracking"), label: t("nav.trackCargo"), icon: PackageSearch }] : []),
     { href: href("/requests"), label: t("nav.requests"), icon: ClipboardList },
     ...(me ? [{ href: href("/account/tickets"), label: t("nav.tickets"), icon: Ticket }, { href: href("/billing"), label: t("nav.billing"), icon: ReceiptText }] : []),
     ...(on("club") ? [{ href: href("/club"), label: t("nav.club"), icon: Star }] : []),
@@ -137,7 +138,7 @@ export function Header() {
         )}
       </header>
       {/* Service pages carry their own hero with its ribbon. */}
-      {!home && !/^\/(en|fa)\/(trains|buses|stays|visa|tours|cip|insurance|cargo|shipments|card)\/?$/.test(path) && (
+      {!home && !/^\/(en|fa)\/(trains|buses|stays|visa|tours|cip|insurance|cargo|shipments|card|tracking)\/?$/.test(path) && (
         <div aria-hidden className="relative bg-brand">
           <div className="bg-dots h-6 md:h-8" />
           <Ribbon className="relative -mt-px" />
@@ -199,7 +200,7 @@ export function Footer() {
   const explore: [string, string][] = [
     [href("/"), t("nav.flights")],
     ...(([["hotels", "/hotels"], ["trains", "/trains"], ["buses", "/buses"], ["stays", "/stays"], ["visa", "/visa"], ["tours", "/tours"], ["cip", "/cip"], ["insurance", "/insurance"], ["card", "/card"]] as const).filter(([k]) => on(k)).map(([k, p]) => [href(p), t(`nav.${k}`)] as [string, string])),
-    ...(on("cargo") ? [[href("/cargo"), t("nav.cargo")], [href("/shipments"), t("nav.shipments")]] as [string, string][] : []),
+    ...(on("cargo") ? [[href("/cargo"), t("nav.cargo")], [href("/tracking"), t("nav.trackCargo")], [href("/shipments"), t("nav.shipments")]] as [string, string][] : []),
   ]
   return (
     <footer className="relative mt-20 overflow-hidden bg-navy-950 text-white/80">

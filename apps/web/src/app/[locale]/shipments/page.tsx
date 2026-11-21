@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { ArrowRight, Package, PackageCheck, Truck } from "lucide-react"
+import { ArrowRight, Package, PackageCheck, SearchCheck, Truck } from "lucide-react"
 import Link from "next/link"
 
 import type { ShipmentSummary, ShipmentView } from "@unitravel/contracts"
@@ -43,7 +43,7 @@ export default function ShipmentsPage() {
   const items = list.data ?? []
   return (
     <div className="min-w-0">
-      <PortalTitle title={t("shipments.title")} lead={t("shipments.lead")} action={<Link href={href("/cargo")} className="btn-orange">{t("shipments.send")}<ArrowRight className="size-4 rtl:rotate-180" aria-hidden /></Link>} />
+      <PortalTitle title={t("shipments.title")} lead={t("shipments.lead")} action={<div className="flex flex-wrap gap-2"><Link href={href("/cargo")} className="btn-orange">{t("shipments.send")}<ArrowRight className="size-4 rtl:rotate-180" aria-hidden /></Link><Link href={href("/tracking")} className="inline-flex items-center gap-1.5 rounded-full border-2 border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-900 hover:text-white pointer-coarse:min-h-11" data-testid="shipments-track-number"><SearchCheck className="size-4" aria-hidden />{t("cargo.trackNumberLink")}</Link></div>} />
       {summary.data && summary.data.total > 0 && <SummaryCard s={summary.data} />}
       {list.isLoading && <LoadingState className="mt-6" label={t("common.loading")} rows={2} />}
       {!list.isLoading && !items.length && <EmptyState className="mt-6" icon={<Truck />} title={t("shipments.empty")} />}
@@ -58,12 +58,23 @@ export default function ShipmentsPage() {
                 <p className="text-xs text-steel"><Ltr className="font-mono">{s.ref}</Ltr>{s.awbNumber && <>{sep}{t("shipments.awb")} <Ltr className="font-mono">{s.awbNumber}</Ltr></>}</p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-navy-950 px-3 py-1 text-xs font-semibold text-white"><span aria-hidden className="size-1.5 rounded-full bg-orange" />{s.statusLabel}</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-navy-950 px-3 py-1 text-xs font-semibold text-white" data-testid="shipment-milestone"><span aria-hidden className="size-1.5 rounded-full bg-orange" />{s.milestoneLabel}</span>
             </div>
             <div className="grid gap-5 p-5 md:grid-cols-[1fr_220px]">
               <TrackingTimeline events={s.timeline} />
               <div className="space-y-4">
+                {s.trackingNumber && <div><p className="text-xs font-bold uppercase tracking-wide text-(color:--ink-muted)">{t("shipments.trackingNumber")}</p><Link href={href(`/tracking/${s.trackingNumber}`)} className="inline-flex items-center gap-1.5 font-mono text-sm font-semibold text-royal underline underline-offset-4 pointer-coarse:min-h-11" data-testid="shipment-tracking-link"><SearchCheck className="size-4" aria-hidden /><Ltr>{s.trackingNumber}</Ltr></Link></div>}
                 <dl><EtaEstimate at={s.estimatedDeliveryAt} /></dl>
+                {/* ADR-0047 D6: the courier carrying it (dispatched consignments) and the courier's own tracking link. */}
+                {s.couriers.map((c) => (
+                  <div key={c.shipmentNo} data-testid="shipment-courier">
+                    <p className="text-xs font-bold uppercase tracking-wide text-(color:--ink-muted)">{c.direction === "RETURN" ? t("shipments.courierReturn") : t("shipments.courier")}</p>
+                    <p className="text-sm font-semibold">{c.courier}</p>
+                    {c.trackingNumber && (c.trackingUrl
+                      ? <a href={c.trackingUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-mono text-sm text-royal underline underline-offset-4 pointer-coarse:min-h-11"><Ltr>{c.trackingNumber}</Ltr></a>
+                      : <p className="font-mono text-sm"><Ltr>{c.trackingNumber}</Ltr></p>)}
+                  </div>
+                ))}
                 {s.lastEvent && <div><p className="text-xs font-bold uppercase tracking-wide text-(color:--ink-muted)">{t("shipments.lastUpdate")}</p><p className="text-sm">{t(`tracking.events.${s.lastEvent.eventCode}` as never)}{sep}{date(s.lastEvent.occurredAt, { withTime: true })}</p></div>}
                 <Link href={href(trackPath(s.ref))} className="inline-flex items-center gap-1.5 rounded-full border-2 border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-900 hover:text-white pointer-coarse:min-h-11"><PackageCheck className="size-4" aria-hidden />{t("shipments.open")}</Link>
               </div>

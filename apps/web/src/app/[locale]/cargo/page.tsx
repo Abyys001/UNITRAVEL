@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowDown, ClipboardList, PackageCheck, Plane, Scale, ShieldCheck, Truck, Workflow } from "lucide-react"
+import { ArrowDown, ClipboardList, PackageCheck, Plane, Scale, SearchCheck, ShieldCheck, Truck, Workflow } from "lucide-react"
 import Link from "next/link"
 
 import { CargoWizard } from "@/components/cargo-wizard/cargo-wizard"
@@ -15,7 +15,7 @@ export default function CargoPage() {
     <>
       <ServiceHero testId="cargo-hero" photo="cargo" scene="cargo" eyebrow={t("cargo.eyebrow")} title={t("cargo.title")} accent={t("cargo.accent")} lead={t("cargo.heroLead")}
         perks={[{ icon: Plane, label: t("cargo.perkServices") }, { icon: Scale, label: t("cargo.perkWeight") }, { icon: Truck, label: t("cargo.perkTrack") }]}
-        actions={<><a href="#cargo-form" className="btn-orange">{t("services.startRequest")}<ArrowDown className="size-4" aria-hidden /></a><Link href={href("/shipments")} className="btn-glass">{t("cargo.trackLink")}</Link></>} />
+        actions={<><a href="#cargo-form" className="btn-orange">{t("services.startRequest")}<ArrowDown className="size-4" aria-hidden /></a><Link href={href("/tracking")} className="btn-glass"><SearchCheck className="size-4" aria-hidden />{t("cargo.trackNumberLink")}</Link></>} />
       <div className="mx-auto grid max-w-6xl gap-6 px-4 pb-16 pt-8 md:px-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-8">
         <aside aria-labelledby="cargo-intro" className="grid gap-4 self-start lg:sticky lg:top-24">
           <h2 id="cargo-intro" className="font-display text-lg text-navy-950">{t("guide.cargo.intro.title")}</h2>

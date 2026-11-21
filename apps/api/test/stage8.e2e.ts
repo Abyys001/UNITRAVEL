@@ -255,7 +255,9 @@ describe("Phase B — identity, profile, passport, verification", () => {
     expect(blocked.body.code).toBe("IDENTITY_NOT_VERIFIED")
     expect((await admin.get(`/v1/admin/flight-requests/${ref}`)).body.status).toBe("RESERVED")
     const actions = (await admin.get(`/v1/admin/flight-requests/${ref}`)).body.actions as { command: string; allowed: boolean; reason?: string }[]
-    expect(actions.find((a) => a.command === "record_tickets")?.reason ?? "").toMatch(/VERIFIED/)
+    // ADR-0044: the command stays offered; without a recorded override reason the server still refuses unverified travellers.
+    expect(actions.find((a) => a.command === "record_tickets")).toMatchObject({ allowed: true })
+    expect(blocked.body.overrideAllowed).toBe(true)
 
     const queue = await admin.get("/v1/admin/verifications")
     const item = queue.body.find((x: { travellerId: string }) => x.travellerId === traveller.id)

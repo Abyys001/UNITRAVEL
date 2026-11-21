@@ -30,15 +30,20 @@ export interface CargoFacts {
   revisedQuoteAccepted?: boolean
   podName?: string
   decisionReason?: string
+  /** ADR-0042 D8 / ADR-0043: true only when the acting agent holds an active DELIVERY assignment on the request. */
+  assignedAgent?: boolean
 }
 
 export type CargoCommandName =
-  | "screen_pass" | "screen_flag" | "screen_prohibited" | "release_hold" | "claim" | "assign" | "request_info" | "respond" | "send_quote"
+  | "screen_pass" | "screen_flag" | "screen_prohibited" | "release_hold" | "claim" | "assign" | "request_info" | "resume_review" | "respond" | "send_quote"
   | "accept_quote" | "decline_quote" | "record_acceptance" | "record_booking" | "schedule_handover" | "receive" | "depart" | "arrive_customs"
   | "clear_customs" | "out_for_delivery" | "deliver" | "close" | "raise_exception" | "resolve_exception" | "accept_revised_quote"
   | "cancel_by_customer" | "cancel" | "decline" | "expire_quote" | "reopen"
 
 const P = ["cargo_request.transition"] as const
+/** ADR-0042 D8 / ADR-0043: an assigned delivery agent may move the shipment out for delivery and deliver it; nothing else. */
+const P_AGENT = ["cargo_request.transition", "cargo_job.agent"] as const
+const agentMustBeAssigned = (f: CargoFacts) => (f.assignedAgent === false ? "Only the assigned delivery agent can do this" : null)
 
 export const CARGO_TRANSITIONS: TransitionTable<CargoStatus, CargoFacts, CargoCommandName> = {
   screen_pass: { from: ["SUBMITTED"], to: "NEW", actor: "SYSTEM" },
@@ -48,6 +53,8 @@ export const CARGO_TRANSITIONS: TransitionTable<CargoStatus, CargoFacts, CargoCo
   claim: { from: ["NEW"], to: "IN_REVIEW", actor: "STAFF", permissions: P },
   assign: { from: ["NEW", "IN_REVIEW"], to: "IN_REVIEW", actor: "STAFF", permissions: P, inputGuard: (f) => (f.assigneeCanTransition ? null : "Assignee lacks cargo_request.transition") },
   request_info: { from: ["IN_REVIEW"], to: "AWAITING_CUSTOMER", actor: "STAFF", permissions: P, inputGuard: (f) => (f.message?.trim() ? null : "A customer-visible message is required") },
+  // ADR-0044 D5: staff move on without waiting for the customer; a note is required.
+  resume_review: { from: ["AWAITING_CUSTOMER"], to: "IN_REVIEW", actor: "STAFF", permissions: P, inputGuard: (f) => (f.message && f.message.trim().length >= 3 ? null : "Say why you continue without the customer's reply") },
   respond: { from: ["AWAITING_CUSTOMER"], to: "IN_REVIEW", actor: "CUSTOMER", inputGuard: (f) => (f.responseProvided ? null : "A message or the requested documents are required") },
   send_quote: {
     from: ["IN_REVIEW", "QUOTED"], to: "QUOTED", actor: "STAFF", permissions: P,
@@ -74,8 +81,8 @@ export const CARGO_TRANSITIONS: TransitionTable<CargoStatus, CargoFacts, CargoCo
   depart: { from: ["RECEIVED"], to: "IN_TRANSIT", actor: "STAFF", permissions: P },
   arrive_customs: { from: ["IN_TRANSIT"], to: "AT_CUSTOMS", actor: "STAFF", permissions: P },
   clear_customs: { from: ["AT_CUSTOMS"], to: "OUT_FOR_DELIVERY", actor: "STAFF", permissions: P },
-  out_for_delivery: { from: ["IN_TRANSIT"], to: "OUT_FOR_DELIVERY", actor: "STAFF", permissions: P },
-  deliver: { from: ["OUT_FOR_DELIVERY"], to: "DELIVERED", actor: "STAFF", permissions: P, inputGuard: (f) => (f.podName?.trim() ? null : "Proof of delivery is required") },
+  out_for_delivery: { from: ["IN_TRANSIT"], to: "OUT_FOR_DELIVERY", actor: "STAFF", permissions: P_AGENT, guard: agentMustBeAssigned },
+  deliver: { from: ["OUT_FOR_DELIVERY"], to: "DELIVERED", actor: "STAFF", permissions: P_AGENT, guard: agentMustBeAssigned, inputGuard: (f) => (f.podName?.trim() ? null : "Proof of delivery is required") },
   close: { from: ["DELIVERED"], to: "COMPLETED", actor: "STAFF", permissions: P },
   raise_exception: { from: IN_FULFILMENT, to: "EXCEPTION", actor: "STAFF", permissions: P, inputGuard: (f) => (f.exceptionReason ? null : "Reason required") },
   resolve_exception: {

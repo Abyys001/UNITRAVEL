@@ -199,7 +199,7 @@ export class ServicesService implements OnModuleInit {
     const phones = await this.db.select().from(userIdentities).where(and(eq(userIdentities.userId, customerId), eq(userIdentities.type, "PHONE"), isNull(userIdentities.revokedAt)))
     const contact = phones.find((i) => i.isPrimary && i.verifiedAt) ?? phones.find((i) => i.verifiedAt) ?? phones.find((i) => i.isPrimary) ?? phones[0]
     if (!contact) throw new AppError("VALIDATION_FAILED", "The customer has no phone number on file", [{ path: "customerId", code: "NO_PHONE" }])
-    if (this.config.get("AUTH").requireVerifiedPhoneForRequests && !contact.verifiedAt) throw new AppError("PHONE_NOT_VERIFIED", "The customer's phone number is not verified")
+    // ADR-0044: staff assigning a service do not need the customer's phone to be verified; the request records it unverified.
     const details = body.details
     const travellerIds = Array.isArray(details.travellerIds) ? (details.travellerIds as string[]) : []
     for (const id of new Set(travellerIds)) await this.customers.owned(customerId, id)

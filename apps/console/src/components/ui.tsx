@@ -32,7 +32,7 @@ export const Loading = ({ label = "Loading…" }: { label?: string }) => <Loadin
 export const Empty = ({ children }: { children: React.ReactNode }) => <EmptyState compact title={children} />
 
 export const COMMAND_LABEL: Record<string, string> = {
-  claim: "Claim", assign: "Assign…", request_info: "Request info…", send_quote: "Send quote…", record_acceptance: "Record acceptance…",
+  claim: "Claim", assign: "Assign…", request_info: "Request info…", resume_review: "Continue without reply…", send_quote: "Send quote…", record_acceptance: "Record acceptance…",
   record_reservation: "Record reservation…", record_tickets: "Record tickets…", close: "Close", reopen: "Reopen", cancel: "Cancel…", decline: "Decline…",
   record_booking: "Record partner booking…", schedule_handover: "Schedule handover…", receive: "Receive & re-weigh…", depart: "Departed…",
   arrive_customs: "At customs…", clear_customs: "Cleared customs…", out_for_delivery: "Out for delivery…", deliver: "Delivered…",

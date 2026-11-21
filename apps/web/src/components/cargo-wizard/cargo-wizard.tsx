@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 
-import { ConfirmationPanel, DateField, type FieldErrors, ReviewList, SelectField, Wizard, type WizardContext, type WizardStep } from "@/components/form"
+import { ConfirmationPanel, DateField, type FieldErrors, FieldShell, fieldAria, ReviewList, SelectField, Wizard, type WizardContext, type WizardStep } from "@/components/form"
 import { api, type ApiError, newIdempotencyKey } from "@/lib/api"
 import { countryName } from "@/lib/countries"
 import { saveDraft } from "@/lib/form-draft"
@@ -118,6 +118,8 @@ export function CargoWizard() {
             { label: t("cargo.items"), value: values.items.map((i) => i.description).filter(Boolean).join(list) },
             { label: t("cargo.summaryValue"), value: <Num>{money({ amountMinor: declaredTotalMinor(values.items), currency: "GBP" })}</Num> },
             { label: t("cargo.readyDate"), value: values.readyDate ? date(values.readyDate, { dateOnly: true }) : "" },
+            ...(values.preferredDeliveryDate ? [{ label: t("cargo.preferredDelivery"), value: date(values.preferredDeliveryDate, { dateOnly: true }) }] : []),
+            ...(values.handlingInstructions.trim() ? [{ label: t("cargo.handlingInstructions"), value: <span dir="auto">{values.handlingInstructions.trim()}</span> }] : []),
             { label: t("cargo.handover"), value: t(values.handoverMode === "DROP_OFF" ? "cargo.dropOff" : "cargo.pickup") },
             ...(freight ? [{ label: t("cargo.incoterm"), value: <Num>{values.incoterm}</Num> }] : []),
             { label: t("cargo.declarations"), value: declared || t("guide.cargo.noneDeclared") },
@@ -217,11 +219,16 @@ function ShipmentStep({ ctx, divisor, today }: { ctx: WizardContext<CargoValues>
       <section aria-labelledby="cargo-handover" className="grid gap-3">
         <h3 id="cargo-handover" className="font-display text-lg text-navy-950">{t("cargo.stepHandover")}</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <DateField id="readyDate" label={t("cargo.readyDate")} required min={today} value={values.readyDate} error={errors.readyDate} onChange={(d) => set("readyDate", d)} />
+          <DateField id="readyDate" label={t("cargo.readyDate")} required min={today} value={values.readyDate} error={errors.readyDate} onChange={(d) => { set("readyDate", d); if (values.preferredDeliveryDate && d > values.preferredDeliveryDate) set("preferredDeliveryDate", "") }} />
+          <DateField id="preferredDeliveryDate" label={t("cargo.preferredDelivery")} optional min={values.readyDate || today} hint={t("cargo.preferredDeliveryHint")} value={values.preferredDeliveryDate} error={errors.preferredDeliveryDate} onChange={(d) => set("preferredDeliveryDate", d)} />
           <SelectField id="handoverMode" label={t("cargo.handover")} required value={values.handoverMode} error={errors.handoverMode}
             options={HANDOVER.map((m) => ({ value: m, label: t(m === "PICKUP" ? "cargo.pickup" : "cargo.dropOff") }))} onChange={(v) => set("handoverMode", v)} />
           {freight ? <SelectField id="incoterm" label={t("cargo.incoterm")} required hint={t("guide.cargo.incotermHint")} value={values.incoterm} error={errors.incoterm}
             options={INCOTERM_CHOICES.map((x) => ({ value: x, label: x }))} onChange={(v) => set("incoterm", v)} /> : null}
+          <FieldShell id="handlingInstructions" label={t("cargo.handlingInstructions")} optional className="text-sm sm:col-span-2 lg:col-span-3" error={errors.handlingInstructions}
+            hint={<span className="flex justify-between gap-3"><span>{t("cargo.handlingHint")}</span><span aria-live="polite" className="shrink-0">{t("cargo.handlingCount", { n: values.handlingInstructions.length })}</span></span>}>
+            <textarea id="handlingInstructions" className="field min-h-20 w-full" dir="auto" maxLength={500} value={values.handlingInstructions} {...fieldAria("handlingInstructions", { hint: true, error: errors.handlingInstructions })} onChange={(e) => set("handlingInstructions", e.target.value)} />
+          </FieldShell>
         </div>
         <fieldset className="rounded-2xl border border-line bg-white p-4">
           <legend className={`${sectionTitle} px-1`}>{t("cargo.declarations")}</legend>

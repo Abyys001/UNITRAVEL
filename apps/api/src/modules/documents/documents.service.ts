@@ -128,6 +128,37 @@ export class DocumentsService implements OnModuleInit {
     return { documentId: doc!.id, uploadUrl: url, method: "PUT" as const, headers: { ...headers, ...(identity ? { "x-amz-server-side-encryption": "AES256" } : {}) }, expiresInSeconds: 300 }
   }
 
+  /**
+   * ADR-0042 D9: proof photos and signatures sent through the API (the console's CSP allows no direct storage upload).
+   * JPEG/PNG only; metadata (camera GPS) is stripped before storage; the virus scan runs as for any upload.
+   */
+  async storeImage(input: { ownerUserId: string; requestType?: "CARGO"; requestId?: string; type: string; filename: string; body: Buffer; createdBy: string }) {
+    let stripped: { body: Buffer; mime: "image/jpeg" | "image/png" }
+    try { stripped = stripImageMetadata(input.body) } catch (err) {
+      if (err instanceof UnsupportedImageError) throw new AppError("VALIDATION_FAILED", "Only JPG and PNG images are accepted", [{ path: "data", code: "TYPE_NOT_ALLOWED" }])
+      throw err
+    }
+    const ext = stripped.mime === "image/png" ? ".png" : ".jpg"
+    const storageKey = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}${ext}`
+    await this.storage.put(storageKey, stripped.body, stripped.mime)
+    const filename = `${input.filename.replace(/\.[A-Za-z0-9]+$/, "").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "image"}${ext}`
+    const [doc] = await this.db.insert(documents).values({ ownerUserId: input.ownerUserId, requestType: input.requestType, requestId: input.requestId, type: input.type, filename, mime: stripped.mime, size: stripped.body.length, storageKey, visibility: "INTERNAL", uploadCompletedAt: new Date(), createdBy: input.createdBy }).returning()
+    await this.outbox.add(this.db, { aggregateType: "document", aggregateId: doc!.id, eventType: "document.uploaded", payload: { documentId: doc!.id } })
+    return doc!
+  }
+
+  /** ADR-0047 D2: a staff-uploaded PDF (a courier's label). PDF only, INTERNAL, scanned asynchronously like any upload. */
+  async storePdf(input: { ownerUserId: string; requestType: "CARGO"; requestId: string; type: string; filename: string; body: Buffer; createdBy: string }) {
+    if (input.body.subarray(0, 5).toString("latin1") !== "%PDF-") throw new AppError("VALIDATION_FAILED", "Only PDF files are accepted", [{ path: "data", code: "TYPE_NOT_ALLOWED" }])
+    if (input.body.length > 5 * 1024 * 1024) throw new AppError("VALIDATION_FAILED", "The PDF is larger than 5 MB", [{ path: "data", code: "TOO_LARGE" }])
+    const storageKey = `${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}.pdf`
+    await this.storage.put(storageKey, input.body, "application/pdf")
+    const filename = `${input.filename.replace(/\.[A-Za-z0-9]+$/, "").replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "label"}.pdf`
+    const [doc] = await this.db.insert(documents).values({ ownerUserId: input.ownerUserId, requestType: input.requestType, requestId: input.requestId, type: input.type, filename, mime: "application/pdf", size: input.body.length, storageKey, visibility: "INTERNAL", uploadCompletedAt: new Date(), createdBy: input.createdBy }).returning()
+    await this.outbox.add(this.db, { aggregateType: "document", aggregateId: doc!.id, eventType: "document.uploaded", payload: { documentId: doc!.id } })
+    return doc!
+  }
+
   async complete(documentId: string, userId: string) {
     const [doc] = await this.db.select().from(documents).where(eq(documents.id, documentId))
     if (!doc || (doc.createdBy !== userId)) throw new AppError("NOT_FOUND")

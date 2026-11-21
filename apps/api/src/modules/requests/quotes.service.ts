@@ -12,7 +12,7 @@ import { AuditService } from "../audit/audit.service"
 import { ComplianceService } from "../compliance/compliance.service"
 import { ConfigService } from "../config/config.service"
 import { ServicesCatalogService } from "../services-catalog/services-catalog.service"
-import { optionUnknowns, RequestsService } from "./requests.service"
+import { optionUnknowns, RequestsService, staffActor } from "./requests.service"
 
 const EDITABLE = ["IN_REVIEW", "QUOTED", "ACCEPTED"]
 
@@ -72,7 +72,13 @@ export class QuotesService {
     const body = { ...input, options: await this.withCatalogueLines(ref, input.options, input.currency) }
     await this.validateOptions(body.options, body.currency)
     const id = await this.uow.run(async (tx) => {
-      const r = await this.requests.byRef(ref, tx, true)
+      let r = await this.requests.byRef(ref, tx, true)
+      // ADR-0044 D6: staff may price a request straight away. A NEW request is claimed by them and a request waiting for the
+      // customer goes back to review first — both as ordinary, audited state-machine transitions. Screening states stay locked.
+      if (r.status === "NEW") r = await this.requests.transition(tx, r, "claim", staffActor(actor), { facts: { assigneeCanTransition: true }, patch: { assigneeUserId: actor.userId, assignedAt: new Date() } })
+      else if (r.status === "AWAITING_CUSTOMER") {
+        r = await this.requests.transition(tx, r, "resume_review", staffActor(actor), { facts: { message: "Staff prepared a quote" }, reasonText: "Staff prepared a quote" })
+      }
       if (!EDITABLE.includes(r.status)) throw new AppError("INVALID_TRANSITION", `Quotes cannot be drafted while ${r.status}`)
       const [{ v } = { v: 0 }] = await tx.select({ v: max(quotes.version) }).from(quotes).where(and(eq(quotes.requestType, "FLIGHT"), eq(quotes.requestId, r.id)))
       const [q] = await tx.insert(quotes).values({ requestType: "FLIGHT", requestId: r.id, version: (v ?? 0) + 1, status: "DRAFT", currency: body.currency, validUntil: this.validity(body.options, body.validUntil), createdBy: actor.userId }).returning()

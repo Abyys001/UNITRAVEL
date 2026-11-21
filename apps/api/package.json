@@ -32,6 +32,7 @@
     "@unitravel/engine": "workspace:*",
     "@unitravel/i18n": "workspace:*",
     "bullmq": "6.3.14",
+    "bwip-js": "4.11.4",
     "cookie-parser": "1.4.7",
     "drizzle-orm": "0.45.4",
     "express": "5.3.0",

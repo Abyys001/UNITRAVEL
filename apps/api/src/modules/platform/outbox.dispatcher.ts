@@ -43,6 +43,11 @@ export const EVENT_ROUTES: Record<string, QueueName[]> = {
   "cargo_request.submitted": ["compliance.screen", "notify.route", "timers.sla", "notify.staff"],
   "cargo_request.transitioned": ["notify.route", "timers.sla"],
   "cargo_request.message": ["notify.route", "notify.staff"],
+  // ADR-0042/0043: milestone notices (tracking number, agent jobs, agent and tracking updates).
+  "cargo.milestone_check": ["notify.route"],
+  "cargo.job_assigned": ["notify.route"],
+  "cargo.job_declined": ["notify.route"],
+  "cargo.agent_problem": ["notify.route"],
   "service_request.submitted": ["compliance.screen", "notify.route", "timers.sla", "notify.staff"],
   "service_request.transitioned": ["notify.route", "timers.sla"],
   "service_request.message": ["notify.route", "notify.staff"],

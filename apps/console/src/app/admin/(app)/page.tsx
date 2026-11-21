@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { ArrowRight, BellRing, CircleCheck, FileText, Gavel, IdCard, Radio, Receipt } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 import type { DashboardMetrics, VerificationQueueItem } from "@unitravel/contracts"
 import { formatMoney } from "@unitravel/domain"
@@ -113,7 +114,16 @@ function ActivityRow({ e, t, locale }: { e: ActivityEntry; t: T; locale: string 
   )
 }
 
+/** ADR-0042: a driver has no dashboard; their home is their job list. */
 export default function Home() {
+  const { can } = useSession()
+  const router = useRouter()
+  const agentOnly = can("cargo_job.agent") && !can("flight_request.read.any", "cargo_request.read.any", "service_request.read.any", "compliance.case.read")
+  useEffect(() => { if (agentOnly) router.replace("/agent") }, [agentOnly, router])
+  return agentOnly ? null : <Dashboard />
+}
+
+function Dashboard() {
   const { me, can, reload } = useSession()
   const t = useT()
   const [locale] = useLocale()
